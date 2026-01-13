@@ -45,25 +45,6 @@ function Layout({ children }: LayoutProps) {
                 </div>
 
                 <div className={`sidebar-section ${isSidebarCollapsed ? 'hidden' : ''}`}>
-                    <h3>Day</h3>
-                    <select
-                        className="select-btns"
-                        value={selectedDay}
-                        onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setSelectedDay(event.target.value)}
-                    >
-                        <option value="">Select Day</option>
-                        <option value="Mo">Monday</option>
-                        <option value="Tu">Tuesday</option>
-                        <option value="We">Wednesday</option>
-                        <option value="Th">Thursday</option>
-                        <option value="Fr">Friday</option>
-                        <option value="Sa">Saturday</option>
-                        <option value="Su">Sunday</option>
-                        <option value="Mo,Tu,We,Th,Fr">Mini Session</option>
-                    </select>
-                </div>
-
-                <div className={`sidebar-section ${isSidebarCollapsed ? 'hidden' : ''}`}>
                     <label className="drop-zone-header">
                         <span>Upload Roster</span>
                         <input
