@@ -133,12 +133,12 @@ function isExceptionClass(level: string) {
 
 function getCapacityClass(course: Course, capacity: number) {
     if (course.studentCount === 1 && !isExceptionClass(course.level)) {
-        return 'capacity-low'
+        return 'border-rose-200 bg-rose-100 text-rose-700'
     }
     if (course.studentCount < Math.floor(capacity / 2)) {
-        return 'capacity-mid'
+        return 'border-amber-200 bg-amber-100 text-amber-700'
     }
-    return 'capacity-ok'
+    return 'border-emerald-200 bg-emerald-100 text-emerald-700'
 }
 
 function buildColumns(courses: Course[]): Course[][] {
@@ -422,37 +422,47 @@ function SchematicPage() {
     const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
 
     return (
-        <div className="schematic">
-            <div className="schematic-wrapper">
-                <div className="schematic-title">
-                    <span className="schematic-title-box">Schematic</span>
-                    <span className="schematic-title-box">{dayLabel} Winter 2026</span>
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+            <div className="flex w-full flex-col gap-4 overflow-x-auto">
+                <div className="flex flex-wrap gap-3">
+                    <span className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-accent">
+                        Schematic
+                    </span>
+                    <span className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-accent">
+                        {dayLabel} Winter 2026
+                    </span>
                 </div>
 
-                <div className="schematic-container">
-                    <div className="time-sidebar" id="time-sidebar-left">
-                        <div className="time-header" style={{ height: `${HEADER_HEIGHT_REM}rem` }} />
+                <div className="flex w-full items-start justify-center gap-4">
+                    <div className="mt-8 flex min-w-[70px] flex-col items-center text-xs text-secondary">
+                        <div style={{ height: `${HEADER_HEIGHT_REM}rem` }} />
                         {timeLabels.map(label => (
-                            <div className="time-label" key={`left-${label}`}>
+                            <div className="py-2" key={`left-${label}`}>
                                 {label}
                             </div>
                         ))}
                     </div>
 
-                    <div className="main-content" id="main-content">
-                        {columns.length === 0 && <p>No schedule data loaded. Upload a CSV file to generate the schedule.</p>}
-                        <div className="schematic-header-row">Instructors/Level</div>
-                        <div className="schematic-columns">
+                    <div className="flex flex-col gap-3" id="main-content">
+                        {columns.length === 0 && (
+                            <p className="text-secondary">
+                                No schedule data loaded. Upload a CSV file to generate the schedule.
+                            </p>
+                        )}
+                        <div className="rounded-xl bg-primary px-4 py-2 text-center font-semibold text-accent">
+                            Instructors/Level
+                        </div>
+                        <div className="flex gap-4">
                             {columns.map((column, columnIndex) => (
                                 <div
-                                    className="column"
+                                    className="flex min-w-[220px] flex-1 flex-col"
                                     key={`column-${columnIndex}`}
                                     onDragOver={event => event.preventDefault()}
                                     onDrop={() => handleDrop(columnIndex)}
                                 >
-                                    <div className="instructor-header">
+                                    <div className="rounded-t-xl border-2 border-secondary bg-accent p-2">
                                         <input
-                                            className="instructor-input"
+                                            className="w-full rounded-lg border-2 border-secondary bg-bg px-2 py-1 text-sm text-primary"
                                             type="text"
                                             value={instructors[columnIndex] ?? ''}
                                             placeholder={`Instructor ${columnIndex + 1}`}
@@ -466,16 +476,20 @@ function SchematicPage() {
                                             }}
                                         />
                                     </div>
-                                    <div className="column-body" style={{ height: `${scheduleHeightRem}rem` }}>
+                                    <div
+                                        className="relative rounded-b-xl border-2 border-secondary bg-bg"
+                                        style={{ height: `${scheduleHeightRem}rem` }}
+                                    >
                                         {column.map(course => {
-                                            const startOffset = (course.startMinutes - scheduleStartMinutes) / SLOT_MINUTES
+                                            const startOffset =
+                                                (course.startMinutes - scheduleStartMinutes) / SLOT_MINUTES
                                             const courseHeight = course.runningTime / SLOT_MINUTES
                                             const capacity = getCapacity(course)
                                             const capacityClass = getCapacityClass(course, capacity)
                                             return (
                                                 <div
                                                     key={course.code}
-                                                    className="code-entry"
+                                                    className="absolute left-2 right-2 flex flex-col gap-2 rounded-xl border-2 border-secondary bg-accent p-2 text-xs shadow-md"
                                                     draggable
                                                     onDragStart={event => handleDragStart(event, course, columnIndex)}
                                                     onDragOver={event => event.preventDefault()}
@@ -485,11 +499,13 @@ function SchematicPage() {
                                                         height: `${courseHeight * SLOT_HEIGHT_REM}rem`,
                                                     }}
                                                 >
-                                                    <div className="code-body">
-                                                        <p className="code-title">{course.level}</p>
-                                                        <p className="code-id">{course.code}</p>
+                                                    <div className="flex flex-col gap-1">
+                                                        <p className="font-semibold text-secondary">{course.level}</p>
+                                                        <p className="text-primary">{course.code}</p>
                                                     </div>
-                                                    <div className={`code-capacity ${capacityClass}`}>
+                                                    <div
+                                                        className={`mt-auto w-fit rounded-md border px-2 py-1 text-[0.7rem] font-semibold ${capacityClass}`}
+                                                    >
                                                         {course.studentCount} of {capacity}
                                                     </div>
                                                 </div>
@@ -501,10 +517,10 @@ function SchematicPage() {
                         </div>
                     </div>
 
-                    <div className="time-sidebar" id="time-sidebar-right">
-                        <div className="time-header" style={{ height: `${HEADER_HEIGHT_REM}rem` }} />
+                    <div className="mt-8 flex min-w-[70px] flex-col items-center text-xs text-secondary">
+                        <div style={{ height: `${HEADER_HEIGHT_REM}rem` }} />
                         {timeLabels.map(label => (
-                            <div className="time-label" key={`right-${label}`}>
+                            <div className="py-2" key={`right-${label}`}>
                                 {label}
                             </div>
                         ))}
@@ -512,8 +528,11 @@ function SchematicPage() {
                 </div>
             </div>
 
-            <div className="schematic-actions">
-                <button className="btn" onClick={handleSaveSchedule}>
+            <div className="flex justify-center">
+                <button
+                    className="rounded-2xl bg-primary px-6 py-3 text-white transition hover:-translate-y-0.5 hover:bg-secondary"
+                    onClick={handleSaveSchedule}
+                >
                     Save Schedule
                 </button>
             </div>

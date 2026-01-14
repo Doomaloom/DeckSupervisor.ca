@@ -146,29 +146,46 @@ function MasterListPage() {
     }
   }
 
+  const optionClass = (active: boolean) =>
+    [
+      'rounded-2xl px-3 py-2 text-base font-semibold transition',
+      active
+        ? 'border-2 border-dashed border-secondary bg-accent text-secondary'
+        : 'bg-secondary text-accent',
+      'hover:-translate-y-0.5 hover:bg-accent hover:text-secondary',
+    ].join(' ')
+
   return (
-    <div className="masterlist">
-      <form onSubmit={handleSubmit}>
-        <div className="drop-zone" onDrop={handleDrop} onDragOver={handleDragOver}>
-          <p>Drag & Drop your .csv file here or click to select</p>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+        <div
+          className="relative cursor-pointer rounded-card border-2 border-dashed border-secondary bg-accent p-4 text-center text-secondary transition hover:bg-bg"
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+        >
+          <p className="text-lg">Drag & Drop your .csv file here or click to select</p>
           <input
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             type="file"
             name="csv_file"
             accept=".csv"
-            style={{ opacity: 0 }}
             required
             onChange={event => handleFileChange(event.target.files?.[0] ?? null)}
           />
         </div>
-        <div id="file-status">{fileStatus}</div>
+        <div className="text-base text-secondary">{fileStatus}</div>
 
-        <div className="main-container">
-          <div className="panel-left">
-            <h2>Instructors and Classes</h2>
-            <div className="instructor-fields">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+            <h2 className="mb-4 text-center text-xl font-semibold">Instructors and Classes</h2>
+            <div className="flex flex-col gap-4">
               {instructors.map((instructor, index) => (
-                <div key={`${instructor.name}-${index}`} className="instructor-entry">
+                <div
+                  key={`${instructor.name}-${index}`}
+                  className="flex flex-col gap-3 md:flex-row md:items-center"
+                >
                   <input
+                    className="w-full rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                     type="text"
                     placeholder="Instructor Name"
                     value={instructor.name}
@@ -177,6 +194,7 @@ function MasterListPage() {
                     }
                   />
                   <input
+                    className="w-full rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                     type="text"
                     placeholder="Classes (comma separated)"
                     value={instructor.codes}
@@ -184,79 +202,87 @@ function MasterListPage() {
                       updateInstructor(index, 'codes', event.target.value)
                     }
                   />
-                  <button type="button" className="remove-btn" onClick={() => removeInstructor(index)}>
+                  <button
+                    type="button"
+                    className="rounded-2xl bg-secondary px-4 py-2 text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
+                    onClick={() => removeInstructor(index)}
+                  >
                     Remove
                   </button>
                 </div>
               ))}
             </div>
-            <button type="button" className="add-btn" onClick={addInstructor}>
+            <button
+              type="button"
+              className="mt-4 rounded-2xl bg-secondary px-4 py-2 text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
+              onClick={addInstructor}
+            >
               Add Instructor
             </button>
           </div>
 
-          <div className="panel-right">
-            <h2>Formatting Options</h2>
-            <div className="option-group">
+          <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+            <h2 className="mb-4 text-center text-xl font-semibold">Formatting Options</h2>
+            <div className="flex flex-col gap-2">
               <button
                 type="button"
-                className={`option-check ${formatOptionsState.time_headers ? 'selected' : ''}`}
+                className={optionClass(formatOptionsState.time_headers)}
                 onClick={() => toggleOption('time_headers')}
               >
                 Time Headers
               </button>
               <button
                 type="button"
-                className={`option-check ${formatOptionsState.instructor_headers ? 'selected' : ''}`}
+                className={optionClass(formatOptionsState.instructor_headers)}
                 onClick={() => toggleOption('instructor_headers')}
               >
                 Instructor Headers
               </button>
               <button
                 type="button"
-                className={`option-check ${formatOptionsState.course_headers ? 'selected' : ''}`}
+                className={optionClass(formatOptionsState.course_headers)}
                 onClick={() => toggleOption('course_headers')}
               >
                 Course Headers
               </button>
               <button
                 type="button"
-                className={`option-check ${formatOptionsState.borders ? 'selected' : ''}`}
+                className={optionClass(formatOptionsState.borders)}
                 onClick={() => toggleOption('borders')}
               >
                 Borders
               </button>
 
-              <fieldset>
-                <legend>Time Header Style</legend>
+              <fieldset className="mt-2 flex flex-col gap-2 rounded-2xl border-2 border-secondary p-4">
+                <legend className="px-2 font-semibold">Time Header Style</legend>
                 <button
                   type="button"
-                  className={`option-check ${formatOptionsState.center_time ? 'selected' : ''}`}
+                  className={optionClass(formatOptionsState.center_time)}
                   onClick={() => toggleOption('center_time')}
                 >
                   Center
                 </button>
                 <button
                   type="button"
-                  className={`option-check ${formatOptionsState.bold_time ? 'selected' : ''}`}
+                  className={optionClass(formatOptionsState.bold_time)}
                   onClick={() => toggleOption('bold_time')}
                 >
                   Bold
                 </button>
               </fieldset>
 
-              <fieldset>
-                <legend>Course Header Style</legend>
+              <fieldset className="mt-2 flex flex-col gap-2 rounded-2xl border-2 border-secondary p-4">
+                <legend className="px-2 font-semibold">Course Header Style</legend>
                 <button
                   type="button"
-                  className={`option-check ${formatOptionsState.center_course ? 'selected' : ''}`}
+                  className={optionClass(formatOptionsState.center_course)}
                   onClick={() => toggleOption('center_course')}
                 >
                   Center
                 </button>
                 <button
                   type="button"
-                  className={`option-check ${formatOptionsState.bold_course ? 'selected' : ''}`}
+                  className={optionClass(formatOptionsState.bold_course)}
                   onClick={() => toggleOption('bold_course')}
                 >
                   Bold
@@ -266,24 +292,28 @@ function MasterListPage() {
           </div>
         </div>
 
-        <div className="remember-panel">
+        <div className="grid gap-4 md:grid-cols-2">
           <button
             type="button"
-            className={`option-check ${rememberInstructors ? 'selected' : ''}`}
+            className={optionClass(rememberInstructors)}
             onClick={() => setRememberInstructors(value => !value)}
           >
             Remember Instructors and Classes
           </button>
           <button
             type="button"
-            className={`option-check ${rememberFormatting ? 'selected' : ''}`}
+            className={optionClass(rememberFormatting)}
             onClick={() => setRememberFormatting(value => !value)}
           >
             Remember Formatting Options
           </button>
         </div>
 
-        <button type="submit" className="submit-btn" disabled={isSubmitting}>
+        <button
+          type="submit"
+          className="w-full rounded-2xl bg-secondary px-4 py-3 text-2xl font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-primary disabled:opacity-70"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Processing...' : 'Create Master List'}
         </button>
       </form>

@@ -203,28 +203,41 @@ function RostersPage() {
         return roster.instructor === instructorFilter
     })
 
+    const actionButtonClass =
+        'rounded-2xl bg-primary px-4 py-2 text-white transition hover:-translate-y-0.5 hover:bg-secondary'
+    const selectClass = 'w-full rounded-lg border-2 border-secondary bg-accent px-3 py-2 text-primary'
+    const toggleClass = (active: boolean) =>
+        [
+            'rounded-2xl px-4 py-2 text-base font-semibold transition',
+            active
+                ? 'border-2 border-dashed border-secondary bg-accent text-secondary'
+                : 'bg-secondary text-accent',
+            'hover:-translate-y-0.5 hover:bg-accent hover:text-secondary',
+        ].join(' ')
+    const rowWidthClass = 'w-full max-w-[900px] mx-auto'
+
     return (
-        <div className="rosters">
-            <div className="button-and-content">
-                <div className="buttons">
-                    <button type="button" className="btn" onClick={handlePrintAll}>
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+            <div className="flex flex-col gap-6">
+                <div className={`flex flex-col gap-3 md:flex-row ${rowWidthClass}`}>
+                    <button type="button" className={actionButtonClass} onClick={handlePrintAll}>
                         Print All
                     </button>
-                    <button type="button" className="btn" onClick={handleClearAll}>
+                    <button type="button" className={actionButtonClass} onClick={handleClearAll}>
                         Clear All
                     </button>
                     <button
                         type="button"
-                        className={`option-check ${multiSelect ? 'selected' : ''}`}
+                        className={toggleClass(multiSelect)}
                         onClick={() => setMultiSelect(value => !value)}
                     >
                         Multi-Select
                     </button>
                 </div>
 
-                <div className="selected-options">
+                <div className={`grid gap-3 md:grid-cols-3 ${rowWidthClass}`}>
                     <select
-                        className="instructor-select"
+                        className={selectClass}
                         value={instructorFilter}
                         onChange={event => setInstructorFilter(event.target.value)}
                     >
@@ -235,32 +248,43 @@ function RostersPage() {
                             </option>
                         ))}
                     </select>
-                    <select className="level-select" disabled>
+                    <select className={selectClass} disabled>
                         <option value="">Change All Selected Levels</option>
                     </select>
-                    <select className="instructor-select" disabled>
+                    <select className={selectClass} disabled>
                         <option value="">Change All Selected Instructors</option>
                     </select>
                 </div>
 
-                <div className="main-content">
-                    <div className="rosters-container">
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-6">
                         {filteredRosters.length === 0 && (
-                            <p>No rosters loaded. Upload a CSV file to see rosters.</p>
+                            <p className="text-secondary">
+                                No rosters loaded. Upload a CSV file to see rosters.
+                            </p>
                         )}
                         {filteredRosters.map(roster => (
-                            <div className="roster" id={roster.code} key={roster.code}>
-                                <div className="roster-header-upper">
-                                    <h2>
+                            <div
+                                className="rounded-2xl border-2 border-secondary/20 bg-accent p-6 shadow-md"
+                                id={roster.code}
+                                key={roster.code}
+                            >
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <h2 className="text-lg font-semibold text-secondary">
                                         {roster.serviceName} : {roster.time}
                                     </h2>
-                                    <button type="button" className="print-btn" onClick={() => handlePrintRoster(roster)}>
+                                    <button
+                                        type="button"
+                                        className="rounded-lg bg-primary px-3 py-1 text-white transition hover:-translate-y-0.5 hover:bg-secondary"
+                                        onClick={() => handlePrintRoster(roster)}
+                                    >
                                         Print
                                     </button>
                                 </div>
-                                <div className="roster-header-lower">
+                                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[1.2fr_1fr_1fr]">
+                                    <div className="hidden md:block" />
                                     <select
-                                        className="instructor-select"
+                                        className={selectClass}
                                         value={roster.instructor}
                                         onChange={event => handleRosterInstructorChange(roster.code, event.target.value)}
                                     >
@@ -272,7 +296,7 @@ function RostersPage() {
                                         ))}
                                     </select>
                                     <select
-                                        className="level-select"
+                                        className={selectClass}
                                         value={roster.level}
                                         onChange={event => handleRosterLevelChange(roster.code, event.target.value)}
                                     >
@@ -308,13 +332,15 @@ function RostersPage() {
                                             <option value="TeenAdult3">Teen/Adult 3</option>
                                         </optgroup>
                                     </select>
-                                    <div className="students" />
                                 </div>
                                 {roster.students.map(student => (
-                                    <div className="student" key={student.id}>
-                                        <p>{student.name.replaceAll('"', '')}</p>
+                                    <div
+                                        className="mt-3 grid grid-cols-1 items-center gap-3 md:grid-cols-[1.2fr_1fr_1fr]"
+                                        key={student.id}
+                                    >
+                                        <p className="text-secondary">{student.name.replaceAll('"', '')}</p>
                                         <select
-                                            className="instructor-select"
+                                            className={selectClass}
                                             value={student.instructor}
                                             onChange={event => handleStudentInstructorChange(student.id, event.target.value)}
                                         >
@@ -326,7 +352,7 @@ function RostersPage() {
                                             ))}
                                         </select>
                                         <select
-                                            className="level-select"
+                                            className={selectClass}
                                             value={student.level}
                                             onChange={event => handleStudentLevelChange(student.id, event.target.value)}
                                         >
@@ -360,16 +386,16 @@ function RostersPage() {
                                                 <option value="TeenAdult1">Teen/Adult 1</option>
                                                 <option value="TeenAdult2">Teen/Adult 2</option>
                                                 <option value="TeenAdult3">Teen/Adult 3</option>
-                                            </optgroup>
-                                        </select>
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
-                    </div>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            ))}
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
+    </div>
     )
 }
 
