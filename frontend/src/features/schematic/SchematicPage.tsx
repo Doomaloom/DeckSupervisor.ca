@@ -169,47 +169,51 @@ function buildColumns(courses: Course[]): Course[][] {
 }
 
 function coursesMatchTime(a: Course, b: Course) {
-  return a.startMinutes === b.startMinutes && a.endMinutes === b.endMinutes
+    return a.startMinutes === b.startMinutes && a.endMinutes === b.endMinutes
 }
 
 function coursesOverlap(a: Course, b: Course) {
-  return a.startMinutes < b.endMinutes && b.startMinutes < a.endMinutes
+    return a.startMinutes < b.endMinutes && b.startMinutes < a.endMinutes
 }
 
 function findContiguousSwapIndices(column: Course[], course: Course) {
-  const overlapping = column
-    .map((entry, index) => ({ entry, index }))
-    .filter(({ entry }) => coursesOverlap(entry, course))
-    .sort((a, b) => a.entry.startMinutes - b.entry.startMinutes)
+    const overlapping = column
+        .map((entry, index) => ({ entry, index }))
+        .filter(({ entry }) => coursesOverlap(entry, course))
+        .sort((a, b) => a.entry.startMinutes - b.entry.startMinutes)
 
-  if (overlapping.length === 0) {
-    return []
-  }
-
-  if (overlapping[0].entry.startMinutes !== course.startMinutes) {
-    return []
-  }
-
-  for (let i = 1; i < overlapping.length; i += 1) {
-    if (overlapping[i - 1].entry.endMinutes !== overlapping[i].entry.startMinutes) {
-      return []
+    if (overlapping.length === 0) {
+        return []
     }
-  }
 
-  const last = overlapping[overlapping.length - 1].entry
-  if (last.endMinutes !== course.endMinutes) {
-    return []
-  }
+    if (overlapping[0].entry.startMinutes !== course.startMinutes) {
+        return []
+    }
 
-  return overlapping.map(item => item.index)
+    for (let i = 1; i < overlapping.length; i += 1) {
+        if (overlapping[i - 1].entry.endMinutes !== overlapping[i].entry.startMinutes) {
+            return []
+        }
+    }
+
+    const last = overlapping[overlapping.length - 1].entry
+    if (last.endMinutes !== course.endMinutes) {
+        return []
+    }
+
+    return overlapping.map(item => item.index)
 }
 
 function canReplaceByStart(column: Course[], course: Course, targetIndex: number) {
-  const target = column[targetIndex]
-  if (!target || target.startMinutes !== course.startMinutes) {
-    return false
-  }
-  return !column.some((entry, index) => index !== targetIndex && coursesOverlap(entry, course))
+    const target = column[targetIndex]
+    if (!target || target.startMinutes !== course.startMinutes) {
+        return false
+    }
+    return !column.some((entry, index) => index !== targetIndex && coursesOverlap(entry, course))
+}
+
+function canPlaceCourses(column: Course[], courses: Course[]) {
+    return courses.every(course => !column.some(entry => coursesOverlap(entry, course)))
 }
 
 function buildTimeLabels(start: string, end: string): string[] {
@@ -269,7 +273,7 @@ function SchematicPage() {
         }, '00:00')
         return buildTimeLabels(earliest, latest)
     }, [courses])
-  const scheduleHeightRem = Math.max(timeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
+    const scheduleHeightRem = Math.max(timeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
 
     useEffect(() => {
         const initialColumns = buildColumns(courses)
@@ -297,63 +301,73 @@ function SchematicPage() {
         event.dataTransfer.setDragImage(target, offsetX, offsetY)
     }
 
-  const handleDrop = (columnIndex: number) => {
-    if (!dragged) {
-      return
+    const handleDrop = (columnIndex: number) => {
+        if (!dragged) {
+            return
+        }
+        setColumns(current => {
+            const next = current.map(column => [...column])
+            const sourceColumn = next[dragged.columnIndex]
+            const courseIndex = sourceColumn.findIndex(course => course.code === dragged.code)
+            if (courseIndex === -1) {
+                return current
+            }
+            const [course] = sourceColumn.splice(courseIndex, 1)
+            const targetColumn = next[columnIndex]
+            if (dragged.columnIndex === columnIndex) {
+                sourceColumn.push(course)
+                sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                return next.filter(column => column.length > 0)
+            }
+            const swapIndices = findContiguousSwapIndices(targetColumn, course)
+            if (swapIndices.length > 0) {
+                const swapCourses = swapIndices.map(index => targetColumn[index])
+                if (!canPlaceCourses(sourceColumn, swapCourses)) {
+                    sourceColumn.splice(courseIndex, 0, course)
+                    return current
+                }
+                const removed = swapIndices
+                    .slice()
+                    .sort((a, b) => b - a)
+                    .map(index => targetColumn.splice(index, 1)[0])
+                sourceColumn.push(...removed)
+                sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                targetColumn.push(course)
+                targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                return next.filter(column => column.length > 0)
+            }
+            const replaceIndex = targetColumn.findIndex(target => target.startMinutes === course.startMinutes)
+            if (replaceIndex !== -1 && canReplaceByStart(targetColumn, course, replaceIndex)) {
+                const replaceCourse = targetColumn[replaceIndex]
+                if (!replaceCourse || !canPlaceCourses(sourceColumn, [replaceCourse])) {
+                    sourceColumn.splice(courseIndex, 0, course)
+                    return current
+                }
+                targetColumn.splice(replaceIndex, 1)
+                sourceColumn.push(replaceCourse)
+                sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                targetColumn.push(course)
+                targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                return next.filter(column => column.length > 0)
+            }
+            if (targetColumn.some(target => coursesOverlap(target, course))) {
+                sourceColumn.splice(courseIndex, 0, course)
+                return current
+            }
+            targetColumn.push(course)
+            targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+            return next.filter(column => column.length > 0)
+        })
+        setDragged(null)
     }
-    setColumns(current => {
-      const next = current.map(column => [...column])
-      const sourceColumn = next[dragged.columnIndex]
-      const courseIndex = sourceColumn.findIndex(course => course.code === dragged.code)
-      if (courseIndex === -1) {
-        return current
-      }
-      const [course] = sourceColumn.splice(courseIndex, 1)
-      const targetColumn = next[columnIndex]
-      if (dragged.columnIndex === columnIndex) {
-        sourceColumn.push(course)
-        sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-        return next.filter(column => column.length > 0)
-      }
-      const swapIndices = findContiguousSwapIndices(targetColumn, course)
-      if (swapIndices.length > 0) {
-        const swapCourses = swapIndices
-          .slice()
-          .sort((a, b) => b - a)
-          .map(index => targetColumn.splice(index, 1)[0])
-        sourceColumn.push(...swapCourses)
-        sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-        targetColumn.push(course)
-        targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-        return next.filter(column => column.length > 0)
-      }
-      const replaceIndex = targetColumn.findIndex(target => target.startMinutes === course.startMinutes)
-      if (replaceIndex !== -1 && canReplaceByStart(targetColumn, course, replaceIndex)) {
-        const [replaceCourse] = targetColumn.splice(replaceIndex, 1)
-        sourceColumn.push(replaceCourse)
-        sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-        targetColumn.push(course)
-        targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-        return next.filter(column => column.length > 0)
-      }
-      if (targetColumn.some(target => coursesOverlap(target, course))) {
-        sourceColumn.splice(courseIndex, 0, course)
-        return current
-      }
-      targetColumn.push(course)
-      targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-      return next.filter(column => column.length > 0)
-    })
-    setDragged(null)
-  }
 
     const handleDropOnCourse = (targetCourse: Course, targetColumnIndex: number) => {
-    if (!dragged) {
-      return
-    }
-    if (dragged.columnIndex === targetColumnIndex && dragged.code === targetCourse.code) {
-      setDragged(null)
-      return
+        if (!dragged) {
+            return
+        }
+        if (dragged.columnIndex === targetColumnIndex && dragged.code === targetCourse.code) {
+            setDragged(null)
+            return
         }
         setColumns(current => {
             const next = current.map(column => [...column])
@@ -361,35 +375,45 @@ function SchematicPage() {
             const sourceIndex = sourceColumn.findIndex(course => course.code === dragged.code)
             const targetColumn = next[targetColumnIndex]
             const targetIndex = targetColumn.findIndex(course => course.code === targetCourse.code)
-      if (sourceIndex === -1 || targetIndex === -1) {
-        return current
-      }
-      const [sourceCourse] = sourceColumn.splice(sourceIndex, 1)
-      const swapIndices = findContiguousSwapIndices(targetColumn, sourceCourse)
-      if (swapIndices.length > 0) {
-        const swapCourses = swapIndices
-          .slice()
-          .sort((a, b) => b - a)
-          .map(index => targetColumn.splice(index, 1)[0])
-        sourceColumn.push(...swapCourses)
-        targetColumn.push(sourceCourse)
-        sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-        targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-      } else {
-        if (canReplaceByStart(targetColumn, sourceCourse, targetIndex)) {
-          const [destinationCourse] = targetColumn.splice(targetIndex, 1)
-          sourceColumn.push(destinationCourse)
-          targetColumn.push(sourceCourse)
-          sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-          targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-        } else {
-          sourceColumn.splice(sourceIndex, 0, sourceCourse)
-        }
-      }
-      return next
-    })
-    setDragged(null)
-  }
+            if (sourceIndex === -1 || targetIndex === -1) {
+                return current
+            }
+            const [sourceCourse] = sourceColumn.splice(sourceIndex, 1)
+            const swapIndices = findContiguousSwapIndices(targetColumn, sourceCourse)
+            if (swapIndices.length > 0) {
+                const swapCourses = swapIndices.map(index => targetColumn[index])
+                if (!canPlaceCourses(sourceColumn, swapCourses)) {
+                    sourceColumn.splice(sourceIndex, 0, sourceCourse)
+                    return current
+                }
+                const removed = swapIndices
+                    .slice()
+                    .sort((a, b) => b - a)
+                    .map(index => targetColumn.splice(index, 1)[0])
+                sourceColumn.push(...removed)
+                targetColumn.push(sourceCourse)
+                sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+            } else {
+                if (canReplaceByStart(targetColumn, sourceCourse, targetIndex)) {
+                    const destinationCourse = targetColumn[targetIndex]
+                    if (!destinationCourse || !canPlaceCourses(sourceColumn, [destinationCourse])) {
+                        sourceColumn.splice(sourceIndex, 0, sourceCourse)
+                        return current
+                    }
+                    targetColumn.splice(targetIndex, 1)
+                    sourceColumn.push(destinationCourse)
+                    targetColumn.push(sourceCourse)
+                    sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                    targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                } else {
+                    sourceColumn.splice(sourceIndex, 0, sourceCourse)
+                }
+            }
+            return next
+        })
+        setDragged(null)
+    }
 
     const handleFileChange = async (nextFile: File | null) => {
         if (!nextFile) {
