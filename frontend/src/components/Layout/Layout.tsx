@@ -74,6 +74,10 @@ function Layout({ children }: LayoutProps) {
                 </div>
 
                 <nav className="sidebar-links">
+                    
+                    <Link to="/" className={isCurrentPage('/schematic') ? 'current' : 'notcurrent'}>
+                        Home
+                    </Link>
                     <Link to="/schematic" className={isCurrentPage('/schematic') ? 'current' : 'notcurrent'}>
                         Schematic
                     </Link>
