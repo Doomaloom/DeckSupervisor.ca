@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useDay } from '../../app/DayContext'
 
 type InstructorEntry = { name: string }
 type SessionEntry = {
@@ -11,6 +13,7 @@ type SessionEntry = {
 }
 
 const STORAGE_KEY = 'decksupervisor.sessions'
+const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
 
 function loadSessions(): SessionEntry[] {
   const stored = localStorage.getItem(STORAGE_KEY)
@@ -26,13 +29,24 @@ function loadSessions(): SessionEntry[] {
 }
 
 function Dashboard() {
-  const [activePanel, setActivePanel] = useState<'options' | 'new-session' | 'select-session'>('options')
+  const navigate = useNavigate()
+  const { setSelectedDay } = useDay()
+  const [activePanel, setActivePanel] = useState<'options' | 'new-session' | 'select-session'>(
+    'options',
+  )
   const [sessionDay, setSessionDay] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [instructors, setInstructors] = useState<InstructorEntry[]>([{ name: '' }])
   const [saveMessage, setSaveMessage] = useState('')
   const [rosterFile, setRosterFile] = useState<File | null>(null)
+  const [currentSessionId, setCurrentSessionId] = useState(() => {
+    if (typeof window === 'undefined') {
+      return ''
+    }
+    return localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+  })
+  const [selectMessage, setSelectMessage] = useState('')
   const [sessionsVersion, setSessionsVersion] = useState(0)
 
   const addInstructor = () => {
@@ -46,6 +60,7 @@ function Dashboard() {
       return next
     })
   }
+
 
   const handleSaveSession = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -66,9 +81,28 @@ function Dashboard() {
     const sessions = loadSessions()
     sessions.push(nextSession)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
+    localStorage.setItem(CURRENT_SESSION_KEY, id)
+    setCurrentSessionId(id)
     setSaveMessage('Session saved.')
     setSessionsVersion(version => version + 1)
+    if (sessionDay) {
+      setSelectedDay(sessionDay)
+    }
+    navigate('/manage-sessions')
   }
+
+  const handleSelectSession = (session: SessionEntry) => {
+    localStorage.setItem(CURRENT_SESSION_KEY, session.id)
+    setCurrentSessionId(session.id)
+    setSelectMessage('Current session set.')
+    if (session.sessionDay) {
+      setSelectedDay(session.sessionDay)
+    } else {
+      setSelectedDay('')
+    }
+    navigate('/manage-sessions')
+  }
+
 
   const sessions = useMemo(() => {
     const items = loadSessions()
@@ -78,6 +112,12 @@ function Dashboard() {
       return bTime - aTime
     })
   }, [sessionsVersion, activePanel])
+
+  useEffect(() => {
+    if (!currentSessionId) {
+      setSelectedDay('')
+    }
+  }, [currentSessionId, setSelectedDay])
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -204,21 +244,32 @@ function Dashboard() {
               <p className="mt-4 font-semibold text-secondary">No existing sessions.</p>
             ) : (
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                {sessions.map(session => (
-                  <div
-                    key={session.id}
-                    className="flex flex-col gap-2 rounded-card border-2 border-secondary/20 bg-accent p-5 text-secondary shadow-md"
-                  >
-                    <h3 className="text-lg font-semibold">{session.sessionDay || 'Session Day'}</h3>
-                    <p>
-                      {session.startDate || 'Start date'} - {session.endDate || 'End date'}
-                    </p>
-                    <p>{session.instructors.length} instructors</p>
-                    {session.rosterFileName ? <p>Roster: {session.rosterFileName}</p> : null}
-                  </div>
-                ))}
+                {sessions.map(session => {
+                  const isCurrent = currentSessionId === session.id
+                  return (
+                    <button
+                      key={session.id}
+                      type="button"
+                      className={`flex flex-col gap-2 rounded-card border-2 bg-accent p-5 text-left text-secondary shadow-md transition hover:-translate-y-0.5 ${
+                        isCurrent ? 'border-secondary' : 'border-secondary/20'
+                      }`}
+                      onClick={() => handleSelectSession(session)}
+                    >
+                      <h3 className="text-lg font-semibold">{session.sessionDay || 'Session Day'}</h3>
+                      <p>
+                        {session.startDate || 'Start date'} - {session.endDate || 'End date'}
+                      </p>
+                      <p>{session.instructors.length} instructors</p>
+                      {session.rosterFileName ? <p>Roster: {session.rosterFileName}</p> : null}
+                      {isCurrent ? <p className="font-semibold text-secondary">Current session</p> : null}
+                    </button>
+                  )
+                })}
               </div>
             )}
+            {selectMessage ? (
+              <p className="mt-4 font-semibold text-secondary">{selectMessage}</p>
+            ) : null}
           </div>
         )}
       </div>

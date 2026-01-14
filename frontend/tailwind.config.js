@@ -11,6 +11,8 @@ export default {
         bg: '#e6f7ff',
         header: '#c45300',
         hover: '#66d9ef',
+        danger: '#d64545',
+        dangerHover: '#c03636',
       },
       borderRadius: {
         card: '24px',

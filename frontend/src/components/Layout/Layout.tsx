@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import {
+    ClipboardDocumentListIcon,
+    CalendarDaysIcon,
+    DocumentTextIcon,
+    HomeIcon,
+    AdjustmentsHorizontalIcon,
+    UsersIcon,
+} from '@heroicons/react/24/outline'
 import { useDay } from '../../app/DayContext'
 import { processCsvAndStore } from '../../lib/api'
 
@@ -20,8 +28,8 @@ function Layout({ children }: LayoutProps) {
     }, [pageTitle])
 
     const navBaseClasses =
-        'rounded-[10px] bg-white/10 px-3 py-2 text-accent transition hover:-translate-y-0.5'
-    const navCollapsedClasses = isSidebarCollapsed ? 'text-center px-0 py-2 text-[0.85rem]' : ''
+        'flex items-center justify-start rounded-[10px] bg-white/10 px-3 py-2 text-accent transition hover:-translate-y-0.5'
+    const navCollapsedClasses = isSidebarCollapsed ? 'justify-center px-0 py-2 text-[0.85rem]' : ''
     const navCurrentClasses = 'bg-accent text-secondary'
     const navHoverClasses = 'hover:bg-hover hover:text-secondary'
 
@@ -117,46 +125,59 @@ function Layout({ children }: LayoutProps) {
                 )}
 
                 <nav className="flex flex-col gap-3">
-                    <Link
-                        to="/"
-                        className={`${navBaseClasses} ${navCollapsedClasses} ${
-                            isCurrentPage('/') ? navCurrentClasses : navHoverClasses
-                        }`}
-                    >
-                        Home
-                    </Link>
-                    <Link
-                        to="/schematic"
-                        className={`${navBaseClasses} ${navCollapsedClasses} ${
-                            isCurrentPage('/schematic') ? navCurrentClasses : navHoverClasses
-                        }`}
-                    >
-                        Schematic
-                    </Link>
-                    <Link
-                        to="/masterlist"
-                        className={`${navBaseClasses} ${navCollapsedClasses} ${
-                            isCurrentPage('/masterlist') ? navCurrentClasses : navHoverClasses
-                        }`}
-                    >
-                        Master List
-                    </Link>
-                    <Link
-                        to="/rosters"
-                        className={`${navBaseClasses} ${navCollapsedClasses} ${
-                            isCurrentPage('/rosters') ? navCurrentClasses : navHoverClasses
-                        }`}
-                    >
-                        Rosters
-                    </Link>
-                    <Link
-                        to="/staff-notes"
-                        className={`${navBaseClasses} ${navCollapsedClasses} ${
-                            isCurrentPage('/staff-notes') ? navCurrentClasses : navHoverClasses
-                        }`}
-                    >
-                        Staff Notes
-                    </Link>
+                    {[
+                        {
+                            to: '/',
+                            label: 'Home',
+                            icon: <HomeIcon className="h-5 w-5" />,
+                        },
+                        {
+                            to: '/manage-sessions',
+                            label: 'Manage Sessions',
+                            icon: <AdjustmentsHorizontalIcon className="h-5 w-5" />,
+                        },
+                        {
+                            to: '/schematic',
+                            label: 'Schematic',
+                            icon: <CalendarDaysIcon className="h-5 w-5" />,
+                        },
+                        {
+                            to: '/masterlist',
+                            label: 'Master List',
+                            icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
+                        },
+                        {
+                            to: '/rosters',
+                            label: 'Rosters',
+                            icon: <UsersIcon className="h-5 w-5" />,
+                        },
+                        {
+                            to: '/staff-notes',
+                            label: 'Staff Notes',
+                            icon: <DocumentTextIcon className="h-5 w-5" />,
+                        },
+                    ].map(item => (
+                        <Link
+                            key={item.to}
+                            to={item.to}
+                            className={`${navBaseClasses} ${navCollapsedClasses} ${
+                                isCurrentPage(item.to) ? navCurrentClasses : navHoverClasses
+                            }`}
+                            aria-label={item.label}
+                        >
+                            {isSidebarCollapsed ? (
+                                <>
+                                    {item.icon}
+                                    <span className="sr-only">{item.label}</span>
+                                </>
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                    {item.icon}
+                                    {item.label}
+                                </span>
+                            )}
+                        </Link>
+                    ))}
                 </nav>
             </aside>
 
@@ -170,6 +191,7 @@ function Layout({ children }: LayoutProps) {
 function getPageTitle(pathname: string) {
     switch (pathname) {
         case '/': return 'Home'
+        case '/manage-sessions': return 'Manage Sessions'
         case '/masterlist': return 'Master List Maker'
         case '/rosters': return 'Class Rosters'
         case '/schematic': return 'Class Schedule'
