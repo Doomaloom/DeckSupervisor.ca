@@ -19,6 +19,15 @@ export type InstructorConfig = {
   codes: string[]
 }
 
+export type InstructorCourseAssignment = {
+  name: string
+  codes: string[]
+}
+
+export type InstructorCourseConfig = {
+  instructors: InstructorCourseAssignment[]
+}
+
 export type Student = {
   id: string
   service_name: string

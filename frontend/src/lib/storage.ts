@@ -1,4 +1,4 @@
-import type { FormatOptions, InstructorConfig, ScheduleConfig, Student } from '../types/app'
+import type { FormatOptions, InstructorConfig, InstructorCourseConfig, ScheduleConfig, Student } from '../types/app'
 
 const PREFIX = 'cob'
 const selectedDayKey = `${PREFIX}:selectedDay`
@@ -6,11 +6,13 @@ const studentsKey = `${PREFIX}:studentsByDay`
 const instructorsKey = `${PREFIX}:instructorsByDay`
 const formatOptionsKey = `${PREFIX}:formatOptions`
 const schedulesKey = `${PREFIX}:schedulesByDay`
+const instructorCoursesKey = `${PREFIX}:instructorCoursesByDay`
 const studentsUpdatedEvent = `${PREFIX}:students-updated`
 
 type StudentsByDay = Record<string, Student[]>
 type InstructorsByDay = Record<string, InstructorConfig>
 type SchedulesByDay = Record<string, ScheduleConfig>
+type InstructorCoursesByDay = Record<string, InstructorCourseConfig>
 
 const defaultFormatOptions: FormatOptions = {
   time_headers: false,
@@ -158,6 +160,27 @@ export function setScheduleForDay(day: string, schedule: ScheduleConfig) {
   saveJson(schedulesKey, all)
 }
 
+export function getInstructorCoursesByDay(): InstructorCoursesByDay {
+  return loadJson(instructorCoursesKey, {})
+}
+
+export function getInstructorCoursesForDay(day: string): InstructorCourseConfig | null {
+  if (!day) {
+    return null
+  }
+  const all = getInstructorCoursesByDay()
+  return all[day] ?? null
+}
+
+export function setInstructorCoursesForDay(day: string, config: InstructorCourseConfig) {
+  if (!day) {
+    return
+  }
+  const all = getInstructorCoursesByDay()
+  all[day] = config
+  saveJson(instructorCoursesKey, all)
+}
+
 export function clearDayData(day: string) {
   if (!day) {
     return
@@ -165,12 +188,15 @@ export function clearDayData(day: string) {
   const students = getStudentsByDay()
   const instructors = getInstructorsByDay()
   const schedules = getSchedulesByDay()
+  const instructorCourses = getInstructorCoursesByDay()
 
   delete students[day]
   delete instructors[day]
   delete schedules[day]
+  delete instructorCourses[day]
 
   saveJson(studentsKey, students)
   saveJson(instructorsKey, instructors)
   saveJson(schedulesKey, schedules)
+  saveJson(instructorCoursesKey, instructorCourses)
 }

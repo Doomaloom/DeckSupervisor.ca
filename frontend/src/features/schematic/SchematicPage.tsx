@@ -2,7 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useDay } from '../../app/DayContext'
 import { processCsvAndStore } from '../../lib/api'
 import { extractEndTime, extractStartTime, getRunningMinutes } from '../../lib/time'
-import { getScheduleForDay, getStudentsForDay, onStudentsUpdated, setScheduleForDay } from '../../lib/storage'
+import {
+    getScheduleForDay,
+    getStudentsForDay,
+    onStudentsUpdated,
+    setInstructorsForDay,
+    setInstructorCoursesForDay,
+    setScheduleForDay,
+    setStudentsForDay,
+} from '../../lib/storage'
 import type { Student } from '../../types/app'
 
 type Course = {
@@ -407,6 +415,35 @@ function SchematicPage() {
             instructors,
             codes,
         })
+
+        const assignments = columns.map((column, index) => ({
+            name: (instructors[index] ?? '').trim(),
+            codes: column.map(course => course.code),
+        })).filter(entry => entry.codes.length > 0 || entry.name)
+
+        setInstructorCoursesForDay(selectedDay, { instructors: assignments })
+        setInstructorsForDay(selectedDay, {
+            names: assignments.map(entry => entry.name),
+            codes: assignments.map(entry => entry.codes.join(',')),
+        })
+
+        const instructorByCode = new Map<string, string>()
+        assignments.forEach(entry => {
+            if (!entry.name) {
+                return
+            }
+            entry.codes.forEach(code => instructorByCode.set(code, entry.name))
+        })
+
+        const students = getStudentsForDay(selectedDay)
+        const updated = students.map(student => {
+            const instructor = instructorByCode.get(student.code)
+            if (!instructor) {
+                return student
+            }
+            return { ...student, instructor }
+        })
+        setStudentsForDay(selectedDay, updated)
         alert('Schedule saved successfully!')
     }
 
