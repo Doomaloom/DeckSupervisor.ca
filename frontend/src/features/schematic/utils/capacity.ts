@@ -43,10 +43,10 @@ export function getCapacity(course: Course) {
 
 export function getCapacityClass(course: Course, capacity: number) {
     if (course.studentCount === 1 && !isExceptionClass(course.level)) {
-        return 'border-rose-200 bg-rose-100 text-rose-700'
+        return 'bg-rose-500 text-white'
     }
     if (course.studentCount < Math.floor(capacity / 2)) {
-        return 'border-amber-200 bg-amber-100 text-amber-700'
+        return 'bg-amber-500 text-black'
     }
-    return 'border-emerald-200 bg-emerald-100 text-emerald-700'
+    return 'bg-emerald-600 text-white'
 }

@@ -6,6 +6,7 @@ type InstructorEntry = { name: string }
 type SessionEntry = {
   id: string
   sessionDay: string
+  sessionSeason: string
   startDate: string
   endDate: string
   instructors: InstructorEntry[]
@@ -14,6 +15,25 @@ type SessionEntry = {
 
 const STORAGE_KEY = 'decksupervisor.sessions'
 const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
+
+const dayNames: Record<string, string> = {
+  Mo: 'Monday',
+  Tu: 'Tuesday',
+  We: 'Wednesday',
+  Th: 'Thursday',
+  Fr: 'Friday',
+  Sa: 'Saturday',
+  Su: 'Sunday',
+}
+
+function getSessionName(session: SessionEntry) {
+  const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
+  const season = session.sessionSeason?.trim()
+  const year = session.startDate ? new Date(session.startDate).getFullYear() : NaN
+  const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+  const parts = [dayLabel, season, yearLabel].filter(Boolean)
+  return parts.length ? parts.join(' ') : 'Session'
+}
 
 function loadSessions(): SessionEntry[] {
   const stored = localStorage.getItem(STORAGE_KEY)
@@ -35,6 +55,7 @@ function Dashboard() {
     'options',
   )
   const [sessionDay, setSessionDay] = useState('')
+  const [sessionSeason, setSessionSeason] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [instructors, setInstructors] = useState<InstructorEntry[]>([{ name: '' }])
@@ -48,6 +69,8 @@ function Dashboard() {
   })
   const [selectMessage, setSelectMessage] = useState('')
   const [sessionsVersion, setSessionsVersion] = useState(0)
+
+  const seasonOptions = ['Winter', 'Spring', 'Summer', 'Fall']
 
   const addInstructor = () => {
     setInstructors(current => [...current, { name: '' }])
@@ -72,6 +95,7 @@ function Dashboard() {
     const nextSession: SessionEntry = {
       id,
       sessionDay,
+      sessionSeason,
       startDate,
       endDate,
       instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
@@ -173,6 +197,21 @@ function Dashboard() {
                     </select>
                   </label>
                   <label className="flex flex-col gap-2 font-semibold text-secondary">
+                    Session Season
+                    <select
+                      className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                      value={sessionSeason}
+                      onChange={event => setSessionSeason(event.target.value)}
+                    >
+                      <option value="">Select a season</option>
+                      {seasonOptions.map(season => (
+                        <option key={season} value={season}>
+                          {season}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-2 font-semibold text-secondary">
                     Start Date
                     <input
                       className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
@@ -246,6 +285,7 @@ function Dashboard() {
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                 {sessions.map(session => {
                   const isCurrent = currentSessionId === session.id
+                  const sessionName = getSessionName(session)
                   return (
                     <button
                       key={session.id}
@@ -255,7 +295,7 @@ function Dashboard() {
                       }`}
                       onClick={() => handleSelectSession(session)}
                     >
-                      <h3 className="text-lg font-semibold">{session.sessionDay || 'Session Day'}</h3>
+                      <h3 className="text-lg font-semibold">{sessionName}</h3>
                       <p>
                         {session.startDate || 'Start date'} - {session.endDate || 'End date'}
                       </p>

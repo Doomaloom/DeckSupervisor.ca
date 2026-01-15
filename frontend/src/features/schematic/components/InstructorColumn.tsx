@@ -1,5 +1,5 @@
 import React from 'react'
-import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
+import { COLUMN_MIN_WIDTH_PX, SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
 import type { Course } from '../types'
 import { getCapacity, getCapacityClass } from '../utils/capacity'
 import CourseCard from './CourseCard'
@@ -8,6 +8,7 @@ type InstructorColumnProps = {
     column: Course[]
     columnIndex: number
     instructor: string
+    instructorOptions: string[]
     scheduleHeightRem: number
     scheduleStartMinutes: number
     onInstructorChange: (columnIndex: number, value: string) => void
@@ -20,6 +21,7 @@ function InstructorColumn({
     column,
     columnIndex,
     instructor,
+    instructorOptions,
     scheduleHeightRem,
     scheduleStartMinutes,
     onInstructorChange,
@@ -27,23 +29,30 @@ function InstructorColumn({
     onCourseDrop,
     onCourseDragStart,
 }: InstructorColumnProps) {
+    const columnBorderClass = columnIndex === 0 ? 'border-black' : 'border-black border-l-0'
     return (
         <div
-            className="flex min-w-[220px] flex-1 flex-col"
+            className="flex flex-1 flex-col"
+            style={{ minWidth: `${COLUMN_MIN_WIDTH_PX}px` }}
             onDragOver={event => event.preventDefault()}
             onDrop={() => onColumnDrop(columnIndex)}
         >
-            <div className="rounded-t-xl border-2 border-secondary bg-accent p-2">
-                <input
-                    className="w-full rounded-lg border-2 border-secondary bg-bg px-2 py-1 text-sm text-primary"
-                    type="text"
+            <div className={`border border-black bg-accent p-2 ${columnBorderClass}`}>
+                <select
+                    className="w-full rounded-none border border-black bg-white px-2 py-1 text-sm text-black"
                     value={instructor}
-                    placeholder={`Instructor ${columnIndex + 1}`}
                     onChange={event => onInstructorChange(columnIndex, event.target.value)}
-                />
+                >
+                    <option value="">{`Instructor ${columnIndex + 1}`}</option>
+                    {instructorOptions.map(name => (
+                        <option key={`${columnIndex}-${name}`} value={name}>
+                            {name}
+                        </option>
+                    ))}
+                </select>
             </div>
             <div
-                className="relative rounded-b-xl border-2 border-secondary bg-bg"
+                className={`relative border border-black border-t-0 bg-bg ${columnBorderClass}`}
                 style={{ height: `${scheduleHeightRem}rem` }}
             >
                 {column.map(course => {

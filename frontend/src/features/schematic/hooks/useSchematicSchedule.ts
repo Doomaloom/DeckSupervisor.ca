@@ -15,6 +15,18 @@ import { buildColumns, buildCourses, coursesOverlap } from '../utils/courses'
 import { canPlaceCourses, canReplaceByStart, findContiguousSwapIndices } from '../utils/drag'
 import { buildTimeLabels } from '../utils/time'
 
+type SessionInstructor = {
+    name: string
+}
+
+type SessionEntry = {
+    id: string
+    instructors: SessionInstructor[]
+}
+
+const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
+const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
+
 export function useSchematicSchedule(selectedDay: string | null) {
     const [columns, setColumns] = useState<Course[][]>([])
     const [instructors, setInstructors] = useState<string[]>([])
@@ -49,6 +61,31 @@ export function useSchematicSchedule(selectedDay: string | null) {
         return buildTimeLabels(earliest, latest)
     }, [courses])
     const scheduleHeightRem = Math.max(timeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
+    const instructorOptions = useMemo(() => {
+        if (typeof window === 'undefined') {
+            return []
+        }
+        const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+        if (!currentSessionId) {
+            return []
+        }
+        const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
+        if (!stored) {
+            return []
+        }
+        try {
+            const sessions = JSON.parse(stored) as SessionEntry[]
+            const session = sessions.find(item => item.id === currentSessionId)
+            if (!session) {
+                return []
+            }
+            const names = session.instructors.map(instructor => instructor.name.trim()).filter(Boolean)
+            return Array.from(new Set(names))
+        } catch (error) {
+            console.error('Failed to parse stored sessions', error)
+            return []
+        }
+    }, [selectedDay])
 
     useEffect(() => {
         const initialColumns = buildColumns(courses)
@@ -246,6 +283,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
         timeLabels,
         scheduleHeightRem,
         scheduleStartMinutes,
+        instructorOptions,
         handleDragStart,
         handleDrop,
         handleDropOnCourse,

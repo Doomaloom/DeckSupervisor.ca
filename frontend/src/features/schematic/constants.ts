@@ -1,7 +1,8 @@
 export const SLOT_MINUTES = 15
-export const SLOT_HEIGHT_REM = 3.5
+export const SLOT_HEIGHT_REM = 2.5
 export const HEADER_HEIGHT_REM = 4.95
 export const DEFAULT_CAPACITY = 12
+export const COLUMN_MIN_WIDTH_PX = 150
 
 export const classCapacities: Record<string, number> = {
     // Example: 'Splash 2A': 6

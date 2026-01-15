@@ -6,6 +6,7 @@ type InstructorEntry = { name: string }
 type SessionEntry = {
   id: string
   sessionDay: string
+  sessionSeason: string
   startDate: string
   endDate: string
   instructors: InstructorEntry[]
@@ -14,6 +15,25 @@ type SessionEntry = {
 
 const STORAGE_KEY = 'decksupervisor.sessions'
 const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
+
+const dayNames: Record<string, string> = {
+  Mo: 'Monday',
+  Tu: 'Tuesday',
+  We: 'Wednesday',
+  Th: 'Thursday',
+  Fr: 'Friday',
+  Sa: 'Saturday',
+  Su: 'Sunday',
+}
+
+function getSessionName(session: SessionEntry) {
+  const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
+  const season = session.sessionSeason?.trim()
+  const year = session.startDate ? new Date(session.startDate).getFullYear() : NaN
+  const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+  const parts = [dayLabel, season, yearLabel].filter(Boolean)
+  return parts.length ? parts.join(' ') : 'Session'
+}
 
 function loadSessions(): SessionEntry[] {
   const stored = localStorage.getItem(STORAGE_KEY)
@@ -32,6 +52,7 @@ function ManageSessionsPage() {
   const navigate = useNavigate()
   const { setSelectedDay } = useDay()
   const [editSessionDay, setEditSessionDay] = useState('')
+  const [editSessionSeason, setEditSessionSeason] = useState('')
   const [editStartDate, setEditStartDate] = useState('')
   const [editEndDate, setEditEndDate] = useState('')
   const [editInstructors, setEditInstructors] = useState<InstructorEntry[]>([{ name: '' }])
@@ -45,6 +66,8 @@ function ManageSessionsPage() {
     }
     return localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
   })
+
+  const seasonOptions = ['Winter', 'Spring', 'Summer', 'Fall']
 
   const sessions = useMemo(() => {
     const items = loadSessions()
@@ -86,6 +109,7 @@ function ManageSessionsPage() {
       return
     }
     setEditSessionDay(currentSession.sessionDay)
+    setEditSessionSeason(currentSession.sessionSeason ?? '')
     setEditStartDate(currentSession.startDate)
     setEditEndDate(currentSession.endDate)
     setEditInstructors(currentSession.instructors.length ? currentSession.instructors : [{ name: '' }])
@@ -113,6 +137,7 @@ function ManageSessionsPage() {
       return {
         ...session,
         sessionDay: editSessionDay,
+        sessionSeason: editSessionSeason,
         startDate: editStartDate,
         endDate: editEndDate,
         instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
@@ -151,7 +176,7 @@ function ManageSessionsPage() {
       ) : (
         <div className="rounded-card border-2 border-secondary/20 bg-accent p-5 text-secondary shadow-md">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold">{currentSession.sessionDay || 'Session Day'}</h3>
+            <h3 className="text-lg font-semibold">{getSessionName(currentSession)}</h3>
             <p>
               {currentSession.startDate || 'Start date'} - {currentSession.endDate || 'End date'}
             </p>
@@ -175,6 +200,21 @@ function ManageSessionsPage() {
                   <option value="Fr">Friday</option>
                   <option value="Sa">Saturday</option>
                   <option value="Su">Sunday</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-2 font-semibold text-secondary">
+                Session Season
+                <select
+                  className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                  value={editSessionSeason}
+                  onChange={event => setEditSessionSeason(event.target.value)}
+                >
+                  <option value="">Select a season</option>
+                  {seasonOptions.map(season => (
+                    <option key={season} value={season}>
+                      {season}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="flex flex-col gap-2 font-semibold text-secondary">

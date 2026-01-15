@@ -1,6 +1,6 @@
 import React from 'react'
 import { useDay } from '../../app/DayContext'
-import { HEADER_HEIGHT_REM, dayNames } from './constants'
+import { HEADER_HEIGHT_REM, SLOT_HEIGHT_REM, dayNames } from './constants'
 import InstructorColumn from './components/InstructorColumn'
 import TimeRail from './components/TimeRail'
 import { useSchematicSchedule } from './hooks/useSchematicSchedule'
@@ -13,6 +13,7 @@ function SchematicPage() {
         timeLabels,
         scheduleHeightRem,
         scheduleStartMinutes,
+        instructorOptions,
         handleDragStart,
         handleDrop,
         handleDropOnCourse,
@@ -24,7 +25,7 @@ function SchematicPage() {
 
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-            <div className="flex w-full flex-col gap-4 overflow-x-auto">
+            <div className="flex w-full flex-col gap-4">
                 <div className="flex flex-wrap gap-3">
                     <span className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-accent">
                         Schematic
@@ -38,40 +39,45 @@ function SchematicPage() {
                     <TimeRail
                         className="mt-8 flex min-w-[70px] flex-col items-center text-xs text-secondary"
                         headerHeightRem={HEADER_HEIGHT_REM}
+                        slotHeightRem={SLOT_HEIGHT_REM}
                         labels={timeLabels}
                         keyPrefix="left"
                     />
 
-                    <div className="flex flex-col gap-3" id="main-content">
-                        {columns.length === 0 && (
-                            <p className="text-secondary">
-                                No schedule data loaded. Upload a CSV file to generate the schedule.
-                            </p>
-                        )}
-                        <div className="rounded-xl bg-primary px-4 py-2 text-center font-semibold text-accent">
-                            Instructors/Level
-                        </div>
-                        <div className="flex gap-4">
-                            {columns.map((column, columnIndex) => (
-                                <InstructorColumn
-                                    key={`column-${columnIndex}`}
+                    <div className="flex-1 overflow-x-auto">
+                        <div className="flex flex-col gap-3" id="main-content">
+                            {columns.length === 0 && (
+                                <p className="text-secondary">
+                                    No schedule data loaded. Upload a CSV file to generate the schedule.
+                                </p>
+                            )}
+                            <div className="rounded-xl bg-primary px-4 py-2 text-center font-semibold text-accent">
+                                Instructors/Level
+                            </div>
+                            <div className="flex">
+                                {columns.map((column, columnIndex) => (
+                                    <InstructorColumn
+                                        key={`column-${columnIndex}`}
                                     column={column}
                                     columnIndex={columnIndex}
                                     instructor={instructors[columnIndex] ?? ''}
+                                    instructorOptions={instructorOptions}
                                     scheduleHeightRem={scheduleHeightRem}
                                     scheduleStartMinutes={scheduleStartMinutes}
                                     onInstructorChange={setInstructorAt}
-                                    onColumnDrop={handleDrop}
-                                    onCourseDrop={handleDropOnCourse}
-                                    onCourseDragStart={handleDragStart}
-                                />
-                            ))}
+                                        onColumnDrop={handleDrop}
+                                        onCourseDrop={handleDropOnCourse}
+                                        onCourseDragStart={handleDragStart}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </div>
 
                     <TimeRail
                         className="mt-8 flex min-w-[70px] flex-col items-center text-xs text-secondary"
                         headerHeightRem={HEADER_HEIGHT_REM}
+                        slotHeightRem={SLOT_HEIGHT_REM}
                         labels={timeLabels}
                         keyPrefix="right"
                     />
