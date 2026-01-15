@@ -2,10 +2,10 @@ import React from 'react'
 import { optionClass } from '../utils'
 
 type RememberOptionsRowProps = {
-  rememberInstructors: boolean
   rememberFormatting: boolean
-  onToggleInstructors: () => void
   onToggleFormatting: () => void
+  rememberInstructors?: boolean
+  onToggleInstructors?: () => void
 }
 
 function RememberOptionsRow({
@@ -14,15 +14,20 @@ function RememberOptionsRow({
   onToggleInstructors,
   onToggleFormatting,
 }: RememberOptionsRowProps) {
+  const showInstructors = typeof rememberInstructors === 'boolean' && typeof onToggleInstructors === 'function'
+  const gridClass = showInstructors ? 'grid gap-4 md:grid-cols-2' : 'grid gap-4'
+
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <button
-        type="button"
-        className={optionClass(rememberInstructors)}
-        onClick={onToggleInstructors}
-      >
-        Remember Instructors and Classes
-      </button>
+    <div className={gridClass}>
+      {showInstructors ? (
+        <button
+          type="button"
+          className={optionClass(rememberInstructors)}
+          onClick={onToggleInstructors}
+        >
+          Remember Instructors and Classes
+        </button>
+      ) : null}
       <button
         type="button"
         className={optionClass(rememberFormatting)}

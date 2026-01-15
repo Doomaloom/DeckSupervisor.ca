@@ -23,3 +23,17 @@ export const courseHeaderStyleOptions: FormatOptionItem[] = [
   { key: 'center_course', label: 'Center' },
   { key: 'bold_course', label: 'Bold' },
 ]
+
+export type ColumnOptionItem = {
+  key: string
+  label: string
+}
+
+export const columnOptionItems: ColumnOptionItem[] = [
+  { key: 'class_code', label: 'Class Code' },
+  { key: 'class_time', label: 'Class Time' },
+  { key: 'class_level', label: 'Class Level' },
+  { key: 'instructor_name', label: 'Instructor Name' },
+  { key: 'student_name', label: 'Student Name' },
+  { key: 'student_phone', label: 'Student Phone' },
+]

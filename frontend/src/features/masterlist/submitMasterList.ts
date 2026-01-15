@@ -1,13 +1,9 @@
-import { processCsvAndStore } from '../../lib/api'
-import { setFormatOptions, setInstructorsForDay } from '../../lib/storage'
-import type { FormatOptions, InstructorEntry } from '../../types/app'
+import { getInstructorCoursesForDay, getInstructorsForDay, getStudentsForDay, setFormatOptions } from '../../lib/storage'
+import type { FormatOptions, InstructorCourseAssignment, InstructorEntry, Student } from '../../types/app'
 
 type SubmitMasterListParams = {
-  file: File
   selectedDay: string
-  instructors: InstructorEntry[]
   formatOptions: FormatOptions
-  rememberInstructors: boolean
   rememberFormatting: boolean
 }
 
@@ -22,30 +18,75 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-export async function submitMasterList({
-  file,
-  selectedDay,
-  instructors,
-  formatOptions,
-  rememberInstructors,
-  rememberFormatting,
-}: SubmitMasterListParams) {
-  await processCsvAndStore(file, selectedDay, instructors)
+function escapeCsvValue(value: string) {
+  if (!value) {
+    return ''
+  }
+  const escaped = value.replace(/"/g, '""')
+  if (escaped.includes(',') || escaped.includes('\n') || escaped.includes('"')) {
+    return `"${escaped}"`
+  }
+  return escaped
+}
 
-  if (rememberInstructors) {
-    setInstructorsForDay(selectedDay, {
-      names: instructors.map(instructor => instructor.name),
-      codes: instructors.map(instructor => instructor.codes),
-    })
+function buildCsvFromStudents(students: Student[]) {
+  const headers = ['EventID', 'EventTime', 'ServiceName', 'AttendeeName', 'AttendeePhone']
+  const rows = students.map(student => [
+    student.code,
+    student.time,
+    student.service_name,
+    student.name,
+    student.phone,
+  ])
+  return [headers, ...rows].map(row => row.map(value => escapeCsvValue(String(value ?? ''))).join(',')).join('\n')
+}
+
+function buildInstructorAssignments(
+  selectedDay: string,
+): Array<Pick<InstructorEntry, 'name' | 'codes'>> {
+  const fromCourses = getInstructorCoursesForDay(selectedDay)
+  if (fromCourses?.instructors?.length) {
+    return fromCourses.instructors
+      .map((entry: InstructorCourseAssignment) => ({
+        name: entry.name.trim(),
+        codes: entry.codes.join(','),
+      }))
+      .filter(entry => entry.name)
   }
 
+  const fromConfig = getInstructorsForDay(selectedDay)
+  if (!fromConfig) {
+    return []
+  }
+  return fromConfig.names
+    .map((name, index) => ({
+      name: name.trim(),
+      codes: fromConfig.codes[index] ?? '',
+    }))
+    .filter(entry => entry.name)
+}
+
+export async function submitMasterList({
+  selectedDay,
+  formatOptions,
+  rememberFormatting,
+}: SubmitMasterListParams) {
   if (rememberFormatting) {
     setFormatOptions(formatOptions)
   }
 
+  const students = getStudentsForDay(selectedDay)
+  if (students.length === 0) {
+    throw new Error('No roster data found for this day.')
+  }
+
+  const csvContent = buildCsvFromStudents(students)
+  const csvBlob = new Blob([csvContent], { type: 'text/csv' })
+  const instructorAssignments = buildInstructorAssignments(selectedDay)
+
   const formData = new FormData()
-  formData.append('csv_file', file)
-  instructors.forEach(instructor => {
+  formData.append('csv_file', csvBlob, 'masterlist.csv')
+  instructorAssignments.forEach(instructor => {
     formData.append('instructor_names[]', instructor.name)
     formData.append('instructor_codes[]', instructor.codes)
   })
