@@ -64,3 +64,12 @@ export type ClassRoster = {
   instructor: string
   students: RosterStudent[]
 }
+
+export type CustomRoster = {
+  id: string
+  serviceName: string
+  instructor?: string
+  sourceCodes: string[]
+  studentIds: string[]
+  createdAt: string
+}

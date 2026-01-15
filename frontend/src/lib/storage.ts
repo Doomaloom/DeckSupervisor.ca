@@ -1,4 +1,11 @@
-import type { FormatOptions, InstructorConfig, InstructorCourseConfig, ScheduleConfig, Student } from '../types/app'
+import type {
+  CustomRoster,
+  FormatOptions,
+  InstructorConfig,
+  InstructorCourseConfig,
+  ScheduleConfig,
+  Student,
+} from '../types/app'
 
 const PREFIX = 'cob'
 const selectedDayKey = `${PREFIX}:selectedDay`
@@ -7,12 +14,14 @@ const instructorsKey = `${PREFIX}:instructorsByDay`
 const formatOptionsKey = `${PREFIX}:formatOptions`
 const schedulesKey = `${PREFIX}:schedulesByDay`
 const instructorCoursesKey = `${PREFIX}:instructorCoursesByDay`
+const customRostersKey = `${PREFIX}:customRostersByDay`
 const studentsUpdatedEvent = `${PREFIX}:students-updated`
 
 type StudentsByDay = Record<string, Student[]>
 type InstructorsByDay = Record<string, InstructorConfig>
 type SchedulesByDay = Record<string, ScheduleConfig>
 type InstructorCoursesByDay = Record<string, InstructorCourseConfig>
+type CustomRostersByDay = Record<string, CustomRoster[]>
 
 const defaultFormatOptions: FormatOptions = {
   time_headers: false,
@@ -160,6 +169,27 @@ export function setScheduleForDay(day: string, schedule: ScheduleConfig) {
   saveJson(schedulesKey, all)
 }
 
+export function getCustomRostersByDay(): CustomRostersByDay {
+  return loadJson(customRostersKey, {})
+}
+
+export function getCustomRostersForDay(day: string): CustomRoster[] {
+  if (!day) {
+    return []
+  }
+  const all = getCustomRostersByDay()
+  return all[day] ?? []
+}
+
+export function setCustomRostersForDay(day: string, rosters: CustomRoster[]) {
+  if (!day) {
+    return
+  }
+  const all = getCustomRostersByDay()
+  all[day] = rosters
+  saveJson(customRostersKey, all)
+}
+
 export function getInstructorCoursesByDay(): InstructorCoursesByDay {
   return loadJson(instructorCoursesKey, {})
 }
@@ -189,14 +219,17 @@ export function clearDayData(day: string) {
   const instructors = getInstructorsByDay()
   const schedules = getSchedulesByDay()
   const instructorCourses = getInstructorCoursesByDay()
+  const customRosters = getCustomRostersByDay()
 
   delete students[day]
   delete instructors[day]
   delete schedules[day]
   delete instructorCourses[day]
+  delete customRosters[day]
 
   saveJson(studentsKey, students)
   saveJson(instructorsKey, instructors)
   saveJson(schedulesKey, schedules)
   saveJson(instructorCoursesKey, instructorCourses)
+  saveJson(customRostersKey, customRosters)
 }

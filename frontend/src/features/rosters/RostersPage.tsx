@@ -6,7 +6,7 @@ import {
     getStudentsForDay,
     onStudentsUpdated,
     setStudentsForDay,
-    updateStudentForDay,
+    updateStudentForDay
 } from '../../lib/storage'
 import { extractStartTime } from '../../lib/time'
 import type { Student } from '../../types/app'
@@ -250,22 +250,20 @@ function RostersPage() {
             <div className="flex w-full gap-3">
                 <button
                     type="button"
-                    className={`flex-1 rounded-2xl px-4 py-2 font-semibold transition hover:-translate-y-0.5 ${
-                        activeTab === 'default'
-                            ? 'border-2 border-dashed border-secondary bg-accent text-secondary'
-                            : 'bg-secondary text-accent'
-                    }`}
+                    className={`flex-1 rounded-2xl px-4 py-2 font-semibold transition hover:-translate-y-0.5 ${activeTab === 'default'
+                        ? 'border-2 border-dashed border-secondary bg-accent text-secondary'
+                        : 'bg-secondary text-accent'
+                        }`}
                     onClick={() => setActiveTab('default')}
                 >
                     Rosters
                 </button>
                 <button
                     type="button"
-                    className={`flex-1 rounded-2xl px-4 py-2 font-semibold transition hover:-translate-y-0.5 ${
-                        activeTab === 'custom'
-                            ? 'border-2 border-dashed border-secondary bg-accent text-secondary'
-                            : 'bg-secondary text-accent'
-                    }`}
+                    className={`flex-1 rounded-2xl px-4 py-2 font-semibold transition hover:-translate-y-0.5 ${activeTab === 'custom'
+                        ? 'border-2 border-dashed border-secondary bg-accent text-secondary'
+                        : 'bg-secondary text-accent'
+                        }`}
                     onClick={() => setActiveTab('custom')}
                 >
                     Custom Rosters
