@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
     ClipboardDocumentListIcon,
@@ -15,13 +15,65 @@ type LayoutProps = {
     children: React.ReactNode
 }
 
+type SessionEntry = {
+    id: string
+    sessionDay: string
+    sessionSeason: string
+    startDate: string
+}
+
+const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
+const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
+
+const dayNames: Record<string, string> = {
+    Mo: 'Monday',
+    Tu: 'Tuesday',
+    We: 'Wednesday',
+    Th: 'Thursday',
+    Fr: 'Friday',
+    Sa: 'Saturday',
+    Su: 'Sunday',
+}
+
+function getSessionName(session: SessionEntry) {
+    const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
+    const season = session.sessionSeason?.trim()
+    const year = session.startDate ? new Date(session.startDate).getFullYear() : NaN
+    const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+    const parts = [dayLabel, season, yearLabel].filter(Boolean)
+    return parts.length ? parts.join(' ') : 'Session'
+}
+
+function getCurrentSessionName() {
+    if (typeof window === 'undefined') {
+        return ''
+    }
+    const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+    if (!currentSessionId) {
+        return ''
+    }
+    const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
+    if (!stored) {
+        return ''
+    }
+    try {
+        const sessions = JSON.parse(stored) as SessionEntry[]
+        const session = sessions.find(item => item.id === currentSessionId)
+        return session ? getSessionName(session) : ''
+    } catch (error) {
+        console.error('Failed to parse stored sessions', error)
+        return ''
+    }
+}
+
 function Layout({ children }: LayoutProps) {
     const location = useLocation()
-    const { selectedDay, setSelectedDay } = useDay()
+    const { selectedDay } = useDay()
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
     const isCurrentPage = (path: string) => location.pathname === path
     const pageTitle = getPageTitle(location.pathname)
+    const currentSessionName = useMemo(() => getCurrentSessionName(), [location.pathname])
 
     useEffect(() => {
         document.title = pageTitle === 'COB Aquatics' ? pageTitle : `${pageTitle} | COB Aquatics`
@@ -34,9 +86,9 @@ function Layout({ children }: LayoutProps) {
     const navHoverClasses = 'hover:bg-hover hover:text-secondary'
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex h-screen overflow-hidden">
             <aside
-                className={`flex flex-col gap-6 bg-primary p-6 text-accent transition-[width] duration-300 ${
+                className={`flex h-screen shrink-0 flex-col gap-6 overflow-y-auto bg-primary p-6 text-accent transition-[width] duration-300 ${
                     isSidebarCollapsed ? 'w-[84px]' : 'w-72'
                 }`}
             >
@@ -61,34 +113,10 @@ function Layout({ children }: LayoutProps) {
 
                 {!isSidebarCollapsed && (
                     <div className="flex flex-col gap-2">
-                        <h3 className="text-[0.95rem] font-semibold">Session Selector</h3>
-                        <button
-                            className="w-full rounded-2xl bg-secondary px-4 py-2 text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
-                            type="button"
-                        >
-                            Current Session
-                        </button>
-                    </div>
-                )}
-
-                {!isSidebarCollapsed && (
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-[0.95rem] font-semibold">Day</h3>
-                        <select
-                            className="w-full rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
-                            value={selectedDay}
-                            onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setSelectedDay(event.target.value)}
-                        >
-                            <option value="">Select Day</option>
-                            <option value="Mo">Monday</option>
-                            <option value="Tu">Tuesday</option>
-                            <option value="We">Wednesday</option>
-                            <option value="Th">Thursday</option>
-                            <option value="Fr">Friday</option>
-                            <option value="Sa">Saturday</option>
-                            <option value="Su">Sunday</option>
-                            <option value="Mo,Tu,We,Th,Fr">Mini Session</option>
-                        </select>
+                        <h3 className="text-[0.95rem] font-semibold">Current Session</h3>
+                        <div className="w-full rounded-2xl border border-secondary/30 bg-accent px-4 py-2 text-sm text-secondary">
+                            {currentSessionName || 'No session selected'}
+                        </div>
                     </div>
                 )}
 
@@ -181,7 +209,7 @@ function Layout({ children }: LayoutProps) {
                 </nav>
             </aside>
 
-            <main className="flex-1 p-8">
+            <main className="flex min-h-0 flex-1 overflow-y-auto p-8">
                 {children}
             </main>
         </div>
