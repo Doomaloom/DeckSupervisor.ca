@@ -7,6 +7,7 @@ import {
     HomeIcon,
     AdjustmentsHorizontalIcon,
     UsersIcon,
+    PrinterIcon,
 } from '@heroicons/react/24/outline'
 import { useDay } from '../../app/DayContext'
 import { processCsvAndStore } from '../../lib/api'
@@ -88,9 +89,8 @@ function Layout({ children }: LayoutProps) {
     return (
         <div className="flex h-screen overflow-hidden">
             <aside
-                className={`flex h-screen shrink-0 flex-col gap-6 overflow-y-auto bg-primary p-6 text-accent transition-[width] duration-300 ${
-                    isSidebarCollapsed ? 'w-[84px]' : 'w-72'
-                }`}
+                className={`flex h-screen shrink-0 flex-col gap-6 overflow-y-auto bg-primary p-6 text-accent transition-[width] duration-300 ${isSidebarCollapsed ? 'w-[84px]' : 'w-72'
+                    }`}
             >
                 <div className="flex flex-col gap-1.5">
                     <span className="flex items-center justify-between gap-3">
@@ -161,7 +161,7 @@ function Layout({ children }: LayoutProps) {
                         },
                         {
                             to: '/manage-sessions',
-                            label: 'Manage Sessions',
+                            label: 'Manage Session',
                             icon: <AdjustmentsHorizontalIcon className="h-5 w-5" />,
                         },
                         {
@@ -180,6 +180,11 @@ function Layout({ children }: LayoutProps) {
                             icon: <UsersIcon className="h-5 w-5" />,
                         },
                         {
+                            to: '/print',
+                            label: 'Print',
+                            icon: <PrinterIcon className="h-5 w-5" />,
+                        },
+                        {
                             to: '/staff-notes',
                             label: 'Staff Notes',
                             icon: <DocumentTextIcon className="h-5 w-5" />,
@@ -188,9 +193,8 @@ function Layout({ children }: LayoutProps) {
                         <Link
                             key={item.to}
                             to={item.to}
-                            className={`${navBaseClasses} ${navCollapsedClasses} ${
-                                isCurrentPage(item.to) ? navCurrentClasses : navHoverClasses
-                            }`}
+                            className={`${navBaseClasses} ${navCollapsedClasses} ${isCurrentPage(item.to) ? navCurrentClasses : navHoverClasses
+                                }`}
                             aria-label={item.label}
                         >
                             {isSidebarCollapsed ? (
@@ -223,6 +227,7 @@ function getPageTitle(pathname: string) {
         case '/masterlist': return 'Master List Maker'
         case '/rosters': return 'Class Rosters'
         case '/schematic': return 'Class Schedule'
+        case '/print': return 'Print'
         case '/staff-notes': return 'Staff Notes'
         default: return 'COB Aquatics'
     }
