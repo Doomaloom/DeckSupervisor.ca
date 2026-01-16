@@ -11,8 +11,9 @@ type RosterListProps = {
     onRosterLevelChange: (code: string, level: string) => void
     onCustomRosterInstructorChange: (id: string, instructor: string) => void
     onCustomRosterLevelChange: (id: string, level: string) => void
-    onStudentInstructorChange: (studentId: string, instructor: string) => void
     onStudentLevelChange: (studentId: string, level: string) => void
+    studentLevelEditMap: Record<string, boolean>
+    onToggleStudentLevelEdits: (code: string) => void
 }
 
 function RosterList({
@@ -24,8 +25,9 @@ function RosterList({
     onRosterLevelChange,
     onCustomRosterInstructorChange,
     onCustomRosterLevelChange,
-    onStudentInstructorChange,
     onStudentLevelChange,
+    studentLevelEditMap,
+    onToggleStudentLevelEdits,
 }: RosterListProps) {
     return (
         <div className="flex flex-col gap-4">
@@ -42,8 +44,9 @@ function RosterList({
                         onRosterLevelChange={onRosterLevelChange}
                         onCustomRosterInstructorChange={onCustomRosterInstructorChange}
                         onCustomRosterLevelChange={onCustomRosterLevelChange}
-                        onStudentInstructorChange={onStudentInstructorChange}
                         onStudentLevelChange={onStudentLevelChange}
+                        allowStudentLevelEdits={Boolean(studentLevelEditMap[item.roster.code])}
+                        onToggleStudentLevelEdits={() => onToggleStudentLevelEdits(item.roster.code)}
                     />
                 ))}
             </div>

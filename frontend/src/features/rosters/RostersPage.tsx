@@ -16,6 +16,7 @@ import type { RosterListItem } from './types'
 function RostersPage() {
     const { selectedDay } = useDay()
     const [activeTab, setActiveTab] = useState<'default' | 'custom'>('default')
+    const [studentLevelEditMap, setStudentLevelEditMap] = useState<Record<string, boolean>>({})
     const { students, setStudents, rosters, instructorOptions } = useRosterData(selectedDay ?? '')
     const { customRosters, saveCustomRosters, updateCustomRosterInstructor, updateCustomRosterLevel } =
         useCustomRosters(selectedDay ?? '')
@@ -62,7 +63,6 @@ function RostersPage() {
     const {
         handleRosterInstructorChange,
         handleRosterLevelChange,
-        handleStudentInstructorChange,
         handleStudentLevelChange,
     } = useRosterEdits({
         selectedDay: selectedDay ?? '',
@@ -71,6 +71,12 @@ function RostersPage() {
     })
     const { handlePrintRoster } = useRosterPrint()
     const emptyMessage = getEmptyMessage(students.length)
+    const handleToggleStudentLevelEdits = (code: string) => {
+        setStudentLevelEditMap(current => ({
+            ...current,
+            [code]: !current[code],
+        }))
+    }
 
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -104,8 +110,9 @@ function RostersPage() {
                             onRosterLevelChange={handleRosterLevelChange}
                             onCustomRosterInstructorChange={updateCustomRosterInstructor}
                             onCustomRosterLevelChange={updateCustomRosterLevel}
-                            onStudentInstructorChange={handleStudentInstructorChange}
                             onStudentLevelChange={handleStudentLevelChange}
+                            studentLevelEditMap={studentLevelEditMap}
+                            onToggleStudentLevelEdits={handleToggleStudentLevelEdits}
                         />
                     </>
                 )}
