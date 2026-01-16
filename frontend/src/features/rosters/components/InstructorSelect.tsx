@@ -6,6 +6,7 @@ type InstructorSelectProps = {
     options: string[]
     placeholder?: string
     optionKeyPrefix?: string
+    disabled?: boolean
     onChange: (value: string) => void
 }
 
@@ -14,10 +15,16 @@ function InstructorSelect({
     options,
     placeholder = 'Select Instructor',
     optionKeyPrefix,
+    disabled = false,
     onChange,
 }: InstructorSelectProps) {
     return (
-        <select className={selectClass} value={value} onChange={event => onChange(event.target.value)}>
+        <select
+            className={selectClass}
+            value={value}
+            onChange={event => onChange(event.target.value)}
+            disabled={disabled}
+        >
             <option value="">{placeholder}</option>
             {options.map(instructor => (
                 <option key={`${optionKeyPrefix ?? 'instructor'}-${instructor}`} value={instructor}>

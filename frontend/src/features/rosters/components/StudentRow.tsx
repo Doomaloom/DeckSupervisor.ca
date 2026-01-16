@@ -8,9 +8,16 @@ type StudentRowProps = {
     instructorOptions: string[]
     onInstructorChange: (studentId: string, instructor: string) => void
     onLevelChange: (studentId: string, level: string) => void
+    disabled?: boolean
 }
 
-function StudentRow({ student, instructorOptions, onInstructorChange, onLevelChange }: StudentRowProps) {
+function StudentRow({
+    student,
+    instructorOptions,
+    onInstructorChange,
+    onLevelChange,
+    disabled = false,
+}: StudentRowProps) {
     return (
         <div className="mt-3 grid grid-cols-1 items-center gap-3 md:grid-cols-[1.2fr_1fr_1fr]">
             <p className="text-secondary">{student.name.replaceAll('"', '')}</p>
@@ -20,8 +27,9 @@ function StudentRow({ student, instructorOptions, onInstructorChange, onLevelCha
                 optionKeyPrefix={student.id}
                 placeholder={student.instructor || 'Select Instructor'}
                 onChange={value => onInstructorChange(student.id, value)}
+                disabled={disabled}
             />
-            <LevelSelect value={student.level} onChange={value => onLevelChange(student.id, value)} />
+            <LevelSelect value={student.level} onChange={value => onLevelChange(student.id, value)} disabled={disabled} />
         </div>
     )
 }

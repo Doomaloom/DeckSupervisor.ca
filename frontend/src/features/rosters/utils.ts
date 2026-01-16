@@ -1,6 +1,6 @@
 import { extractStartTime } from '../../lib/time'
-import type { Student } from '../../types/app'
-import type { RosterGroup } from './types'
+import type { CustomRoster, Student } from '../../types/app'
+import type { RosterGroup, RosterListItem } from './types'
 
 export function sanitizeLevel(level: string): string {
     if (!level) {
@@ -55,14 +55,42 @@ export function buildRosterGroups(students: Student[]): RosterGroup[] {
     return sorted
 }
 
-export function filterRosters(
-    rosters: RosterGroup[],
+export function buildCustomRosterGroups(
+    customRosters: CustomRoster[],
+    rosterByCode: Map<string, RosterGroup>,
+    studentsById: Map<string, Student>,
+): RosterGroup[] {
+    return customRosters.map(customRoster => {
+        const sourceRoster = customRoster.sourceCodes
+            .map(code => rosterByCode.get(code))
+            .find(Boolean)
+        const students = customRoster.studentIds
+            .map(id => studentsById.get(id))
+            .filter(Boolean) as Student[]
+        students.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
+        return {
+            code: `custom-${customRoster.id}`,
+            customRosterId: customRoster.id,
+            serviceName: customRoster.serviceName,
+            level: customRoster.serviceName,
+            time: sourceRoster?.time ?? '',
+            instructor: customRoster.instructor ?? '',
+            location: sourceRoster?.location ?? '',
+            schedule: sourceRoster?.schedule ?? '',
+            students,
+        }
+    })
+}
+
+export function filterRosterItems(
+    rosters: RosterListItem[],
     instructorFilter: string,
     levelFilter: string,
     searchQuery: string,
 ) {
     const normalizedQuery = searchQuery.trim().toLowerCase()
-    return rosters.filter(roster => {
+    return rosters.filter(item => {
+        const roster = item.roster
         if (instructorFilter && roster.instructor !== instructorFilter) {
             return false
         }

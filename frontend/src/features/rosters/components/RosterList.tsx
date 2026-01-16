@@ -1,14 +1,16 @@
 import React from 'react'
-import type { RosterGroup } from '../types'
+import type { RosterListItem } from '../types'
 import RosterCard from './RosterCard'
 
 type RosterListProps = {
-    rosters: RosterGroup[]
+    rosters: RosterListItem[]
     emptyMessage: string
     instructorOptions: string[]
-    onPrintRoster: (roster: RosterGroup) => void
+    onPrintRoster: (roster: RosterListItem['roster']) => void
     onRosterInstructorChange: (code: string, instructor: string) => void
     onRosterLevelChange: (code: string, level: string) => void
+    onCustomRosterInstructorChange: (id: string, instructor: string) => void
+    onCustomRosterLevelChange: (id: string, level: string) => void
     onStudentInstructorChange: (studentId: string, instructor: string) => void
     onStudentLevelChange: (studentId: string, level: string) => void
 }
@@ -20,6 +22,8 @@ function RosterList({
     onPrintRoster,
     onRosterInstructorChange,
     onRosterLevelChange,
+    onCustomRosterInstructorChange,
+    onCustomRosterLevelChange,
     onStudentInstructorChange,
     onStudentLevelChange,
 }: RosterListProps) {
@@ -27,14 +31,17 @@ function RosterList({
         <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-6">
                 {rosters.length === 0 && <p className="text-secondary">{emptyMessage}</p>}
-                {rosters.map(roster => (
+                {rosters.map(item => (
                     <RosterCard
-                        key={roster.code}
-                        roster={roster}
+                        key={item.roster.code}
+                        roster={item.roster}
                         instructorOptions={instructorOptions}
+                        isCustom={item.isCustom}
                         onPrint={onPrintRoster}
                         onRosterInstructorChange={onRosterInstructorChange}
                         onRosterLevelChange={onRosterLevelChange}
+                        onCustomRosterInstructorChange={onCustomRosterInstructorChange}
+                        onCustomRosterLevelChange={onCustomRosterLevelChange}
                         onStudentInstructorChange={onStudentInstructorChange}
                         onStudentLevelChange={onStudentLevelChange}
                     />
