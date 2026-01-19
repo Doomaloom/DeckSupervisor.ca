@@ -1,65 +1,113 @@
 import type { RosterGroup } from '../types'
 import { sanitizeLevel } from '../utils'
 
+const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
+const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
+
+type SessionEntry = {
+    id: string
+    sessionDay: string
+    sessionSeason: string
+    startDate: string
+}
+
+const dayNames: Record<string, string> = {
+    Mo: 'Monday',
+    Tu: 'Tuesday',
+    We: 'Wednesday',
+    Th: 'Thursday',
+    Fr: 'Friday',
+    Sa: 'Saturday',
+    Su: 'Sunday',
+}
+
+function getSessionName(session: SessionEntry) {
+    const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
+    const season = session.sessionSeason?.trim()
+    const year = session.startDate ? new Date(session.startDate).getFullYear() : NaN
+    const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+    const parts = [dayLabel, season, yearLabel].filter(Boolean)
+    return parts.length ? parts.join(' ') : ''
+}
+
+function getCurrentSessionName() {
+    if (typeof window === 'undefined') {
+        return ''
+    }
+    const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+    if (!currentSessionId) {
+        return ''
+    }
+    const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
+    if (!stored) {
+        return ''
+    }
+    try {
+        const sessions = JSON.parse(stored) as SessionEntry[]
+        const session = sessions.find(item => item.id === currentSessionId)
+        return session ? getSessionName(session) : ''
+    } catch (error) {
+        console.error('Failed to parse stored sessions', error)
+        return ''
+    }
+}
+
 export function useRosterPrint() {
     const handlePrintRoster = async (roster: RosterGroup) => {
-        const level = sanitizeLevel(roster.level)
-        const levelUrl = `/swimming attendance/${level}.html`
-        const fallbackUrl = `/swimming attendance/SplashFitness.html`
-
-        const iframe = document.createElement('iframe')
-        iframe.style.display = 'none'
-        document.body.appendChild(iframe)
+        const template = sanitizeLevel(roster.level)
+        const sessionName = getCurrentSessionName() || 'Summer 2025'
 
         try {
-            const res = await fetch(levelUrl, { method: 'HEAD' })
-            iframe.src = res.ok ? levelUrl : fallbackUrl
-        } catch (error) {
-            iframe.src = fallbackUrl
-        }
-
-        iframe.onload = () => {
-            const doc = iframe.contentDocument || iframe.contentWindow?.document
-            if (!doc) {
-                document.body.removeChild(iframe)
-                return
-            }
-
-            const startDate = roster.schedule?.split(' ')[1] ?? ''
-            doc.getElementById('instructor')!.textContent = roster.instructor
-            doc.getElementById('start_time')!.textContent = `${startDate} ${roster.time}`.trim()
-            doc.getElementById('session')!.textContent = 'Summer 2025'
-            doc.getElementById('location')!.textContent = roster.location
-            doc.getElementById('barcode')!.textContent = roster.code
-
-            const templateRow = doc.getElementById('student-rows')
-            const totalColumns = templateRow?.children.length ?? 1
-            const emptyCells = Math.max(totalColumns - 1, 0)
-
-            roster.students.forEach((student, index) => {
-                const row = doc.createElement('tr')
-                row.innerHTML = `
-          <td><strong style="font-family: Arial;">${index + 1}. ${student.name}</strong>
-            <font size="2"><br><span style="text-decoration: underline;">A</span>bsent/<span style="text-decoration: underline;">P</span>resent<br>
-            <span style="color: rgb(191, 191, 191);">[Day 1] [Day 2] [Day 3] [Day 4] [Day 5] [Day 6] [Day 7] [Day 8] [Day 9] [Day 10] [Day 11] [Day 12] [Day 13] [Day 14]</span></font>
-          </td>
-          ${'<td>&nbsp;</td>'.repeat(emptyCells)}
-        `
-                doc.getElementById('attendance-rows')?.appendChild(row)
+            const response = await fetch('/api/attendance-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    template,
+                    session: sessionName,
+                    roster: {
+                        code: roster.code,
+                        level: roster.level,
+                        serviceName: roster.serviceName,
+                        time: roster.time,
+                        instructor: roster.instructor,
+                        location: roster.location,
+                        schedule: roster.schedule,
+                        students: roster.students.map(student => ({
+                            name: student.name,
+                        })),
+                    },
+                }),
             })
 
-            iframe.contentWindow?.focus()
-            iframe.contentWindow?.print()
-            setTimeout(() => document.body.removeChild(iframe), 1000)
-        }
-    }
+            if (!response.ok) {
+                const message = await response.text()
+                throw new Error(message || 'Failed to generate attendance PDF')
+            }
 
-    const handlePrintAll = (rosters: RosterGroup[]) => {
-        rosters.forEach(roster => handlePrintRoster(roster))
+            const pdfBlob = await response.blob()
+            const blobUrl = window.URL.createObjectURL(pdfBlob)
+            const iframe = document.createElement('iframe')
+            iframe.style.display = 'none'
+            iframe.src = blobUrl
+            document.body.appendChild(iframe)
+
+            iframe.onload = () => {
+                iframe.contentWindow?.focus()
+                iframe.contentWindow?.print()
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(blobUrl)
+                    document.body.removeChild(iframe)
+                }, 1000)
+            }
+        } catch (error) {
+            console.error(error)
+            alert('Unable to generate attendance PDF. Please try again.')
+        }
     }
 
     return {
         handlePrintRoster,
-        handlePrintAll,
     }
 }

@@ -19,6 +19,7 @@ func main() {
 	// API routes
 	r.HandleFunc("/api/process-csv", processCSVHandler).Methods("POST")
 	r.HandleFunc("/api/masterlist", masterListHandler).Methods("POST")
+	r.HandleFunc("/api/attendance-pdf", attendancePDFHandler).Methods("POST")
 	r.HandleFunc("/api/health", healthHandler).Methods("GET")
 
 	// Serve React app
