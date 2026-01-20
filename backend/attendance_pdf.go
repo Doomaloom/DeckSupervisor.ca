@@ -175,10 +175,22 @@ func resolveAttendanceTemplate(template string) (string, error) {
 
 func attendanceTemplatesDir() (string, error) {
 	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return "", errors.New("unable to resolve backend path")
+	if ok {
+		path := filepath.Join(filepath.Dir(filename), "swimming attendance")
+		if _, err := os.Stat(path); err == nil {
+			return path, nil
+		}
 	}
-	return filepath.Join(filepath.Dir(filename), "swimming attendance"), nil
+
+	executable, err := os.Executable()
+	if err == nil {
+		path := filepath.Join(filepath.Dir(executable), "swimming attendance")
+		if _, err := os.Stat(path); err == nil {
+			return path, nil
+		}
+	}
+
+	return "", errors.New("unable to resolve backend path")
 }
 
 func buildAttendanceFilename(code, template string) string {
