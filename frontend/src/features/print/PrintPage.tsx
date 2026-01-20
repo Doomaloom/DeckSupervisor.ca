@@ -212,6 +212,28 @@ function PrintPage() {
     }
   }
 
+  const buildInstructorPayload = (rostersToPrint: ReturnType<typeof buildRosterGroups>) => {
+    const sessionName = getCurrentSessionName() || 'Summer 2025'
+    return {
+      session: sessionName,
+      rosters: rostersToPrint.map(roster => ({
+        template: sanitizeLevel(roster.level),
+        roster: {
+          code: roster.code,
+          level: roster.level,
+          serviceName: roster.serviceName,
+          time: roster.time,
+          instructor: roster.instructor,
+          location: roster.location,
+          schedule: roster.schedule,
+          students: roster.students.map(student => ({
+            name: student.name,
+          })),
+        },
+      })),
+    }
+  }
+
   const handlePrintInstructorSheets = async () => {
     if (!selectedDay) {
       alert('Please select a day before printing instructor sheets.')
@@ -230,52 +252,65 @@ function PrintPage() {
       return
     }
 
-    const rosterGroups = buildRosterGroups(students)
-    const rostersToPrint = selectedInstructors.flatMap(name =>
-      rosterGroups.filter(roster => roster.instructor === name),
-    )
-
-    if (rostersToPrint.length === 0) {
-      alert('No classes found for the selected instructors.')
-      return
-    }
-
-    const sessionName = getCurrentSessionName() || 'Summer 2025'
-    const payload = {
-      session: sessionName,
-      rosters: rostersToPrint.map(roster => ({
-        template: sanitizeLevel(roster.level),
-        roster: {
-          code: roster.code,
-          level: roster.level,
-          serviceName: roster.serviceName,
-          time: roster.time,
-          instructor: roster.instructor,
-          location: roster.location,
-          schedule: roster.schedule,
-          students: roster.students.map(student => ({
-            name: student.name,
-          })),
-        },
-      })),
-    }
-
     try {
-      const response = await fetch('/api/attendance-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
+      const rosterGroups = buildRosterGroups(students)
+      if (instructorExtras.singlePrint) {
+        const rostersToPrint = selectedInstructors.flatMap(name =>
+          rosterGroups.filter(roster => roster.instructor === name),
+        )
 
-      if (!response.ok) {
-        const message = await response.text()
-        throw new Error(message || 'Failed to generate instructor sheets')
+        if (rostersToPrint.length === 0) {
+          alert('No classes found for the selected instructors.')
+          return
+        }
+
+        const response = await fetch('/api/attendance-pdf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(buildInstructorPayload(rostersToPrint)),
+        })
+
+        if (!response.ok) {
+          const message = await response.text()
+          throw new Error(message || 'Failed to generate instructor sheets')
+        }
+
+        const pdfBlob = await response.blob()
+        openPdfPrintDialog(pdfBlob)
+        return
       }
 
-      const pdfBlob = await response.blob()
-      openPdfPrintDialog(pdfBlob)
+      const grouped = selectedInstructors
+        .map(name => ({
+          name,
+          rosters: rosterGroups.filter(roster => roster.instructor === name),
+        }))
+        .filter(group => group.rosters.length > 0)
+
+      if (grouped.length === 0) {
+        alert('No classes found for the selected instructors.')
+        return
+      }
+
+      for (const group of grouped) {
+        const response = await fetch('/api/attendance-pdf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(buildInstructorPayload(group.rosters)),
+        })
+
+        if (!response.ok) {
+          const message = await response.text()
+          throw new Error(message || `Failed to generate sheets for ${group.name}`)
+        }
+
+        const pdfBlob = await response.blob()
+        openPdfPrintDialog(pdfBlob)
+      }
     } catch (error) {
       console.error(error)
       alert('Unable to generate instructor sheets. Please try again.')
