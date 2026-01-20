@@ -14,6 +14,7 @@ type InstructorOptionsModalProps = {
   onClose: () => void
   onToggleInstructor: (name: string) => void
   onToggleExtra: (key: keyof InstructorExtras) => void
+  onPrint: () => void
 }
 
 function InstructorOptionsModal({
@@ -24,6 +25,7 @@ function InstructorOptionsModal({
   onClose,
   onToggleInstructor,
   onToggleExtra,
+  onPrint,
 }: InstructorOptionsModalProps) {
   if (!open) {
     return null
@@ -89,6 +91,13 @@ function InstructorOptionsModal({
           onClick={onClose}
         >
           Close
+        </button>
+        <button
+          type="button"
+          className="rounded-2xl bg-secondary px-5 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
+          onClick={onPrint}
+        >
+          Print
         </button>
       </div>
     </PrintModalShell>

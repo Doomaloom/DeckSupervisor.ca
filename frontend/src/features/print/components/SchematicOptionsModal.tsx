@@ -13,6 +13,7 @@ type SchematicOptionsModalProps = {
   onClose: () => void
   onToggleHighlight: () => void
   onSelectInstructor: (value: string) => void
+  onPrint: () => void
 }
 
 function SchematicOptionsModal({
@@ -22,6 +23,7 @@ function SchematicOptionsModal({
   onClose,
   onToggleHighlight,
   onSelectInstructor,
+  onPrint,
 }: SchematicOptionsModalProps) {
   if (!open) {
     return null
@@ -65,13 +67,20 @@ function SchematicOptionsModal({
           </select>
         </label>
       </div>
-      <div className="mt-8 flex justify-end">
+      <div className="mt-8 flex flex-wrap justify-end gap-3">
         <button
           type="button"
           className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
           onClick={onClose}
         >
           Close
+        </button>
+        <button
+          type="button"
+          className="rounded-2xl bg-secondary px-5 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
+          onClick={onPrint}
+        >
+          Print
         </button>
       </div>
     </PrintModalShell>

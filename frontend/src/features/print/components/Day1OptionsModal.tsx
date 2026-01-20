@@ -13,6 +13,7 @@ type Day1OptionsModalProps = {
   options: Day1Options
   onClose: () => void
   onToggle: (key: keyof Day1Options) => void
+  onPrint: () => void
 }
 
 const day1Items: { key: keyof Day1Options; label: string }[] = [
@@ -22,7 +23,7 @@ const day1Items: { key: keyof Day1Options; label: string }[] = [
   { key: 'extraMasterlistCopy', label: 'Extra Masterlist Copy' },
 ]
 
-function Day1OptionsModal({ open, options, onClose, onToggle }: Day1OptionsModalProps) {
+function Day1OptionsModal({ open, options, onClose, onToggle, onPrint }: Day1OptionsModalProps) {
   if (!open) {
     return null
   }
@@ -55,6 +56,13 @@ function Day1OptionsModal({ open, options, onClose, onToggle }: Day1OptionsModal
           onClick={onClose}
         >
           Close
+        </button>
+        <button
+          type="button"
+          className="rounded-2xl bg-secondary px-5 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
+          onClick={onPrint}
+        >
+          Print
         </button>
       </div>
     </PrintModalShell>

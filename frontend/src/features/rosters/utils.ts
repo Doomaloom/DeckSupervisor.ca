@@ -6,9 +6,39 @@ export function sanitizeLevel(level: string): string {
     if (!level) {
         return 'SplashFitness'
     }
-    let sanitized = level.trim().replace(/\s+|\//g, '')
-    if (sanitized.includes('Teen') && !sanitized.includes('TeenAdult')) {
-        const parts = level.split(/[\s/]+/)
+    const normalized = level.trim()
+
+    if (/splash\s*fitness/i.test(normalized)) {
+        return 'SplashFitness'
+    }
+
+    const teenMatch = normalized.match(/teen\s*\/?\s*adult\s*(\d+)/i)
+    if (teenMatch?.[1]) {
+        return `TeenAdult${teenMatch[1]}`
+    }
+
+    const littleMatch = normalized.match(/little\s*splash\s*(\d+)/i)
+    if (littleMatch?.[1]) {
+        return `LittleSplash${littleMatch[1]}`
+    }
+
+    const parentMatch = normalized.match(/parent\s*(?:and|&)\s*tot\s*(\d+)/i)
+    if (parentMatch?.[1]) {
+        return `ParentandTot${parentMatch[1]}`
+    }
+
+    const splashMatch = normalized.match(/splash\s*(\d+)([a-z])?/i)
+    if (splashMatch?.[1]) {
+        const suffix = splashMatch[2] ? splashMatch[2].toUpperCase() : ''
+        return `Splash${splashMatch[1]}${suffix}`
+    }
+
+    let sanitized = normalized.replace(/^Swim\s*/i, '')
+    sanitized = sanitized.replace(/&/g, 'and')
+    sanitized = sanitized.replace(/[^a-zA-Z0-9]/g, '')
+
+    if (sanitized.includes('Teen') || sanitized.includes('Adult')) {
+        const parts = normalized.split(/[\s/]+/)
         sanitized = `TeenAdult${parts[2] ?? ''}`.trim()
     }
     if (sanitized.includes('Splash7')) return 'Splash7'
@@ -117,9 +147,8 @@ export function getEmptyMessage(studentsCount: number) {
 }
 
 export function tabButtonClass(active: boolean) {
-    return `flex-1 rounded-2xl px-4 py-2 font-semibold transition hover:-translate-y-0.5 ${
-        active
+    return `flex-1 rounded-2xl px-4 py-2 font-semibold transition hover:-translate-y-0.5 ${active
             ? 'border-2 border-dashed border-secondary bg-accent text-secondary'
             : 'bg-secondary text-accent'
-    }`
+        }`
 }
