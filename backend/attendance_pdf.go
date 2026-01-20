@@ -30,6 +30,7 @@ var scriptTagPattern = regexp.MustCompile(`(?is)<script[^>]*>.*?</script>`)
 type attendancePDFRequest struct {
 	Template string              `json:"template"`
 	Session  string              `json:"session"`
+	Filename string              `json:"filename"`
 	Roster   attendanceRoster    `json:"roster"`
 	Rosters  []attendancePDFItem `json:"rosters"`
 }
@@ -126,9 +127,14 @@ func attendancePDFHandler(w http.ResponseWriter, r *http.Request) {
 
 	var pdfBytes []byte
 	filename := ""
+	requestedFilename := sanitizeFilename(req.Filename)
 	if len(pdfs) == 1 {
 		pdfBytes = pdfs[0]
-		filename = buildAttendanceFilename(firstCode, firstTemplate)
+		if requestedFilename != "" {
+			filename = buildAttendanceFilename(requestedFilename, "attendance")
+		} else {
+			filename = buildAttendanceFilename(firstCode, firstTemplate)
+		}
 	} else {
 		merged, err := mergePDFs(pdfs)
 		if err != nil {
@@ -136,7 +142,11 @@ func attendancePDFHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		pdfBytes = merged
-		filename = buildAttendanceFilename("", "multi")
+		if requestedFilename != "" {
+			filename = buildAttendanceFilename(requestedFilename, "attendance")
+		} else {
+			filename = buildAttendanceFilename("", "multi")
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/pdf")
@@ -315,6 +325,10 @@ const fillAttendanceTemplateJS = `(function () {
       el.textContent = value || '';
     }
   };
+
+  if (roster.instructor) {
+    document.title = roster.instructor;
+  }
 
   setText('instructor', roster.instructor);
   setText('start_time', startTimeValue);

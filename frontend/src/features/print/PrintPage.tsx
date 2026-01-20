@@ -212,10 +212,14 @@ function PrintPage() {
     }
   }
 
-  const buildInstructorPayload = (rostersToPrint: ReturnType<typeof buildRosterGroups>) => {
+  const buildInstructorPayload = (
+    rostersToPrint: ReturnType<typeof buildRosterGroups>,
+    filename?: string,
+  ) => {
     const sessionName = getCurrentSessionName() || 'Summer 2025'
     return {
       session: sessionName,
+      filename,
       rosters: rostersToPrint.map(roster => ({
         template: sanitizeLevel(roster.level),
         roster: {
@@ -300,7 +304,7 @@ function PrintPage() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(buildInstructorPayload(group.rosters)),
+          body: JSON.stringify(buildInstructorPayload(group.rosters, group.name)),
         })
 
         if (!response.ok) {
