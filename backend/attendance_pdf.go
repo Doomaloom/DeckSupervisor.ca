@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
+	"github.com/pdfcpu/pdfcpu/pkg/api"
 )
 
 const (
@@ -25,8 +28,14 @@ const (
 var scriptTagPattern = regexp.MustCompile(`(?is)<script[^>]*>.*?</script>`)
 
 type attendancePDFRequest struct {
+	Template string              `json:"template"`
+	Session  string              `json:"session"`
+	Roster   attendanceRoster    `json:"roster"`
+	Rosters  []attendancePDFItem `json:"rosters"`
+}
+
+type attendancePDFItem struct {
 	Template string           `json:"template"`
-	Session  string           `json:"session"`
 	Roster   attendanceRoster `json:"roster"`
 }
 
@@ -43,6 +52,11 @@ type attendanceRoster struct {
 
 type attendanceStudent struct {
 	Name string `json:"name"`
+}
+
+type attendancePDFPayload struct {
+	Session string
+	Roster  attendanceRoster
 }
 
 type attendanceRenderPayload struct {
@@ -62,29 +76,69 @@ func attendancePDFHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.Template = strings.TrimSpace(req.Template)
-	if req.Template == "" {
-		http.Error(w, "Missing attendance template", http.StatusBadRequest)
-		return
+	session := strings.TrimSpace(req.Session)
+	if session == "" {
+		session = defaultSessionName
 	}
 
-	if strings.TrimSpace(req.Session) == "" {
-		req.Session = defaultSessionName
+	items := req.Rosters
+	if len(items) == 0 {
+		req.Template = strings.TrimSpace(req.Template)
+		if req.Template == "" {
+			http.Error(w, "Missing attendance template", http.StatusBadRequest)
+			return
+		}
+		items = []attendancePDFItem{{Template: req.Template, Roster: req.Roster}}
 	}
 
-	templatePath, err := resolveAttendanceTemplate(req.Template)
-	if err != nil {
-		http.Error(w, "Attendance template not found", http.StatusNotFound)
-		return
+	pdfs := make([][]byte, 0, len(items))
+	firstTemplate := ""
+	firstCode := ""
+	for index, item := range items {
+		template := strings.TrimSpace(item.Template)
+		if template == "" {
+			http.Error(w, "Missing attendance template", http.StatusBadRequest)
+			return
+		}
+
+		templatePath, err := resolveAttendanceTemplate(template)
+		if err != nil {
+			http.Error(w, "Attendance template not found", http.StatusNotFound)
+			return
+		}
+
+		pdfBytes, err := renderAttendancePDF(r.Context(), templatePath, attendancePDFPayload{
+			Session: session,
+			Roster:  item.Roster,
+		})
+		if err != nil {
+			http.Error(w, "Unable to render attendance PDF", http.StatusInternalServerError)
+			return
+		}
+
+		if index == 0 {
+			firstTemplate = template
+			firstCode = item.Roster.Code
+		}
+
+		pdfs = append(pdfs, pdfBytes)
 	}
 
-	pdfBytes, err := renderAttendancePDF(r.Context(), templatePath, req)
-	if err != nil {
-		http.Error(w, "Unable to render attendance PDF", http.StatusInternalServerError)
-		return
+	var pdfBytes []byte
+	filename := ""
+	if len(pdfs) == 1 {
+		pdfBytes = pdfs[0]
+		filename = buildAttendanceFilename(firstCode, firstTemplate)
+	} else {
+		merged, err := mergePDFs(pdfs)
+		if err != nil {
+			http.Error(w, "Unable to merge attendance PDFs", http.StatusInternalServerError)
+			return
+		}
+		pdfBytes = merged
+		filename = buildAttendanceFilename("", "multi")
 	}
 
-	filename := buildAttendanceFilename(req.Roster.Code, req.Template)
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
 	w.Write(pdfBytes)
@@ -152,7 +206,7 @@ func sanitizeFilename(input string) string {
 	return clean
 }
 
-func renderAttendancePDF(ctx context.Context, templatePath string, req attendancePDFRequest) ([]byte, error) {
+func renderAttendancePDF(ctx context.Context, templatePath string, data attendancePDFPayload) ([]byte, error) {
 	templateHTML, err := os.ReadFile(templatePath)
 	if err != nil {
 		return nil, err
@@ -160,13 +214,13 @@ func renderAttendancePDF(ctx context.Context, templatePath string, req attendanc
 	htmlContent := stripScriptTags(string(templateHTML))
 
 	payload := attendanceRenderPayload{
-		Code:       req.Roster.Code,
-		Time:       req.Roster.Time,
-		Instructor: req.Roster.Instructor,
-		Location:   req.Roster.Location,
-		Schedule:   req.Roster.Schedule,
-		Session:    req.Session,
-		Students:   req.Roster.Students,
+		Code:       data.Roster.Code,
+		Time:       data.Roster.Time,
+		Instructor: data.Roster.Instructor,
+		Location:   data.Roster.Location,
+		Schedule:   data.Roster.Schedule,
+		Session:    data.Session,
+		Students:   data.Roster.Students,
 	}
 	rosterJSON, err := json.Marshal(payload)
 	if err != nil {
@@ -223,6 +277,26 @@ func renderAttendancePDF(ctx context.Context, templatePath string, req attendanc
 
 func stripScriptTags(html string) string {
 	return scriptTagPattern.ReplaceAllString(html, "")
+}
+
+func mergePDFs(pdfs [][]byte) ([]byte, error) {
+	if len(pdfs) == 0 {
+		return nil, errors.New("no PDFs to merge")
+	}
+
+	readers := make([]io.ReadSeeker, 0, len(pdfs))
+	for _, pdf := range pdfs {
+		if len(pdf) == 0 {
+			return nil, errors.New("empty PDF payload")
+		}
+		readers = append(readers, bytes.NewReader(pdf))
+	}
+
+	var buf bytes.Buffer
+	if err := api.MergeRaw(readers, &buf, false, nil); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 const fillAttendanceTemplateJS = `(function () {
