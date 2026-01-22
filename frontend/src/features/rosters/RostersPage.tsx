@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useDay } from '../../app/DayContext'
 import { extractStartTime } from '../../lib/time'
+import { prefetchInstructorPacket } from '../../lib/instructorPdfCache'
 import CustomRostersPanel from './components/CustomRostersPanel'
 import RosterFiltersBar from './components/RosterFiltersBar'
 import RosterList from './components/RosterList'
@@ -77,6 +78,20 @@ function RostersPage() {
             [code]: !current[code],
         }))
     }
+    const selectedDayRef = useRef(selectedDay)
+
+    useEffect(() => {
+        selectedDayRef.current = selectedDay
+    }, [selectedDay])
+
+    useEffect(() => {
+        return () => {
+            const day = selectedDayRef.current
+            if (day) {
+                void prefetchInstructorPacket(day)
+            }
+        }
+    }, [])
 
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">

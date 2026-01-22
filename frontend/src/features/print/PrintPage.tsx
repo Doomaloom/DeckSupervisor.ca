@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { useDay } from '../../app/DayContext'
 import { getStudentsForDay } from '../../lib/storage'
+import {
+  getCachedInstructorPdf,
+  getCurrentSessionId,
+  getCurrentSessionName,
+  getInstructorPacket,
+  upsertInstructorPdf,
+} from '../../lib/instructorPdfCache'
 import { buildRosterGroups, sanitizeLevel } from '../rosters/utils'
 import { printOptions } from './constants'
 import type { PrintOptionKey } from './types'
@@ -24,11 +31,10 @@ function PrintPage() {
     schematicCovers: false,
     extraMasterlistCopy: false,
   })
-  const [instructorSelections, setInstructorSelections] = useState<Record<string, boolean>>({})
-  const [instructorExtras, setInstructorExtras] = useState({
-    singlePrint: true,
-    schematicCoverPage: false,
-  })
+  const [cachedInstructorPacket, setCachedInstructorPacket] = useState<Awaited<
+    ReturnType<typeof getInstructorPacket>
+  > | null>(null)
+  const [busyInstructors, setBusyInstructors] = useState<Record<string, boolean>>({})
   const [masterlistExtras, setMasterlistExtras] = useState({
     schematicCoverPage: false,
   })
@@ -53,20 +59,6 @@ function PrintPage() {
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [activeModal])
-
-  useEffect(() => {
-    if (!instructorNames.length) {
-      setInstructorSelections({})
-      return
-    }
-    setInstructorSelections(current => {
-      const next: Record<string, boolean> = {}
-      instructorNames.forEach(name => {
-        next[name] = current[name] ?? true
-      })
-      return next
-    })
-  }, [instructorNames])
 
   useEffect(() => {
     if (!schematicOptions.highlightInstructor) {
@@ -105,20 +97,6 @@ function PrintPage() {
     }))
   }
 
-  const handleToggleInstructor = (name: string) => {
-    setInstructorSelections(current => ({
-      ...current,
-      [name]: !current[name],
-    }))
-  }
-
-  const handleToggleInstructorExtra = (key: keyof typeof instructorExtras) => {
-    setInstructorExtras(current => ({
-      ...current,
-      [key]: !current[key],
-    }))
-  }
-
   const handleToggleMasterlistExtra = (key: keyof typeof masterlistExtras) => {
     setMasterlistExtras(current => ({
       ...current,
@@ -143,14 +121,18 @@ function PrintPage() {
     })
   }
 
-  const openPdfPrintDialog = (pdfBlob: Blob) => {
+  const openPdfPrintDialog = (pdfBlob: Blob, existingWindow?: Window | null) => {
     const blobUrl = window.URL.createObjectURL(pdfBlob)
-    const printWindow = window.open(blobUrl, '_blank')
+    const printWindow = existingWindow ?? window.open(blobUrl, '_blank')
 
     if (!printWindow) {
       window.URL.revokeObjectURL(blobUrl)
       alert('Pop-up blocked. Please allow pop-ups to print.')
       return
+    }
+
+    if (existingWindow) {
+      printWindow.location.href = blobUrl
     }
 
     const cleanup = () => {
@@ -171,46 +153,31 @@ function PrintPage() {
     setTimeout(triggerPrint, 3000)
   }
 
-  const getCurrentSessionName = () => {
-    if (typeof window === 'undefined') {
-      return ''
+  useEffect(() => {
+    if (activeModal !== 'instructors') {
+      return
     }
-    const currentSessionId = localStorage.getItem('decksupervisor.currentSessionId') ?? ''
-    const stored = localStorage.getItem('decksupervisor.sessions')
-    if (!currentSessionId || !stored) {
-      return ''
-    }
-    try {
-      const sessions = JSON.parse(stored) as {
-        id: string
-        sessionDay: string
-        sessionSeason: string
-        startDate: string
-      }[]
-      const session = sessions.find(item => item.id === currentSessionId)
-      if (!session) {
-        return ''
+    let isActive = true
+    const loadPacket = async () => {
+      if (!selectedDay) {
+        setCachedInstructorPacket(null)
+        return
       }
-      const dayNames: Record<string, string> = {
-        Mo: 'Monday',
-        Tu: 'Tuesday',
-        We: 'Wednesday',
-        Th: 'Thursday',
-        Fr: 'Friday',
-        Sa: 'Saturday',
-        Su: 'Sunday',
+      const sessionId = getCurrentSessionId()
+      if (!sessionId) {
+        setCachedInstructorPacket(null)
+        return
       }
-      const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
-      const season = session.sessionSeason?.trim()
-      const year = session.startDate ? new Date(session.startDate).getFullYear() : NaN
-      const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
-      const parts = [dayLabel, season, yearLabel].filter(Boolean)
-      return parts.length ? parts.join(' ') : ''
-    } catch (error) {
-      console.error('Failed to parse stored sessions', error)
-      return ''
+      const packet = await getInstructorPacket(sessionId, selectedDay)
+      if (isActive) {
+        setCachedInstructorPacket(packet)
+      }
     }
-  }
+    void loadPacket()
+    return () => {
+      isActive = false
+    }
+  }, [activeModal, selectedDay])
 
   const buildInstructorPayload = (
     rostersToPrint: ReturnType<typeof buildRosterGroups>,
@@ -238,15 +205,28 @@ function PrintPage() {
     }
   }
 
-  const handlePrintInstructorSheets = async () => {
+  const refreshCachedPacket = async () => {
+    if (!selectedDay) {
+      setCachedInstructorPacket(null)
+      return
+    }
+    const sessionId = getCurrentSessionId()
+    if (!sessionId) {
+      setCachedInstructorPacket(null)
+      return
+    }
+    const packet = await getInstructorPacket(sessionId, selectedDay)
+    setCachedInstructorPacket(packet)
+  }
+
+  const handlePrintInstructorSheet = async (name: string) => {
     if (!selectedDay) {
       alert('Please select a day before printing instructor sheets.')
       return
     }
 
-    const selectedInstructors = instructorNames.filter(name => instructorSelections[name])
-    if (selectedInstructors.length === 0) {
-      alert('Select at least one instructor to print.')
+    if (!name) {
+      alert('Select an instructor to print.')
       return
     }
 
@@ -256,65 +236,57 @@ function PrintPage() {
       return
     }
 
+    const sessionId = getCurrentSessionId()
+    if (!sessionId) {
+      alert('Please select a session before printing.')
+      return
+    }
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      alert('Pop-up blocked. Please allow pop-ups to print.')
+      return
+    }
+    printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
+
+    setBusyInstructors(current => ({
+      ...current,
+      [name]: true,
+    }))
+
     try {
+      const cached = await getCachedInstructorPdf(sessionId, selectedDay, name)
+      if (cached) {
+        openPdfPrintDialog(cached, printWindow)
+        return
+      }
+
       const rosterGroups = buildRosterGroups(students)
-      if (instructorExtras.singlePrint) {
-        const rostersToPrint = selectedInstructors.flatMap(name =>
-          rosterGroups.filter(roster => roster.instructor === name),
-        )
+      const rostersToPrint = rosterGroups.filter(roster => roster.instructor === name)
 
-        if (rostersToPrint.length === 0) {
-          alert('No classes found for the selected instructors.')
-          return
-        }
-
-        const response = await fetch('/api/attendance-pdf', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(buildInstructorPayload(rostersToPrint)),
-        })
-
-        if (!response.ok) {
-          const message = await response.text()
-          throw new Error(message || 'Failed to generate instructor sheets')
-        }
-
-        const pdfBlob = await response.blob()
-        openPdfPrintDialog(pdfBlob)
+      if (rostersToPrint.length === 0) {
+        alert(`No classes found for ${name}.`)
+        printWindow.close()
         return
       }
 
-      const grouped = selectedInstructors
-        .map(name => ({
-          name,
-          rosters: rosterGroups.filter(roster => roster.instructor === name),
-        }))
-        .filter(group => group.rosters.length > 0)
+      const response = await fetch('/api/attendance-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(buildInstructorPayload(rostersToPrint, name)),
+      })
 
-      if (grouped.length === 0) {
-        alert('No classes found for the selected instructors.')
-        return
+      if (!response.ok) {
+        const message = await response.text()
+        throw new Error(message || `Failed to generate sheets for ${name}`)
       }
 
-      for (const group of grouped) {
-        const response = await fetch('/api/attendance-pdf', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(buildInstructorPayload(group.rosters, group.name)),
-        })
-
-        if (!response.ok) {
-          const message = await response.text()
-          throw new Error(message || `Failed to generate sheets for ${group.name}`)
-        }
-
-        const pdfBlob = await response.blob()
-        openPdfPrintDialog(pdfBlob)
-      }
+      const pdfBlob = await response.blob()
+      await upsertInstructorPdf(sessionId, selectedDay, name, pdfBlob)
+      await refreshCachedPacket()
+      openPdfPrintDialog(pdfBlob, printWindow)
     } catch (error) {
       console.error(error)
       const message =
@@ -322,6 +294,12 @@ function PrintPage() {
           ? error.message
           : 'Unable to generate instructor sheets. Please try again.'
       alert(message)
+      printWindow.close()
+    } finally {
+      setBusyInstructors(current => ({
+        ...current,
+        [name]: false,
+      }))
     }
   }
 
@@ -364,12 +342,16 @@ function PrintPage() {
       <InstructorOptionsModal
         open={activeModal === 'instructors'}
         instructorNames={instructorNames}
-        selections={instructorSelections}
-        extras={instructorExtras}
+        cachedInstructors={cachedInstructorPacket?.instructors.reduce<Record<string, boolean>>(
+          (acc, entry) => {
+            acc[entry.name] = true
+            return acc
+          },
+          {},
+        ) ?? {}}
+        busyInstructors={busyInstructors}
         onClose={() => setActiveModal(null)}
-        onToggleInstructor={handleToggleInstructor}
-        onToggleExtra={handleToggleInstructorExtra}
-        onPrint={handlePrintInstructorSheets}
+        onPrintInstructor={handlePrintInstructorSheet}
       />
       <MasterlistOptionsModal
         open={activeModal === 'masterlist'}

@@ -8,6 +8,7 @@ import {
     setScheduleForDay,
     setStudentsForDay,
 } from '../../../lib/storage'
+import { prefetchInstructorPacket } from '../../../lib/instructorPdfCache'
 import type { Student } from '../../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
 import type { Course, DragState } from '../types'
@@ -266,6 +267,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
             return { ...student, instructor }
         })
         setStudentsForDay(selectedDay, updated)
+        void prefetchInstructorPacket(selectedDay)
         alert('Schedule saved successfully!')
     }
 
