@@ -28,6 +28,165 @@
 			</form>
 			<div class="templatePage">
 				<style>
+					/* Fixed Size for the Table */
+					table {
+						width: 1400px;
+					}
+
+					/*            - add this .rotate class to all the td            - adjust this height value if your titles get longer (see #2)            */
+					.rotate {
+						white-space: nowrap;
+						height: 320px !important;
+						position: relative;
+					}
+
+					/*            - Adjust the top value if you adjusted the height value            */
+					.rotate span {
+						transform: translate(0, 190px) rotate(-90deg);
+						transform-origin: left top;
+						display: block;
+						position: absolute;
+						top: 120px;
+						left: 0px;
+					}
+
+					/*            - This removes all the break tags so it stays on one line            */
+					/*            .rotate br {            display: none;            }            */
+				</style>
+				<table border="1">
+					<tbody id="attendance-rows">
+						<tr id="student-rows">
+							<td class="fa-lg" style="width: 660pt; height: 20pt; white-space: nowrap;"><b>&nbsp;<font
+										size="5">Swim Teen Adult 3</font></b>
+								<p style="text-align: left;"><span style="font-family: Arial;">
+										<font size="3"><strong>&nbsp;Instructor:&nbsp;<span id="instructor"></span></strong><br> <span
+												style="background-color: rgb(255, 255, 255);"><strong>&nbsp;Day/Time:&nbsp;</strong><span id="start_time"></span><br> <strong>&nbsp;Session:&nbsp;</strong><span id="session"></span>&nbsp;</span><span
+												style="background-color: rgb(255, 255, 255);"><br>
+												<strong>&nbsp;Location:</strong>&nbsp;<span id="location"></span><br>
+												<strong>&nbsp;Barcode:&nbsp;</strong><span id="barcode"></span></span></font>
+									</span></p>
+							</td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>Previous Level</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>1. Shallow Dive into Deep Water</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>2. Stride Entry into Deep Water</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>3. Compact Jump into Deep Water</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>4. Legs-only Surface support 30-60 sec</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>5. Back Somersault (in water)</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>6. Swim Underwater 5-10 m to Recover Object</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>7. Eggbeater Kick on Back or Scissor Kick on Side 10-15
+											m</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>8. Breaststroke 25-50 m</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>9a. Front Crawl (50-100 m.)</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>9b. Back Crawl (50-100 m.)</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 60pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>10. Head-up Front Crawl 10-15 m</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 60pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>11. Interval Training: 4 x 50 m Front or Back Crawl or <br>
+											Breaststroke with 30 sec Rests</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>12. Sprint (25-50 m) Front Crawl, Back Crawl or
+											Breaststroke</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 90pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>13. Workout 300 m: 50 m Warm-up (choice of Strokes); 4 x 25 m
+											<br> Front Crawl with 15 sec Rests; 4 x25 m Back Crawl with 15 sec<br>
+											Rests; 50 m Cool-down (Choice of Strokes)</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>14a. Water Smart Messages - Swim with a Buddy</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>14b. Water Smart Messages Wear a Lifejacket</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>14c. Water Smart Messages - Check the ice</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>14d. Water Smart Messages - Within Arms</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 50pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;Result: &nbsp;</strong>&nbsp;Complete (c) Incomplete
+										(I)&nbsp;&nbsp;</font>
+								</span></td>
+							<td class="rotate"
+								style="width: 50pt; height: 50pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;Register&nbsp;In</strong></font>
+								</span></td>
+						</tr> <!-- loop:Client -->
+					</tbody>
+				</table>
+			<p style="page-break-before: always;"> <span
+						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span>
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<meta http-equiv="X-UA-Compatible" content="ie=edge">
+					<title>Document</title>
+				</p>
+				<style>
 					.wm-ab-launcher-spinner {
 						height: 100%;
 						left: 0;
@@ -189,166 +348,7 @@
 						</tr>
 					</tbody>
 				</table>
-				<p style="page-break-before: always;"> <span
-						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span>
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<meta http-equiv="X-UA-Compatible" content="ie=edge">
-					<title>Document</title>
-				</p>
-				<style>
-					/* Fixed Size for the Table */
-					table {
-						width: 1400px;
-					}
-
-					/*            - add this .rotate class to all the td            - adjust this height value if your titles get longer (see #2)            */
-					.rotate {
-						white-space: nowrap;
-						height: 320px !important;
-						position: relative;
-					}
-
-					/*            - Adjust the top value if you adjusted the height value            */
-					.rotate span {
-						transform: translate(0, 190px) rotate(-90deg);
-						transform-origin: left top;
-						display: block;
-						position: absolute;
-						top: 120px;
-						left: 0px;
-					}
-
-					/*            - This removes all the break tags so it stays on one line            */
-					/*            .rotate br {            display: none;            }            */
-				</style>
-				<table border="1">
-					<tbody id="attendance-rows">
-						<tr id="student-rows">
-							<td class="fa-lg" style="width: 660pt; height: 20pt; white-space: nowrap;"><b>&nbsp;<font
-										size="5">Swim Teen Adult 3</font></b>
-								<p style="text-align: left;"><span style="font-family: Arial;">
-										<font size="3"><strong>&nbsp;Instructor:&nbsp;<span id="instructor"></span></strong><br> <span
-												style="background-color: rgb(255, 255, 255);"><strong>&nbsp;Day/Time:&nbsp;</strong><span id="start_time"></span><br> <strong>&nbsp;Session:&nbsp;</strong><span id="session"></span>&nbsp;</span><span
-												style="background-color: rgb(255, 255, 255);"><br>
-												<strong>&nbsp;Location:</strong>&nbsp;<span id="location"></span><br>
-												<strong>&nbsp;Barcode:&nbsp;</strong><span id="barcode"></span></span></font>
-									</span></p>
-							</td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>Previous Level</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>1. Shallow Dive into Deep Water</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>2. Stride Entry into Deep Water</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>3. Compact Jump into Deep Water</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>4. Legs-only Surface support 30-60 sec</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>5. Back Somersault (in water)</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>6. Swim Underwater 5-10 m to Recover Object</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>7. Eggbeater Kick on Back or Scissor Kick on Side 10-15
-											m</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>8. Breaststroke 25-50 m</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>9a. Front Crawl (50-100 m.)</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>9b. Back Crawl (50-100 m.)</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 60pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>10. Head-up Front Crawl 10-15 m</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 60pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>11. Interval Training: 4 x 50 m Front or Back Crawl or <br>
-											Breaststroke with 30 sec Rests</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>12. Sprint (25-50 m) Front Crawl, Back Crawl or
-											Breaststroke</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 90pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>13. Workout 300 m: 50 m Warm-up (choice of Strokes); 4 x 25 m
-											<br> Front Crawl with 15 sec Rests; 4 x25 m Back Crawl with 15 sec<br>
-											Rests; 50 m Cool-down (Choice of Strokes)</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>14a. Water Smart Messages - Swim with a Buddy</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>14b. Water Smart Messages Wear a Lifejacket</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>14c. Water Smart Messages - Check the ice</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 40pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>14d. Water Smart Messages - Within Arms</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 50pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>&nbsp;Result: &nbsp;</strong>&nbsp;Complete (c) Incomplete
-										(I)&nbsp;&nbsp;</font>
-								</span></td>
-							<td class="rotate"
-								style="width: 50pt; height: 50pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>&nbsp;Register&nbsp;In</strong></font>
-								</span></td>
-						</tr> <!-- loop:Client -->
-					</tbody>
-				</table>
-			</div>
+				</div>
 
 		</div>
 	</div>

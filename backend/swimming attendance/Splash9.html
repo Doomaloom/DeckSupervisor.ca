@@ -28,6 +28,178 @@
 			</form>
 			<div class="templatePage">
 				<style>
+					/* Fixed Size for the Table */
+					table {
+						width: 1400px;
+					}
+
+					/*            - add this .rotate class to all the td            - adjust this height value if your titles get longer (see #2)            */
+					.rotate {
+						white-space: nowrap;
+						height: 320px !important;
+						position: relative;
+					}
+
+					/*            - Adjust the top value if you adjusted the height value            */
+					.rotate span {
+						transform: translate(0, 190px) rotate(-90deg);
+						transform-origin: left top;
+						display: block;
+						position: absolute;
+						top: 120px;
+						left: 0px;
+					}
+
+					/*            - This removes all the break tags so it stays on one line            */
+					/*            .rotate br {            display: none;            }            */
+				</style>
+				<table border="1">
+					<tbody id="attendance-rows">
+						<tr id="student-rows">
+							<td class="fa-lg" style="width: 660pt; height: 20pt; white-space: nowrap;"><b>&nbsp;<font
+										size="5">Splash 9 Star Patrol</font></b>
+								<p style="text-align: left;"><span style="font-family: Arial;">
+										<font size="3"><strong>&nbsp;Instructor:&nbsp; <span id="instructor"></span></strong><br> <span
+												style="background-color: rgb(255, 255, 255);"><strong>&nbsp;Day/Time:&nbsp;</strong><span id="start_time"></span>
+												<br> <strong>&nbsp;Session:&nbsp;</strong><span id="session"></span>&nbsp;</span><span
+												style="background-color: rgb(255, 255, 255);"><br>
+												<strong>&nbsp;Location:</strong>&nbsp;<span id="location"></span><br>
+												<strong>&nbsp;Barcode:&nbsp;</strong><span id="barcode"></span></span></font>
+									</span></p>
+							</td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>Previous Level</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>1. Entries with aids - at least 2</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>2. Head-up swim (25 m. or yd.) &amp; scull in ready
+											position.</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>3. Defence Methods - Front, Side and Rear</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>4. Eggbeater Kick - travel, change direction &amp; height
+										</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>5. Carry object 4.5 kg (10 lb) Object - 25 m. or yd.
+										</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>6. Remove unconscious victim</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>7. Search to recover object</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>8. Turn &amp; support victim face-up - shallow water</strong>
+									</font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>9. Front Crawl, 100 m or y.</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>9. Back Crawl, 100 m or y.</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>9. Breaststroke, 100 m or y.</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>10. Fitness training - 600 m. or yd. workout (3
+											times)</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>11. Swim 300 m in 9 min (300 yd in 8:00 min) or
+											better</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>12. Care of a Bone or Joint Injury</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 60pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>13. Care for respiratory emergency - asthma or allergic<br>
+											reaction</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>14. Locate and describe submerged object</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>15. Rescue with towing aid - 20 m. or yd.</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;</strong></font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;Result: &nbsp;</strong>&nbsp;Complete (c) Incomplete
+										(I)&nbsp;&nbsp;</font>
+								</span></td>
+							<td class="rotate"
+								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;Register&nbsp;In</strong></font>
+								</span></td>
+						</tr> <!-- loop:Client -->
+					</tbody>
+				</table>
+			<p style="page-break-before: always;"> <span
+						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span>
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<meta http-equiv="X-UA-Compatible" content="ie=edge">
+					<title>Document</title>
+				</p>
+				<style>
 					.wm-ab-launcher-spinner {
 						height: 100%;
 						left: 0;
@@ -306,179 +478,7 @@
 						</tr>
 					</tbody>
 				</table>
-				<p style="page-break-before: always;"> <span
-						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span>
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<meta http-equiv="X-UA-Compatible" content="ie=edge">
-					<title>Document</title>
-				</p>
-				<style>
-					/* Fixed Size for the Table */
-					table {
-						width: 1400px;
-					}
-
-					/*            - add this .rotate class to all the td            - adjust this height value if your titles get longer (see #2)            */
-					.rotate {
-						white-space: nowrap;
-						height: 320px !important;
-						position: relative;
-					}
-
-					/*            - Adjust the top value if you adjusted the height value            */
-					.rotate span {
-						transform: translate(0, 190px) rotate(-90deg);
-						transform-origin: left top;
-						display: block;
-						position: absolute;
-						top: 120px;
-						left: 0px;
-					}
-
-					/*            - This removes all the break tags so it stays on one line            */
-					/*            .rotate br {            display: none;            }            */
-				</style>
-				<table border="1">
-					<tbody id="attendance-rows">
-						<tr id="student-rows">
-							<td class="fa-lg" style="width: 660pt; height: 20pt; white-space: nowrap;"><b>&nbsp;<font
-										size="5">Splash 9 Star Patrol</font></b>
-								<p style="text-align: left;"><span style="font-family: Arial;">
-										<font size="3"><strong>&nbsp;Instructor:&nbsp; <span id="instructor"></span></strong><br> <span
-												style="background-color: rgb(255, 255, 255);"><strong>&nbsp;Day/Time:&nbsp;</strong><span id="start_time"></span>
-												<br> <strong>&nbsp;Session:&nbsp;</strong><span id="session"></span>&nbsp;</span><span
-												style="background-color: rgb(255, 255, 255);"><br>
-												<strong>&nbsp;Location:</strong>&nbsp;<span id="location"></span><br>
-												<strong>&nbsp;Barcode:&nbsp;</strong><span id="barcode"></span></span></font>
-									</span></p>
-							</td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>Previous Level</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>1. Entries with aids - at least 2</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>2. Head-up swim (25 m. or yd.) &amp; scull in ready
-											position.</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>3. Defence Methods - Front, Side and Rear</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>4. Eggbeater Kick - travel, change direction &amp; height
-										</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>5. Carry object 4.5 kg (10 lb) Object - 25 m. or yd.
-										</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>6. Remove unconscious victim</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>7. Search to recover object</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>8. Turn &amp; support victim face-up - shallow water</strong>
-									</font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>9. Front Crawl, 100 m or y.</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>9. Back Crawl, 100 m or y.</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>9. Breaststroke, 100 m or y.</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>10. Fitness training - 600 m. or yd. workout (3
-											times)</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>11. Swim 300 m in 9 min (300 yd in 8:00 min) or
-											better</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>12. Care of a Bone or Joint Injury</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 60pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>13. Care for respiratory emergency - asthma or allergic<br>
-											reaction</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>14. Locate and describe submerged object</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>15. Rescue with towing aid - 20 m. or yd.</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>&nbsp;</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>&nbsp;</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>&nbsp;</strong></font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>&nbsp;Result: &nbsp;</strong>&nbsp;Complete (c) Incomplete
-										(I)&nbsp;&nbsp;</font>
-								</span></td>
-							<td class="rotate"
-								style="width: 30pt; height: 60pt; text-align: left; vertical-align: top;"><span
-									style="font-family: Arial;">
-									<font size="1"><strong>&nbsp;Register&nbsp;In</strong></font>
-								</span></td>
-						</tr> <!-- loop:Client -->
-					</tbody>
-				</table>
-			</div>
+				</div>
 
 		</div>
 	</div>

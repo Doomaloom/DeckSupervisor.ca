@@ -28,6 +28,169 @@
             </form>
             <div class="templatePage">
                 <style>
+                    /* Fixed Size for the Table */
+                    table {
+                        width: 1500px;
+                    }
+
+                    /*            - add this .rotate class to all the td            - adjust this height value if your titles get longer (see #2)            */
+                    .rotate {
+                        white-space: nowrap;
+                        height: 300px !important;
+                        position: relative;
+                    }
+
+                    /*            - Adjust the top value if you adjusted the height value            */
+                    .rotate span {
+                        transform: translate(0, 190px) rotate(-90deg);
+                        transform-origin: left top;
+                        display: block;
+                        position: absolute;
+                        top: 100px;
+                        left: 0px;
+                    }
+
+                    /*            - This removes all the break tags so it stays on one line            */
+                    /*.rotate br {            display: none;            }*/
+                </style>
+                <table border="1" class="">
+                    <tbody id="attendance-rows">
+                        <tr id="student-rows">
+                            <td class="fa-lg" style="width: 660pt; height: 50pt; white-space: nowrap;"><b>&nbsp;<font
+                                        size="5"><b>Parent and Tot 2</b></font><br>
+                                    <p style="text-align: left;"><span style="font-family: Arial;">
+                                            <font size="3"><strong>&nbsp;Instructor:&nbsp; <span id="instructor"></span> </strong><br> <span
+                                                    style="background-color: rgb(255, 255, 255);"><strong>&nbsp;Day/Time:&nbsp;</strong><span id="start_time"></span><br> <strong>&nbsp;Session:&nbsp;</strong><span id="session"></span>&nbsp;</span><span
+                                                    style="background-color: rgb(255, 255, 255);"><br>
+                                                    <strong>&nbsp;Location:</strong>&nbsp;<span id="location"></span><br>
+                                                    <strong>&nbsp;Barcode:&nbsp;</strong><span id="barcode"></span></span>
+                                            </font>
+                                        </span></p>
+                                </b></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>Previous Level</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>1.&nbsp; Entry from Sitting Position (Assisted)</strong>
+                                    </font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>2.&nbsp; Exit the Water (Assisted)</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>3.&nbsp; Blow Bubbles On and In Water</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>4.&nbsp; Face Wet and in Water</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  160pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>5.&nbsp; Attempt to Recover Object Below Surface</strong>
+                                    </font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>6.&nbsp; Entry from Sitting Position Wearing PFD and
+                                            Return<br> (Assisted)</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>7.&nbsp; Front Float (Face In) - Assisted</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>8.&nbsp; Back Float (Assisted)</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  160pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>9a. &nbsp; Kicking on Front (Assisted)</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  160pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>9b. &nbsp; Kicking on Back (Assisted)</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>10. &nbsp; Surface Passes with Continuous Contact</strong>
+                                    </font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>11a. &nbsp; Water Smart Messages - Within Arms'
+                                            Reach</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>11b. &nbsp; Water Smart Messages - Wear a Lifejacket
+                                        </strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>11c. &nbsp; Water Smart Messages - Swim to Survive </strong>
+                                    </font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong> &nbsp; </strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>&nbsp;</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>&nbsp;</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>&nbsp;</strong></font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
+                                    style="font-family: Arial;">
+                                    <font size="1"><strong>&nbsp;Result: &nbsp;</strong>&nbsp;Complete (c) Incomplete
+                                        (I)&nbsp;&nbsp;</font>
+                                </span></td>
+                            <td class="rotate"
+                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;word-wrap:break-word;">
+                                <span style="font-family: Arial;">
+                                    <font size="1"><strong>&nbsp;Register&nbsp;In</strong></font>
+                                </span></td>
+                        </tr> <!-- loop:Client -->
+                    </tbody>
+                </table>
+            <p style="page-break-before: always"> <span
+                        style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+                    <title>Document</title>
+                </p>
+                <style>
                     .wm-ab-launcher-spinner {
                         height: 100%;
                         left: 0;
@@ -398,170 +561,7 @@
                         </tr>
                     </tbody>
                 </table>
-                <p style="page-break-before: always"> <span
-                        style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-                    <title>Document</title>
-                </p>
-                <style>
-                    /* Fixed Size for the Table */
-                    table {
-                        width: 1500px;
-                    }
-
-                    /*            - add this .rotate class to all the td            - adjust this height value if your titles get longer (see #2)            */
-                    .rotate {
-                        white-space: nowrap;
-                        height: 300px !important;
-                        position: relative;
-                    }
-
-                    /*            - Adjust the top value if you adjusted the height value            */
-                    .rotate span {
-                        transform: translate(0, 190px) rotate(-90deg);
-                        transform-origin: left top;
-                        display: block;
-                        position: absolute;
-                        top: 100px;
-                        left: 0px;
-                    }
-
-                    /*            - This removes all the break tags so it stays on one line            */
-                    /*.rotate br {            display: none;            }*/
-                </style>
-                <table border="1" class="">
-                    <tbody id="attendance-rows">
-                        <tr id="student-rows">
-                            <td class="fa-lg" style="width: 660pt; height: 50pt; white-space: nowrap;"><b>&nbsp;<font
-                                        size="5"><b>Parent and Tot 2</b></font><br>
-                                    <p style="text-align: left;"><span style="font-family: Arial;">
-                                            <font size="3"><strong>&nbsp;Instructor:&nbsp; <span id="instructor"></span> </strong><br> <span
-                                                    style="background-color: rgb(255, 255, 255);"><strong>&nbsp;Day/Time:&nbsp;</strong><span id="start_time"></span><br> <strong>&nbsp;Session:&nbsp;</strong><span id="session"></span>&nbsp;</span><span
-                                                    style="background-color: rgb(255, 255, 255);"><br>
-                                                    <strong>&nbsp;Location:</strong>&nbsp;<span id="location"></span><br>
-                                                    <strong>&nbsp;Barcode:&nbsp;</strong><span id="barcode"></span></span>
-                                            </font>
-                                        </span></p>
-                                </b></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>Previous Level</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>1.&nbsp; Entry from Sitting Position (Assisted)</strong>
-                                    </font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>2.&nbsp; Exit the Water (Assisted)</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>3.&nbsp; Blow Bubbles On and In Water</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>4.&nbsp; Face Wet and in Water</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  160pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>5.&nbsp; Attempt to Recover Object Below Surface</strong>
-                                    </font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>6.&nbsp; Entry from Sitting Position Wearing PFD and
-                                            Return<br> (Assisted)</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>7.&nbsp; Front Float (Face In) - Assisted</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>8.&nbsp; Back Float (Assisted)</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  160pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>9a. &nbsp; Kicking on Front (Assisted)</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  160pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>9b. &nbsp; Kicking on Back (Assisted)</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>10. &nbsp; Surface Passes with Continuous Contact</strong>
-                                    </font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>11a. &nbsp; Water Smart Messages - Within Arms'
-                                            Reach</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>11b. &nbsp; Water Smart Messages - Wear a Lifejacket
-                                        </strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>11c. &nbsp; Water Smart Messages - Swim to Survive </strong>
-                                    </font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong> &nbsp; </strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>&nbsp;</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>&nbsp;</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>&nbsp;</strong></font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;"><span
-                                    style="font-family: Arial;">
-                                    <font size="1"><strong>&nbsp;Result: &nbsp;</strong>&nbsp;Complete (c) Incomplete
-                                        (I)&nbsp;&nbsp;</font>
-                                </span></td>
-                            <td class="rotate"
-                                style="width:  140pt; height: 70pt; text-align: left; vertical-align: top;word-wrap:break-word;">
-                                <span style="font-family: Arial;">
-                                    <font size="1"><strong>&nbsp;Register&nbsp;In</strong></font>
-                                </span></td>
-                        </tr> <!-- loop:Client -->
-                    </tbody>
-                </table>
-            </div>
+                </div>
 
         </div>
     </div>
