@@ -7,12 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/chromedp/cdproto/page"
@@ -93,10 +96,23 @@ func attendancePDFHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pdfs := make([][]byte, 0, len(items))
-	firstTemplate := ""
-	firstCode := ""
-	for index, item := range items {
-		template := strings.TrimSpace(item.Template)
+	firstTemplate := strings.TrimSpace(items[0].Template)
+	firstCode := items[0].Roster.Code
+
+	if len(items) > 1 {
+		rendered, err := renderAttendancePDFManyTabs(r.Context(), session, items)
+		if err != nil {
+			log.Printf("attendance pdf: multi-tab render failed: %v", err)
+			rendered, err = renderAttendancePDFSequential(r.Context(), session, items)
+			if err != nil {
+				log.Printf("attendance pdf: sequential fallback failed: %v", err)
+				http.Error(w, fmt.Sprintf("Unable to render attendance PDF: %v", err), http.StatusInternalServerError)
+				return
+			}
+		}
+		pdfs = rendered
+	} else {
+		template := strings.TrimSpace(items[0].Template)
 		if template == "" {
 			http.Error(w, "Missing attendance template", http.StatusBadRequest)
 			return
@@ -110,18 +126,12 @@ func attendancePDFHandler(w http.ResponseWriter, r *http.Request) {
 
 		pdfBytes, err := renderAttendancePDF(r.Context(), templatePath, attendancePDFPayload{
 			Session: session,
-			Roster:  item.Roster,
+			Roster:  items[0].Roster,
 		})
 		if err != nil {
 			http.Error(w, "Unable to render attendance PDF", http.StatusInternalServerError)
 			return
 		}
-
-		if index == 0 {
-			firstTemplate = template
-			firstCode = item.Roster.Code
-		}
-
 		pdfs = append(pdfs, pdfBytes)
 	}
 
@@ -138,7 +148,7 @@ func attendancePDFHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		merged, err := mergePDFs(pdfs)
 		if err != nil {
-			http.Error(w, "Unable to merge attendance PDFs", http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("Unable to merge attendance PDFs: %v", err), http.StatusInternalServerError)
 			return
 		}
 		pdfBytes = merged
@@ -229,6 +239,40 @@ func sanitizeFilename(input string) string {
 }
 
 func renderAttendancePDF(ctx context.Context, templatePath string, data attendancePDFPayload) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(ctx, 25*time.Second)
+	defer cancel()
+
+	allocatorOptions, err := buildChromeAllocatorOptions()
+	if err != nil {
+		return nil, err
+	}
+
+	allocatorCtx, allocatorCancel := chromedp.NewExecAllocator(ctx, allocatorOptions...)
+	defer allocatorCancel()
+
+	taskCtx, taskCancel := chromedp.NewContext(allocatorCtx)
+	defer taskCancel()
+
+	return renderAttendancePDFWithContext(taskCtx, templatePath, data)
+}
+
+func buildChromeAllocatorOptions() ([]chromedp.ExecAllocatorOption, error) {
+	allocatorOptions := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.NoSandbox,
+		chromedp.Flag("disable-gpu", true),
+		chromedp.Flag("disable-dev-shm-usage", true),
+	)
+	chromePath, err := resolveChromePath()
+	if err != nil {
+		return nil, err
+	}
+	if chromePath != "" {
+		allocatorOptions = append(allocatorOptions, chromedp.ExecPath(chromePath))
+	}
+	return allocatorOptions, nil
+}
+
+func renderAttendancePDFWithContext(ctx context.Context, templatePath string, data attendancePDFPayload) ([]byte, error) {
 	templateHTML, err := os.ReadFile(templatePath)
 	if err != nil {
 		return nil, err
@@ -249,22 +293,8 @@ func renderAttendancePDF(ctx context.Context, templatePath string, data attendan
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 25*time.Second)
-	defer cancel()
-
-	allocatorOptions := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.NoSandbox,
-		chromedp.Flag("disable-gpu", true),
-		chromedp.Flag("disable-dev-shm-usage", true),
-	)
-	allocatorCtx, allocatorCancel := chromedp.NewExecAllocator(ctx, allocatorOptions...)
-	defer allocatorCancel()
-
-	taskCtx, taskCancel := chromedp.NewContext(allocatorCtx)
-	defer taskCancel()
-
 	var pdfBytes []byte
-	err = chromedp.Run(taskCtx,
+	err = chromedp.Run(ctx,
 		chromedp.EmulateViewport(1400, 900),
 		chromedp.Navigate("about:blank"),
 		chromedp.ActionFunc(func(ctx context.Context) error {
@@ -295,6 +325,148 @@ func renderAttendancePDF(ctx context.Context, templatePath string, data attendan
 		return nil, err
 	}
 	return pdfBytes, nil
+}
+
+func renderAttendancePDFManyTabs(ctx context.Context, session string, items []attendancePDFItem) ([][]byte, error) {
+	if len(items) == 0 {
+		return nil, errors.New("no attendance items provided")
+	}
+
+	type renderJob struct {
+		templatePath string
+		payload      attendancePDFPayload
+	}
+
+	jobs := make([]renderJob, 0, len(items))
+	for index, item := range items {
+		template := strings.TrimSpace(item.Template)
+		if template == "" {
+			return nil, fmt.Errorf("attendance item %d: missing attendance template", index+1)
+		}
+		templatePath, err := resolveAttendanceTemplate(template)
+		if err != nil {
+			return nil, fmt.Errorf("attendance item %d: attendance template not found", index+1)
+		}
+		jobs = append(jobs, renderJob{
+			templatePath: templatePath,
+			payload: attendancePDFPayload{
+				Session: session,
+				Roster:  item.Roster,
+			},
+		})
+	}
+
+	allocatorOptions, err := buildChromeAllocatorOptions()
+	if err != nil {
+		return nil, err
+	}
+	allocatorCtx, allocatorCancel := chromedp.NewExecAllocator(ctx, allocatorOptions...)
+	defer allocatorCancel()
+
+	browserCtx, browserCancel := chromedp.NewContext(allocatorCtx)
+	defer browserCancel()
+
+	if err := chromedp.Run(browserCtx, chromedp.Navigate("about:blank")); err != nil {
+		return nil, err
+	}
+
+	type result struct {
+		index int
+		pdf   []byte
+		err   error
+	}
+
+	results := make(chan result, len(jobs))
+	var wg sync.WaitGroup
+
+	for index, job := range jobs {
+		wg.Add(1)
+		go func(idx int, data renderJob) {
+			defer wg.Done()
+			tabCtx, tabCancel := chromedp.NewContext(browserCtx)
+			defer tabCancel()
+
+			tabCtx, timeoutCancel := context.WithTimeout(tabCtx, 25*time.Second)
+			defer timeoutCancel()
+
+			pdfBytes, err := renderAttendancePDFWithContext(tabCtx, data.templatePath, data.payload)
+			results <- result{index: idx, pdf: pdfBytes, err: err}
+		}(index, job)
+	}
+
+	wg.Wait()
+	close(results)
+
+	output := make([][]byte, len(jobs))
+	for res := range results {
+		if res.err != nil {
+			return nil, res.err
+		}
+		output[res.index] = res.pdf
+	}
+	return output, nil
+}
+
+func resolveChromePath() (string, error) {
+	if envPath := strings.TrimSpace(os.Getenv("CHROME_PATH")); envPath != "" {
+		if _, err := os.Stat(envPath); err == nil {
+			return envPath, nil
+		}
+		return "", fmt.Errorf("chrome executable not found at CHROME_PATH: %s", envPath)
+	}
+
+	if path, err := exec.LookPath("google-chrome"); err == nil {
+		return path, nil
+	}
+	if path, err := exec.LookPath("chromium"); err == nil {
+		return path, nil
+	}
+	if path, err := exec.LookPath("chromium-browser"); err == nil {
+		return path, nil
+	}
+
+	if runtime.GOOS == "darwin" {
+		candidates := []string{
+			"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+			"/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta",
+			"/Applications/Chromium.app/Contents/MacOS/Chromium",
+		}
+		for _, candidate := range candidates {
+			if _, err := os.Stat(candidate); err == nil {
+				return candidate, nil
+			}
+		}
+	}
+
+	return "", errors.New("chrome executable not found; install Chrome/Chromium or set CHROME_PATH")
+}
+
+func renderAttendancePDFSequential(ctx context.Context, session string, items []attendancePDFItem) ([][]byte, error) {
+	if len(items) == 0 {
+		return nil, errors.New("no attendance items provided")
+	}
+
+	output := make([][]byte, 0, len(items))
+	for index, item := range items {
+		template := strings.TrimSpace(item.Template)
+		if template == "" {
+			return nil, fmt.Errorf("attendance item %d: missing attendance template", index+1)
+		}
+		templatePath, err := resolveAttendanceTemplate(template)
+		if err != nil {
+			return nil, fmt.Errorf("attendance item %d: attendance template not found", index+1)
+		}
+
+		pdfBytes, err := renderAttendancePDF(ctx, templatePath, attendancePDFPayload{
+			Session: session,
+			Roster:  item.Roster,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("attendance item %d: %w", index+1, err)
+		}
+		output = append(output, pdfBytes)
+	}
+	return output, nil
 }
 
 func stripScriptTags(html string) string {

@@ -317,7 +317,11 @@ function PrintPage() {
       }
     } catch (error) {
       console.error(error)
-      alert('Unable to generate instructor sheets. Please try again.')
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Unable to generate instructor sheets. Please try again.'
+      alert(message)
     }
   }
 
