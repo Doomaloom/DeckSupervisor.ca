@@ -37,6 +37,7 @@ function PrintPage() {
   > | null>(null)
   const [busyInstructors, setBusyInstructors] = useState<Record<string, boolean>>({})
   const [isRefreshingInstructorPdfs, setIsRefreshingInstructorPdfs] = useState(false)
+  const [isPrintingAllInstructors, setIsPrintingAllInstructors] = useState(false)
   const [masterlistExtras, setMasterlistExtras] = useState({
     schematicCoverPage: false,
   })
@@ -207,6 +208,23 @@ function PrintPage() {
     }
   }
 
+  const groupRostersByInstructor = (rosterGroups: ReturnType<typeof buildRosterGroups>) => {
+    const grouped = new Map<string, typeof rosterGroups>()
+    rosterGroups.forEach(roster => {
+      const name = roster.instructor?.trim()
+      if (!name) {
+        return
+      }
+      const existing = grouped.get(name)
+      if (existing) {
+        existing.push(roster)
+      } else {
+        grouped.set(name, [roster])
+      }
+    })
+    return grouped
+  }
+
   const refreshCachedPacket = async () => {
     if (!selectedDay) {
       setCachedInstructorPacket(null)
@@ -237,6 +255,117 @@ function PrintPage() {
       await refreshCachedPacket()
     } finally {
       setIsRefreshingInstructorPdfs(false)
+    }
+  }
+
+  const handlePrintAllInstructorSheets = async () => {
+    if (!selectedDay) {
+      alert('Please select a day before printing instructor sheets.')
+      return
+    }
+
+    const sessionId = getCurrentSessionId()
+    if (!sessionId) {
+      alert('Please select a session before printing.')
+      return
+    }
+
+    const students = getStudentsForDay(selectedDay)
+    if (students.length === 0) {
+      alert('No roster data found for the selected day.')
+      return
+    }
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      alert('Pop-up blocked. Please allow pop-ups to print.')
+      return
+    }
+    printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
+
+    setIsPrintingAllInstructors(true)
+
+    try {
+      const rosterGroups = buildRosterGroups(students)
+      const grouped = groupRostersByInstructor(rosterGroups)
+      const orderedNames =
+        instructorNames.length > 0
+          ? instructorNames.filter(name => grouped.has(name))
+          : Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b))
+
+      if (orderedNames.length === 0) {
+        alert('No instructor sheets available to print.')
+        printWindow.close()
+        return
+      }
+
+      const pdfs: Blob[] = []
+      let shouldRefresh = false
+
+      for (const name of orderedNames) {
+        let pdfBlob = await getCachedInstructorPdf(sessionId, selectedDay, name)
+        if (!pdfBlob) {
+          const rostersToPrint = grouped.get(name) ?? []
+          if (rostersToPrint.length === 0) {
+            continue
+          }
+          const response = await fetch('/api/attendance-pdf', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(buildInstructorPayload(rostersToPrint, name)),
+          })
+
+          if (!response.ok) {
+            const message = await response.text()
+            throw new Error(message || `Failed to generate sheets for ${name}`)
+          }
+
+          pdfBlob = await response.blob()
+          await upsertInstructorPdf(sessionId, selectedDay, name, pdfBlob)
+          shouldRefresh = true
+        }
+        pdfs.push(pdfBlob)
+      }
+
+      if (pdfs.length === 0) {
+        alert('No instructor sheets available to print.')
+        printWindow.close()
+        return
+      }
+
+      const formData = new FormData()
+      pdfs.forEach((pdf, index) => {
+        formData.append('pdfs', pdf, `instructor-${index + 1}.pdf`)
+      })
+      formData.append('filename', 'instructor-sheets')
+
+      const concatResponse = await fetch('/api/concat-pdfs', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!concatResponse.ok) {
+        const message = await concatResponse.text()
+        throw new Error(message || 'Failed to combine instructor PDFs.')
+      }
+
+      const combinedPdf = await concatResponse.blob()
+      if (shouldRefresh) {
+        await refreshCachedPacket()
+      }
+      openPdfPrintDialog(combinedPdf, printWindow)
+    } catch (error) {
+      console.error(error)
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Unable to generate instructor sheets. Please try again.'
+      alert(message)
+      printWindow.close()
+    } finally {
+      setIsPrintingAllInstructors(false)
     }
   }
 
@@ -372,8 +501,10 @@ function PrintPage() {
         ) ?? {}}
         busyInstructors={busyInstructors}
         isRefreshing={isRefreshingInstructorPdfs}
+        isPrintingAll={isPrintingAllInstructors}
         onClose={() => setActiveModal(null)}
         onRefresh={handleRefreshInstructorPdfs}
+        onPrintAll={handlePrintAllInstructorSheets}
         onPrintInstructor={handlePrintInstructorSheet}
       />
       <MasterlistOptionsModal

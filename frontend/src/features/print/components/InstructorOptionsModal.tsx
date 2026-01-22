@@ -7,8 +7,10 @@ type InstructorOptionsModalProps = {
   cachedInstructors: Record<string, boolean>
   busyInstructors: Record<string, boolean>
   isRefreshing: boolean
+  isPrintingAll: boolean
   onClose: () => void
   onRefresh: () => void
+  onPrintAll: () => void
   onPrintInstructor: (name: string) => void
 }
 
@@ -18,8 +20,10 @@ function InstructorOptionsModal({
   cachedInstructors,
   busyInstructors,
   isRefreshing,
+  isPrintingAll,
   onClose,
   onRefresh,
+  onPrintAll,
   onPrintInstructor,
 }: InstructorOptionsModalProps) {
   if (!open) {
@@ -36,14 +40,24 @@ function InstructorOptionsModal({
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary/70">
           Instructors
         </p>
-        <button
-          type="button"
-          className="rounded-2xl border border-secondary/40 px-3 py-1 text-xs font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg disabled:cursor-not-allowed disabled:opacity-60"
-          onClick={onRefresh}
-          disabled={isRefreshing}
-        >
-          {isRefreshing ? 'Refreshing...' : 'Refresh PDFs'}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="rounded-2xl bg-secondary px-3 py-1 text-xs font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={onPrintAll}
+            disabled={isPrintingAll || instructorNames.length === 0}
+          >
+            {isPrintingAll ? 'Preparing...' : 'Print all as one'}
+          </button>
+          <button
+            type="button"
+            className="rounded-2xl border border-secondary/40 px-3 py-1 text-xs font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? 'Refreshing...' : 'Refresh PDFs'}
+          </button>
+        </div>
       </div>
       <div className="mt-4">
         {instructorNames.length === 0 ? (
