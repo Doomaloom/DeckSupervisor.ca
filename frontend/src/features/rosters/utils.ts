@@ -8,6 +8,10 @@ export function sanitizeLevel(level: string): string {
     }
     const normalized = level.trim()
 
+    if (/private/i.test(normalized)) {
+        return 'SplashPrivate'
+    }
+
     if (/splash\s*fitness/i.test(normalized)) {
         return 'SplashFitness'
     }
