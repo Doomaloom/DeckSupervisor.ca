@@ -6,7 +6,9 @@ type InstructorOptionsModalProps = {
   instructorNames: string[]
   cachedInstructors: Record<string, boolean>
   busyInstructors: Record<string, boolean>
+  isRefreshing: boolean
   onClose: () => void
+  onRefresh: () => void
   onPrintInstructor: (name: string) => void
 }
 
@@ -15,7 +17,9 @@ function InstructorOptionsModal({
   instructorNames,
   cachedInstructors,
   busyInstructors,
+  isRefreshing,
   onClose,
+  onRefresh,
   onPrintInstructor,
 }: InstructorOptionsModalProps) {
   if (!open) {
@@ -28,16 +32,26 @@ function InstructorOptionsModal({
       description="Print instructor packets as they are ready."
       onClose={onClose}
     >
-      <div className="mt-6">
+      <div className="mt-6 flex items-center justify-between gap-3">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary/70">
           Instructors
         </p>
+        <button
+          type="button"
+          className="rounded-2xl border border-secondary/40 px-3 py-1 text-xs font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+        >
+          {isRefreshing ? 'Refreshing...' : 'Refresh PDFs'}
+        </button>
+      </div>
+      <div className="mt-4">
         {instructorNames.length === 0 ? (
           <p className="mt-3 text-sm text-secondary/80">
             No instructors found. Add instructors in Manage Sessions.
           </p>
         ) : (
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             {instructorNames.map(name => {
               const isReady = cachedInstructors[name] ?? false
               const isBusy = busyInstructors[name] ?? false

@@ -6,6 +6,7 @@ import {
   getCurrentSessionId,
   getCurrentSessionName,
   getInstructorPacket,
+  prefetchInstructorPacket,
   upsertInstructorPdf,
 } from '../../lib/instructorPdfCache'
 import { buildRosterGroups, sanitizeLevel } from '../rosters/utils'
@@ -35,6 +36,7 @@ function PrintPage() {
     ReturnType<typeof getInstructorPacket>
   > | null>(null)
   const [busyInstructors, setBusyInstructors] = useState<Record<string, boolean>>({})
+  const [isRefreshingInstructorPdfs, setIsRefreshingInstructorPdfs] = useState(false)
   const [masterlistExtras, setMasterlistExtras] = useState({
     schematicCoverPage: false,
   })
@@ -219,6 +221,25 @@ function PrintPage() {
     setCachedInstructorPacket(packet)
   }
 
+  const handleRefreshInstructorPdfs = async () => {
+    if (!selectedDay) {
+      alert('Please select a day before refreshing PDFs.')
+      return
+    }
+    const sessionId = getCurrentSessionId()
+    if (!sessionId) {
+      alert('Please select a session before refreshing PDFs.')
+      return
+    }
+    setIsRefreshingInstructorPdfs(true)
+    try {
+      await prefetchInstructorPacket(selectedDay)
+      await refreshCachedPacket()
+    } finally {
+      setIsRefreshingInstructorPdfs(false)
+    }
+  }
+
   const handlePrintInstructorSheet = async (name: string) => {
     if (!selectedDay) {
       alert('Please select a day before printing instructor sheets.')
@@ -350,7 +371,9 @@ function PrintPage() {
           {},
         ) ?? {}}
         busyInstructors={busyInstructors}
+        isRefreshing={isRefreshingInstructorPdfs}
         onClose={() => setActiveModal(null)}
+        onRefresh={handleRefreshInstructorPdfs}
         onPrintInstructor={handlePrintInstructorSheet}
       />
       <MasterlistOptionsModal
