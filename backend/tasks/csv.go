@@ -65,6 +65,10 @@ func ProcessCSV(records [][]string, instructorMap map[string]string, fallbackDay
 		phone := getByName(row, []string{"AttendeePhone", "Phone"})
 
 		name := getByName(row, []string{"AttendeeName", "Name"})
+		if strings.Contains(name, ",") {
+			parts := strings.SplitN(name, ",", 2)
+			name = strings.TrimSpace(parts[1]) + " " + strings.TrimSpace(parts[0])
+		}
 		if name == "" {
 			firstName := getByName(row, []string{"FirstName", "First Name"})
 			lastName := getByName(row, []string{"LastName", "Last Name"})

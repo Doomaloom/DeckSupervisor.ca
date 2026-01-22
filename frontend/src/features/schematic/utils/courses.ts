@@ -24,6 +24,7 @@ export function buildCourses(students: Student[]): Course[] {
             startMinutes,
             endMinutes,
             studentCount: 1,
+            studentName: student.name,
         })
     })
 

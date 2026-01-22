@@ -7,6 +7,7 @@ export type Course = {
     startMinutes: number
     endMinutes: number
     studentCount: number
+    studentName?: string
 }
 
 export type DragState = {

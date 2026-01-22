@@ -23,6 +23,9 @@ function CourseCard({ course, capacity, capacityClass, style, onDragStart, onDro
             <div className="flex flex-1 flex-col items-center justify-center gap-1 px-2 py-1 text-center">
                 <p className="font-semibold">{course.level}</p>
                 <p>{course.code}</p>
+                {course.studentName && course.level.toLowerCase().includes('private') && (
+                    <p className="text-[0.7rem] font-semibold">{course.studentName}</p>
+                )}
             </div>
             <div className={`border-t border-black px-2 py-0.5 text-center text-[0.7rem] font-semibold ${capacityClass}`}>
                 {course.studentCount} of {capacity}
