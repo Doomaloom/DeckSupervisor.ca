@@ -60,7 +60,7 @@ func ProcessCSV(records [][]string, instructorMap map[string]string, fallbackDay
 		code := getByName(row, []string{"EventID", "Event Id", "ClassCode", "Code"})
 		day := getByName(row, []string{"Day", "DayOfWeek"})
 		timeValue := getByName(row, []string{"EventTime", "Time"})
-		location := getByName(row, []string{"Location"})
+		location := getByName(row, []string{"Location", "Facility"})
 		schedule := getByName(row, []string{"EventSchedule", "Schedule"})
 		phone := getByName(row, []string{"AttendeePhone", "Phone"})
 

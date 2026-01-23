@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useDay } from '../../app/DayContext'
-import { getStudentsForDay } from '../../lib/storage'
+import { getFormatOptions, getStudentsForDay } from '../../lib/storage'
 import {
   getCachedInstructorPdf,
   getCurrentSessionId,
@@ -453,6 +453,74 @@ function PrintPage() {
     }
   }
 
+  const handlePrintMasterlist = async () => {
+    if (!selectedDay) {
+      alert('Please select a day before printing the masterlist.')
+      return
+    }
+
+    const students = getStudentsForDay(selectedDay)
+    if (students.length === 0) {
+      alert('No roster data found for the selected day.')
+      return
+    }
+
+    const rosterGroups = buildRosterGroups(students)
+    const rosters = rosterGroups.map(roster => ({
+      code: roster.code,
+      serviceName: roster.serviceName,
+      day: selectedDay,
+      time: roster.time,
+      location: roster.location,
+      schedule: roster.schedule,
+      instructor: roster.instructor,
+      students: roster.students.map(student => ({
+        name: student.name,
+        phone: student.phone,
+        instructor: student.instructor,
+        level: student.level,
+      })),
+    }))
+
+    try {
+      const response = await fetch('/api/masterlist-rosters', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rosters,
+          options: getFormatOptions(),
+        }),
+      })
+
+      if (!response.ok) {
+        const message = await response.text()
+        throw new Error(message || 'Failed to generate masterlist.')
+      }
+
+      const blob = await response.blob()
+      const disposition = response.headers.get('Content-Disposition') ?? ''
+      const filenameMatch = disposition.match(/filename="([^"]+)"/i)
+      const filename = filenameMatch?.[1] ? filenameMatch[1] : 'masterlist.xlsx'
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error(error)
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Unable to generate masterlist. Please try again.'
+      alert(message)
+    }
+  }
+
   const handlePrint = () => {}
 
   return (
@@ -512,7 +580,7 @@ function PrintPage() {
         extras={masterlistExtras}
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleMasterlistExtra}
-        onPrint={handlePrint}
+        onPrint={handlePrintMasterlist}
       />
       <SchematicOptionsModal
         open={activeModal === 'schematic'}
