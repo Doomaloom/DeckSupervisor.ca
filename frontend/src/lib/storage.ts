@@ -12,6 +12,7 @@ const selectedDayKey = `${PREFIX}:selectedDay`
 const studentsKey = `${PREFIX}:studentsByDay`
 const instructorsKey = `${PREFIX}:instructorsByDay`
 const formatOptionsKey = `${PREFIX}:formatOptions`
+const masterlistDraftOptionsKey = `${PREFIX}:masterlistDraftOptions`
 const schedulesKey = `${PREFIX}:schedulesByDay`
 const instructorCoursesKey = `${PREFIX}:instructorCoursesByDay`
 const customRostersKey = `${PREFIX}:customRostersByDay`
@@ -78,6 +79,14 @@ export function getFormatOptions(): FormatOptions {
 
 export function setFormatOptions(options: FormatOptions) {
   saveJson(formatOptionsKey, options)
+}
+
+export function getMasterlistDraftOptions(): FormatOptions {
+  return loadJson(masterlistDraftOptionsKey, getFormatOptions())
+}
+
+export function setMasterlistDraftOptions(options: FormatOptions) {
+  saveJson(masterlistDraftOptionsKey, options)
 }
 
 export function getStudentsByDay(): StudentsByDay {

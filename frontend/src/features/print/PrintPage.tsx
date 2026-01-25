@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useDay } from '../../app/DayContext'
-import { getFormatOptions, getStudentsForDay } from '../../lib/storage'
+import { getMasterlistDraftOptions, getStudentsForDay } from '../../lib/storage'
 import {
   getCachedInstructorPdf,
   getCurrentSessionId,
@@ -482,6 +482,13 @@ function PrintPage() {
       })),
     }))
 
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      alert('Pop-up blocked. Please allow pop-ups to print.')
+      return
+    }
+    printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
+
     try {
       const response = await fetch('/api/masterlist-rosters', {
         method: 'POST',
@@ -490,7 +497,7 @@ function PrintPage() {
         },
         body: JSON.stringify({
           rosters,
-          options: getFormatOptions(),
+          options: getMasterlistDraftOptions(),
         }),
       })
 
@@ -500,17 +507,7 @@ function PrintPage() {
       }
 
       const blob = await response.blob()
-      const disposition = response.headers.get('Content-Disposition') ?? ''
-      const filenameMatch = disposition.match(/filename="([^"]+)"/i)
-      const filename = filenameMatch?.[1] ? filenameMatch[1] : 'masterlist.xlsx'
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = filename
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.URL.revokeObjectURL(url)
+      openPdfPrintDialog(blob, printWindow)
     } catch (error) {
       console.error(error)
       const message =
@@ -518,6 +515,7 @@ function PrintPage() {
           ? error.message
           : 'Unable to generate masterlist. Please try again.'
       alert(message)
+      printWindow.close()
     }
   }
 

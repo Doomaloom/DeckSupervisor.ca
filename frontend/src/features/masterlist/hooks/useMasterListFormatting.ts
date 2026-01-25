@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getFormatOptions } from '../../../lib/storage'
+import { getFormatOptions, setMasterlistDraftOptions } from '../../../lib/storage'
 import type { FormatOptions } from '../../../types/app'
 
 export function useMasterListFormatting() {
@@ -7,10 +7,14 @@ export function useMasterListFormatting() {
   const [rememberFormatting, setRememberFormatting] = useState(false)
 
   const toggleOption = (option: keyof FormatOptions) => {
-    setFormatOptionsState(prev => ({
-      ...prev,
-      [option]: !prev[option],
-    }))
+    setFormatOptionsState(prev => {
+      const next = {
+        ...prev,
+        [option]: !prev[option],
+      }
+      setMasterlistDraftOptions(next)
+      return next
+    })
   }
 
   return {
