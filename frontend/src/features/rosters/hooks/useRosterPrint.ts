@@ -94,12 +94,38 @@ export function useRosterPrint() {
             document.body.appendChild(iframe)
 
             iframe.onload = () => {
-                iframe.contentWindow?.focus()
-                iframe.contentWindow?.print()
-                setTimeout(() => {
+                let cleanedUp = false
+                const cleanup = () => {
+                    if (cleanedUp) {
+                        return
+                    }
+                    cleanedUp = true
                     window.URL.revokeObjectURL(blobUrl)
-                    document.body.removeChild(iframe)
-                }, 1000)
+                    if (iframe.parentNode) {
+                        document.body.removeChild(iframe)
+                    }
+                }
+
+                const handleAfterPrint = () => {
+                    cleanup()
+                }
+
+                const win = iframe.contentWindow
+                if (win) {
+                    win.addEventListener('afterprint', handleAfterPrint)
+                }
+                window.addEventListener('afterprint', handleAfterPrint, { once: true })
+
+                try {
+                    win?.focus()
+                    win?.print()
+                } catch (error) {
+                    console.error('Print failed', error)
+                    cleanup()
+                    return
+                }
+
+                setTimeout(cleanup, 15000)
             }
         } catch (error) {
             console.error(error)
