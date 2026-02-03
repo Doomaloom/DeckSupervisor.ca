@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { useDay } from '../../app/DayContext'
-import { getMasterlistDraftOptions, getStudentsForDay, setMasterlistDraftOptions } from '../../lib/storage'
+import {
+  getCustomRostersForDay,
+  getMasterlistDraftOptions,
+  getStudentsForDay,
+  setMasterlistDraftOptions,
+} from '../../lib/storage'
 import {
   getCachedInstructorPdf,
   getCurrentSessionId,
@@ -9,7 +14,7 @@ import {
   prefetchInstructorPacket,
   upsertInstructorPdf,
 } from '../../lib/instructorPdfCache'
-import { buildRosterGroups, sanitizeLevel } from '../rosters/utils'
+import { buildCustomRosterGroups, buildRosterGroups, sanitizeLevel } from '../rosters/utils'
 import { printOptions } from './constants'
 import type { FormatOptions } from '../../types/app'
 import type { PrintOptionKey } from './types'
@@ -197,6 +202,22 @@ function PrintPage() {
     })
   }
 
+  const buildRosterGroupsForDay = (day: string) => {
+    const students = getStudentsForDay(day)
+    const rosterGroups = buildRosterGroups(students)
+    if (!day) {
+      return rosterGroups
+    }
+    const customRosters = getCustomRostersForDay(day)
+    if (customRosters.length === 0) {
+      return rosterGroups
+    }
+    const rosterByCode = new Map(rosterGroups.map(roster => [roster.code, roster]))
+    const studentsById = new Map(students.map(student => [student.id, student]))
+    const customGroups = buildCustomRosterGroups(customRosters, rosterByCode, studentsById)
+    return [...rosterGroups, ...customGroups]
+  }
+
   const openPdfPrintDialog = (pdfBlob: Blob, existingWindow?: Window | null) => {
     const blobUrl = window.URL.createObjectURL(pdfBlob)
     const printWindow = existingWindow ?? window.open(blobUrl, '_blank')
@@ -343,8 +364,8 @@ function PrintPage() {
       return
     }
 
-    const students = getStudentsForDay(selectedDay)
-    if (students.length === 0) {
+    const rosterGroups = buildRosterGroupsForDay(selectedDay)
+    if (rosterGroups.length === 0) {
       alert('No roster data found for the selected day.')
       return
     }
@@ -359,7 +380,6 @@ function PrintPage() {
     setIsPrintingAllInstructors(true)
 
     try {
-      const rosterGroups = buildRosterGroups(students)
       const grouped = groupRostersByInstructor(rosterGroups)
       const orderedNames =
         instructorNames.length > 0
@@ -453,8 +473,8 @@ function PrintPage() {
       return
     }
 
-    const students = getStudentsForDay(selectedDay)
-    if (students.length === 0) {
+    const rosterGroups = buildRosterGroupsForDay(selectedDay)
+    if (rosterGroups.length === 0) {
       alert('No roster data found for the selected day.')
       return
     }
@@ -484,7 +504,6 @@ function PrintPage() {
         return
       }
 
-      const rosterGroups = buildRosterGroups(students)
       const rostersToPrint = rosterGroups.filter(roster => roster.instructor === name)
 
       if (rostersToPrint.length === 0) {
@@ -526,38 +545,37 @@ function PrintPage() {
     }
   }
 
-	const handlePrintMasterlist = async () => {
+  const handlePrintMasterlist = async () => {
     if (!selectedDay) {
       alert('Please select a day before printing the masterlist.')
       return
     }
 
-    const students = getStudentsForDay(selectedDay)
-    if (students.length === 0) {
+    const rosterGroups = buildRosterGroupsForDay(selectedDay)
+    if (rosterGroups.length === 0) {
       alert('No roster data found for the selected day.')
       return
     }
 
-		const rosterGroups = buildRosterGroups(students)
-		const rosters = rosterGroups.map(roster => ({
-			code: roster.code,
-			serviceName: roster.serviceName,
-			day: selectedDay,
-			time: roster.time,
-			location: roster.location,
-			schedule: roster.schedule,
-			instructor: roster.instructor,
-			students: roster.students.map(student => ({
-				name: student.name,
-				phone: student.phone,
-				instructor: student.instructor,
-				level: student.level,
-			})),
-		}))
+    const rosters = rosterGroups.map(roster => ({
+      code: roster.code,
+      serviceName: roster.serviceName,
+      day: selectedDay,
+      time: roster.time,
+      location: roster.location,
+      schedule: roster.schedule,
+      instructor: roster.instructor,
+      students: roster.students.map(student => ({
+        name: student.name,
+        phone: student.phone,
+        instructor: student.instructor,
+        level: student.level,
+      })),
+    }))
 
-		const sessionName = getCurrentSessionName() || 'Summer 2025'
-		const generatedDate = formatGeneratedDate(new Date())
-		const sessionWeek = getSessionWeek(getCurrentSessionStartDate()) ?? 1
+    const sessionName = getCurrentSessionName() || 'Summer 2025'
+    const generatedDate = formatGeneratedDate(new Date())
+    const sessionWeek = getSessionWeek(getCurrentSessionStartDate()) ?? 1
 
     const printWindow = window.open('', '_blank')
     if (!printWindow) {
@@ -572,8 +590,8 @@ function PrintPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-			body: JSON.stringify({
-				rosters,
+        body: JSON.stringify({
+          rosters,
           options: masterlistFormatOptions,
           sessionName,
           generatedDate,

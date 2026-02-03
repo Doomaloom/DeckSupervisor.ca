@@ -1,5 +1,5 @@
-import { getStudentsForDay } from './storage'
-import { buildRosterGroups, sanitizeLevel } from '../features/rosters/utils'
+import { getCustomRostersForDay, getStudentsForDay } from './storage'
+import { buildCustomRosterGroups, buildRosterGroups, sanitizeLevel } from '../features/rosters/utils'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
 const DB_VERSION = 1
@@ -30,6 +30,22 @@ export type InstructorPdfPacket = {
 }
 
 const pendingPrefetches = new Map<string, Promise<void>>()
+
+function buildRosterGroupsForDay(day: string) {
+  const students = getStudentsForDay(day)
+  const rosterGroups = buildRosterGroups(students)
+  if (!day) {
+    return rosterGroups
+  }
+  const customRosters = getCustomRostersForDay(day)
+  if (customRosters.length === 0) {
+    return rosterGroups
+  }
+  const rosterByCode = new Map(rosterGroups.map(roster => [roster.code, roster]))
+  const studentsById = new Map(students.map(student => [student.id, student]))
+  const customGroups = buildCustomRosterGroups(customRosters, rosterByCode, studentsById)
+  return [...rosterGroups, ...customGroups]
+}
 
 function openDb(): Promise<IDBDatabase> {
   if (typeof window === 'undefined' || !window.indexedDB) {
@@ -186,8 +202,7 @@ export async function prefetchInstructorPacket(day: string): Promise<void> {
   }
 
   const promise = (async () => {
-    const students = getStudentsForDay(day)
-    const rosterGroups = buildRosterGroups(students)
+    const rosterGroups = buildRosterGroupsForDay(day)
     const grouped = new Map<string, typeof rosterGroups>()
     rosterGroups.forEach(roster => {
       const name = roster.instructor?.trim()
