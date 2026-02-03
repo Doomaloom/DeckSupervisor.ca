@@ -18,8 +18,11 @@ import (
 )
 
 type masterListRostersRequest struct {
-	Rosters []tasks.ClassRoster     `json:"rosters"`
-	Options masterListRosterOptions `json:"options"`
+	Rosters       []tasks.ClassRoster     `json:"rosters"`
+	Options       masterListRosterOptions `json:"options"`
+	SessionName   string                  `json:"sessionName"`
+	GeneratedDate string                  `json:"generatedDate"`
+	SessionWeek   int                     `json:"sessionWeek"`
 }
 
 type masterListRosterOptions struct {
@@ -65,7 +68,8 @@ func masterListRostersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	htmlContent := buildMasterListHTML(rows, req.Options)
+	title := buildMasterListTitle(req.SessionName, req.SessionWeek, req.GeneratedDate)
+	htmlContent := buildMasterListHTML(rows, req.Options, title)
 	pdfBytes, err := renderMasterListPDF(r.Context(), htmlContent)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Unable to render master list PDF: %v", err), http.StatusInternalServerError)
@@ -163,7 +167,7 @@ func buildMasterListRows(
 	return rows, nil
 }
 
-func buildMasterListHTML(rows []masterListRow, options masterListRosterOptions) string {
+func buildMasterListHTML(rows []masterListRow, options masterListRosterOptions, title string) string {
 	const (
 		tableID = "masterlist-table"
 	)
@@ -188,6 +192,7 @@ func buildMasterListHTML(rows []masterListRow, options masterListRosterOptions) 
 	buf.WriteString(`@page { size: Letter; margin: 0.35in; }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: "Arial", sans-serif; color: #111; }
+.masterlist-title { font-size: 14px; font-weight: 700; text-align: center; margin: 0 0 8px; }
 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 thead { display: table-header-group; }
 th, td { padding: 3px 6px; font-size: 11px; line-height: 1.2; vertical-align: top; word-break: break-word; }
@@ -198,6 +203,11 @@ th, td { padding: 3px 6px; font-size: 11px; line-height: 1.2; vertical-align: to
 .header-row.center td { text-align: center; }
 tr { page-break-inside: avoid; }`)
 	buf.WriteString("</style></head><body>")
+	if title != "" {
+		buf.WriteString("<div class=\"masterlist-title\">")
+		buf.WriteString(html.EscapeString(title))
+		buf.WriteString("</div>")
+	}
 	buf.WriteString("<table id=\"" + tableID + "\" class=\"" + borderClass + "\">")
 	buf.WriteString("<colgroup>")
 	for _, width := range buildMasterListColumnWidths(rows, headers) {
@@ -237,6 +247,20 @@ tr { page-break-inside: avoid; }`)
 
 	buf.WriteString("</tbody></table></body></html>")
 	return buf.String()
+}
+
+func buildMasterListTitle(sessionName string, sessionWeek int, generatedDate string) string {
+	parts := make([]string, 0, 3)
+	if strings.TrimSpace(sessionName) != "" {
+		parts = append(parts, strings.TrimSpace(sessionName))
+	}
+	if sessionWeek > 0 {
+		parts = append(parts, fmt.Sprintf("Week %d", sessionWeek))
+	}
+	if strings.TrimSpace(generatedDate) != "" {
+		parts = append(parts, strings.TrimSpace(generatedDate))
+	}
+	return strings.Join(parts, " - ")
 }
 
 func buildMasterListHeaderClass(kind masterListRowKind, options masterListRosterOptions) string {

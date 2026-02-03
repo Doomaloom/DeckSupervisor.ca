@@ -19,6 +19,57 @@ import MasterlistOptionsModal from './components/MasterlistOptionsModal'
 import PrintOptionButton from './components/PrintOptionButton'
 import SchematicOptionsModal from './components/SchematicOptionsModal'
 
+const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
+const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
+const MS_PER_DAY = 1000 * 60 * 60 * 24
+
+type SessionEntry = {
+  id: string
+  startDate: string
+}
+
+const formatGeneratedDate = (date: Date) =>
+  date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+
+const getCurrentSessionStartDate = () => {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+  const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+  if (!currentSessionId) {
+    return ''
+  }
+  const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
+  if (!stored) {
+    return ''
+  }
+  try {
+    const sessions = JSON.parse(stored) as SessionEntry[]
+    const session = sessions.find(item => item.id === currentSessionId)
+    return session?.startDate ?? ''
+  } catch (error) {
+    console.error('Failed to parse stored sessions', error)
+    return ''
+  }
+}
+
+const getSessionWeek = (startDate: string, now = new Date()) => {
+  if (!startDate) {
+    return null
+  }
+  const start = new Date(startDate)
+  if (Number.isNaN(start.getTime())) {
+    return null
+  }
+  const diffDays = Math.floor((now.getTime() - start.getTime()) / MS_PER_DAY)
+  const week = Math.floor(diffDays / 7) + 1
+  return week < 1 ? 1 : week
+}
+
 function PrintPage() {
   const { selectedDay } = useDay()
   const [activeInfo, setActiveInfo] = useState<PrintOptionKey | null>(null)
@@ -453,7 +504,7 @@ function PrintPage() {
     }
   }
 
-  const handlePrintMasterlist = async () => {
+	const handlePrintMasterlist = async () => {
     if (!selectedDay) {
       alert('Please select a day before printing the masterlist.')
       return
@@ -465,22 +516,26 @@ function PrintPage() {
       return
     }
 
-    const rosterGroups = buildRosterGroups(students)
-    const rosters = rosterGroups.map(roster => ({
-      code: roster.code,
-      serviceName: roster.serviceName,
-      day: selectedDay,
-      time: roster.time,
-      location: roster.location,
-      schedule: roster.schedule,
-      instructor: roster.instructor,
-      students: roster.students.map(student => ({
-        name: student.name,
-        phone: student.phone,
-        instructor: student.instructor,
-        level: student.level,
-      })),
-    }))
+		const rosterGroups = buildRosterGroups(students)
+		const rosters = rosterGroups.map(roster => ({
+			code: roster.code,
+			serviceName: roster.serviceName,
+			day: selectedDay,
+			time: roster.time,
+			location: roster.location,
+			schedule: roster.schedule,
+			instructor: roster.instructor,
+			students: roster.students.map(student => ({
+				name: student.name,
+				phone: student.phone,
+				instructor: student.instructor,
+				level: student.level,
+			})),
+		}))
+
+		const sessionName = getCurrentSessionName() || 'Summer 2025'
+		const generatedDate = formatGeneratedDate(new Date())
+		const sessionWeek = getSessionWeek(getCurrentSessionStartDate()) ?? 1
 
     const printWindow = window.open('', '_blank')
     if (!printWindow) {
@@ -495,11 +550,14 @@ function PrintPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          rosters,
-          options: getMasterlistDraftOptions(),
-        }),
-      })
+			body: JSON.stringify({
+				rosters,
+				options: getMasterlistDraftOptions(),
+				sessionName,
+				generatedDate,
+				sessionWeek,
+			}),
+		})
 
       if (!response.ok) {
         const message = await response.text()
