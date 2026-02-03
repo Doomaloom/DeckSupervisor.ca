@@ -126,7 +126,7 @@ func buildMasterListRows(
 				continue
 			}
 
-			code := strings.TrimSpace(roster.Code)
+			code := tasks.NormalizeEventID(roster.Code)
 			if code == "" {
 				continue
 			}
@@ -190,7 +190,7 @@ func buildMasterListHTML(rows []masterListRow, options masterListRosterOptions) 
 body { margin: 0; font-family: "Arial", sans-serif; color: #111; }
 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 thead { display: table-header-group; }
-th, td { padding: 2px 4px; font-size: 9px; vertical-align: top; word-break: break-word; }
+th, td { padding: 3px 6px; font-size: 11px; line-height: 1.2; vertical-align: top; word-break: break-word; }
 .` + borderClass + ` th, .` + borderClass + ` td { border: 1px solid #000; }
 .no-borders th, .no-borders td { border: none; }
 .header-row td { background: #f4f4f4; }
@@ -281,12 +281,15 @@ func buildMasterListColumnWidths(rows []masterListRow, headers []string) []float
 		}
 	}
 
+	const paddingChars = 2
+	weighted := make([]int, len(maxLengths))
 	total := 0
-	for _, length := range maxLengths {
+	for i, length := range maxLengths {
 		if length < 1 {
 			length = 1
 		}
-		total += length
+		weighted[i] = length + paddingChars
+		total += weighted[i]
 	}
 	if total == 0 {
 		widths := make([]float64, len(headers))
@@ -301,10 +304,7 @@ func buildMasterListColumnWidths(rows []masterListRow, headers []string) []float
 	}
 
 	widths := make([]float64, len(headers))
-	for i, length := range maxLengths {
-		if length < 1 {
-			length = 1
-		}
+	for i, length := range weighted {
 		widths[i] = (float64(length) / float64(total)) * 100
 	}
 	return widths
@@ -351,7 +351,7 @@ func renderMasterListPDF(ctx context.Context, htmlContent string) ([]byte, error
 			pdfBytes, _, err = page.PrintToPDF().
 				WithPrintBackground(true).
 				WithPreferCSSPageSize(true).
-				WithScale(0.9).
+				WithScale(1.0).
 				Do(ctx)
 			return err
 		}),

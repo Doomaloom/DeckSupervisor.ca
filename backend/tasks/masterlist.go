@@ -8,6 +8,23 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+func NormalizeEventID(value string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return ""
+	}
+	for _, r := range trimmed {
+		if r < '0' || r > '9' {
+			return trimmed
+		}
+	}
+	stripped := strings.TrimLeft(trimmed, "0")
+	if stripped == "" {
+		return "0"
+	}
+	return stripped
+}
+
 type FormatOptions struct {
 	TimeHeaders       bool
 	InstructorHeaders bool
@@ -58,8 +75,7 @@ func ProcessMasterList(records [][]string, options FormatOptions, instructorMap 
 		if len(row) == 0 {
 			continue
 		}
-
-		eventID := getColumn(row, "EventID")
+		eventID := NormalizeEventID(getColumn(row, "EventID"))
 		eventTime := getColumn(row, "EventTime")
 		instructor := instructorMap[eventID]
 

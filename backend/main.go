@@ -146,7 +146,7 @@ func masterListHandler(w http.ResponseWriter, r *http.Request) {
 			codes = codeList[i]
 		}
 		for _, code := range strings.Split(codes, ",") {
-			trimmed := strings.TrimSpace(code)
+			trimmed := tasks.NormalizeEventID(code)
 			if trimmed == "" {
 				continue
 			}

@@ -20,7 +20,7 @@ func ProcessMasterListFromRosters(rosters []ClassRoster, options FormatOptions) 
 	instructorMap := map[string]string{}
 
 	for _, roster := range rosters {
-		code := strings.TrimSpace(roster.Code)
+		code := NormalizeEventID(roster.Code)
 		if code == "" {
 			continue
 		}
