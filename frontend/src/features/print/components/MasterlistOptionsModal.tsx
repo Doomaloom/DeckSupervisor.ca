@@ -1,4 +1,10 @@
 import React from 'react'
+import type { FormatOptions } from '../../../types/app'
+import {
+  courseHeaderStyleOptions,
+  formatOptionItems,
+  timeHeaderStyleOptions,
+} from '../../masterlist/constants'
 import PrintModalShell from './PrintModalShell'
 
 type MasterlistExtras = {
@@ -8,6 +14,8 @@ type MasterlistExtras = {
 type MasterlistOptionsModalProps = {
   open: boolean
   extras: MasterlistExtras
+  formatOptions: FormatOptions
+  onToggleFormat: (key: keyof FormatOptions) => void
   onClose: () => void
   onToggle: (key: keyof MasterlistExtras) => void
   onPrint: () => void
@@ -16,6 +24,8 @@ type MasterlistOptionsModalProps = {
 function MasterlistOptionsModal({
   open,
   extras,
+  formatOptions,
+  onToggleFormat,
   onClose,
   onToggle,
   onPrint,
@@ -27,18 +37,70 @@ function MasterlistOptionsModal({
   return (
     <PrintModalShell
       title="Masterlist Options"
-      description="Choose whether to add a schematic coverpage to the masterlist."
+      description="Choose formatting options and add a schematic coverpage to the masterlist."
       onClose={onClose}
     >
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-4 py-3 text-sm font-semibold text-secondary">
-          <input
-            type="checkbox"
-            checked={extras.schematicCoverPage}
-            onChange={() => onToggle('schematicCoverPage')}
-          />
-          Schematic Coverpage
-        </label>
+        <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+          <legend className="px-2 text-xs font-semibold">Format Options</legend>
+          <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
+            <input
+              type="checkbox"
+              checked={extras.schematicCoverPage}
+              onChange={() => onToggle('schematicCoverPage')}
+            />
+            Schematic Coverpage
+          </label>
+          {formatOptionItems.map(option => (
+            <label
+              key={option.key}
+              className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+            >
+              <input
+                type="checkbox"
+                checked={formatOptions[option.key]}
+                onChange={() => onToggleFormat(option.key)}
+              />
+              {option.label}
+            </label>
+          ))}
+        </fieldset>
+
+        <div className="flex flex-col gap-3">
+          <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+            <legend className="px-2 text-xs font-semibold">Time Header Style</legend>
+            {timeHeaderStyleOptions.map(option => (
+              <label
+                key={option.key}
+                className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+              >
+                <input
+                  type="checkbox"
+                  checked={formatOptions[option.key]}
+                  onChange={() => onToggleFormat(option.key)}
+                />
+                {option.label}
+              </label>
+            ))}
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+            <legend className="px-2 text-xs font-semibold">Course Header Style</legend>
+            {courseHeaderStyleOptions.map(option => (
+              <label
+                key={option.key}
+                className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+              >
+                <input
+                  type="checkbox"
+                  checked={formatOptions[option.key]}
+                  onChange={() => onToggleFormat(option.key)}
+                />
+                {option.label}
+              </label>
+            ))}
+          </fieldset>
+        </div>
       </div>
       <div className="mt-8 flex flex-wrap justify-end gap-3">
         <button

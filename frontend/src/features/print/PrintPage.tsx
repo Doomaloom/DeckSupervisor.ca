@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useDay } from '../../app/DayContext'
-import { getMasterlistDraftOptions, getStudentsForDay } from '../../lib/storage'
+import { getMasterlistDraftOptions, getStudentsForDay, setMasterlistDraftOptions } from '../../lib/storage'
 import {
   getCachedInstructorPdf,
   getCurrentSessionId,
@@ -11,6 +11,7 @@ import {
 } from '../../lib/instructorPdfCache'
 import { buildRosterGroups, sanitizeLevel } from '../rosters/utils'
 import { printOptions } from './constants'
+import type { FormatOptions } from '../../types/app'
 import type { PrintOptionKey } from './types'
 import { useSessionInstructors } from './hooks/useSessionInstructors'
 import Day1OptionsModal from './components/Day1OptionsModal'
@@ -92,6 +93,9 @@ function PrintPage() {
   const [masterlistExtras, setMasterlistExtras] = useState({
     schematicCoverPage: false,
   })
+  const [masterlistFormatOptions, setMasterlistFormatOptions] = useState<FormatOptions>(() =>
+    getMasterlistDraftOptions(),
+  )
   const [schematicOptions, setSchematicOptions] = useState({
     highlightInstructor: false,
     selectedInstructor: 'none',
@@ -112,6 +116,13 @@ function PrintPage() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
+  }, [activeModal])
+
+  useEffect(() => {
+    if (activeModal !== 'masterlist') {
+      return
+    }
+    setMasterlistFormatOptions(getMasterlistDraftOptions())
   }, [activeModal])
 
   useEffect(() => {
@@ -156,6 +167,17 @@ function PrintPage() {
       ...current,
       [key]: !current[key],
     }))
+  }
+
+  const handleToggleMasterlistOption = (key: keyof FormatOptions) => {
+    setMasterlistFormatOptions(current => {
+      const next = {
+        ...current,
+        [key]: !current[key],
+      }
+      setMasterlistDraftOptions(next)
+      return next
+    })
   }
 
   const handleToggleSchematicHighlight = () => {
@@ -552,12 +574,12 @@ function PrintPage() {
         },
 			body: JSON.stringify({
 				rosters,
-				options: getMasterlistDraftOptions(),
-				sessionName,
-				generatedDate,
-				sessionWeek,
-			}),
-		})
+          options: masterlistFormatOptions,
+          sessionName,
+          generatedDate,
+          sessionWeek,
+        }),
+      })
 
       if (!response.ok) {
         const message = await response.text()
@@ -634,6 +656,8 @@ function PrintPage() {
       <MasterlistOptionsModal
         open={activeModal === 'masterlist'}
         extras={masterlistExtras}
+        formatOptions={masterlistFormatOptions}
+        onToggleFormat={handleToggleMasterlistOption}
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleMasterlistExtra}
         onPrint={handlePrintMasterlist}

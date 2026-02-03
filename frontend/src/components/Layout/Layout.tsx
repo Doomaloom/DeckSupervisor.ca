@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
-    ClipboardDocumentListIcon,
     CalendarDaysIcon,
     DocumentTextIcon,
     HomeIcon,
@@ -170,11 +169,6 @@ function Layout({ children }: LayoutProps) {
                             icon: <CalendarDaysIcon className="h-5 w-5" />,
                         },
                         {
-                            to: '/masterlist',
-                            label: 'Master List',
-                            icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
-                        },
-                        {
                             to: '/rosters',
                             label: 'Rosters',
                             icon: <UsersIcon className="h-5 w-5" />,
@@ -224,7 +218,6 @@ function getPageTitle(pathname: string) {
     switch (pathname) {
         case '/': return 'Home'
         case '/manage-sessions': return 'Manage Sessions'
-        case '/masterlist': return 'Master List Maker'
         case '/rosters': return 'Class Rosters'
         case '/schematic': return 'Class Schedule'
         case '/print': return 'Print'
