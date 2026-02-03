@@ -180,7 +180,7 @@ function Layout({ children }: LayoutProps) {
                         },
                         {
                             to: '/staff-notes',
-                            label: 'Staff Notes',
+                            label: 'Notes',
                             icon: <DocumentTextIcon className="h-5 w-5" />,
                         },
                     ].map(item => (
@@ -221,7 +221,7 @@ function getPageTitle(pathname: string) {
         case '/rosters': return 'Class Rosters'
         case '/schematic': return 'Class Schedule'
         case '/print': return 'Print'
-        case '/staff-notes': return 'Staff Notes'
+        case '/staff-notes': return 'Notes'
         default: return 'COB Aquatics'
     }
 }
