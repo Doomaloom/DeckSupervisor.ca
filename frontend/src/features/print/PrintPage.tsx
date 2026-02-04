@@ -24,6 +24,9 @@ import InstructorOptionsModal from './components/InstructorOptionsModal'
 import MasterlistOptionsModal from './components/MasterlistOptionsModal'
 import PrintOptionButton from './components/PrintOptionButton'
 import SchematicOptionsModal from './components/SchematicOptionsModal'
+import { dayNames } from '../schematic/constants'
+import { useSchematicSchedule } from '../schematic/hooks/useSchematicSchedule'
+import { getCapacity } from '../schematic/utils/capacity'
 
 const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
 const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
@@ -32,6 +35,8 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24
 type SessionEntry = {
   id: string
   startDate: string
+  endDate?: string
+  sessionSeason?: string
 }
 
 const formatGeneratedDate = (date: Date) =>
@@ -60,6 +65,28 @@ const getCurrentSessionStartDate = () => {
   } catch (error) {
     console.error('Failed to parse stored sessions', error)
     return ''
+  }
+}
+
+const getCurrentSessionInfo = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+  const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+  if (!currentSessionId) {
+    return null
+  }
+  const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
+  if (!stored) {
+    return null
+  }
+  try {
+    const sessions = JSON.parse(stored) as SessionEntry[]
+    const session = sessions.find(item => item.id === currentSessionId)
+    return session ?? null
+  } catch (error) {
+    console.error('Failed to parse stored sessions', error)
+    return null
   }
 }
 
@@ -104,7 +131,9 @@ function PrintPage() {
   const [schematicOptions, setSchematicOptions] = useState({
     highlightInstructor: false,
     selectedInstructor: 'none',
+    orientation: 'portrait' as const,
   })
+  const schematicPreview = useSchematicSchedule(selectedDay ?? null)
 
   useEffect(() => {
     if (!activeModal) {
@@ -200,6 +229,75 @@ function PrintPage() {
         selectedInstructor: nextSelected,
       }
     })
+  }
+
+  const handleSelectSchematicOrientation = (value: 'portrait' | 'landscape') => {
+    setSchematicOptions(current => ({
+      ...current,
+      orientation: value,
+    }))
+  }
+
+  const handlePrintSchematic = async () => {
+    if (!selectedDay) {
+      alert('Please select a day before printing the schematic.')
+      return
+    }
+    if (schematicPreview.columns.length === 0) {
+      alert('No schematic data found for the selected day.')
+      return
+    }
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      alert('Pop-up blocked. Please allow pop-ups to print.')
+      return
+    }
+    printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
+
+    try {
+      const payload = {
+        orientation: schematicOptions.orientation,
+        title: sessionTitle,
+        dateRange,
+        weeksLabel,
+        instructors: schematicPreview.instructors,
+        columns: schematicPreview.columns.map(column =>
+          column.map(course => ({
+            code: course.code,
+            level: course.level,
+            startMinutes: course.startMinutes,
+            durationMinutes: course.runningTime || course.endMinutes - course.startMinutes,
+            studentCount: course.studentCount,
+            capacity: getCapacity(course),
+          })),
+        ),
+      }
+
+      const response = await fetch('/api/schematic-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const message = await response.text()
+        throw new Error(message || 'Failed to generate schematic PDF.')
+      }
+
+      const pdfBlob = await response.blob()
+      openPdfPrintDialog(pdfBlob, printWindow)
+    } catch (error) {
+      console.error(error)
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Unable to generate the schematic PDF. Please try again.'
+      alert(message)
+      printWindow.close()
+    }
   }
 
   const buildRosterGroupsForDay = (day: string) => {
@@ -617,7 +715,42 @@ function PrintPage() {
     }
   }
 
-  const handlePrint = () => {}
+  const handlePrint = () => {
+    if (activeModal === 'schematic') {
+      handlePrintSchematic()
+    }
+  }
+
+  const sessionInfo = getCurrentSessionInfo()
+  const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
+  const seasonLabel = sessionInfo?.sessionSeason?.trim() ?? ''
+  const yearLabel = sessionInfo?.startDate ? new Date(sessionInfo.startDate).getFullYear() : NaN
+  const sessionTitle = [dayLabel, seasonLabel, Number.isFinite(yearLabel) ? String(yearLabel) : '']
+    .filter(Boolean)
+    .join(' ')
+  const dateRange = sessionInfo?.startDate && sessionInfo?.endDate
+    ? `${sessionInfo.startDate} - ${sessionInfo.endDate}`
+    : sessionInfo?.startDate
+    ? sessionInfo.startDate
+    : 'Date range unavailable'
+  const weeksLabel = (() => {
+    if (!sessionInfo?.startDate || !sessionInfo?.endDate) {
+      return ''
+    }
+    const start = new Date(sessionInfo.startDate)
+    const end = new Date(sessionInfo.endDate)
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return ''
+    }
+    const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+    const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+    if (endDate < startDate) {
+      return ''
+    }
+    const days = Math.floor((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1
+    const weeks = Math.floor((days + 6) / 7)
+    return `# of weeks ${weeks} classes`
+  })()
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
@@ -686,6 +819,7 @@ function PrintPage() {
         instructorNames={instructorNames}
         onClose={() => setActiveModal(null)}
         onToggleHighlight={handleToggleSchematicHighlight}
+        onSelectOrientation={handleSelectSchematicOrientation}
         onSelectInstructor={value =>
           setSchematicOptions(current => ({
             ...current,
@@ -694,6 +828,7 @@ function PrintPage() {
         }
         onPrint={handlePrint}
       />
+
     </div>
   )
 }

@@ -4,6 +4,7 @@ import PrintModalShell from './PrintModalShell'
 type SchematicOptions = {
   highlightInstructor: boolean
   selectedInstructor: string
+  orientation: 'portrait' | 'landscape'
 }
 
 type SchematicOptionsModalProps = {
@@ -13,6 +14,7 @@ type SchematicOptionsModalProps = {
   onClose: () => void
   onToggleHighlight: () => void
   onSelectInstructor: (value: string) => void
+  onSelectOrientation: (value: 'portrait' | 'landscape') => void
   onPrint: () => void
 }
 
@@ -23,6 +25,7 @@ function SchematicOptionsModal({
   onClose,
   onToggleHighlight,
   onSelectInstructor,
+  onSelectOrientation,
   onPrint,
 }: SchematicOptionsModalProps) {
   if (!open) {
@@ -43,6 +46,19 @@ function SchematicOptionsModal({
             onChange={onToggleHighlight}
           />
           Highlight Instructor Name
+        </label>
+        <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-4 py-3 text-sm font-semibold text-secondary">
+          Orientation
+          <select
+            className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
+            value={options.orientation}
+            onChange={event =>
+              onSelectOrientation(event.target.value === 'landscape' ? 'landscape' : 'portrait')
+            }
+          >
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
         </label>
         <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-4 py-3 text-sm font-semibold text-secondary">
           Instructor

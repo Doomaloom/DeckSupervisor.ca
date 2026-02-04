@@ -15,6 +15,7 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/attendance-pdf", handlers.AttendancePDF).Methods("POST")
 	r.HandleFunc("/api/concat-pdfs", handlers.ConcatPDF).Methods("POST")
 	r.HandleFunc("/api/schematic-maker", handlers.SchematicMaker).Methods("POST")
+	r.HandleFunc("/api/schematic-pdf", handlers.SchematicPDF).Methods("POST")
 	r.HandleFunc("/api/health", handlers.Health).Methods("GET")
 	r.NotFoundHandler = http.NotFoundHandler()
 	return r
