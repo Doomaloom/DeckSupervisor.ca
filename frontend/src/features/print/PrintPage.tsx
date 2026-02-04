@@ -103,6 +103,20 @@ const getSessionWeek = (startDate: string, now = new Date()) => {
   return week < 1 ? 1 : week
 }
 
+const formatMonthDay = (value: string) => {
+  if (!value) {
+    return ''
+  }
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  const parsed = match
+    ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+    : new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return value
+  }
+  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 function PrintPage() {
   const { selectedDay } = useDay()
   const [activeInfo, setActiveInfo] = useState<PrintOptionKey | null>(null)
@@ -122,9 +136,17 @@ function PrintPage() {
   const [busyInstructors, setBusyInstructors] = useState<Record<string, boolean>>({})
   const [isRefreshingInstructorPdfs, setIsRefreshingInstructorPdfs] = useState(false)
   const [isPrintingAllInstructors, setIsPrintingAllInstructors] = useState(false)
+  const [instructorExtras, setInstructorExtras] = useState({
+    schematicCoverPage: false,
+    highlightCoverInstructor: false,
+  })
+  const [instructorCoverOrientation, setInstructorCoverOrientation] = useState<
+    'portrait' | 'landscape'
+  >('portrait')
   const [masterlistExtras, setMasterlistExtras] = useState({
     schematicCoverPage: false,
   })
+  const [coverOrientation, setCoverOrientation] = useState<'portrait' | 'landscape'>('portrait')
   const [masterlistFormatOptions, setMasterlistFormatOptions] = useState<FormatOptions>(() =>
     getMasterlistDraftOptions(),
   )
@@ -134,6 +156,36 @@ function PrintPage() {
     orientation: 'portrait' as const,
   })
   const schematicPreview = useSchematicSchedule(selectedDay ?? null)
+  const sessionInfo = getCurrentSessionInfo()
+  const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
+  const seasonLabel = sessionInfo?.sessionSeason?.trim() ?? ''
+  const yearLabel = sessionInfo?.startDate ? new Date(sessionInfo.startDate).getFullYear() : NaN
+  const sessionTitle = [dayLabel, seasonLabel, Number.isFinite(yearLabel) ? String(yearLabel) : '']
+    .filter(Boolean)
+    .join(' ')
+  const dateRange = sessionInfo?.startDate && sessionInfo?.endDate
+    ? `${formatMonthDay(sessionInfo.startDate)} - ${formatMonthDay(sessionInfo.endDate)}`
+    : sessionInfo?.startDate
+    ? formatMonthDay(sessionInfo.startDate)
+    : 'Date range unavailable'
+  const weeksLabel = (() => {
+    if (!sessionInfo?.startDate || !sessionInfo?.endDate) {
+      return ''
+    }
+    const start = new Date(sessionInfo.startDate)
+    const end = new Date(sessionInfo.endDate)
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return ''
+    }
+    const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+    const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+    if (endDate < startDate) {
+      return ''
+    }
+    const days = Math.floor((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1
+    const weeks = Math.floor((days + 6) / 7)
+    return `# of weeks ${weeks} classes`
+  })()
 
   useEffect(() => {
     if (!activeModal) {
@@ -203,6 +255,20 @@ function PrintPage() {
     }))
   }
 
+  const handleToggleInstructorCover = () => {
+    setInstructorExtras(current => ({
+      ...current,
+      schematicCoverPage: !current.schematicCoverPage,
+    }))
+  }
+
+  const handleToggleInstructorCoverHighlight = () => {
+    setInstructorExtras(current => ({
+      ...current,
+      highlightCoverInstructor: !current.highlightCoverInstructor,
+    }))
+  }
+
   const handleToggleMasterlistOption = (key: keyof FormatOptions) => {
     setMasterlistFormatOptions(current => {
       const next = {
@@ -238,6 +304,77 @@ function PrintPage() {
     }))
   }
 
+  const buildSchematicPayload = (
+    orientation: 'portrait' | 'landscape',
+    highlightOptions: { highlightInstructor: boolean; selectedInstructor: string } = {
+      highlightInstructor: false,
+      selectedInstructor: 'none',
+    },
+    instructorsOverride?: string[],
+  ) => ({
+    orientation,
+    title: sessionTitle,
+    dateRange,
+    weeksLabel,
+    highlightInstructor: highlightOptions.highlightInstructor,
+    selectedInstructor: highlightOptions.selectedInstructor,
+    instructors: instructorsOverride ?? schematicPreview.instructors,
+    columns: schematicPreview.columns.map(column =>
+      column.map(course => ({
+        code: course.code,
+        level: course.level,
+        startMinutes: course.startMinutes,
+        durationMinutes: course.runningTime || course.endMinutes - course.startMinutes,
+        studentCount: course.studentCount,
+        capacity: getCapacity(course),
+      })),
+    ),
+  })
+
+  const fetchSchematicCoverWithBlank = async (
+    orientation: 'portrait' | 'landscape',
+    highlightOptions?: { highlightInstructor: boolean; selectedInstructor: string },
+  ) => {
+    if (schematicPreview.columns.length === 0) {
+      throw new Error('No schematic data found for the selected day.')
+    }
+
+    const schematicResponse = await fetch('/api/schematic-pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(
+        buildSchematicPayload(
+          orientation,
+          highlightOptions ?? { highlightInstructor: false, selectedInstructor: 'none' },
+        ),
+      ),
+    })
+
+    if (!schematicResponse.ok) {
+      const message = await schematicResponse.text()
+      throw new Error(message || 'Failed to generate schematic cover.')
+    }
+    const schematicCover = await schematicResponse.blob()
+
+    const blankResponse = await fetch('/api/blank-pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ orientation }),
+    })
+
+    if (!blankResponse.ok) {
+      const message = await blankResponse.text()
+      throw new Error(message || 'Failed to generate blank page.')
+    }
+    const blankPage = await blankResponse.blob()
+
+    return { schematicCover, blankPage }
+  }
+
   const handlePrintSchematic = async () => {
     if (!selectedDay) {
       alert('Please select a day before printing the schematic.')
@@ -256,39 +393,74 @@ function PrintPage() {
     printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
 
     try {
-      const payload = {
-        orientation: schematicOptions.orientation,
-        title: sessionTitle,
-        dateRange,
-        weeksLabel,
-        instructors: schematicPreview.instructors,
-        columns: schematicPreview.columns.map(column =>
-          column.map(course => ({
-            code: course.code,
-            level: course.level,
-            startMinutes: course.startMinutes,
-            durationMinutes: course.runningTime || course.endMinutes - course.startMinutes,
-            studentCount: course.studentCount,
-            capacity: getCapacity(course),
-          })),
-        ),
+      const highlightOptions = {
+        highlightInstructor: schematicOptions.highlightInstructor,
+        selectedInstructor: schematicOptions.selectedInstructor,
       }
 
-      const response = await fetch('/api/schematic-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
+      const fetchSchematicPdf = async (payload: ReturnType<typeof buildSchematicPayload>) => {
+        const response = await fetch('/api/schematic-pdf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
 
-      if (!response.ok) {
-        const message = await response.text()
-        throw new Error(message || 'Failed to generate schematic PDF.')
+        if (!response.ok) {
+          const message = await response.text()
+          throw new Error(message || 'Failed to generate schematic PDF.')
+        }
+        return response.blob()
       }
 
-      const pdfBlob = await response.blob()
-      openPdfPrintDialog(pdfBlob, printWindow)
+      if (
+        highlightOptions.highlightInstructor &&
+        highlightOptions.selectedInstructor === 'one-each'
+      ) {
+        const columnCount = Math.max(
+          schematicPreview.columns.length,
+          schematicPreview.instructors.length,
+          1,
+        )
+        const instructorLabels = Array.from({ length: columnCount }).map((_, index) => {
+          const name = schematicPreview.instructors[index]?.trim()
+          return name || `Instructor ${index + 1}`
+        })
+
+        const pdfs: Blob[] = []
+        for (const name of instructorLabels) {
+          const payload = buildSchematicPayload(
+            schematicOptions.orientation,
+            { highlightInstructor: true, selectedInstructor: name },
+            instructorLabels,
+          )
+          pdfs.push(await fetchSchematicPdf(payload))
+        }
+
+        const formData = new FormData()
+        pdfs.forEach((pdf, index) => {
+          formData.append('pdfs', pdf, `schematic-${index + 1}.pdf`)
+        })
+        formData.append('filename', 'schematic')
+
+        const concatResponse = await fetch('/api/concat-pdfs', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!concatResponse.ok) {
+          const message = await concatResponse.text()
+          throw new Error(message || 'Failed to combine schematic PDFs.')
+        }
+
+        const combined = await concatResponse.blob()
+        openPdfPrintDialog(combined, printWindow)
+      } else {
+        const payload = buildSchematicPayload(schematicOptions.orientation, highlightOptions)
+        const pdfBlob = await fetchSchematicPdf(payload)
+        openPdfPrintDialog(pdfBlob, printWindow)
+      }
     } catch (error) {
       console.error(error)
       const message =
@@ -478,6 +650,14 @@ function PrintPage() {
     setIsPrintingAllInstructors(true)
 
     try {
+      let schematicCover: Blob | null = null
+      let schematicBlank: Blob | null = null
+      if (instructorExtras.schematicCoverPage) {
+        const result = await fetchSchematicCoverWithBlank(instructorCoverOrientation)
+        schematicCover = result.schematicCover
+        schematicBlank = result.blankPage
+      }
+
       const grouped = groupRostersByInstructor(rosterGroups)
       const orderedNames =
         instructorNames.length > 0
@@ -527,6 +707,12 @@ function PrintPage() {
       }
 
       const formData = new FormData()
+      if (schematicCover) {
+        formData.append('pdfs', schematicCover, 'schematic-cover.pdf')
+        if (schematicBlank) {
+          formData.append('pdfs', schematicBlank, 'schematic-blank.pdf')
+        }
+      }
       pdfs.forEach((pdf, index) => {
         formData.append('pdfs', pdf, `instructor-${index + 1}.pdf`)
       })
@@ -596,9 +782,44 @@ function PrintPage() {
     }))
 
     try {
+      let schematicCover: Blob | null = null
+      let schematicBlank: Blob | null = null
+      if (instructorExtras.schematicCoverPage) {
+        const highlight =
+          instructorExtras.highlightCoverInstructor && name
+            ? { highlightInstructor: true, selectedInstructor: name }
+            : { highlightInstructor: false, selectedInstructor: 'none' }
+        const result = await fetchSchematicCoverWithBlank(instructorCoverOrientation, highlight)
+        schematicCover = result.schematicCover
+        schematicBlank = result.blankPage
+      }
+
       const cached = await getCachedInstructorPdf(sessionId, selectedDay, name)
       if (cached) {
-        openPdfPrintDialog(cached, printWindow)
+        if (schematicCover) {
+          const formData = new FormData()
+          formData.append('pdfs', schematicCover, 'schematic-cover.pdf')
+          if (schematicBlank) {
+            formData.append('pdfs', schematicBlank, 'schematic-blank.pdf')
+          }
+          formData.append('pdfs', cached, `instructor-${name}.pdf`)
+          formData.append('filename', `instructor-${name}`)
+
+          const concatResponse = await fetch('/api/concat-pdfs', {
+            method: 'POST',
+            body: formData,
+          })
+
+          if (!concatResponse.ok) {
+            const message = await concatResponse.text()
+            throw new Error(message || 'Failed to combine schematic cover and instructor sheet.')
+          }
+
+          const combined = await concatResponse.blob()
+          openPdfPrintDialog(combined, printWindow)
+        } else {
+          openPdfPrintDialog(cached, printWindow)
+        }
         return
       }
 
@@ -626,7 +847,30 @@ function PrintPage() {
       const pdfBlob = await response.blob()
       await upsertInstructorPdf(sessionId, selectedDay, name, pdfBlob)
       await refreshCachedPacket()
-      openPdfPrintDialog(pdfBlob, printWindow)
+      if (schematicCover) {
+        const formData = new FormData()
+        formData.append('pdfs', schematicCover, 'schematic-cover.pdf')
+        if (schematicBlank) {
+          formData.append('pdfs', schematicBlank, 'schematic-blank.pdf')
+        }
+        formData.append('pdfs', pdfBlob, `instructor-${name}.pdf`)
+        formData.append('filename', `instructor-${name}`)
+
+        const concatResponse = await fetch('/api/concat-pdfs', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!concatResponse.ok) {
+          const message = await concatResponse.text()
+          throw new Error(message || 'Failed to combine schematic cover and instructor sheet.')
+        }
+
+        const combined = await concatResponse.blob()
+        openPdfPrintDialog(combined, printWindow)
+      } else {
+        openPdfPrintDialog(pdfBlob, printWindow)
+      }
     } catch (error) {
       console.error(error)
       const message =
@@ -683,6 +927,14 @@ function PrintPage() {
     printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
 
     try {
+      let schematicCover: Blob | null = null
+      let schematicBlank: Blob | null = null
+      if (masterlistExtras.schematicCoverPage) {
+        const result = await fetchSchematicCoverWithBlank(coverOrientation)
+        schematicCover = result.schematicCover
+        schematicBlank = result.blankPage
+      }
+
       const response = await fetch('/api/masterlist-rosters', {
         method: 'POST',
         headers: {
@@ -702,8 +954,32 @@ function PrintPage() {
         throw new Error(message || 'Failed to generate masterlist.')
       }
 
-      const blob = await response.blob()
-      openPdfPrintDialog(blob, printWindow)
+      const masterlistBlob = await response.blob()
+
+      if (schematicCover) {
+        const formData = new FormData()
+        formData.append('pdfs', schematicCover, 'schematic-cover.pdf')
+        if (schematicBlank) {
+          formData.append('pdfs', schematicBlank, 'schematic-blank.pdf')
+        }
+        formData.append('pdfs', masterlistBlob, 'masterlist.pdf')
+        formData.append('filename', 'masterlist')
+
+        const concatResponse = await fetch('/api/concat-pdfs', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!concatResponse.ok) {
+          const message = await concatResponse.text()
+          throw new Error(message || 'Failed to combine schematic cover and masterlist.')
+        }
+
+        const combined = await concatResponse.blob()
+        openPdfPrintDialog(combined, printWindow)
+      } else {
+        openPdfPrintDialog(masterlistBlob, printWindow)
+      }
     } catch (error) {
       console.error(error)
       const message =
@@ -720,37 +996,6 @@ function PrintPage() {
       handlePrintSchematic()
     }
   }
-
-  const sessionInfo = getCurrentSessionInfo()
-  const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
-  const seasonLabel = sessionInfo?.sessionSeason?.trim() ?? ''
-  const yearLabel = sessionInfo?.startDate ? new Date(sessionInfo.startDate).getFullYear() : NaN
-  const sessionTitle = [dayLabel, seasonLabel, Number.isFinite(yearLabel) ? String(yearLabel) : '']
-    .filter(Boolean)
-    .join(' ')
-  const dateRange = sessionInfo?.startDate && sessionInfo?.endDate
-    ? `${sessionInfo.startDate} - ${sessionInfo.endDate}`
-    : sessionInfo?.startDate
-    ? sessionInfo.startDate
-    : 'Date range unavailable'
-  const weeksLabel = (() => {
-    if (!sessionInfo?.startDate || !sessionInfo?.endDate) {
-      return ''
-    }
-    const start = new Date(sessionInfo.startDate)
-    const end = new Date(sessionInfo.endDate)
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return ''
-    }
-    const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate())
-    const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate())
-    if (endDate < startDate) {
-      return ''
-    }
-    const days = Math.floor((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1
-    const weeks = Math.floor((days + 6) / 7)
-    return `# of weeks ${weeks} classes`
-  })()
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
@@ -799,18 +1044,25 @@ function PrintPage() {
         busyInstructors={busyInstructors}
         isRefreshing={isRefreshingInstructorPdfs}
         isPrintingAll={isPrintingAllInstructors}
+        extras={instructorExtras}
+        coverOrientation={instructorCoverOrientation}
         onClose={() => setActiveModal(null)}
         onRefresh={handleRefreshInstructorPdfs}
         onPrintAll={handlePrintAllInstructorSheets}
         onPrintInstructor={handlePrintInstructorSheet}
+        onToggleCover={handleToggleInstructorCover}
+        onToggleCoverHighlight={handleToggleInstructorCoverHighlight}
+        onSelectCoverOrientation={setInstructorCoverOrientation}
       />
       <MasterlistOptionsModal
         open={activeModal === 'masterlist'}
         extras={masterlistExtras}
+        coverOrientation={coverOrientation}
         formatOptions={masterlistFormatOptions}
         onToggleFormat={handleToggleMasterlistOption}
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleMasterlistExtra}
+        onSelectCoverOrientation={setCoverOrientation}
         onPrint={handlePrintMasterlist}
       />
       <SchematicOptionsModal

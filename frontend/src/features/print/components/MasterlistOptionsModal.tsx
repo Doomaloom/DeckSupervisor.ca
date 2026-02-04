@@ -14,20 +14,24 @@ type MasterlistExtras = {
 type MasterlistOptionsModalProps = {
   open: boolean
   extras: MasterlistExtras
+  coverOrientation: 'portrait' | 'landscape'
   formatOptions: FormatOptions
   onToggleFormat: (key: keyof FormatOptions) => void
   onClose: () => void
   onToggle: (key: keyof MasterlistExtras) => void
+  onSelectCoverOrientation: (value: 'portrait' | 'landscape') => void
   onPrint: () => void
 }
 
 function MasterlistOptionsModal({
   open,
   extras,
+  coverOrientation,
   formatOptions,
   onToggleFormat,
   onClose,
   onToggle,
+  onSelectCoverOrientation,
   onPrint,
 }: MasterlistOptionsModalProps) {
   if (!open) {
@@ -51,6 +55,23 @@ function MasterlistOptionsModal({
             />
             Schematic Coverpage
           </label>
+          {extras.schematicCoverPage && (
+            <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
+              Cover Orientation
+              <select
+                className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
+                value={coverOrientation}
+                onChange={event =>
+                  onSelectCoverOrientation(
+                    event.target.value === 'landscape' ? 'landscape' : 'portrait',
+                  )
+                }
+              >
+                <option value="portrait">Portrait</option>
+                <option value="landscape">Landscape</option>
+              </select>
+            </label>
+          )}
           {formatOptionItems.map(option => (
             <label
               key={option.key}

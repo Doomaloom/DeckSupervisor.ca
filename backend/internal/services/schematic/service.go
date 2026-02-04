@@ -472,6 +472,13 @@ func weeksBetweenDates(start time.Time, end time.Time) int {
 	return (days + 6) / 7
 }
 
+func formatMonthDay(value time.Time) string {
+	if value.IsZero() {
+		return ""
+	}
+	return value.Format("Jan 2")
+}
+
 func fillClassBlock(
 	f *excelize.File,
 	sheet string,
@@ -997,10 +1004,10 @@ func buildWorkbook(location string, byDay map[string][]classInfo) ([]byte, strin
 		startDateText := ""
 		endDateText := ""
 		if haveStartDate {
-			startDateText = minStart.Format("2006-01-02")
+			startDateText = formatMonthDay(minStart)
 		}
 		if haveEndDate {
-			endDateText = maxEndDate.Format("2006-01-02")
+			endDateText = formatMonthDay(maxEndDate)
 		}
 		if startDateText != "" || endDateText != "" {
 			dateRange := strings.TrimSpace(strings.Trim(startDateText+" - "+endDateText, " -"))

@@ -31,6 +31,8 @@ type Request struct {
 	Title       string     `json:"title"`
 	DateRange   string     `json:"dateRange"`
 	WeeksLabel  string     `json:"weeksLabel"`
+	Highlight   bool       `json:"highlightInstructor"`
+	Selected    string     `json:"selectedInstructor"`
 	Instructors []string   `json:"instructors"`
 	Columns     [][]Course `json:"columns"`
 }
@@ -76,7 +78,8 @@ func BuildPDF(ctx context.Context, req Request) (Output, error) {
 	cells := buildCellMatrix(columns, columnCount, baseMin, totalRows)
 	timeLabels := buildTimeLabels(baseMin, totalBlocks)
 
-	htmlContent := buildHTML(req, columnCount, totalRows, timeLabels, cells, orientation)
+	highlightCols := resolveHighlightColumns(req, columnCount)
+	htmlContent := buildHTML(req, columnCount, totalRows, timeLabels, cells, orientation, highlightCols)
 	scale := computeScale(orientation, totalRows)
 	pdfBytes, err := renderPDF(ctx, htmlContent, scale)
 	if err != nil {
@@ -269,7 +272,7 @@ func formatTimeLabel(minutes int) string {
 	return fmt.Sprintf("%d:%02d %s", h12, m, ampm)
 }
 
-func buildHTML(req Request, columnCount int, totalRows int, timeLabels []string, cells [][]cell, orientation string) string {
+func buildHTML(req Request, columnCount int, totalRows int, timeLabels []string, cells [][]cell, orientation string, highlightCols []bool) string {
 	timeWidth := 16.5
 	classWidth := 26.0
 	totalWidth := timeWidth*2 + classWidth*float64(columnCount)
@@ -307,6 +310,8 @@ th, td { border: 1px solid #000; text-align: center; vertical-align: middle; pad
 .cap-yellow { background: #FFC000; }
 .cap-green { background: #00B050; }
 .empty-cell { background: #D9D9D9; border: none; }
+.highlight-col { background: #FFEB3B; }
+.highlight-col.instructor-header { background: #FFEB3B; }
 .border-top { border-bottom: none; }
 .border-middle { border-top: none; border-bottom: none; }
 .border-bottom { border-top: none; }
@@ -348,7 +353,11 @@ th, td { border: 1px solid #000; text-align: center; vertical-align: middle; pad
 		if i < len(req.Instructors) && strings.TrimSpace(req.Instructors[i]) != "" {
 			label = strings.TrimSpace(req.Instructors[i])
 		}
-		buf.WriteString("<th class=\"instructor-header\">" + html.EscapeString(label) + "</th>")
+		classes := "instructor-header"
+		if i < len(highlightCols) && highlightCols[i] {
+			classes += " highlight-col"
+		}
+		buf.WriteString("<th class=\"" + classes + "\">" + html.EscapeString(label) + "</th>")
 	}
 	buf.WriteString("</tr></thead><tbody>")
 
@@ -372,6 +381,9 @@ th, td { border: 1px solid #000; text-align: center; vertical-align: middle; pad
 		for colIndex := 0; colIndex < columnCount; colIndex++ {
 			entry := cells[rowIndex][colIndex]
 			classes := []string{}
+			if colIndex < len(highlightCols) && highlightCols[colIndex] {
+				classes = append(classes, "highlight-col")
+			}
 			if entry.kind == "empty" {
 				classes = append(classes, "empty-cell")
 			}
@@ -405,6 +417,31 @@ th, td { border: 1px solid #000; text-align: center; vertical-align: middle; pad
 
 	buf.WriteString("</tbody></table></body></html>")
 	return buf.String()
+}
+
+func resolveHighlightColumns(req Request, columnCount int) []bool {
+	if !req.Highlight {
+		return nil
+	}
+	selected := strings.TrimSpace(req.Selected)
+	if selected == "" || strings.EqualFold(selected, "none") || strings.EqualFold(selected, "one-each") {
+		return nil
+	}
+
+	highlight := make([]bool, columnCount)
+	for i := 0; i < columnCount; i++ {
+		if i >= len(req.Instructors) {
+			continue
+		}
+		name := strings.TrimSpace(req.Instructors[i])
+		if name == "" {
+			continue
+		}
+		if strings.EqualFold(name, selected) {
+			highlight[i] = true
+		}
+	}
+	return highlight
 }
 
 func renderPDF(ctx context.Context, htmlContent string, scale float64) ([]byte, error) {
