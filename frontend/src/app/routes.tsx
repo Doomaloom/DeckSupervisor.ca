@@ -5,6 +5,7 @@ import PrintPage from '../features/print/PrintPage'
 import RostersPage from '../features/rosters/RostersPage'
 import SchematicPage from '../features/schematic/SchematicPage'
 import StaffNotesPage from '../features/staff-notes/StaffNotesPage'
+import FullTimerToolsPage from '../features/full-timer-tools/FullTimerToolsPage'
 
 function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ function AppRoutes() {
       <Route path="/rosters" element={<RostersPage />} />
       <Route path="/schematic" element={<SchematicPage />} />
       <Route path="/staff-notes" element={<StaffNotesPage />} />
+      <Route path="/full-timer-tools" element={<FullTimerToolsPage />} />
     </Routes>
   )
 }

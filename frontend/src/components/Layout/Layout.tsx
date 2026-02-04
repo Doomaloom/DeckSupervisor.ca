@@ -7,6 +7,7 @@ import {
     AdjustmentsHorizontalIcon,
     UsersIcon,
     PrinterIcon,
+    ClockIcon,
 } from '@heroicons/react/24/outline'
 import { useDay } from '../../app/DayContext'
 import { processCsvAndStore } from '../../lib/api'
@@ -183,6 +184,11 @@ function Layout({ children }: LayoutProps) {
                             label: 'Notes',
                             icon: <DocumentTextIcon className="h-5 w-5" />,
                         },
+                        {
+                            to: '/full-timer-tools',
+                            label: 'Full Timer Tools',
+                            icon: <ClockIcon className="h-5 w-5" />,
+                        },
                     ].map(item => (
                         <Link
                             key={item.to}
@@ -222,6 +228,7 @@ function getPageTitle(pathname: string) {
         case '/schematic': return 'Class Schedule'
         case '/print': return 'Print'
         case '/staff-notes': return 'Notes'
+        case '/full-timer-tools': return 'Full Timer Tools'
         default: return 'COB Aquatics'
     }
 }

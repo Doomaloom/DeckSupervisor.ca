@@ -17,7 +17,7 @@ export function buildCourses(students: Student[]): Course[] {
         const endMinutes = timeToMinutes(endTime)
         map.set(student.code, {
             code: student.code,
-            level: student.level || student.service_name,
+            level: student.service_name || student.level,
             runningTime: getRunningMinutes(student.time),
             startTime,
             endTime,

@@ -1,0 +1,21 @@
+package httpapi
+
+import (
+	"net/http"
+
+	"cob-aquatics/internal/http/handlers"
+	"github.com/gorilla/mux"
+)
+
+func NewRouter() *mux.Router {
+	r := mux.NewRouter()
+	r.HandleFunc("/api/process-csv", handlers.ProcessCSV).Methods("POST")
+	r.HandleFunc("/api/masterlist", handlers.Masterlist).Methods("POST")
+	r.HandleFunc("/api/masterlist-rosters", handlers.MasterlistRosters).Methods("POST")
+	r.HandleFunc("/api/attendance-pdf", handlers.AttendancePDF).Methods("POST")
+	r.HandleFunc("/api/concat-pdfs", handlers.ConcatPDF).Methods("POST")
+	r.HandleFunc("/api/schematic-maker", handlers.SchematicMaker).Methods("POST")
+	r.HandleFunc("/api/health", handlers.Health).Methods("GET")
+	r.NotFoundHandler = http.NotFoundHandler()
+	return r
+}
