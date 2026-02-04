@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
     CalendarDaysIcon,
+    ClipboardDocumentListIcon,
     DocumentTextIcon,
     HomeIcon,
     AdjustmentsHorizontalIcon,
@@ -180,6 +181,11 @@ function Layout({ children }: LayoutProps) {
                             icon: <PrinterIcon className="h-5 w-5" />,
                         },
                         {
+                            to: '/report-cards',
+                            label: 'Report Cards',
+                            icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
+                        },
+                        {
                             to: '/staff-notes',
                             label: 'Notes',
                             icon: <DocumentTextIcon className="h-5 w-5" />,
@@ -227,6 +233,7 @@ function getPageTitle(pathname: string) {
         case '/rosters': return 'Class Rosters'
         case '/schematic': return 'Class Schedule'
         case '/print': return 'Print'
+        case '/report-cards': return 'Report Cards'
         case '/staff-notes': return 'Notes'
         case '/full-timer-tools': return 'Full Timer Tools'
         default: return 'COB Aquatics'
