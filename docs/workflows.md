@@ -87,7 +87,7 @@ Guest users can use the app exactly as it works now:
 - Auth users (Supabase Auth)
 - Profiles (`profiles`): first/last name, account type, email
 - Teams (`teams`): name, owner_id
-- Team locations (`teams.locations`): editable list of available locations
+- Team locations (`teams.available_locations`): editable list of available locations
 - Team membership (`team_members`)
 - Invites (`team_invites`)
 - Sessions (`sessions`): day, season, start/end, instructors, team_id, location
@@ -111,6 +111,9 @@ Guest users can use the app exactly as it works now:
 
 **Sessions**
 - Fields: `id`, `team_id`, `created_by`, `session_day`, `session_season`, `start_date`, `end_date`, `location`, `instructors` (jsonb), `created_at`
+
+**Teams**
+- Fields: `id`, `owner_id`, `name`, `available_locations` (text[])
 
 **Schematics**
 - Fields: `id`, `session_id`, `data` (jsonb), `created_by`, `created_at`, `updated_at`
