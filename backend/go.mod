@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/chromedp/cdproto v0.0.0-20241003230502-a4a8f7c660df
 	github.com/chromedp/chromedp v0.10.1
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/gorilla/mux v1.8.0
 	github.com/pdfcpu/pdfcpu v0.8.1
 	github.com/rs/cors v1.10.1

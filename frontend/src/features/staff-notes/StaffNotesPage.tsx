@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getCurrentSessionId } from '../../lib/instructorPdfCache'
+import { getScopedKey } from '../../lib/storageScope'
 import { useSessionInstructors } from '../print/hooks/useSessionInstructors'
 
 type NoteTabKey = 'general' | 'recognition' | 'feedback' | 'coaching'
@@ -26,7 +27,7 @@ type TabConfig = {
   showEmployee?: boolean
 }
 
-const NOTES_STORAGE_PREFIX = 'decksupervisor.notes'
+const NOTES_STORAGE_PREFIX = () => getScopedKey('notes')
 
 const tabs: TabConfig[] = [
   { key: 'general', label: 'General Session Notes', type: 'note' },
@@ -42,7 +43,7 @@ const createId = () =>
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`
 
 const buildStorageKey = (sessionId: string, tab: TabKey) =>
-  `${NOTES_STORAGE_PREFIX}::${sessionId}::${tab}`
+  `${NOTES_STORAGE_PREFIX()}::${sessionId}::${tab}`
 
 const loadJson = <T,>(key: string, fallback: T): T => {
   if (typeof window === 'undefined') {

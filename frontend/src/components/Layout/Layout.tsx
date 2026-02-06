@@ -9,9 +9,16 @@ import {
     UsersIcon,
     PrinterIcon,
     ClockIcon,
+    UserCircleIcon,
+    UserGroupIcon,
 } from '@heroicons/react/24/outline'
 import { useDay } from '../../app/DayContext'
+import { useAuth } from '../../app/AuthContext'
 import { processCsvAndStore } from '../../lib/api'
+import { resolveCustomRosters } from '../../lib/customRostersApi'
+import { getCurrentSessionId, loadSessions } from '../../lib/sessionStorage'
+import { onStorageScopeChanged } from '../../lib/storageScope'
+import { getCustomRostersForDay, getStudentsForDay, setCustomRostersForDay } from '../../lib/storage'
 
 type LayoutProps = {
     children: React.ReactNode
@@ -23,9 +30,6 @@ type SessionEntry = {
     sessionSeason: string
     startDate: string
 }
-
-const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
-const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
 
 const dayNames: Record<string, string> = {
     Mo: 'Monday',
@@ -47,45 +51,141 @@ function getSessionName(session: SessionEntry) {
 }
 
 function getCurrentSessionName() {
-    if (typeof window === 'undefined') {
-        return ''
-    }
-    const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+    const currentSessionId = getCurrentSessionId()
     if (!currentSessionId) {
         return ''
     }
-    const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
-    if (!stored) {
-        return ''
-    }
-    try {
-        const sessions = JSON.parse(stored) as SessionEntry[]
-        const session = sessions.find(item => item.id === currentSessionId)
-        return session ? getSessionName(session) : ''
-    } catch (error) {
-        console.error('Failed to parse stored sessions', error)
-        return ''
-    }
+    const sessions = loadSessions() as SessionEntry[]
+    const session = sessions.find(item => item.id === currentSessionId)
+    return session ? getSessionName(session) : ''
 }
 
 function Layout({ children }: LayoutProps) {
     const location = useLocation()
     const { selectedDay } = useDay()
+    const { accountType, completeProfile, isGuest, needsProfile, profile, session, signOut, user } = useAuth()
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+    const [scopeVersion, setScopeVersion] = useState(0)
+    const [profileFirstName, setProfileFirstName] = useState('')
+    const [profileLastName, setProfileLastName] = useState('')
+    const [profileError, setProfileError] = useState('')
 
     const isCurrentPage = (path: string) => location.pathname === path
     const pageTitle = getPageTitle(location.pathname)
-    const currentSessionName = useMemo(() => getCurrentSessionName(), [location.pathname])
+    const currentSessionName = useMemo(() => getCurrentSessionName(), [location.pathname, scopeVersion])
+
+    useEffect(() => {
+        if (!needsProfile) {
+            return
+        }
+        setProfileFirstName(profile?.first_name ?? '')
+        setProfileLastName(profile?.last_name ?? '')
+    }, [needsProfile, profile])
 
     useEffect(() => {
         document.title = pageTitle === 'COB Aquatics' ? pageTitle : `${pageTitle} | COB Aquatics`
     }, [pageTitle])
+
+    useEffect(() => {
+        return onStorageScopeChanged(() => {
+            setScopeVersion(version => version + 1)
+        })
+    }, [])
+
+    useEffect(() => {
+        const accessToken = session?.access_token
+        if (!selectedDay || !accessToken || !user) {
+            return
+        }
+        const students = getStudentsForDay(selectedDay)
+        if (students.length === 0) {
+            return
+        }
+        let active = true
+        const sync = async () => {
+            try {
+                const resolved = await resolveCustomRosters(selectedDay, students, accessToken)
+                if (!active) {
+                    return
+                }
+                if (resolved.length > 0 || getCustomRostersForDay(selectedDay).length > 0) {
+                    setCustomRostersForDay(selectedDay, resolved)
+                }
+            } catch (error) {
+                console.error('Failed to sync custom rosters', error)
+            }
+        }
+        void sync()
+        return () => {
+            active = false
+        }
+    }, [selectedDay, session?.access_token, user, scopeVersion])
 
     const navBaseClasses =
         'flex items-center justify-start rounded-[10px] bg-white/10 px-3 py-2 text-accent transition hover:-translate-y-0.5'
     const navCollapsedClasses = isSidebarCollapsed ? 'justify-center px-0 py-2 text-[0.85rem]' : ''
     const navCurrentClasses = 'bg-accent text-secondary'
     const navHoverClasses = 'hover:bg-hover hover:text-secondary'
+    const displayName = profile?.first_name
+        ? `${profile.first_name} ${profile.last_name}`.trim()
+        : profile?.email ?? user?.email ?? 'Guest'
+    const accountLabel = accountType === 'full_time' ? 'Full-time' : user ? 'Part-time' : 'Guest'
+    const navItems = [
+        {
+            to: '/',
+            label: 'Home',
+            icon: <HomeIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/manage-sessions',
+            label: 'Manage Session',
+            icon: <AdjustmentsHorizontalIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/schematic',
+            label: 'Schematic',
+            icon: <CalendarDaysIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/rosters',
+            label: 'Rosters',
+            icon: <UsersIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/print',
+            label: 'Print',
+            icon: <PrinterIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/report-cards',
+            label: 'Report Cards',
+            icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/staff-notes',
+            label: 'Notes',
+            icon: <DocumentTextIcon className="h-5 w-5" />,
+        },
+        ...(accountType === 'full_time'
+            ? [
+                {
+                    to: '/full-timer-tools',
+                    label: 'Full Timer Tools',
+                    icon: <ClockIcon className="h-5 w-5" />,
+                },
+                {
+                    to: '/team',
+                    label: 'Team',
+                    icon: <UserGroupIcon className="h-5 w-5" />,
+                },
+            ]
+            : []),
+        {
+            to: '/account',
+            label: 'Account',
+            icon: <UserCircleIcon className="h-5 w-5" />,
+        },
+    ]
 
     return (
         <div className="flex h-screen overflow-hidden">
@@ -123,6 +223,32 @@ function Layout({ children }: LayoutProps) {
 
                 {!isSidebarCollapsed && (
                     <div className="flex flex-col gap-2">
+                        <h3 className="text-[0.95rem] font-semibold">Account</h3>
+                        <div className="rounded-2xl border border-secondary/30 bg-accent px-4 py-2 text-sm text-secondary">
+                            <p className="font-semibold">{displayName}</p>
+                            <p className="text-xs uppercase tracking-wide text-secondary/70">{accountLabel}</p>
+                        </div>
+                        {isGuest ? (
+                            <Link
+                                to="/sign-in"
+                                className="rounded-2xl bg-secondary px-3 py-2 text-center text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
+                            >
+                                Sign In
+                            </Link>
+                        ) : (
+                            <button
+                                type="button"
+                                className="rounded-2xl border border-secondary/40 px-3 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                                onClick={() => void signOut()}
+                            >
+                                Sign Out
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {!isSidebarCollapsed && (
+                    <div className="flex flex-col gap-2">
                         <label className="relative flex h-12 items-center justify-center rounded-[10px] border border-dashed border-white/50 bg-white/10 px-2 text-center text-sm font-medium text-accent transition hover:-translate-y-0.5 hover:bg-hover">
                             <span>Upload Roster</span>
                             <input
@@ -154,48 +280,7 @@ function Layout({ children }: LayoutProps) {
                 )}
 
                 <nav className="flex flex-col gap-3">
-                    {[
-                        {
-                            to: '/',
-                            label: 'Home',
-                            icon: <HomeIcon className="h-5 w-5" />,
-                        },
-                        {
-                            to: '/manage-sessions',
-                            label: 'Manage Session',
-                            icon: <AdjustmentsHorizontalIcon className="h-5 w-5" />,
-                        },
-                        {
-                            to: '/schematic',
-                            label: 'Schematic',
-                            icon: <CalendarDaysIcon className="h-5 w-5" />,
-                        },
-                        {
-                            to: '/rosters',
-                            label: 'Rosters',
-                            icon: <UsersIcon className="h-5 w-5" />,
-                        },
-                        {
-                            to: '/print',
-                            label: 'Print',
-                            icon: <PrinterIcon className="h-5 w-5" />,
-                        },
-                        {
-                            to: '/report-cards',
-                            label: 'Report Cards',
-                            icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
-                        },
-                        {
-                            to: '/staff-notes',
-                            label: 'Notes',
-                            icon: <DocumentTextIcon className="h-5 w-5" />,
-                        },
-                        {
-                            to: '/full-timer-tools',
-                            label: 'Full Timer Tools',
-                            icon: <ClockIcon className="h-5 w-5" />,
-                        },
-                    ].map(item => (
+                    {navItems.map(item => (
                         <Link
                             key={item.to}
                             to={item.to}
@@ -222,6 +307,59 @@ function Layout({ children }: LayoutProps) {
             <main className="flex min-h-0 flex-1 overflow-y-auto p-8">
                 {children}
             </main>
+
+            {needsProfile ? (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                    <div className="w-full max-w-md rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-lg">
+                        <h2 className="text-lg font-semibold">Complete your profile</h2>
+                        <p className="mt-2 text-sm text-secondary/70">
+                            Add your first and last name so full-time users can invite you to teams.
+                        </p>
+                        <div className="mt-4 flex flex-col gap-3">
+                            <input
+                                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                                placeholder="First name"
+                                value={profileFirstName}
+                                onChange={event => setProfileFirstName(event.target.value)}
+                            />
+                            <input
+                                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                                placeholder="Last name"
+                                value={profileLastName}
+                                onChange={event => setProfileLastName(event.target.value)}
+                            />
+                            {profileError ? (
+                                <p className="text-sm font-semibold text-danger">{profileError}</p>
+                            ) : null}
+                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                                <button
+                                    type="button"
+                                    className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-secondary"
+                                    onClick={async () => {
+                                        const trimmedFirst = profileFirstName.trim()
+                                        const trimmedLast = profileLastName.trim()
+                                        if (!trimmedFirst || !trimmedLast) {
+                                            setProfileError('Please enter your first and last name.')
+                                            return
+                                        }
+                                        setProfileError('')
+                                        await completeProfile(trimmedFirst, trimmedLast)
+                                    }}
+                                >
+                                    Save Profile
+                                </button>
+                                <button
+                                    type="button"
+                                    className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
+                                    onClick={() => void signOut()}
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </div>
     )
 }

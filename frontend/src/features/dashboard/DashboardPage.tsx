@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDay } from '../../app/DayContext'
+import { getCurrentSessionId, loadSessions, saveSessions, setCurrentSessionId } from '../../lib/sessionStorage'
+import { onStorageScopeChanged } from '../../lib/storageScope'
 
 type InstructorEntry = { name: string }
 type SessionEntry = {
@@ -13,8 +15,6 @@ type SessionEntry = {
   rosterFileName?: string
 }
 
-const STORAGE_KEY = 'decksupervisor.sessions'
-const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
 
 const dayNames: Record<string, string> = {
   Mo: 'Monday',
@@ -35,19 +35,6 @@ function getSessionName(session: SessionEntry) {
   return parts.length ? parts.join(' ') : 'Session'
 }
 
-function loadSessions(): SessionEntry[] {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (!stored) {
-    return []
-  }
-  try {
-    return JSON.parse(stored) as SessionEntry[]
-  } catch (error) {
-    console.error('Failed to parse stored sessions', error)
-    return []
-  }
-}
-
 function Dashboard() {
   const navigate = useNavigate()
   const { setSelectedDay } = useDay()
@@ -61,12 +48,7 @@ function Dashboard() {
   const [instructors, setInstructors] = useState<InstructorEntry[]>([{ name: '' }])
   const [saveMessage, setSaveMessage] = useState('')
   const [rosterFile, setRosterFile] = useState<File | null>(null)
-  const [currentSessionId, setCurrentSessionId] = useState(() => {
-    if (typeof window === 'undefined') {
-      return ''
-    }
-    return localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
-  })
+  const [currentSessionId, setCurrentSessionIdState] = useState(() => getCurrentSessionId())
   const [selectMessage, setSelectMessage] = useState('')
   const [sessionsVersion, setSessionsVersion] = useState(0)
 
@@ -104,9 +86,9 @@ function Dashboard() {
 
     const sessions = loadSessions()
     sessions.push(nextSession)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
-    localStorage.setItem(CURRENT_SESSION_KEY, id)
+    saveSessions(sessions)
     setCurrentSessionId(id)
+    setCurrentSessionIdState(id)
     setSaveMessage('Session saved.')
     setSessionsVersion(version => version + 1)
     if (sessionDay) {
@@ -116,8 +98,8 @@ function Dashboard() {
   }
 
   const handleSelectSession = (session: SessionEntry) => {
-    localStorage.setItem(CURRENT_SESSION_KEY, session.id)
     setCurrentSessionId(session.id)
+    setCurrentSessionIdState(session.id)
     setSelectMessage('Current session set.')
     if (session.sessionDay) {
       setSelectedDay(session.sessionDay)
@@ -142,6 +124,13 @@ function Dashboard() {
       setSelectedDay('')
     }
   }, [currentSessionId, setSelectedDay])
+
+  useEffect(() => {
+    return onStorageScopeChanged(() => {
+      setCurrentSessionIdState(getCurrentSessionId())
+      setSessionsVersion(version => version + 1)
+    })
+  }, [])
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">

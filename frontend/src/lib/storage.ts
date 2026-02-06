@@ -6,17 +6,17 @@ import type {
   ScheduleConfig,
   Student,
 } from '../types/app'
+import { getScopedKey } from './storageScope'
 
-const PREFIX = 'cob'
-const selectedDayKey = `${PREFIX}:selectedDay`
-const studentsKey = `${PREFIX}:studentsByDay`
-const instructorsKey = `${PREFIX}:instructorsByDay`
-const formatOptionsKey = `${PREFIX}:formatOptions`
-const masterlistDraftOptionsKey = `${PREFIX}:masterlistDraftOptions`
-const schedulesKey = `${PREFIX}:schedulesByDay`
-const instructorCoursesKey = `${PREFIX}:instructorCoursesByDay`
-const customRostersKey = `${PREFIX}:customRostersByDay`
-const studentsUpdatedEvent = `${PREFIX}:students-updated`
+const selectedDayKey = () => getScopedKey('selectedDay')
+const studentsKey = () => getScopedKey('studentsByDay')
+const instructorsKey = () => getScopedKey('instructorsByDay')
+const formatOptionsKey = () => getScopedKey('formatOptions')
+const masterlistDraftOptionsKey = () => getScopedKey('masterlistDraftOptions')
+const schedulesKey = () => getScopedKey('schedulesByDay')
+const instructorCoursesKey = () => getScopedKey('instructorCoursesByDay')
+const customRostersKey = () => getScopedKey('customRostersByDay')
+const studentsUpdatedEvent = () => getScopedKey('students-updated')
 
 type StudentsByDay = Record<string, Student[]>
 type InstructorsByDay = Record<string, InstructorConfig>
@@ -63,34 +63,34 @@ export function getSelectedDay(): string {
   if (typeof window === 'undefined') {
     return ''
   }
-  return window.localStorage.getItem(selectedDayKey) ?? ''
+  return window.localStorage.getItem(selectedDayKey()) ?? ''
 }
 
 export function setSelectedDay(day: string) {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem(selectedDayKey, day)
+  window.localStorage.setItem(selectedDayKey(), day)
 }
 
 export function getFormatOptions(): FormatOptions {
-  return loadJson(formatOptionsKey, defaultFormatOptions)
+  return loadJson(formatOptionsKey(), defaultFormatOptions)
 }
 
 export function setFormatOptions(options: FormatOptions) {
-  saveJson(formatOptionsKey, options)
+  saveJson(formatOptionsKey(), options)
 }
 
 export function getMasterlistDraftOptions(): FormatOptions {
-  return loadJson(masterlistDraftOptionsKey, getFormatOptions())
+  return loadJson(masterlistDraftOptionsKey(), getFormatOptions())
 }
 
 export function setMasterlistDraftOptions(options: FormatOptions) {
-  saveJson(masterlistDraftOptionsKey, options)
+  saveJson(masterlistDraftOptionsKey(), options)
 }
 
 export function getStudentsByDay(): StudentsByDay {
-  return loadJson(studentsKey, {})
+  return loadJson(studentsKey(), {})
 }
 
 export function getStudentsForDay(day: string): Student[] {
@@ -107,9 +107,9 @@ export function setStudentsForDay(day: string, students: Student[]) {
   }
   const all = getStudentsByDay()
   all[day] = students
-  saveJson(studentsKey, all)
+  saveJson(studentsKey(), all)
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(studentsUpdatedEvent, { detail: { day } }))
+    window.dispatchEvent(new CustomEvent(studentsUpdatedEvent(), { detail: { day } }))
   }
 }
 
@@ -132,12 +132,13 @@ export function onStudentsUpdated(handler: (day: string) => void) {
     const custom = event as CustomEvent<{ day?: string }>
     handler(custom.detail?.day ?? '')
   }
-  window.addEventListener(studentsUpdatedEvent, listener)
-  return () => window.removeEventListener(studentsUpdatedEvent, listener)
+  const eventName = studentsUpdatedEvent()
+  window.addEventListener(eventName, listener)
+  return () => window.removeEventListener(eventName, listener)
 }
 
 export function getInstructorsByDay(): InstructorsByDay {
-  return loadJson(instructorsKey, {})
+  return loadJson(instructorsKey(), {})
 }
 
 export function getInstructorsForDay(day: string): InstructorConfig | null {
@@ -154,11 +155,11 @@ export function setInstructorsForDay(day: string, instructors: InstructorConfig)
   }
   const all = getInstructorsByDay()
   all[day] = instructors
-  saveJson(instructorsKey, all)
+  saveJson(instructorsKey(), all)
 }
 
 export function getSchedulesByDay(): SchedulesByDay {
-  return loadJson(schedulesKey, {})
+  return loadJson(schedulesKey(), {})
 }
 
 export function getScheduleForDay(day: string): ScheduleConfig | null {
@@ -175,11 +176,11 @@ export function setScheduleForDay(day: string, schedule: ScheduleConfig) {
   }
   const all = getSchedulesByDay()
   all[day] = schedule
-  saveJson(schedulesKey, all)
+  saveJson(schedulesKey(), all)
 }
 
 export function getCustomRostersByDay(): CustomRostersByDay {
-  return loadJson(customRostersKey, {})
+  return loadJson(customRostersKey(), {})
 }
 
 export function getCustomRostersForDay(day: string): CustomRoster[] {
@@ -196,11 +197,11 @@ export function setCustomRostersForDay(day: string, rosters: CustomRoster[]) {
   }
   const all = getCustomRostersByDay()
   all[day] = rosters
-  saveJson(customRostersKey, all)
+  saveJson(customRostersKey(), all)
 }
 
 export function getInstructorCoursesByDay(): InstructorCoursesByDay {
-  return loadJson(instructorCoursesKey, {})
+  return loadJson(instructorCoursesKey(), {})
 }
 
 export function getInstructorCoursesForDay(day: string): InstructorCourseConfig | null {
@@ -217,7 +218,7 @@ export function setInstructorCoursesForDay(day: string, config: InstructorCourse
   }
   const all = getInstructorCoursesByDay()
   all[day] = config
-  saveJson(instructorCoursesKey, all)
+  saveJson(instructorCoursesKey(), all)
 }
 
 export function clearDayData(day: string) {
@@ -236,9 +237,9 @@ export function clearDayData(day: string) {
   delete instructorCourses[day]
   delete customRosters[day]
 
-  saveJson(studentsKey, students)
-  saveJson(instructorsKey, instructors)
-  saveJson(schedulesKey, schedules)
-  saveJson(instructorCoursesKey, instructorCourses)
-  saveJson(customRostersKey, customRosters)
+  saveJson(studentsKey(), students)
+  saveJson(instructorsKey(), instructors)
+  saveJson(schedulesKey(), schedules)
+  saveJson(instructorCoursesKey(), instructorCourses)
+  saveJson(customRostersKey(), customRosters)
 }

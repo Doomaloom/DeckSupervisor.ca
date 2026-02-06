@@ -20,7 +20,7 @@ function RostersPage() {
     const [studentLevelEditMap, setStudentLevelEditMap] = useState<Record<string, boolean>>({})
     const { students, setStudents, rosters, instructorOptions } = useRosterData(selectedDay ?? '')
     const { customRosters, saveCustomRosters, updateCustomRosterInstructor, updateCustomRosterLevel } =
-        useCustomRosters(selectedDay ?? '')
+        useCustomRosters(selectedDay ?? '', students)
     const customRosterGroups = useMemo(() => {
         const rosterByCode = new Map(rosters.map(roster => [roster.code, roster]))
         const studentsById = new Map(students.map(student => [student.id, student]))

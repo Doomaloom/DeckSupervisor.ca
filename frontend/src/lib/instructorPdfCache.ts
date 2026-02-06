@@ -1,12 +1,11 @@
 import { getCustomRostersForDay, getStudentsForDay } from './storage'
+import { getCurrentSessionId as getStoredCurrentSessionId, loadSessions } from './sessionStorage'
 import { buildCustomRosterGroups, buildRosterGroups, sanitizeLevel } from '../features/rosters/utils'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
 const DB_VERSION = 1
 const STORE_NAME = 'instructorPackets'
 
-const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
-const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
 const FALLBACK_SESSION_NAME = 'Summer 2025'
 
 type SessionEntry = {
@@ -82,23 +81,16 @@ async function withStore<T>(
 }
 
 export function getCurrentSessionId(): string {
-  if (typeof window === 'undefined') {
-    return ''
-  }
-  return localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+  return getStoredCurrentSessionId()
 }
 
 export function getCurrentSessionName(): string {
-  if (typeof window === 'undefined') {
-    return ''
-  }
-  const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
-  const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
-  if (!currentSessionId || !stored) {
+  const currentSessionId = getStoredCurrentSessionId()
+  const sessions = loadSessions()
+  if (!currentSessionId || sessions.length === 0) {
     return ''
   }
   try {
-    const sessions = JSON.parse(stored) as SessionEntry[]
     const session = sessions.find(item => item.id === currentSessionId)
     if (!session) {
       return ''

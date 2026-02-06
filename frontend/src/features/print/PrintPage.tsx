@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useDay } from '../../app/DayContext'
+import { getCurrentSessionId as getStoredCurrentSessionId, loadSessions } from '../../lib/sessionStorage'
 import {
   getCustomRostersForDay,
   getMasterlistDraftOptions,
@@ -28,8 +29,6 @@ import { dayNames } from '../schematic/constants'
 import { useSchematicSchedule } from '../schematic/hooks/useSchematicSchedule'
 import { getCapacity } from '../schematic/utils/capacity'
 
-const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
-const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
 type SessionEntry = {
@@ -47,47 +46,23 @@ const formatGeneratedDate = (date: Date) =>
   })
 
 const getCurrentSessionStartDate = () => {
-  if (typeof window === 'undefined') {
-    return ''
-  }
-  const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+  const currentSessionId = getStoredCurrentSessionId()
   if (!currentSessionId) {
     return ''
   }
-  const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
-  if (!stored) {
-    return ''
-  }
-  try {
-    const sessions = JSON.parse(stored) as SessionEntry[]
-    const session = sessions.find(item => item.id === currentSessionId)
-    return session?.startDate ?? ''
-  } catch (error) {
-    console.error('Failed to parse stored sessions', error)
-    return ''
-  }
+  const sessions = loadSessions() as SessionEntry[]
+  const session = sessions.find(item => item.id === currentSessionId)
+  return session?.startDate ?? ''
 }
 
 const getCurrentSessionInfo = () => {
-  if (typeof window === 'undefined') {
-    return null
-  }
-  const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+  const currentSessionId = getStoredCurrentSessionId()
   if (!currentSessionId) {
     return null
   }
-  const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
-  if (!stored) {
-    return null
-  }
-  try {
-    const sessions = JSON.parse(stored) as SessionEntry[]
-    const session = sessions.find(item => item.id === currentSessionId)
-    return session ?? null
-  } catch (error) {
-    console.error('Failed to parse stored sessions', error)
-    return null
-  }
+  const sessions = loadSessions() as SessionEntry[]
+  const session = sessions.find(item => item.id === currentSessionId)
+  return session ?? null
 }
 
 const getSessionWeek = (startDate: string, now = new Date()) => {

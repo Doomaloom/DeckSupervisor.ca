@@ -1,8 +1,6 @@
 import type { RosterGroup } from '../types'
 import { sanitizeLevel } from '../utils'
-
-const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
-const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
+import { getCurrentSessionId, loadSessions } from '../../../lib/sessionStorage'
 
 type SessionEntry = {
     id: string
@@ -31,25 +29,13 @@ function getSessionName(session: SessionEntry) {
 }
 
 function getCurrentSessionName() {
-    if (typeof window === 'undefined') {
-        return ''
-    }
-    const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+    const currentSessionId = getCurrentSessionId()
     if (!currentSessionId) {
         return ''
     }
-    const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
-    if (!stored) {
-        return ''
-    }
-    try {
-        const sessions = JSON.parse(stored) as SessionEntry[]
-        const session = sessions.find(item => item.id === currentSessionId)
-        return session ? getSessionName(session) : ''
-    } catch (error) {
-        console.error('Failed to parse stored sessions', error)
-        return ''
-    }
+    const sessions = loadSessions() as SessionEntry[]
+    const session = sessions.find(item => item.id === currentSessionId)
+    return session ? getSessionName(session) : ''
 }
 
 export function useRosterPrint() {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
-const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
+import { getCurrentSessionId, loadSessions } from '../../../lib/sessionStorage'
+import { onStorageScopeChanged } from '../../../lib/storageScope'
 
 type SessionEntry = {
   id: string
@@ -10,35 +10,32 @@ type SessionEntry = {
 
 export function useSessionInstructors(active: boolean) {
   const [names, setNames] = useState<string[]>([])
+  const [scopeVersion, setScopeVersion] = useState(0)
+
+  useEffect(() => {
+    return onStorageScopeChanged(() => {
+      setScopeVersion(version => version + 1)
+    })
+  }, [])
 
   useEffect(() => {
     if (!active) {
       return
     }
-    if (typeof window === 'undefined') {
+    const currentSessionId = getCurrentSessionId()
+    if (!currentSessionId) {
       setNames([])
       return
     }
-    const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
-    const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
-    if (!currentSessionId || !stored) {
-      setNames([])
-      return
-    }
-    try {
-      const sessions = JSON.parse(stored) as SessionEntry[]
-      const session = sessions.find(item => item.id === currentSessionId)
-      const next =
-        session?.instructors
-          .map(instructor => instructor.name.trim())
-          .filter(Boolean)
-          .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })) ?? []
-      setNames(next)
-    } catch (error) {
-      console.error('Failed to parse stored sessions', error)
-      setNames([])
-    }
-  }, [active])
+    const sessions = loadSessions() as SessionEntry[]
+    const session = sessions.find(item => item.id === currentSessionId)
+    const next =
+      session?.instructors
+        .map(instructor => instructor.name.trim())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })) ?? []
+    setNames(next)
+  }, [active, scopeVersion])
 
   return names
 }

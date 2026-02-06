@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDay } from '../../app/DayContext'
+import { clearCurrentSessionId, getCurrentSessionId, loadSessions, saveSessions } from '../../lib/sessionStorage'
+import { onStorageScopeChanged } from '../../lib/storageScope'
 
 type InstructorEntry = { name: string }
 type SessionEntry = {
@@ -13,8 +15,6 @@ type SessionEntry = {
   rosterFileName?: string
 }
 
-const STORAGE_KEY = 'decksupervisor.sessions'
-const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
 
 const dayNames: Record<string, string> = {
   Mo: 'Monday',
@@ -35,19 +35,6 @@ function getSessionName(session: SessionEntry) {
   return parts.length ? parts.join(' ') : 'Session'
 }
 
-function loadSessions(): SessionEntry[] {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (!stored) {
-    return []
-  }
-  try {
-    return JSON.parse(stored) as SessionEntry[]
-  } catch (error) {
-    console.error('Failed to parse stored sessions', error)
-    return []
-  }
-}
-
 function ManageSessionsPage() {
   const navigate = useNavigate()
   const { setSelectedDay } = useDay()
@@ -60,12 +47,7 @@ function ManageSessionsPage() {
   const [editRosterFileName, setEditRosterFileName] = useState<string | undefined>(undefined)
   const [editMessage, setEditMessage] = useState('')
   const [sessionsVersion, setSessionsVersion] = useState(0)
-  const [currentSessionId] = useState(() => {
-    if (typeof window === 'undefined') {
-      return ''
-    }
-    return localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
-  })
+  const [currentSessionId, setCurrentSessionIdState] = useState(() => getCurrentSessionId())
 
   const seasonOptions = ['Winter', 'Spring', 'Summer', 'Fall']
 
@@ -124,6 +106,13 @@ function ManageSessionsPage() {
     }
   }, [currentSessionId, setSelectedDay])
 
+  useEffect(() => {
+    return onStorageScopeChanged(() => {
+      setCurrentSessionIdState(getCurrentSessionId())
+      setSessionsVersion(version => version + 1)
+    })
+  }, [])
+
   const handleUpdateSession = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!currentSessionId) {
@@ -144,7 +133,7 @@ function ManageSessionsPage() {
         rosterFileName: editRosterFile ? editRosterFile.name : editRosterFileName,
       }
     })
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSessions))
+    saveSessions(updatedSessions)
     setEditMessage('Session updated.')
     setSessionsVersion(version => version + 1)
   }
@@ -158,8 +147,8 @@ function ManageSessionsPage() {
     }
     const sessionsToUpdate = loadSessions()
     const updatedSessions = sessionsToUpdate.filter(session => session.id !== currentSessionId)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedSessions))
-    localStorage.removeItem(CURRENT_SESSION_KEY)
+    saveSessions(updatedSessions)
+    clearCurrentSessionId()
     setSessionsVersion(version => version + 1)
     setEditMessage('Session deleted.')
     setSelectedDay('')

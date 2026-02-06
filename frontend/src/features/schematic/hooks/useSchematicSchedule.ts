@@ -8,6 +8,7 @@ import {
     setScheduleForDay,
     setStudentsForDay,
 } from '../../../lib/storage'
+import { getCurrentSessionId, loadSessions } from '../../../lib/sessionStorage'
 import { prefetchInstructorPacket } from '../../../lib/instructorPdfCache'
 import type { Student } from '../../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
@@ -25,8 +26,6 @@ type SessionEntry = {
     instructors: SessionInstructor[]
 }
 
-const SESSIONS_STORAGE_KEY = 'decksupervisor.sessions'
-const CURRENT_SESSION_KEY = 'decksupervisor.currentSessionId'
 
 export function useSchematicSchedule(selectedDay: string | null) {
     const [columns, setColumns] = useState<Course[][]>([])
@@ -63,29 +62,17 @@ export function useSchematicSchedule(selectedDay: string | null) {
     }, [courses])
     const scheduleHeightRem = Math.max(timeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
     const instructorOptions = useMemo(() => {
-        if (typeof window === 'undefined') {
-            return []
-        }
-        const currentSessionId = localStorage.getItem(CURRENT_SESSION_KEY) ?? ''
+        const currentSessionId = getCurrentSessionId()
         if (!currentSessionId) {
             return []
         }
-        const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
-        if (!stored) {
+        const sessions = loadSessions() as SessionEntry[]
+        const session = sessions.find(item => item.id === currentSessionId)
+        if (!session) {
             return []
         }
-        try {
-            const sessions = JSON.parse(stored) as SessionEntry[]
-            const session = sessions.find(item => item.id === currentSessionId)
-            if (!session) {
-                return []
-            }
-            const names = session.instructors.map(instructor => instructor.name.trim()).filter(Boolean)
-            return Array.from(new Set(names))
-        } catch (error) {
-            console.error('Failed to parse stored sessions', error)
-            return []
-        }
+        const names = session.instructors.map(instructor => instructor.name.trim()).filter(Boolean)
+        return Array.from(new Set(names))
     }, [selectedDay])
 
     useEffect(() => {
