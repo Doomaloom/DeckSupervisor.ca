@@ -1,11 +1,12 @@
-create or replace function session_team_id(p_session_id uuid)
-returns uuid
+create or replace function toronto_today()
+returns date
 language sql
+stable
 security definer
 set search_path = public
 set row_security = off
 as $$
-  select team_id from sessions where id = p_session_id;
+  select (now() at time zone 'America/Toronto')::date;
 $$;
 
 create or replace function is_session_owner(p_session_id uuid, p_uid uuid)
@@ -18,22 +19,7 @@ as $$
   select exists (select 1 from sessions where id = p_session_id and created_by = p_uid);
 $$;
 
-create or replace function is_session_member(p_session_id uuid, p_uid uuid)
-returns boolean
-language sql
-security definer
-set search_path = public
-set row_security = off
-as $$
-  select exists (
-    select 1
-    from sessions s
-    join team_members tm on tm.team_id = s.team_id
-    where s.id = p_session_id and tm.user_id = p_uid
-  );
-$$;
-
-create or replace function is_session_shared_with(p_session_id uuid, p_uid uuid)
+create or replace function is_session_shared_today(p_session_id uuid, p_uid uuid)
 returns boolean
 language sql
 security definer
@@ -42,7 +28,9 @@ set row_security = off
 as $$
   select exists (
     select 1 from session_shares
-    where session_id = p_session_id and shared_with = p_uid
+    where session_id = p_session_id
+      and shared_with = p_uid
+      and share_date = toronto_today()
   );
 $$;
 
@@ -55,9 +43,7 @@ set row_security = off
 as $$
   select
     is_session_owner(p_session_id, p_uid)
-    or is_team_owner(session_team_id(p_session_id), p_uid)
-    or is_session_member(p_session_id, p_uid)
-    or is_session_shared_with(p_session_id, p_uid);
+    or is_session_shared_today(p_session_id, p_uid);
 $$;
 
 create or replace function can_edit_session(p_session_id uuid, p_uid uuid)
@@ -67,9 +53,7 @@ security definer
 set search_path = public
 set row_security = off
 as $$
-  select
-    is_session_owner(p_session_id, p_uid)
-    or is_team_owner(session_team_id(p_session_id), p_uid);
+  select is_session_owner(p_session_id, p_uid);
 $$;
 
 create or replace function can_edit_roster(p_session_id uuid, p_uid uuid)
@@ -80,27 +64,26 @@ set search_path = public
 set row_security = off
 as $$
   select
-    can_edit_session(p_session_id, p_uid)
+    is_session_owner(p_session_id, p_uid)
     or exists (
       select 1 from session_shares
       where session_id = p_session_id
         and shared_with = p_uid
+        and share_date = toronto_today()
         and allow_roster_edits = true
     );
 $$;
 
-grant execute on function session_team_id(uuid) to authenticated;
+grant execute on function toronto_today() to authenticated;
 grant execute on function is_session_owner(uuid, uuid) to authenticated;
-grant execute on function is_session_member(uuid, uuid) to authenticated;
-grant execute on function is_session_shared_with(uuid, uuid) to authenticated;
+grant execute on function is_session_shared_today(uuid, uuid) to authenticated;
 grant execute on function can_read_session(uuid, uuid) to authenticated;
 grant execute on function can_edit_session(uuid, uuid) to authenticated;
 grant execute on function can_edit_roster(uuid, uuid) to authenticated;
 
-revoke execute on function session_team_id(uuid) from anon;
+revoke execute on function toronto_today() from anon;
 revoke execute on function is_session_owner(uuid, uuid) from anon;
-revoke execute on function is_session_member(uuid, uuid) from anon;
-revoke execute on function is_session_shared_with(uuid, uuid) from anon;
+revoke execute on function is_session_shared_today(uuid, uuid) from anon;
 revoke execute on function can_read_session(uuid, uuid) from anon;
 revoke execute on function can_edit_session(uuid, uuid) from anon;
 revoke execute on function can_edit_roster(uuid, uuid) from anon;
@@ -172,32 +155,32 @@ create policy "Session shares read"
   using (
     shared_with = auth.uid()
     or shared_by = auth.uid()
-    or can_edit_session(session_id, auth.uid())
+    or is_session_owner(session_id, auth.uid())
   );
 
 create policy "Session shares create"
   on session_shares for insert
   with check (
     shared_by = auth.uid()
-    and can_edit_session(session_id, auth.uid())
+    and is_session_owner(session_id, auth.uid())
   );
 
 create policy "Session shares update"
   on session_shares for update
   using (
     shared_by = auth.uid()
-    or can_edit_session(session_id, auth.uid())
+    or is_session_owner(session_id, auth.uid())
   )
   with check (
     shared_by = auth.uid()
-    or can_edit_session(session_id, auth.uid())
+    or is_session_owner(session_id, auth.uid())
   );
 
 create policy "Session shares delete"
   on session_shares for delete
   using (
     shared_by = auth.uid()
-    or can_edit_session(session_id, auth.uid())
+    or is_session_owner(session_id, auth.uid())
   );
 
 drop policy if exists "Session notes read" on session_notes;

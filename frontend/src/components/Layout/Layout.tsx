@@ -14,9 +14,9 @@ import {
 } from '@heroicons/react/24/outline'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
+import { useCurrentSession } from '../../app/useCurrentSession'
 import { processCsvAndStore } from '../../lib/api'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
-import { getCurrentSessionId, loadSessions } from '../../lib/sessionStorage'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 import { getCustomRostersForDay, getStudentsForDay, setCustomRostersForDay } from '../../lib/storage'
 
@@ -50,20 +50,11 @@ function getSessionName(session: SessionEntry) {
     return parts.length ? parts.join(' ') : 'Session'
 }
 
-function getCurrentSessionName() {
-    const currentSessionId = getCurrentSessionId()
-    if (!currentSessionId) {
-        return ''
-    }
-    const sessions = loadSessions() as SessionEntry[]
-    const session = sessions.find(item => item.id === currentSessionId)
-    return session ? getSessionName(session) : ''
-}
-
 function Layout({ children }: LayoutProps) {
     const location = useLocation()
     const { selectedDay } = useDay()
     const { accountType, completeProfile, isGuest, needsProfile, profile, session, signOut, user } = useAuth()
+    const { session: currentSession } = useCurrentSession()
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
     const [scopeVersion, setScopeVersion] = useState(0)
     const [profileFirstName, setProfileFirstName] = useState('')
@@ -72,7 +63,20 @@ function Layout({ children }: LayoutProps) {
 
     const isCurrentPage = (path: string) => location.pathname === path
     const pageTitle = getPageTitle(location.pathname)
-    const currentSessionName = useMemo(() => getCurrentSessionName(), [location.pathname, scopeVersion])
+    const currentSessionName = useMemo(() => {
+        if (!currentSession) {
+            return ''
+        }
+        const sessionDay = currentSession.session_day || ''
+        const sessionSeason = currentSession.session_season ?? ''
+        const startDate = currentSession.start_date ?? ''
+        return getSessionName({
+            id: currentSession.id,
+            sessionDay,
+            sessionSeason,
+            startDate,
+        })
+    }, [currentSession, scopeVersion])
 
     useEffect(() => {
         if (!needsProfile) {

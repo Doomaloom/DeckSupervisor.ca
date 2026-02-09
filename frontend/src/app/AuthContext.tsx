@@ -8,6 +8,7 @@ export type Profile = {
   email: string
   first_name: string
   last_name: string
+  location?: string | null
   account_type: 'part_time' | 'full_time'
 }
 
@@ -20,7 +21,7 @@ type AuthContextValue = {
   accountType: Profile['account_type'] | null
   needsProfile: boolean
   refreshProfile: () => Promise<void>
-  completeProfile: (firstName: string, lastName: string) => Promise<void>
+  completeProfile: (firstName: string, lastName: string, location?: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const { data, error } = await supabase
       .from('profiles')
-      .select('id,email,first_name,last_name,account_type')
+      .select('id,email,first_name,last_name,location,account_type')
       .eq('id', activeUser.id)
       .maybeSingle()
     if (error) {
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const { data: createdProfile } = await supabase
       .from('profiles')
-      .select('id,email,first_name,last_name,account_type')
+      .select('id,email,first_name,last_name,location,account_type')
       .eq('id', activeUser.id)
       .maybeSingle()
     setProfile(createdProfile ?? null)
@@ -100,15 +101,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadProfile, user])
 
   const completeProfile = useCallback(
-    async (firstName: string, lastName: string) => {
+    async (firstName: string, lastName: string, location?: string) => {
       if (!user) {
         return
       }
-      const payload = {
+      const payload: {
+        id: string
+        email: string
+        first_name: string
+        last_name: string
+        location?: string | null
+      } = {
         id: user.id,
         email: user.email ?? '',
         first_name: firstName,
         last_name: lastName,
+      }
+      if (location !== undefined) {
+        payload.location = location ?? null
       }
       const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' })
       if (error) {

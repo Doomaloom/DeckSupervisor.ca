@@ -20,6 +20,7 @@ function AccountPage() {
   const { accountType, completeProfile, isGuest, profile, user } = useAuth()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [location, setLocation] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
   const [saveError, setSaveError] = useState('')
   const [inviteError, setInviteError] = useState('')
@@ -30,6 +31,7 @@ function AccountPage() {
   useEffect(() => {
     setFirstName(profile?.first_name ?? '')
     setLastName(profile?.last_name ?? '')
+    setLocation(profile?.location ?? '')
   }, [profile])
 
   useEffect(() => {
@@ -65,7 +67,7 @@ function AccountPage() {
     setSaveMessage('')
     setLoading(true)
     try {
-      await completeProfile(trimmedFirst, trimmedLast)
+      await completeProfile(trimmedFirst, trimmedLast, location.trim() || undefined)
       setSaveMessage('Profile updated.')
     } finally {
       setLoading(false)
@@ -157,6 +159,12 @@ function AccountPage() {
             value={lastName}
             onChange={event => setLastName(event.target.value)}
             placeholder="Last name"
+          />
+          <input
+            className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+            value={location}
+            onChange={event => setLocation(event.target.value)}
+            placeholder="Default work location"
           />
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">

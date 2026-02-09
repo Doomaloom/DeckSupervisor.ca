@@ -2,6 +2,7 @@ import { getScopedKey } from './storageScope'
 
 const sessionsKey = () => getScopedKey('sessions')
 const currentSessionKey = () => getScopedKey('currentSessionId')
+const CURRENT_SESSION_EVENT = 'cob:current-session-changed'
 
 export type StoredSessionEntry = {
   id: string
@@ -48,6 +49,7 @@ export function setCurrentSessionId(id: string) {
     return
   }
   window.localStorage.setItem(currentSessionKey(), id)
+  window.dispatchEvent(new CustomEvent(CURRENT_SESSION_EVENT, { detail: { id } }))
 }
 
 export function clearCurrentSessionId() {
@@ -55,4 +57,17 @@ export function clearCurrentSessionId() {
     return
   }
   window.localStorage.removeItem(currentSessionKey())
+  window.dispatchEvent(new CustomEvent(CURRENT_SESSION_EVENT, { detail: { id: '' } }))
+}
+
+export function onCurrentSessionChanged(handler: (id: string) => void) {
+  if (typeof window === 'undefined') {
+    return () => {}
+  }
+  const listener = (event: Event) => {
+    const custom = event as CustomEvent<{ id?: string }>
+    handler(custom.detail?.id ?? '')
+  }
+  window.addEventListener(CURRENT_SESSION_EVENT, listener)
+  return () => window.removeEventListener(CURRENT_SESSION_EVENT, listener)
 }

@@ -40,6 +40,7 @@ This document defines user workflows and storage rules for DeckSupervisor.
 **Notes**
 - Notes page as-is.
 - Notes are stored in the database per session.
+- Sessions are private to the creator unless shared for a calendar date.
 
 **Team**
 - View your team and teammates.
@@ -85,14 +86,14 @@ Guest users can use the app exactly as it works now:
 
 **Stored in Supabase (DB)**
 - Auth users (Supabase Auth)
-- Profiles (`profiles`): first/last name, account type, email
+- Profiles (`profiles`): first/last name, account type, email, default work location
 - Teams (`teams`): name, owner_id
 - Team locations (`teams.available_locations`): editable list of available locations
 - Team membership (`team_members`)
 - Invites (`team_invites`)
 - Sessions (`sessions`): day, season, start/end, instructors, team_id, location
 - Schematics (`schematics`): one per session, linked by `session_id`
-- Session sharing (`session_shares`): session_id, day, shared_by, shared_with, permissions
+- Session sharing (`session_shares`): session_id, share_date, shared_by, shared_with, permissions
 - Notes (`session_notes`): notes stored per session
 - Custom rosters (`custom_rosters`): roster metadata + hashed student names only
 - Roster level edits
@@ -119,7 +120,7 @@ Guest users can use the app exactly as it works now:
 - Fields: `id`, `session_id`, `data` (jsonb), `created_by`, `created_at`, `updated_at`
 
 **Session Shares**
-- Fields: `id`, `session_id`, `day`, `shared_by`, `shared_with`, `allow_roster_edits`, `created_at`
+- Fields: `id`, `session_id`, `share_date`, `shared_by`, `shared_with`, `allow_roster_edits`, `created_at`
 
 **Roster Level Edits**
 - Roster-level: `session_id`, `code`, `level`

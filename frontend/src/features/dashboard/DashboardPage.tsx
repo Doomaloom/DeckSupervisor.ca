@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDay } from '../../app/DayContext'
+import { useAuth } from '../../app/AuthContext'
+import { supabase } from '../../lib/supabaseClient'
+import { getTorontoDate } from '../../lib/torontoDate'
 import { getCurrentSessionId, loadSessions, saveSessions, setCurrentSessionId } from '../../lib/sessionStorage'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 
@@ -13,6 +16,31 @@ type SessionEntry = {
   endDate: string
   instructors: InstructorEntry[]
   rosterFileName?: string
+}
+
+type DbSessionEntry = {
+  id: string
+  team_id: string
+  created_by: string
+  session_day: string
+  session_season: string | null
+  start_date: string | null
+  end_date: string | null
+  location: string
+  instructors: InstructorEntry[]
+}
+
+type TeamEntry = {
+  id: string
+  name: string
+  available_locations: string[]
+}
+
+type SharedSessionEntry = {
+  id: string
+  share_date: string
+  allow_roster_edits: boolean
+  sessions?: DbSessionEntry | null
 }
 
 
@@ -35,9 +63,19 @@ function getSessionName(session: SessionEntry) {
   return parts.length ? parts.join(' ') : 'Session'
 }
 
+function getDbSessionName(session: DbSessionEntry) {
+  const dayLabel = session.session_day ? dayNames[session.session_day] ?? session.session_day : ''
+  const season = session.session_season?.trim()
+  const year = session.start_date ? new Date(session.start_date).getFullYear() : NaN
+  const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+  const parts = [dayLabel, season, yearLabel].filter(Boolean)
+  return parts.length ? parts.join(' ') : 'Session'
+}
+
 function Dashboard() {
   const navigate = useNavigate()
   const { setSelectedDay } = useDay()
+  const { isGuest, user } = useAuth()
   const [activePanel, setActivePanel] = useState<'options' | 'new-session' | 'select-session'>(
     'options',
   )
@@ -48,6 +86,12 @@ function Dashboard() {
   const [instructors, setInstructors] = useState<InstructorEntry[]>([{ name: '' }])
   const [saveMessage, setSaveMessage] = useState('')
   const [rosterFile, setRosterFile] = useState<File | null>(null)
+  const [selectedTeamId, setSelectedTeamId] = useState('')
+  const [availableLocations, setAvailableLocations] = useState<string[]>([])
+  const [location, setLocation] = useState('')
+  const [teams, setTeams] = useState<TeamEntry[]>([])
+  const [dbSessions, setDbSessions] = useState<DbSessionEntry[]>([])
+  const [sharedSessions, setSharedSessions] = useState<SharedSessionEntry[]>([])
   const [currentSessionId, setCurrentSessionIdState] = useState(() => getCurrentSessionId())
   const [selectMessage, setSelectMessage] = useState('')
   const [sessionsVersion, setSessionsVersion] = useState(0)
@@ -67,26 +111,63 @@ function Dashboard() {
   }
 
 
-  const handleSaveSession = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveSession = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!isGuest && !user) {
+      return
+    }
     const id =
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(16).slice(2)}`
 
-    const nextSession: SessionEntry = {
-      id,
-      sessionDay,
-      sessionSeason,
-      startDate,
-      endDate,
-      instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
-      rosterFileName: rosterFile?.name,
+    if (isGuest) {
+      const nextSession: SessionEntry = {
+        id,
+        sessionDay,
+        sessionSeason,
+        startDate,
+        endDate,
+        instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
+        rosterFileName: rosterFile?.name,
+      }
+
+      const sessions = loadSessions()
+      sessions.push(nextSession)
+      saveSessions(sessions)
+      setCurrentSessionId(id)
+      setCurrentSessionIdState(id)
+      setSaveMessage('Session saved.')
+      setSessionsVersion(version => version + 1)
+      if (sessionDay) {
+        setSelectedDay(sessionDay)
+      }
+      navigate('/manage-sessions')
+      return
     }
 
-    const sessions = loadSessions()
-    sessions.push(nextSession)
-    saveSessions(sessions)
+    if (!selectedTeamId || !location) {
+      setSaveMessage('Select a team and location before saving.')
+      return
+    }
+
+    const payload = {
+      id,
+      team_id: selectedTeamId,
+      created_by: user!.id,
+      session_day: sessionDay,
+      session_season: sessionSeason || null,
+      start_date: startDate || null,
+      end_date: endDate || null,
+      location,
+      instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
+    }
+
+    const { error } = await supabase.from('sessions').insert(payload)
+    if (error) {
+      setSaveMessage(error.message)
+      return
+    }
     setCurrentSessionId(id)
     setCurrentSessionIdState(id)
     setSaveMessage('Session saved.')
@@ -97,7 +178,7 @@ function Dashboard() {
     navigate('/manage-sessions')
   }
 
-  const handleSelectSession = (session: SessionEntry) => {
+  const handleSelectLocalSession = (session: SessionEntry) => {
     setCurrentSessionId(session.id)
     setCurrentSessionIdState(session.id)
     setSelectMessage('Current session set.')
@@ -109,21 +190,135 @@ function Dashboard() {
     navigate('/manage-sessions')
   }
 
+  const handleSelectDbSession = (session: DbSessionEntry) => {
+    setCurrentSessionId(session.id)
+    setCurrentSessionIdState(session.id)
+    setSelectMessage('Current session set.')
+    if (session.session_day) {
+      setSelectedDay(session.session_day)
+    } else {
+      setSelectedDay('')
+    }
+    navigate('/manage-sessions')
+  }
+
+  const handleOpenSharedSession = (entry: SharedSessionEntry) => {
+    if (!entry.sessions) {
+      return
+    }
+    handleSelectDbSession(entry.sessions)
+  }
+
 
   const sessions = useMemo(() => {
-    const items = loadSessions()
-    return items.sort((a, b) => {
-      const aTime = a.startDate ? new Date(a.startDate).getTime() : 0
-      const bTime = b.startDate ? new Date(b.startDate).getTime() : 0
-      return bTime - aTime
-    })
-  }, [sessionsVersion, activePanel])
+    if (isGuest) {
+      const items = loadSessions()
+      return items.sort((a, b) => {
+        const aTime = a.startDate ? new Date(a.startDate).getTime() : 0
+        const bTime = b.startDate ? new Date(b.startDate).getTime() : 0
+        return bTime - aTime
+      })
+    }
+    return dbSessions
+      .slice()
+      .sort((a, b) => {
+        const aTime = a.start_date ? new Date(a.start_date).getTime() : 0
+        const bTime = b.start_date ? new Date(b.start_date).getTime() : 0
+        return bTime - aTime
+      })
+  }, [dbSessions, isGuest, sessionsVersion, activePanel])
 
   useEffect(() => {
     if (!currentSessionId) {
       setSelectedDay('')
     }
   }, [currentSessionId, setSelectedDay])
+
+  useEffect(() => {
+    if (isGuest || !user) {
+      return
+    }
+    const loadTeams = async () => {
+      const [{ data: memberRows }, { data: ownedRows }] = await Promise.all([
+        supabase.from('team_members').select('team_id').eq('user_id', user.id),
+        supabase.from('teams').select('id,name,available_locations').eq('owner_id', user.id),
+      ])
+
+      const memberIds = new Set((memberRows ?? []).map(row => row.team_id))
+      const ownedTeams = ownedRows ?? []
+      const ownedIds = new Set(ownedTeams.map(team => team.id))
+      const allIds = Array.from(new Set([...Array.from(memberIds), ...Array.from(ownedIds)]))
+
+      let memberTeams: TeamEntry[] = []
+      if (allIds.length > 0) {
+        const { data } = await supabase
+          .from('teams')
+          .select('id,name,available_locations')
+          .in('id', allIds)
+        memberTeams = data ?? []
+      }
+
+      const merged = new Map<string, TeamEntry>()
+      ;[...ownedTeams, ...memberTeams].forEach(team => merged.set(team.id, team))
+      const nextTeams = Array.from(merged.values())
+      setTeams(nextTeams)
+
+      if (nextTeams.length === 1) {
+        setSelectedTeamId(nextTeams[0].id)
+        setAvailableLocations(nextTeams[0].available_locations ?? [])
+        if (!location && nextTeams[0].available_locations?.length) {
+          setLocation(nextTeams[0].available_locations[0])
+        }
+      }
+    }
+    void loadTeams()
+  }, [isGuest, location, user])
+
+  useEffect(() => {
+    if (isGuest || !user) {
+      return
+    }
+    const loadSessionsFromDb = async () => {
+      const { data } = await supabase
+        .from('sessions')
+        .select(
+          'id,team_id,created_by,session_day,session_season,start_date,end_date,location,instructors',
+        )
+        .eq('created_by', user.id)
+      setDbSessions(data ?? [])
+    }
+    void loadSessionsFromDb()
+  }, [isGuest, user, sessionsVersion])
+
+  useEffect(() => {
+    if (isGuest || !user) {
+      return
+    }
+    const loadShared = async () => {
+      const today = getTorontoDate()
+      const { data } = await supabase
+        .from('session_shares')
+        .select(
+          'id,share_date,allow_roster_edits,sessions(id,team_id,created_by,session_day,session_season,start_date,end_date,location,instructors)',
+        )
+        .eq('shared_with', user.id)
+        .eq('share_date', today)
+      setSharedSessions(data ?? [])
+    }
+    void loadShared()
+  }, [isGuest, user])
+
+  useEffect(() => {
+    if (!selectedTeamId) {
+      setAvailableLocations([])
+      return
+    }
+    const selected = teams.find(team => team.id === selectedTeamId)
+    setAvailableLocations(selected?.available_locations ?? [])
+    if (selected?.available_locations?.length && !location) {
+      setLocation(selected.available_locations[0])
+    }
+  }, [location, selectedTeamId, teams])
 
   useEffect(() => {
     return onStorageScopeChanged(() => {
@@ -218,6 +413,41 @@ function Dashboard() {
                       onChange={event => setEndDate(event.target.value)}
                     />
                   </label>
+                  {!isGuest ? (
+                    <>
+                      <label className="flex flex-col gap-2 font-semibold text-secondary">
+                        Team
+                        <select
+                          className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                          value={selectedTeamId}
+                          onChange={event => setSelectedTeamId(event.target.value)}
+                        >
+                          <option value="">Select a team</option>
+                          {teams.map(team => (
+                            <option key={team.id} value={team.id}>
+                              {team.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="flex flex-col gap-2 font-semibold text-secondary">
+                        Location
+                        <select
+                          className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                          value={location}
+                          onChange={event => setLocation(event.target.value)}
+                          disabled={!selectedTeamId}
+                        >
+                          <option value="">Select a location</option>
+                          {availableLocations.map(option => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </>
+                  ) : null}
                   <div className="flex flex-col gap-2">
                     <span className="font-semibold text-secondary">Upload Roster (optional)</span>
                     <label className="relative flex h-12 items-center justify-center rounded-[10px] border-2 border-dashed border-secondary bg-bg px-2 text-center text-sm font-medium text-secondary transition hover:-translate-y-0.5 hover:border-secondary">
@@ -268,28 +498,88 @@ function Dashboard() {
         ) : (
           <div className="w-full max-w-5xl">
             <h2 className="text-2xl font-semibold text-secondary">Select Existing Session</h2>
+            {!isGuest && sharedSessions.length > 0 ? (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold text-secondary">Covering Today</h3>
+                <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {sharedSessions.map(entry => {
+                    const session = entry.sessions
+                    if (!session) {
+                      return null
+                    }
+                    const sessionName = getDbSessionName(session)
+                    return (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        className="flex flex-col gap-2 rounded-card border-2 border-secondary/20 bg-accent p-5 text-left text-secondary shadow-md transition hover:-translate-y-0.5"
+                        onClick={() => handleOpenSharedSession(entry)}
+                      >
+                        <h3 className="text-lg font-semibold">{sessionName}</h3>
+                        <p>
+                          {session.start_date || 'Start date'} - {session.end_date || 'End date'}
+                        </p>
+                        <p>{session.instructors?.length ?? 0} instructors</p>
+                        <p className="text-sm text-secondary/70">
+                          Shared for {entry.share_date}
+                        </p>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
+
             {sessions.length === 0 ? (
               <p className="mt-4 font-semibold text-secondary">No existing sessions.</p>
             ) : (
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                 {sessions.map(session => {
                   const isCurrent = currentSessionId === session.id
-                  const sessionName = getSessionName(session)
+                  if (isGuest) {
+                    const localSession = session as SessionEntry
+                    const sessionName = getSessionName(localSession)
+                    return (
+                      <button
+                        key={localSession.id}
+                        type="button"
+                        className={`flex flex-col gap-2 rounded-card border-2 bg-accent p-5 text-left text-secondary shadow-md transition hover:-translate-y-0.5 ${
+                          isCurrent ? 'border-secondary' : 'border-secondary/20'
+                        }`}
+                        onClick={() => handleSelectLocalSession(localSession)}
+                      >
+                        <h3 className="text-lg font-semibold">{sessionName}</h3>
+                        <p>
+                          {localSession.startDate || 'Start date'} - {localSession.endDate || 'End date'}
+                        </p>
+                        <p>{localSession.instructors.length} instructors</p>
+                        {localSession.rosterFileName ? (
+                          <p>Roster: {localSession.rosterFileName}</p>
+                        ) : null}
+                        {isCurrent ? (
+                          <p className="font-semibold text-secondary">Current session</p>
+                        ) : null}
+                      </button>
+                    )
+                  }
+
+                  const dbSession = session as DbSessionEntry
+                  const sessionName = getDbSessionName(dbSession)
                   return (
                     <button
-                      key={session.id}
+                      key={dbSession.id}
                       type="button"
                       className={`flex flex-col gap-2 rounded-card border-2 bg-accent p-5 text-left text-secondary shadow-md transition hover:-translate-y-0.5 ${
                         isCurrent ? 'border-secondary' : 'border-secondary/20'
                       }`}
-                      onClick={() => handleSelectSession(session)}
+                      onClick={() => handleSelectDbSession(dbSession)}
                     >
                       <h3 className="text-lg font-semibold">{sessionName}</h3>
                       <p>
-                        {session.startDate || 'Start date'} - {session.endDate || 'End date'}
+                        {dbSession.start_date || 'Start date'} - {dbSession.end_date || 'End date'}
                       </p>
-                      <p>{session.instructors.length} instructors</p>
-                      {session.rosterFileName ? <p>Roster: {session.rosterFileName}</p> : null}
+                      <p>{dbSession.instructors?.length ?? 0} instructors</p>
+                      <p className="text-sm text-secondary/70">{dbSession.location}</p>
                       {isCurrent ? <p className="font-semibold text-secondary">Current session</p> : null}
                     </button>
                   )

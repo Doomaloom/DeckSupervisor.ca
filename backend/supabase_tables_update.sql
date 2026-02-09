@@ -1,3 +1,6 @@
+alter table profiles
+  add column if not exists location text;
+
 alter table teams
   add column if not exists available_locations text[] not null default '{}';
 
@@ -32,16 +35,17 @@ create index if not exists schematics_session_id_idx on schematics(session_id);
 create table if not exists session_shares (
   id uuid primary key default gen_random_uuid(),
   session_id uuid not null references sessions(id) on delete cascade,
-  day text not null,
+  share_date date not null,
   shared_by uuid not null references profiles(id) on delete cascade,
   shared_with uuid not null references profiles(id) on delete cascade,
   allow_roster_edits boolean not null default false,
   created_at timestamptz not null default now(),
-  unique (session_id, shared_with)
+  unique (session_id, shared_with, share_date)
 );
 
 create index if not exists session_shares_session_id_idx on session_shares(session_id);
 create index if not exists session_shares_shared_with_idx on session_shares(shared_with);
+create index if not exists session_shares_share_date_idx on session_shares(share_date);
 
 create table if not exists session_notes (
   id uuid primary key default gen_random_uuid(),

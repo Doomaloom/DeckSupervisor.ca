@@ -1,13 +1,6 @@
 import type { RosterGroup } from '../types'
 import { sanitizeLevel } from '../utils'
-import { getCurrentSessionId, loadSessions } from '../../../lib/sessionStorage'
-
-type SessionEntry = {
-    id: string
-    sessionDay: string
-    sessionSeason: string
-    startDate: string
-}
+import { useCurrentSession } from '../../../app/useCurrentSession'
 
 const dayNames: Record<string, string> = {
     Mo: 'Monday',
@@ -19,29 +12,26 @@ const dayNames: Record<string, string> = {
     Su: 'Sunday',
 }
 
-function getSessionName(session: SessionEntry) {
-    const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
-    const season = session.sessionSeason?.trim()
-    const year = session.startDate ? new Date(session.startDate).getFullYear() : NaN
+function getSessionName(sessionDay: string, sessionSeason: string | null, startDate: string | null) {
+    const dayLabel = sessionDay ? dayNames[sessionDay] ?? sessionDay : ''
+    const season = sessionSeason?.trim()
+    const year = startDate ? new Date(startDate).getFullYear() : NaN
     const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
     const parts = [dayLabel, season, yearLabel].filter(Boolean)
     return parts.length ? parts.join(' ') : ''
 }
 
-function getCurrentSessionName() {
-    const currentSessionId = getCurrentSessionId()
-    if (!currentSessionId) {
-        return ''
-    }
-    const sessions = loadSessions() as SessionEntry[]
-    const session = sessions.find(item => item.id === currentSessionId)
-    return session ? getSessionName(session) : ''
-}
-
 export function useRosterPrint() {
+    const { session: currentSession } = useCurrentSession()
     const handlePrintRoster = async (roster: RosterGroup) => {
         const template = sanitizeLevel(roster.level)
-        const sessionName = getCurrentSessionName() || 'Summer 2025'
+        const sessionName = currentSession
+            ? getSessionName(
+                  currentSession.session_day,
+                  currentSession.session_season ?? null,
+                  currentSession.start_date ?? null,
+              )
+            : 'Summer 2025'
 
         try {
             const response = await fetch('/api/attendance-pdf', {

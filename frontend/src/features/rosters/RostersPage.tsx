@@ -13,12 +13,20 @@ import { useRosterFilters } from './hooks/useRosterFilters'
 import { useRosterPrint } from './hooks/useRosterPrint'
 import { buildCustomRosterGroups, getEmptyMessage } from './utils'
 import type { RosterListItem } from './types'
+import { useAuth } from '../../app/AuthContext'
+import { useCurrentSession } from '../../app/useCurrentSession'
 
 function RostersPage() {
     const { selectedDay } = useDay()
+    const { isGuest } = useAuth()
+    const { access, sessionId } = useCurrentSession()
     const [activeTab, setActiveTab] = useState<'default' | 'custom'>('default')
     const [studentLevelEditMap, setStudentLevelEditMap] = useState<Record<string, boolean>>({})
-    const { students, setStudents, rosters, instructorOptions } = useRosterData(selectedDay ?? '')
+    const { students, setStudents, rosters, instructorOptions } = useRosterData(
+        selectedDay ?? '',
+        sessionId ?? undefined,
+        isGuest,
+    )
     const { customRosters, saveCustomRosters, updateCustomRosterInstructor, updateCustomRosterLevel } =
         useCustomRosters(selectedDay ?? '', students)
     const customRosterGroups = useMemo(() => {
@@ -69,6 +77,8 @@ function RostersPage() {
         selectedDay: selectedDay ?? '',
         students,
         setStudents,
+        sessionId: sessionId ?? undefined,
+        canEdit: isGuest || access.mode === 'owner' || access.allowRosterEdits,
     })
     const { handlePrintRoster } = useRosterPrint()
     const emptyMessage = getEmptyMessage(students.length)

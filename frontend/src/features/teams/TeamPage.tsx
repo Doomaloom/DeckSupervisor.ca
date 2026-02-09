@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
+import { getTorontoDate } from '../../lib/torontoDate'
 
 type TeamEntry = {
   id: string
   name: string
+  available_locations?: string[]
 }
 
 type ProfileResult = {
@@ -29,17 +31,54 @@ type MemberEntry = {
   profiles?: { first_name: string; last_name: string; email: string } | null
 }
 
+type SessionEntry = {
+  id: string
+  team_id: string
+  session_day: string
+  session_season: string | null
+  start_date: string | null
+  end_date: string | null
+}
+
+const dayNames: Record<string, string> = {
+  Mo: 'Monday',
+  Tu: 'Tuesday',
+  We: 'Wednesday',
+  Th: 'Thursday',
+  Fr: 'Friday',
+  Sa: 'Saturday',
+  Su: 'Sunday',
+}
+
+function getSessionLabel(session: SessionEntry) {
+  const dayLabel = session.session_day ? dayNames[session.session_day] ?? session.session_day : ''
+  const season = session.session_season?.trim()
+  const year = session.start_date ? new Date(session.start_date).getFullYear() : NaN
+  const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+  const parts = [dayLabel, season, yearLabel].filter(Boolean)
+  return parts.length ? parts.join(' ') : 'Session'
+}
+
 function TeamPage() {
   const { accountType, isGuest, user } = useAuth()
   const [teams, setTeams] = useState<TeamEntry[]>([])
   const [activeTeamId, setActiveTeamId] = useState('')
   const [teamName, setTeamName] = useState('')
+  const [locationsInput, setLocationsInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<ProfileResult[]>([])
   const [invites, setInvites] = useState<InviteEntry[]>([])
   const [members, setMembers] = useState<MemberEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [memberTeams, setMemberTeams] = useState<TeamEntry[]>([])
+  const [userSessions, setUserSessions] = useState<SessionEntry[]>([])
+  const [shareSessionId, setShareSessionId] = useState('')
+  const [shareDate, setShareDate] = useState(() => getTorontoDate())
+  const [shareMemberId, setShareMemberId] = useState('')
+  const [shareAllowEdits, setShareAllowEdits] = useState(false)
+  const [shareMembers, setShareMembers] = useState<MemberEntry[]>([])
+  const [shareMessage, setShareMessage] = useState('')
 
   useEffect(() => {
     if (!user || accountType !== 'full_time') {
@@ -48,22 +87,48 @@ function TeamPage() {
     const loadTeams = async () => {
       const { data } = await supabase
         .from('teams')
-        .select('id,name')
+        .select('id,name,available_locations')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: true })
       const rows = data ?? []
       setTeams(rows)
       if (rows.length === 0) {
         setActiveTeamId('')
+        setLocationsInput('')
         return
       }
       const hasActive = rows.some(team => team.id === activeTeamId)
       if (!hasActive) {
         setActiveTeamId(rows[0].id)
+        setLocationsInput((rows[0].available_locations ?? []).join(', '))
       }
     }
     void loadTeams()
   }, [accountType, activeTeamId, user])
+
+  useEffect(() => {
+    if (!user || accountType === 'full_time') {
+      return
+    }
+    const loadMemberTeams = async () => {
+      const { data } = await supabase
+        .from('team_members')
+        .select('team_id,teams(id,name,available_locations)')
+        .eq('user_id', user.id)
+      const rows = (data ?? []) as { team_id: string; teams: TeamEntry | null }[]
+      const nextTeams = rows.map(row => row.teams).filter(Boolean) as TeamEntry[]
+      setMemberTeams(nextTeams)
+    }
+    const loadSessions = async () => {
+      const { data } = await supabase
+        .from('sessions')
+        .select('id,team_id,session_day,session_season,start_date,end_date')
+        .eq('created_by', user.id)
+      setUserSessions((data ?? []) as SessionEntry[])
+    }
+    void loadMemberTeams()
+    void loadSessions()
+  }, [accountType, user])
 
   useEffect(() => {
     if (!activeTeamId || !user || accountType !== 'full_time') {
@@ -87,20 +152,53 @@ function TeamPage() {
     void loadTeamDetails()
   }, [accountType, activeTeamId, user])
 
+  useEffect(() => {
+    if (accountType !== 'full_time') {
+      return
+    }
+    const activeTeam = teams.find(team => team.id === activeTeamId)
+    setLocationsInput((activeTeam?.available_locations ?? []).join(', '))
+  }, [accountType, activeTeamId, teams])
+
   const memberIds = useMemo(() => new Set(members.map(member => member.user_id)), [members])
   const invitedIds = useMemo(() => new Set(invites.map(invite => invite.invitee_id)), [invites])
+
+  useEffect(() => {
+    if (!user || accountType === 'full_time' || !shareSessionId) {
+      setShareMembers([])
+      return
+    }
+    const session = userSessions.find(item => item.id === shareSessionId)
+    if (!session) {
+      setShareMembers([])
+      return
+    }
+    const loadMembers = async () => {
+      const { data } = await supabase
+        .from('team_members')
+        .select('user_id,role,profiles(first_name,last_name,email)')
+        .eq('team_id', session.team_id)
+      const rows = (data ?? []) as MemberEntry[]
+      setShareMembers(rows.filter(member => member.user_id !== user.id))
+    }
+    void loadMembers()
+  }, [accountType, shareSessionId, user, userSessions])
 
   const handleCreateTeam = async () => {
     if (!user || !teamName.trim()) {
       return
     }
+    const locations = locationsInput
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean)
     setLoading(true)
     setMessage('')
     try {
       const { data, error } = await supabase
         .from('teams')
-        .insert({ name: teamName.trim(), owner_id: user.id })
-        .select('id,name')
+        .insert({ name: teamName.trim(), owner_id: user.id, available_locations: locations })
+        .select('id,name,available_locations')
         .single()
       if (error) {
         setMessage(error.message)
@@ -110,6 +208,7 @@ function TeamPage() {
         setTeams(current => [...current, data])
         setActiveTeamId(data.id)
         setTeamName('')
+        setLocationsInput((data.available_locations ?? []).join(', '))
         setMessage('Team created.')
       }
     } finally {
@@ -175,6 +274,62 @@ function TeamPage() {
     }
   }
 
+  const handleUpdateLocations = async () => {
+    if (!activeTeamId) {
+      return
+    }
+    const locations = locationsInput
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean)
+    setLoading(true)
+    setMessage('')
+    try {
+      const { error } = await supabase
+        .from('teams')
+        .update({ available_locations: locations })
+        .eq('id', activeTeamId)
+      if (error) {
+        setMessage(error.message)
+        return
+      }
+      setTeams(current =>
+        current.map(team =>
+          team.id === activeTeamId ? { ...team, available_locations: locations } : team,
+        ),
+      )
+      setMessage('Locations updated.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleShareSession = async () => {
+    if (!user || !shareSessionId || !shareMemberId || !shareDate) {
+      setShareMessage('Select a session, teammate, and date.')
+      return
+    }
+    setLoading(true)
+    setShareMessage('')
+    try {
+      const { error } = await supabase.from('session_shares').insert({
+        session_id: shareSessionId,
+        share_date: shareDate,
+        shared_by: user.id,
+        shared_with: shareMemberId,
+        allow_roster_edits: shareAllowEdits,
+      })
+      if (error) {
+        setShareMessage(error.message)
+        return
+      }
+      setShareMessage('Session shared.')
+      setShareMemberId('')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleRemoveMember = async (member: MemberEntry) => {
     if (!activeTeamId) {
       return
@@ -211,12 +366,99 @@ function TeamPage() {
 
   if (accountType !== 'full_time') {
     return (
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
-          <h2 className="text-xl font-semibold">Full-time access only</h2>
+          <h2 className="text-2xl font-semibold">My Team</h2>
           <p className="mt-2 text-sm text-secondary/70">
-            Only full-time accounts can manage teams and send invites.
+            View your teams and share sessions when you need coverage.
           </p>
+        </div>
+
+        <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+          <h3 className="text-lg font-semibold">Teams</h3>
+          {memberTeams.length === 0 ? (
+            <p className="mt-3 text-sm text-secondary/70">No team memberships found.</p>
+          ) : (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {memberTeams.map(team => (
+                <div key={team.id} className="rounded-2xl border border-secondary/20 bg-bg p-4">
+                  <p className="font-semibold text-secondary">{team.name}</p>
+                  {team.available_locations?.length ? (
+                    <p className="text-xs text-secondary/70">
+                      Locations: {team.available_locations.join(', ')}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+          <h3 className="text-lg font-semibold">Share a session</h3>
+          <p className="mt-2 text-sm text-secondary/70">
+            Share a session for a specific date with a teammate covering your shift.
+          </p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
+              Session
+              <select
+                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                value={shareSessionId}
+                onChange={event => setShareSessionId(event.target.value)}
+              >
+                <option value="">Select a session</option>
+                {userSessions.map(session => (
+                  <option key={session.id} value={session.id}>
+                    {getSessionLabel(session)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
+              Teammate
+              <select
+                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                value={shareMemberId}
+                onChange={event => setShareMemberId(event.target.value)}
+              >
+                <option value="">Select a teammate</option>
+                {shareMembers.map(member => (
+                  <option key={member.user_id} value={member.user_id}>
+                    {member.profiles?.first_name} {member.profiles?.last_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
+              Share Date
+              <input
+                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                type="date"
+                value={shareDate}
+                onChange={event => setShareDate(event.target.value)}
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm font-semibold text-secondary">
+              <input
+                type="checkbox"
+                checked={shareAllowEdits}
+                onChange={event => setShareAllowEdits(event.target.checked)}
+              />
+              Allow roster edits
+            </label>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="rounded-2xl bg-secondary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
+              onClick={handleShareSession}
+              disabled={loading}
+            >
+              Share Session
+            </button>
+            {shareMessage ? <span className="text-sm font-semibold text-secondary">{shareMessage}</span> : null}
+          </div>
         </div>
       </div>
     )
@@ -237,6 +479,12 @@ function TeamPage() {
             value={teamName}
             onChange={event => setTeamName(event.target.value)}
             placeholder="Team name"
+          />
+          <input
+            className="flex-1 rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+            value={locationsInput}
+            onChange={event => setLocationsInput(event.target.value)}
+            placeholder="Locations (comma separated)"
           />
           <button
             type="button"
@@ -269,6 +517,23 @@ function TeamPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <input
+              className="flex-1 rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+              value={locationsInput}
+              onChange={event => setLocationsInput(event.target.value)}
+              placeholder="Locations (comma separated)"
+            />
+            <button
+              type="button"
+              className="rounded-2xl bg-secondary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
+              onClick={handleUpdateLocations}
+              disabled={loading || !activeTeamId}
+            >
+              Update Locations
+            </button>
           </div>
 
           <div className="mt-6 grid gap-6 md:grid-cols-2">

@@ -8,7 +8,8 @@ import {
     setScheduleForDay,
     setStudentsForDay,
 } from '../../../lib/storage'
-import { getCurrentSessionId, loadSessions } from '../../../lib/sessionStorage'
+import { useCurrentSession } from '../../../app/useCurrentSession'
+import { supabase } from '../../../lib/supabaseClient'
 import { prefetchInstructorPacket } from '../../../lib/instructorPdfCache'
 import type { Student } from '../../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
@@ -17,21 +18,14 @@ import { buildColumns, buildCourses, coursesOverlap } from '../utils/courses'
 import { canPlaceCourses, canReplaceByStart, findContiguousSwapIndices } from '../utils/drag'
 import { buildTimeLabels } from '../utils/time'
 
-type SessionInstructor = {
-    name: string
-}
-
-type SessionEntry = {
-    id: string
-    instructors: SessionInstructor[]
-}
-
 
 export function useSchematicSchedule(selectedDay: string | null) {
+    const { access, session: currentSession, sessionId } = useCurrentSession()
     const [columns, setColumns] = useState<Course[][]>([])
     const [instructors, setInstructors] = useState<string[]>([])
     const [dragged, setDragged] = useState<DragState | null>(null)
     const [students, setStudents] = useState<Student[]>([])
+    const [remoteSchedule, setRemoteSchedule] = useState<{ codes: string[]; instructors: string[] } | null>(null)
 
     useEffect(() => {
         setStudents(getStudentsForDay(selectedDay))
@@ -62,22 +56,44 @@ export function useSchematicSchedule(selectedDay: string | null) {
     }, [courses])
     const scheduleHeightRem = Math.max(timeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
     const instructorOptions = useMemo(() => {
-        const currentSessionId = getCurrentSessionId()
-        if (!currentSessionId) {
-            return []
-        }
-        const sessions = loadSessions() as SessionEntry[]
-        const session = sessions.find(item => item.id === currentSessionId)
-        if (!session) {
-            return []
-        }
-        const names = session.instructors.map(instructor => instructor.name.trim()).filter(Boolean)
+        const names = currentSession?.instructors?.map(instructor => instructor.name.trim()).filter(Boolean) ?? []
         return Array.from(new Set(names))
-    }, [selectedDay])
+    }, [currentSession])
+
+    useEffect(() => {
+        if (access.mode === 'guest' || !sessionId || !currentSession) {
+            setRemoteSchedule(null)
+            return
+        }
+        let active = true
+        const loadRemote = async () => {
+            const { data } = await supabase
+                .from('schematics')
+                .select('data')
+                .eq('session_id', sessionId)
+                .maybeSingle()
+            if (!active) {
+                return
+            }
+            const dataValue = data?.data as { codes?: string[]; instructors?: string[] } | undefined
+            if (dataValue?.codes?.length) {
+                setRemoteSchedule({
+                    codes: dataValue.codes ?? [],
+                    instructors: dataValue.instructors ?? [],
+                })
+            } else {
+                setRemoteSchedule(null)
+            }
+        }
+        void loadRemote()
+        return () => {
+            active = false
+        }
+    }, [access.mode, currentSession, sessionId])
 
     useEffect(() => {
         const initialColumns = buildColumns(courses)
-        const stored = getScheduleForDay(selectedDay)
+        const stored = access.mode === 'guest' ? getScheduleForDay(selectedDay) : remoteSchedule
 
         if (stored && stored.codes.length > 0) {
             const courseMap = new Map(courses.map(course => [course.code, course]))
@@ -90,7 +106,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
             setColumns(initialColumns)
             setInstructors(initialColumns.map(() => ''))
         }
-    }, [courses, selectedDay])
+    }, [courses, currentSession, remoteSchedule, selectedDay])
 
     const handleDragStart = (event: React.DragEvent<HTMLDivElement>, course: Course, columnIndex: number) => {
         setDragged({ code: course.code, columnIndex })
@@ -220,6 +236,10 @@ export function useSchematicSchedule(selectedDay: string | null) {
             alert('Please select a day first.')
             return
         }
+        if (currentSession && access.mode !== 'owner') {
+            alert('This schematic is view-only for shared sessions.')
+            return
+        }
         const codes = columns.map(column => column.map(course => course.code).join(','))
         setScheduleForDay(selectedDay, {
             instructors,
@@ -255,6 +275,19 @@ export function useSchematicSchedule(selectedDay: string | null) {
         })
         setStudentsForDay(selectedDay, updated)
         void prefetchInstructorPacket(selectedDay)
+        if (access.mode === 'owner' && currentSession && sessionId) {
+            void supabase
+                .from('schematics')
+                .upsert({
+                    session_id: sessionId,
+                    data: {
+                        codes,
+                        instructors,
+                    },
+                    created_by: currentSession.created_by,
+                    updated_at: new Date().toISOString(),
+                }, { onConflict: 'session_id' })
+        }
         alert('Schedule saved successfully!')
     }
 

@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../../app/AuthContext'
+import { useCurrentSession } from '../../app/useCurrentSession'
 import { getCurrentSessionId } from '../../lib/instructorPdfCache'
 import { getScopedKey } from '../../lib/storageScope'
+import { supabase } from '../../lib/supabaseClient'
 import { useSessionInstructors } from '../print/hooks/useSessionInstructors'
 
 type NoteTabKey = 'general' | 'recognition' | 'feedback' | 'coaching'
@@ -69,7 +72,9 @@ const saveJson = <T,>(key: string, value: T) => {
 }
 
 function StaffNotesPage() {
-  const sessionId = getCurrentSessionId()
+  const { isGuest } = useAuth()
+  const { sessionId: currentSessionId, access } = useCurrentSession()
+  const sessionId = isGuest ? getCurrentSessionId() : currentSessionId
   const isSessionReady = Boolean(sessionId)
   const instructorNames = useSessionInstructors(true)
   const [activeTab, setActiveTab] = useState<TabKey>('general')
@@ -90,13 +95,50 @@ function StaffNotesPage() {
       setTodos([])
       return
     }
-    const storageKey = buildStorageKey(sessionId, activeTab)
-    if (activeTab === 'todo') {
-      setTodos(loadJson<TodoItem[]>(storageKey, []))
-    } else {
-      setNotes(loadJson<NoteItem[]>(storageKey, []))
+    if (isGuest) {
+      const storageKey = buildStorageKey(sessionId, activeTab)
+      if (activeTab === 'todo') {
+        setTodos(loadJson<TodoItem[]>(storageKey, []))
+      } else {
+        setNotes(loadJson<NoteItem[]>(storageKey, []))
+      }
+      return
     }
-  }, [activeTab, sessionId])
+
+    const loadFromDb = async () => {
+      const { data } = await supabase
+        .from('session_notes')
+        .select('id,created_at,note_type,text,employee_name,done')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: false })
+
+      const rows = data ?? []
+      if (activeTab === 'todo') {
+        setTodos(
+          rows
+            .filter(row => row.note_type === 'todo')
+            .map(row => ({
+              id: row.id,
+              createdAt: row.created_at,
+              text: row.text,
+              done: row.done ?? false,
+            })),
+        )
+      } else {
+        setNotes(
+          rows
+            .filter(row => row.note_type === activeTab)
+            .map(row => ({
+              id: row.id,
+              createdAt: row.created_at,
+              text: row.text,
+              employeeName: row.employee_name ?? undefined,
+            })),
+        )
+      }
+    }
+    void loadFromDb()
+  }, [activeTab, isGuest, sessionId])
 
   useEffect(() => {
     if (!employeeName) {
@@ -121,9 +163,19 @@ function StaffNotesPage() {
       text: trimmed,
       employeeName: employeeName.trim() || undefined,
     }
-    const next = [entry, ...notes]
-    setNotes(next)
-    saveJson(buildStorageKey(sessionId, activeTab), next)
+    if (isGuest) {
+      const next = [entry, ...notes]
+      setNotes(next)
+      saveJson(buildStorageKey(sessionId, activeTab), next)
+    } else if (access.mode === 'owner' || access.mode === 'shared') {
+      void supabase.from('session_notes').insert({
+        session_id: sessionId,
+        note_type: activeTab,
+        text: trimmed,
+        employee_name: employeeName.trim() || null,
+      })
+      setNotes(current => [entry, ...current])
+    }
     setNoteText('')
     setEmployeeName('')
   }
@@ -132,9 +184,14 @@ function StaffNotesPage() {
     if (!sessionId) {
       return
     }
-    const next = notes.filter(item => item.id !== id)
-    setNotes(next)
-    saveJson(buildStorageKey(sessionId, activeTab), next)
+    if (isGuest) {
+      const next = notes.filter(item => item.id !== id)
+      setNotes(next)
+      saveJson(buildStorageKey(sessionId, activeTab), next)
+      return
+    }
+    void supabase.from('session_notes').delete().eq('id', id)
+    setNotes(current => current.filter(item => item.id !== id))
   }
 
   const handleAddTodo = () => {
@@ -151,9 +208,19 @@ function StaffNotesPage() {
       text: trimmed,
       done: false,
     }
-    const next = [entry, ...todos]
-    setTodos(next)
-    saveJson(buildStorageKey(sessionId, activeTab), next)
+    if (isGuest) {
+      const next = [entry, ...todos]
+      setTodos(next)
+      saveJson(buildStorageKey(sessionId, activeTab), next)
+    } else if (access.mode === 'owner' || access.mode === 'shared') {
+      void supabase.from('session_notes').insert({
+        session_id: sessionId,
+        note_type: 'todo',
+        text: trimmed,
+        done: false,
+      })
+      setTodos(current => [entry, ...current])
+    }
     setTodoText('')
   }
 
@@ -161,18 +228,32 @@ function StaffNotesPage() {
     if (!sessionId) {
       return
     }
-    const next = todos.map(item => (item.id === id ? { ...item, done: !item.done } : item))
-    setTodos(next)
-    saveJson(buildStorageKey(sessionId, activeTab), next)
+    if (isGuest) {
+      const next = todos.map(item => (item.id === id ? { ...item, done: !item.done } : item))
+      setTodos(next)
+      saveJson(buildStorageKey(sessionId, activeTab), next)
+      return
+    }
+    const updated = todos.map(item => (item.id === id ? { ...item, done: !item.done } : item))
+    const target = updated.find(item => item.id === id)
+    if (target) {
+      void supabase.from('session_notes').update({ done: target.done }).eq('id', id)
+    }
+    setTodos(updated)
   }
 
   const handleDeleteTodo = (id: string) => {
     if (!sessionId) {
       return
     }
-    const next = todos.filter(item => item.id !== id)
-    setTodos(next)
-    saveJson(buildStorageKey(sessionId, activeTab), next)
+    if (isGuest) {
+      const next = todos.filter(item => item.id !== id)
+      setTodos(next)
+      saveJson(buildStorageKey(sessionId, activeTab), next)
+      return
+    }
+    void supabase.from('session_notes').delete().eq('id', id)
+    setTodos(current => current.filter(item => item.id !== id))
   }
 
   const tabButtonClass = (tabKey: TabKey) =>
@@ -184,8 +265,9 @@ function StaffNotesPage() {
     ].join(' ')
 
   const listEmptyLabel = activeConfig.type === 'todo' ? 'No todo items yet.' : 'No notes yet.'
-  const isAddNoteDisabled = !isSessionReady || noteText.trim() === ''
-  const isAddTodoDisabled = !isSessionReady || todoText.trim() === ''
+  const isEditable = isGuest || access.mode === 'owner' || access.mode === 'shared'
+  const isAddNoteDisabled = !isSessionReady || noteText.trim() === '' || !isEditable
+  const isAddTodoDisabled = !isSessionReady || todoText.trim() === '' || !isEditable
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">

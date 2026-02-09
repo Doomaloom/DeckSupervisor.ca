@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useDay } from '../../app/DayContext'
-import { getCurrentSessionId as getStoredCurrentSessionId, loadSessions } from '../../lib/sessionStorage'
+import { useCurrentSession } from '../../app/useCurrentSession'
 import {
   getCustomRostersForDay,
   getMasterlistDraftOptions,
@@ -10,7 +10,6 @@ import {
 import {
   getCachedInstructorPdf,
   getCurrentSessionId,
-  getCurrentSessionName,
   getInstructorPacket,
   prefetchInstructorPacket,
   upsertInstructorPdf,
@@ -31,39 +30,12 @@ import { getCapacity } from '../schematic/utils/capacity'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
-type SessionEntry = {
-  id: string
-  startDate: string
-  endDate?: string
-  sessionSeason?: string
-}
-
 const formatGeneratedDate = (date: Date) =>
   date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   })
-
-const getCurrentSessionStartDate = () => {
-  const currentSessionId = getStoredCurrentSessionId()
-  if (!currentSessionId) {
-    return ''
-  }
-  const sessions = loadSessions() as SessionEntry[]
-  const session = sessions.find(item => item.id === currentSessionId)
-  return session?.startDate ?? ''
-}
-
-const getCurrentSessionInfo = () => {
-  const currentSessionId = getStoredCurrentSessionId()
-  if (!currentSessionId) {
-    return null
-  }
-  const sessions = loadSessions() as SessionEntry[]
-  const session = sessions.find(item => item.id === currentSessionId)
-  return session ?? null
-}
 
 const getSessionWeek = (startDate: string, now = new Date()) => {
   if (!startDate) {
@@ -94,6 +66,7 @@ const formatMonthDay = (value: string) => {
 
 function PrintPage() {
   const { selectedDay } = useDay()
+  const { session: currentSession } = useCurrentSession()
   const [activeInfo, setActiveInfo] = useState<PrintOptionKey | null>(null)
   const [activeModal, setActiveModal] = useState<PrintOptionKey | null>(null)
   const instructorNames = useSessionInstructors(
@@ -131,24 +104,24 @@ function PrintPage() {
     orientation: 'portrait' as const,
   })
   const schematicPreview = useSchematicSchedule(selectedDay ?? null)
-  const sessionInfo = getCurrentSessionInfo()
+  const sessionInfo = currentSession
   const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
-  const seasonLabel = sessionInfo?.sessionSeason?.trim() ?? ''
-  const yearLabel = sessionInfo?.startDate ? new Date(sessionInfo.startDate).getFullYear() : NaN
+  const seasonLabel = sessionInfo?.session_season?.trim() ?? ''
+  const yearLabel = sessionInfo?.start_date ? new Date(sessionInfo.start_date).getFullYear() : NaN
   const sessionTitle = [dayLabel, seasonLabel, Number.isFinite(yearLabel) ? String(yearLabel) : '']
     .filter(Boolean)
     .join(' ')
-  const dateRange = sessionInfo?.startDate && sessionInfo?.endDate
-    ? `${formatMonthDay(sessionInfo.startDate)} - ${formatMonthDay(sessionInfo.endDate)}`
-    : sessionInfo?.startDate
-    ? formatMonthDay(sessionInfo.startDate)
+  const dateRange = sessionInfo?.start_date && sessionInfo?.end_date
+    ? `${formatMonthDay(sessionInfo.start_date)} - ${formatMonthDay(sessionInfo.end_date)}`
+    : sessionInfo?.start_date
+    ? formatMonthDay(sessionInfo.start_date)
     : 'Date range unavailable'
   const weeksLabel = (() => {
-    if (!sessionInfo?.startDate || !sessionInfo?.endDate) {
+    if (!sessionInfo?.start_date || !sessionInfo?.end_date) {
       return ''
     }
-    const start = new Date(sessionInfo.startDate)
-    const end = new Date(sessionInfo.endDate)
+    const start = new Date(sessionInfo.start_date)
+    const end = new Date(sessionInfo.end_date)
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       return ''
     }
@@ -525,7 +498,7 @@ function PrintPage() {
     rostersToPrint: ReturnType<typeof buildRosterGroups>,
     filename?: string,
   ) => {
-    const sessionName = getCurrentSessionName() || 'Summer 2025'
+    const sessionName = sessionTitle || 'Summer 2025'
     return {
       session: sessionName,
       filename,
@@ -890,9 +863,9 @@ function PrintPage() {
       })),
     }))
 
-    const sessionName = getCurrentSessionName() || 'Summer 2025'
+    const sessionName = sessionTitle || 'Summer 2025'
     const generatedDate = formatGeneratedDate(new Date())
-    const sessionWeek = getSessionWeek(getCurrentSessionStartDate()) ?? 1
+    const sessionWeek = getSessionWeek(currentSession?.start_date ?? '') ?? 1
 
     const printWindow = window.open('', '_blank')
     if (!printWindow) {
