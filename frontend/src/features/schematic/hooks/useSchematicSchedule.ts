@@ -231,7 +231,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
         setDragged(null)
     }
 
-    const handleSaveSchedule = () => {
+    const handleSaveSchedule = async () => {
         if (!selectedDay) {
             alert('Please select a day first.')
             return
@@ -273,21 +273,31 @@ export function useSchematicSchedule(selectedDay: string | null) {
             }
             return { ...student, instructor }
         })
-        setStudentsForDay(selectedDay, updated)
-        void prefetchInstructorPacket(selectedDay)
+
         if (access.mode === 'owner' && currentSession && sessionId) {
-            void supabase
+            const nextRemoteSchedule = {
+                codes,
+                instructors,
+            }
+            const { error } = await supabase
                 .from('schematics')
                 .upsert({
                     session_id: sessionId,
-                    data: {
-                        codes,
-                        instructors,
-                    },
+                    data: nextRemoteSchedule,
                     created_by: currentSession.created_by,
                     updated_at: new Date().toISOString(),
                 }, { onConflict: 'session_id' })
+
+            if (error) {
+                alert(`Failed to save schedule: ${error.message}`)
+                return
+            }
+
+            setRemoteSchedule(nextRemoteSchedule)
         }
+
+        setStudentsForDay(selectedDay, updated)
+        void prefetchInstructorPacket(selectedDay)
         alert('Schedule saved successfully!')
     }
 
