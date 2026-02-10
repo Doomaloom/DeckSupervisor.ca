@@ -72,7 +72,7 @@ const saveJson = <T,>(key: string, value: T) => {
 }
 
 function StaffNotesPage() {
-  const { isGuest } = useAuth()
+  const { isGuest, user } = useAuth()
   const { sessionId: currentSessionId, access } = useCurrentSession()
   const sessionId = isGuest ? getCurrentSessionId() : currentSessionId
   const isSessionReady = Boolean(sessionId)
@@ -149,8 +149,11 @@ function StaffNotesPage() {
     }
   }, [employeeName, instructorNames])
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (!sessionId) {
+      return
+    }
+    if (activeTab === 'todo') {
       return
     }
     const trimmed = noteText.trim()
@@ -167,14 +170,32 @@ function StaffNotesPage() {
       const next = [entry, ...notes]
       setNotes(next)
       saveJson(buildStorageKey(sessionId, activeTab), next)
-    } else if (access.mode === 'owner' || access.mode === 'shared') {
-      void supabase.from('session_notes').insert({
-        session_id: sessionId,
-        note_type: activeTab,
-        text: trimmed,
-        employee_name: employeeName.trim() || null,
-      })
-      setNotes(current => [entry, ...current])
+    } else if (user?.id && (access.mode === 'owner' || access.mode === 'shared')) {
+      const { data, error } = await supabase
+        .from('session_notes')
+        .insert({
+          session_id: sessionId,
+          created_by: user.id,
+          note_type: activeTab,
+          text: trimmed,
+          employee_name: employeeName.trim() || null,
+        })
+        .select('id,created_at,text,employee_name')
+        .single()
+      if (error || !data) {
+        console.error('Failed to add note', error)
+        alert(`Failed to add note: ${error?.message ?? 'Unknown error'}`)
+        return
+      }
+      setNotes(current => [
+        {
+          id: data.id,
+          createdAt: data.created_at,
+          text: data.text,
+          employeeName: data.employee_name ?? undefined,
+        },
+        ...current,
+      ])
     }
     setNoteText('')
     setEmployeeName('')
@@ -194,7 +215,7 @@ function StaffNotesPage() {
     setNotes(current => current.filter(item => item.id !== id))
   }
 
-  const handleAddTodo = () => {
+  const handleAddTodo = async () => {
     if (!sessionId) {
       return
     }
@@ -212,14 +233,32 @@ function StaffNotesPage() {
       const next = [entry, ...todos]
       setTodos(next)
       saveJson(buildStorageKey(sessionId, activeTab), next)
-    } else if (access.mode === 'owner' || access.mode === 'shared') {
-      void supabase.from('session_notes').insert({
-        session_id: sessionId,
-        note_type: 'todo',
-        text: trimmed,
-        done: false,
-      })
-      setTodos(current => [entry, ...current])
+    } else if (user?.id && (access.mode === 'owner' || access.mode === 'shared')) {
+      const { data, error } = await supabase
+        .from('session_notes')
+        .insert({
+          session_id: sessionId,
+          created_by: user.id,
+          note_type: 'todo',
+          text: trimmed,
+          done: false,
+        })
+        .select('id,created_at,text,done')
+        .single()
+      if (error || !data) {
+        console.error('Failed to add todo', error)
+        alert(`Failed to add todo: ${error?.message ?? 'Unknown error'}`)
+        return
+      }
+      setTodos(current => [
+        {
+          id: data.id,
+          createdAt: data.created_at,
+          text: data.text,
+          done: data.done ?? false,
+        },
+        ...current,
+      ])
     }
     setTodoText('')
   }
@@ -265,7 +304,8 @@ function StaffNotesPage() {
     ].join(' ')
 
   const listEmptyLabel = activeConfig.type === 'todo' ? 'No todo items yet.' : 'No notes yet.'
-  const isEditable = isGuest || access.mode === 'owner' || access.mode === 'shared'
+  const canWriteDbNotes = Boolean(user?.id) && (access.mode === 'owner' || access.mode === 'shared')
+  const isEditable = isGuest || canWriteDbNotes
   const isAddNoteDisabled = !isSessionReady || noteText.trim() === '' || !isEditable
   const isAddTodoDisabled = !isSessionReady || todoText.trim() === '' || !isEditable
 
