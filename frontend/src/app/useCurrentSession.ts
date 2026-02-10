@@ -7,13 +7,13 @@ import { onStorageScopeChanged } from '../lib/storageScope'
 
 export type SessionRecord = {
   id: string
-  team_id: string
+  team_id: string | null
   created_by: string
   session_day: string
   session_season: string | null
   start_date: string | null
   end_date: string | null
-  location: string
+  location: string | null
   instructors: { name: string }[]
 }
 
@@ -60,13 +60,13 @@ export function useCurrentSession() {
             local
               ? {
                   id: local.id,
-                  team_id: '',
+                  team_id: null,
                   created_by: '',
                   session_day: local.sessionDay,
                   session_season: local.sessionSeason ?? null,
                   start_date: local.startDate ?? null,
                   end_date: local.endDate ?? null,
-                  location: '',
+                  location: null,
                   instructors: local.instructors ?? [],
                 }
               : null,

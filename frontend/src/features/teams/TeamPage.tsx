@@ -33,7 +33,7 @@ type MemberEntry = {
 
 type SessionEntry = {
   id: string
-  team_id: string
+  team_id: string | null
   session_day: string
   session_season: string | null
   start_date: string | null
@@ -162,14 +162,15 @@ function TeamPage() {
 
   const memberIds = useMemo(() => new Set(members.map(member => member.user_id)), [members])
   const invitedIds = useMemo(() => new Set(invites.map(invite => invite.invitee_id)), [invites])
+  const shareableSessions = useMemo(() => userSessions.filter(session => Boolean(session.team_id)), [userSessions])
 
   useEffect(() => {
     if (!user || accountType === 'full_time' || !shareSessionId) {
       setShareMembers([])
       return
     }
-    const session = userSessions.find(item => item.id === shareSessionId)
-    if (!session) {
+    const session = shareableSessions.find(item => item.id === shareSessionId)
+    if (!session || !session.team_id) {
       setShareMembers([])
       return
     }
@@ -182,7 +183,7 @@ function TeamPage() {
       setShareMembers(rows.filter(member => member.user_id !== user.id))
     }
     void loadMembers()
-  }, [accountType, shareSessionId, user, userSessions])
+  }, [accountType, shareSessionId, shareableSessions, user])
 
   const handleCreateTeam = async () => {
     if (!user || !teamName.trim()) {
@@ -408,7 +409,7 @@ function TeamPage() {
                 onChange={event => setShareSessionId(event.target.value)}
               >
                 <option value="">Select a session</option>
-                {userSessions.map(session => (
+                {shareableSessions.map(session => (
                   <option key={session.id} value={session.id}>
                     {getSessionLabel(session)}
                   </option>

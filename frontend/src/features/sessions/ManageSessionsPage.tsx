@@ -216,7 +216,7 @@ function ManageSessionsPage() {
         session_season: editSessionSeason || null,
         start_date: editStartDate || null,
         end_date: editEndDate || null,
-        location: editLocation || currentSessionRecord?.location,
+        location: editLocation || null,
         instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
         updated_at: new Date().toISOString(),
       })
@@ -365,11 +365,12 @@ function ManageSessionsPage() {
                 </label>
                 {!isGuest ? (
                   <label className="flex flex-col gap-2 font-semibold text-secondary">
-                    Location
+                    Location (optional)
                     <select
                       className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                       value={editLocation}
                       onChange={event => setEditLocation(event.target.value)}
+                      disabled={!currentSessionRecord?.team_id}
                     >
                       <option value="">Select a location</option>
                       {availableLocations.map(option => (

@@ -108,7 +108,11 @@ create policy "Sessions create"
   on sessions for insert
   with check (
     created_by = auth.uid()
-    and (is_team_member(team_id, auth.uid()) or is_team_owner(team_id, auth.uid()))
+    and (
+      team_id is null
+      or is_team_member(team_id, auth.uid())
+      or is_team_owner(team_id, auth.uid())
+    )
   );
 
 create policy "Sessions update"

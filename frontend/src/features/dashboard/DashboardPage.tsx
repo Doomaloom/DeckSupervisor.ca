@@ -20,13 +20,13 @@ type SessionEntry = {
 
 type DbSessionEntry = {
   id: string
-  team_id: string
+  team_id: string | null
   created_by: string
   session_day: string
   session_season: string | null
   start_date: string | null
   end_date: string | null
-  location: string
+  location: string | null
   instructors: InstructorEntry[]
 }
 
@@ -53,6 +53,8 @@ const dayNames: Record<string, string> = {
   Sa: 'Saturday',
   Su: 'Sunday',
 }
+
+const NO_TEAM_VALUE = '__no_team__'
 
 function getSessionName(session: SessionEntry) {
   const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
@@ -146,20 +148,27 @@ function Dashboard() {
       return
     }
 
-    if (!selectedTeamId || !location) {
-      setSaveMessage('Select a team and location before saving.')
+    if (!selectedTeamId) {
+      setSaveMessage('Select a team or choose No team before saving.')
+      return
+    }
+
+    const hasTeam = selectedTeamId !== NO_TEAM_VALUE
+
+    if (hasTeam && !location) {
+      setSaveMessage('Select a location before saving.')
       return
     }
 
     const payload = {
       id,
-      team_id: selectedTeamId,
+      team_id: hasTeam ? selectedTeamId : null,
       created_by: user!.id,
       session_day: sessionDay,
       session_season: sessionSeason || null,
       start_date: startDate || null,
       end_date: endDate || null,
-      location,
+      location: location || null,
       instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
     }
 
@@ -263,7 +272,7 @@ function Dashboard() {
       const nextTeams = Array.from(merged.values())
       setTeams(nextTeams)
 
-      if (nextTeams.length === 1) {
+      if (nextTeams.length === 1 && !selectedTeamId) {
         setSelectedTeamId(nextTeams[0].id)
         setAvailableLocations(nextTeams[0].available_locations ?? [])
         if (!location && nextTeams[0].available_locations?.length) {
@@ -272,7 +281,7 @@ function Dashboard() {
       }
     }
     void loadTeams()
-  }, [isGuest, location, user])
+  }, [isGuest, location, selectedTeamId, user])
 
   useEffect(() => {
     if (isGuest || !user) {
@@ -309,14 +318,20 @@ function Dashboard() {
   }, [isGuest, user])
 
   useEffect(() => {
-    if (!selectedTeamId) {
+    if (!selectedTeamId || selectedTeamId === NO_TEAM_VALUE) {
       setAvailableLocations([])
+      setLocation('')
       return
     }
     const selected = teams.find(team => team.id === selectedTeamId)
-    setAvailableLocations(selected?.available_locations ?? [])
-    if (selected?.available_locations?.length && !location) {
-      setLocation(selected.available_locations[0])
+    const options = selected?.available_locations ?? []
+    setAvailableLocations(options)
+    if (options.length === 0) {
+      setLocation('')
+      return
+    }
+    if (!location || !options.includes(location)) {
+      setLocation(options[0])
     }
   }, [location, selectedTeamId, teams])
 
@@ -423,6 +438,7 @@ function Dashboard() {
                           onChange={event => setSelectedTeamId(event.target.value)}
                         >
                           <option value="">Select a team</option>
+                          <option value={NO_TEAM_VALUE}>No team</option>
                           {teams.map(team => (
                             <option key={team.id} value={team.id}>
                               {team.name}
@@ -436,7 +452,7 @@ function Dashboard() {
                           className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                           value={location}
                           onChange={event => setLocation(event.target.value)}
-                          disabled={!selectedTeamId}
+                          disabled={!selectedTeamId || selectedTeamId === NO_TEAM_VALUE}
                         >
                           <option value="">Select a location</option>
                           {availableLocations.map(option => (
@@ -579,7 +595,9 @@ function Dashboard() {
                         {dbSession.start_date || 'Start date'} - {dbSession.end_date || 'End date'}
                       </p>
                       <p>{dbSession.instructors?.length ?? 0} instructors</p>
-                      <p className="text-sm text-secondary/70">{dbSession.location}</p>
+                      <p className="text-sm text-secondary/70">
+                        {dbSession.location || 'No location set'}
+                      </p>
                       {isCurrent ? <p className="font-semibold text-secondary">Current session</p> : null}
                     </button>
                   )

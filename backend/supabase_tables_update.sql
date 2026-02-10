@@ -6,17 +6,21 @@ alter table teams
 
 create table if not exists sessions (
   id uuid primary key default gen_random_uuid(),
-  team_id uuid not null references teams(id) on delete cascade,
+  team_id uuid references teams(id) on delete cascade,
   created_by uuid not null references profiles(id) on delete restrict,
   session_day text not null,
   session_season text,
   start_date date,
   end_date date,
-  location text not null,
+  location text,
   instructors jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table sessions
+  alter column team_id drop not null,
+  alter column location drop not null;
 
 create index if not exists sessions_team_id_idx on sessions(team_id);
 create index if not exists sessions_created_by_idx on sessions(created_by);
