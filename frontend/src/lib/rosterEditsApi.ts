@@ -61,10 +61,16 @@ export async function fetchRosterStudentEdits(sessionId: string): Promise<Studen
   return (data ?? []) as StudentLevelEdit[]
 }
 
-export async function upsertRosterLevelEdit(sessionId: string, code: string, level: string) {
+export async function upsertRosterLevelEdit(
+  sessionId: string,
+  createdBy: string,
+  code: string,
+  level: string,
+) {
   return supabase.from('roster_level_edits').upsert(
     {
       session_id: sessionId,
+      created_by: createdBy,
       code,
       level,
       updated_at: new Date().toISOString(),
@@ -75,6 +81,7 @@ export async function upsertRosterLevelEdit(sessionId: string, code: string, lev
 
 export async function upsertRosterStudentLevelEdit(
   sessionId: string,
+  createdBy: string,
   code: string,
   studentName: string,
   level: string,
@@ -86,6 +93,7 @@ export async function upsertRosterStudentLevelEdit(
   return supabase.from('roster_student_level_edits').upsert(
     {
       session_id: sessionId,
+      created_by: createdBy,
       code,
       student_name_hash: hash,
       level,

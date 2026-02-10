@@ -18,7 +18,7 @@ import { useCurrentSession } from '../../app/useCurrentSession'
 
 function RostersPage() {
     const { selectedDay } = useDay()
-    const { isGuest } = useAuth()
+    const { isGuest, user } = useAuth()
     const { access, sessionId } = useCurrentSession()
     const [activeTab, setActiveTab] = useState<'default' | 'custom'>('default')
     const [studentLevelEditMap, setStudentLevelEditMap] = useState<Record<string, boolean>>({})
@@ -78,6 +78,7 @@ function RostersPage() {
         students,
         setStudents,
         sessionId: sessionId ?? undefined,
+        currentUserId: user?.id,
         canEdit: isGuest || access.mode === 'owner' || access.allowRosterEdits,
     })
     const { handlePrintRoster } = useRosterPrint()
