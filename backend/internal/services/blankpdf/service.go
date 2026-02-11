@@ -10,12 +10,14 @@ import (
 	"strings"
 	"time"
 
+	"cob-aquatics/internal/services/pdf"
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 )
 
 type Request struct {
-	Orientation string `json:"orientation"`
+	Orientation              string `json:"orientation"`
+	RotateCounterClockwise90 bool   `json:"rotateCounterClockwise90"`
 }
 
 type Output struct {
@@ -33,6 +35,12 @@ func BuildPDF(ctx context.Context, req Request) (Output, error) {
 	pdfBytes, err := renderPDF(ctx, htmlContent)
 	if err != nil {
 		return Output{}, err
+	}
+	if req.RotateCounterClockwise90 {
+		pdfBytes, err = pdf.RotateAllPages(pdfBytes, 270)
+		if err != nil {
+			return Output{}, err
+		}
 	}
 
 	filename := fmt.Sprintf("blank-%s.pdf", time.Now().Format("2006-01-02"))

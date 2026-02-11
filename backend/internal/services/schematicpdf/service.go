@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"cob-aquatics/internal/services/pdf"
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 )
@@ -27,14 +28,15 @@ type Course struct {
 }
 
 type Request struct {
-	Orientation string     `json:"orientation"`
-	Title       string     `json:"title"`
-	DateRange   string     `json:"dateRange"`
-	WeeksLabel  string     `json:"weeksLabel"`
-	Highlight   bool       `json:"highlightInstructor"`
-	Selected    string     `json:"selectedInstructor"`
-	Instructors []string   `json:"instructors"`
-	Columns     [][]Course `json:"columns"`
+	Orientation              string     `json:"orientation"`
+	Title                    string     `json:"title"`
+	DateRange                string     `json:"dateRange"`
+	WeeksLabel               string     `json:"weeksLabel"`
+	Highlight                bool       `json:"highlightInstructor"`
+	Selected                 string     `json:"selectedInstructor"`
+	Instructors              []string   `json:"instructors"`
+	Columns                  [][]Course `json:"columns"`
+	RotateCounterClockwise90 bool       `json:"rotateCounterClockwise90"`
 }
 
 type Output struct {
@@ -84,6 +86,12 @@ func BuildPDF(ctx context.Context, req Request) (Output, error) {
 	pdfBytes, err := renderPDF(ctx, htmlContent, scale)
 	if err != nil {
 		return Output{}, err
+	}
+	if req.RotateCounterClockwise90 {
+		pdfBytes, err = pdf.RotateAllPages(pdfBytes, 270)
+		if err != nil {
+			return Output{}, err
+		}
 	}
 
 	filename := fmt.Sprintf("schematic-%s.pdf", time.Now().Format("2006-01-02"))

@@ -283,10 +283,14 @@ function PrintPage() {
   const fetchSchematicCoverWithBlank = async (
     orientation: 'portrait' | 'landscape',
     highlightOptions?: { highlightInstructor: boolean; selectedInstructor: string },
+    rotateForInstructorSheets = false,
   ) => {
     if (schematicPreview.columns.length === 0) {
       throw new Error('No schematic data found for the selected day.')
     }
+
+    const shouldRotateCounterClockwise90 =
+      rotateForInstructorSheets && orientation === 'portrait'
 
     const schematicResponse = await fetch('/api/schematic-pdf', {
       method: 'POST',
@@ -294,10 +298,13 @@ function PrintPage() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(
-        buildSchematicPayload(
-          orientation,
-          highlightOptions ?? { highlightInstructor: false, selectedInstructor: 'none' },
-        ),
+        {
+          ...buildSchematicPayload(
+            orientation,
+            highlightOptions ?? { highlightInstructor: false, selectedInstructor: 'none' },
+          ),
+          rotateCounterClockwise90: shouldRotateCounterClockwise90,
+        },
       ),
     })
 
@@ -312,7 +319,10 @@ function PrintPage() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ orientation }),
+      body: JSON.stringify({
+        orientation,
+        rotateCounterClockwise90: shouldRotateCounterClockwise90,
+      }),
     })
 
     if (!blankResponse.ok) {
@@ -603,7 +613,11 @@ function PrintPage() {
       let schematicCover: Blob | null = null
       let schematicBlank: Blob | null = null
       if (instructorExtras.schematicCoverPage) {
-        const result = await fetchSchematicCoverWithBlank(instructorCoverOrientation)
+        const result = await fetchSchematicCoverWithBlank(
+          instructorCoverOrientation,
+          undefined,
+          true,
+        )
         schematicCover = result.schematicCover
         schematicBlank = result.blankPage
       }
@@ -739,7 +753,7 @@ function PrintPage() {
           instructorExtras.highlightCoverInstructor && name
             ? { highlightInstructor: true, selectedInstructor: name }
             : { highlightInstructor: false, selectedInstructor: 'none' }
-        const result = await fetchSchematicCoverWithBlank(instructorCoverOrientation, highlight)
+        const result = await fetchSchematicCoverWithBlank(instructorCoverOrientation, highlight, true)
         schematicCover = result.schematicCover
         schematicBlank = result.blankPage
       }
