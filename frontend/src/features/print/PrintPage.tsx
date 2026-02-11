@@ -847,21 +847,64 @@ function PrintPage() {
       return
     }
 
-    const rosters = rosterGroups.map(roster => ({
-      code: roster.code,
-      serviceName: roster.serviceName,
-      day: selectedDay,
-      time: roster.time,
-      location: roster.location,
-      schedule: roster.schedule,
-      instructor: roster.instructor,
-      students: roster.students.map(student => ({
+    const rosters = rosterGroups.flatMap(roster => {
+      const mappedStudents = roster.students.map(student => ({
         name: student.name,
         phone: student.phone,
         instructor: student.instructor,
         level: student.level,
-      })),
-    }))
+        code: student.code,
+      }))
+
+      if (!roster.code.startsWith('custom-')) {
+        return [
+          {
+            code: roster.code,
+            serviceName: roster.serviceName,
+            day: selectedDay,
+            time: roster.time,
+            location: roster.location,
+            schedule: roster.schedule,
+            instructor: roster.instructor,
+            students: mappedStudents.map(({ code: _code, ...student }) => student),
+          },
+        ]
+      }
+
+      const studentsByOriginalCode = new Map<
+        string,
+        Array<{ name: string; phone: string; instructor: string; level: string }>
+      >()
+      mappedStudents.forEach(student => {
+        const originalCode = student.code?.trim()
+        if (!originalCode) {
+          return
+        }
+        const bucket = studentsByOriginalCode.get(originalCode)
+        const studentPayload = {
+          name: student.name,
+          phone: student.phone,
+          instructor: student.instructor,
+          level: student.level,
+        }
+        if (bucket) {
+          bucket.push(studentPayload)
+        } else {
+          studentsByOriginalCode.set(originalCode, [studentPayload])
+        }
+      })
+
+      return Array.from(studentsByOriginalCode.entries()).map(([code, students]) => ({
+        code,
+        serviceName: roster.serviceName,
+        day: selectedDay,
+        time: roster.time,
+        location: roster.location,
+        schedule: roster.schedule,
+        instructor: roster.instructor,
+        students,
+      }))
+    })
 
     const sessionName = sessionTitle || 'Summer 2025'
     const generatedDate = formatGeneratedDate(new Date())
