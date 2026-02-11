@@ -5,11 +5,8 @@ import RosterCard from './RosterCard'
 type RosterListProps = {
     rosters: RosterListItem[]
     emptyMessage: string
-    instructorOptions: string[]
     onPrintRoster: (roster: RosterListItem['roster']) => void
-    onRosterInstructorChange: (code: string, instructor: string) => void
     onRosterLevelChange: (code: string, level: string) => void
-    onCustomRosterInstructorChange: (id: string, instructor: string) => void
     onCustomRosterLevelChange: (id: string, level: string) => void
     onStudentLevelChange: (studentId: string, level: string) => void
     studentLevelEditMap: Record<string, boolean>
@@ -19,11 +16,8 @@ type RosterListProps = {
 function RosterList({
     rosters,
     emptyMessage,
-    instructorOptions,
     onPrintRoster,
-    onRosterInstructorChange,
     onRosterLevelChange,
-    onCustomRosterInstructorChange,
     onCustomRosterLevelChange,
     onStudentLevelChange,
     studentLevelEditMap,
@@ -37,12 +31,9 @@ function RosterList({
                     <RosterCard
                         key={item.roster.code}
                         roster={item.roster}
-                        instructorOptions={instructorOptions}
                         isCustom={item.isCustom}
                         onPrint={onPrintRoster}
-                        onRosterInstructorChange={onRosterInstructorChange}
                         onRosterLevelChange={onRosterLevelChange}
-                        onCustomRosterInstructorChange={onCustomRosterInstructorChange}
                         onCustomRosterLevelChange={onCustomRosterLevelChange}
                         onStudentLevelChange={onStudentLevelChange}
                         allowStudentLevelEdits={Boolean(studentLevelEditMap[item.roster.code])}

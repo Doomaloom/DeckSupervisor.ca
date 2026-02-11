@@ -1,17 +1,13 @@
 import React from 'react'
 import type { RosterGroup } from '../types'
-import InstructorSelect from './InstructorSelect'
 import LevelSelect from './LevelSelect'
 import StudentRow from './StudentRow'
 
 type RosterCardProps = {
     roster: RosterGroup
-    instructorOptions: string[]
     isCustom?: boolean
     onPrint: (roster: RosterGroup) => void
-    onRosterInstructorChange: (code: string, instructor: string) => void
     onRosterLevelChange: (code: string, level: string) => void
-    onCustomRosterInstructorChange?: (id: string, instructor: string) => void
     onCustomRosterLevelChange?: (id: string, level: string) => void
     onStudentLevelChange: (studentId: string, level: string) => void
     allowStudentLevelEdits: boolean
@@ -20,12 +16,9 @@ type RosterCardProps = {
 
 function RosterCard({
     roster,
-    instructorOptions,
     isCustom = false,
     onPrint,
-    onRosterInstructorChange,
     onRosterLevelChange,
-    onCustomRosterInstructorChange,
     onCustomRosterLevelChange,
     onStudentLevelChange,
     allowStudentLevelEdits,
@@ -65,20 +58,10 @@ function RosterCard({
                     </button>
                 </div>
             </div>
-            <div className="mt-4 grid w-full grid-cols-2 gap-3">
-                <InstructorSelect
-                    value={roster.instructor}
-                    options={instructorOptions}
-                    optionKeyPrefix={roster.code}
-                    placeholder={roster.instructor ? roster.instructor : 'Select Instructor'}
-                    onChange={value => {
-                        if (isCustom && customId && onCustomRosterInstructorChange) {
-                            onCustomRosterInstructorChange(customId, value)
-                            return
-                        }
-                        onRosterInstructorChange(roster.code, value)
-                    }}
-                />
+            <div className="mt-4 grid w-full grid-cols-1 gap-3">
+                <p className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary">
+                    Instructor: {roster.instructor || 'Unassigned'}
+                </p>
                 <LevelSelect
                     value={roster.level}
                     onChange={value => {

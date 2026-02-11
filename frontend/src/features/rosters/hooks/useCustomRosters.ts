@@ -71,13 +71,6 @@ export function useCustomRosters(selectedDay: string, students: Student[]) {
         }
     }
 
-    const updateCustomRosterInstructor = (id: string, instructor: string) => {
-        const next = customRosters.map(roster =>
-            roster.id === id ? { ...roster, instructor: instructor || undefined } : roster,
-        )
-        void saveCustomRosters(next)
-    }
-
     const updateCustomRosterLevel = (id: string, level: string) => {
         const next = customRosters.map(roster => (roster.id === id ? { ...roster, serviceName: level } : roster))
         void saveCustomRosters(next)
@@ -86,7 +79,6 @@ export function useCustomRosters(selectedDay: string, students: Student[]) {
     return {
         customRosters,
         saveCustomRosters,
-        updateCustomRosterInstructor,
         updateCustomRosterLevel,
     }
 }

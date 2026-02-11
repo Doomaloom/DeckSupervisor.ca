@@ -50,17 +50,6 @@ export function useRosterEdits({
         }
     }
 
-    const handleRosterInstructorChange = (code: string, instructor: string) => {
-        if (canEdit === false) {
-            return
-        }
-        const updated = students.map(student =>
-            student.code === code ? { ...student, instructor } : student,
-        )
-        setStudents(updated)
-        setStudentsForDay(selectedDay, updated)
-    }
-
     const handleRosterLevelChange = (code: string, level: string) => {
         if (canEdit === false) {
             return
@@ -71,17 +60,6 @@ export function useRosterEdits({
         setStudents(updated)
         setStudentsForDay(selectedDay, updated)
         void saveRosterLevelEdit(code, level)
-    }
-
-    const handleStudentInstructorChange = (studentId: string, instructor: string) => {
-        if (canEdit === false) {
-            return
-        }
-        const updated = students.map(student =>
-            student.id === studentId ? { ...student, instructor } : student,
-        )
-        setStudents(updated)
-        updateStudentForDay(selectedDay, studentId, { instructor })
     }
 
     const handleStudentLevelChange = (studentId: string, level: string) => {
@@ -100,9 +78,7 @@ export function useRosterEdits({
     }
 
     return {
-        handleRosterInstructorChange,
         handleRosterLevelChange,
-        handleStudentInstructorChange,
         handleStudentLevelChange,
     }
 }

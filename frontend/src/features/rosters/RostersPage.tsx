@@ -27,7 +27,7 @@ function RostersPage() {
         sessionId ?? undefined,
         isGuest,
     )
-    const { customRosters, saveCustomRosters, updateCustomRosterInstructor, updateCustomRosterLevel } =
+    const { customRosters, saveCustomRosters, updateCustomRosterLevel } =
         useCustomRosters(selectedDay ?? '', students)
     const customRosterGroups = useMemo(() => {
         const rosterByCode = new Map(rosters.map(roster => [roster.code, roster]))
@@ -70,7 +70,6 @@ function RostersPage() {
         filteredRosters,
     } = useRosterFilters(sortedRosterItems)
     const {
-        handleRosterInstructorChange,
         handleRosterLevelChange,
         handleStudentLevelChange,
     } = useRosterEdits({
@@ -130,11 +129,8 @@ function RostersPage() {
                         <RosterList
                             rosters={filteredRosters}
                             emptyMessage={emptyMessage}
-                            instructorOptions={instructorOptions}
                             onPrintRoster={handlePrintRoster}
-                            onRosterInstructorChange={handleRosterInstructorChange}
                             onRosterLevelChange={handleRosterLevelChange}
-                            onCustomRosterInstructorChange={updateCustomRosterInstructor}
                             onCustomRosterLevelChange={updateCustomRosterLevel}
                             onStudentLevelChange={handleStudentLevelChange}
                             studentLevelEditMap={studentLevelEditMap}
