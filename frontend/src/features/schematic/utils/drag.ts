@@ -40,3 +40,14 @@ export function canReplaceByStart(column: Course[], course: Course, targetIndex:
 export function canPlaceCourses(column: Course[], courses: Course[]) {
     return courses.every(course => !column.some(entry => coursesOverlap(entry, course)))
 }
+
+export function canSwapSingleCourses(
+    sourceColumn: Course[],
+    targetColumn: Course[],
+    sourceCourse: Course,
+    targetCourse: Course,
+) {
+    const nextSource = sourceColumn.filter(course => course.code !== sourceCourse.code)
+    const nextTarget = targetColumn.filter(course => course.code !== targetCourse.code)
+    return canPlaceCourses(nextSource, [targetCourse]) && canPlaceCourses(nextTarget, [sourceCourse])
+}

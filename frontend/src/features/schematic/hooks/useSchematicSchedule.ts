@@ -15,7 +15,7 @@ import type { Student } from '../../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
 import type { Course, DragState } from '../types'
 import { buildColumns, buildCourses, coursesOverlap } from '../utils/courses'
-import { canPlaceCourses, canReplaceByStart, findContiguousSwapIndices } from '../utils/drag'
+import { canPlaceCourses, canReplaceByStart, canSwapSingleCourses, findContiguousSwapIndices } from '../utils/drag'
 import { buildTimeLabels } from '../utils/time'
 
 
@@ -223,7 +223,16 @@ export function useSchematicSchedule(selectedDay: string | null) {
                     sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
                     targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
                 } else {
-                    sourceColumn.splice(sourceIndex, 0, sourceCourse)
+                    const destinationCourse = targetColumn[targetIndex]
+                    if (!destinationCourse || !canSwapSingleCourses(sourceColumn, targetColumn, sourceCourse, destinationCourse)) {
+                        sourceColumn.splice(sourceIndex, 0, sourceCourse)
+                        return current
+                    }
+                    targetColumn.splice(targetIndex, 1)
+                    sourceColumn.push(destinationCourse)
+                    targetColumn.push(sourceCourse)
+                    sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                    targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
                 }
             }
             return next
