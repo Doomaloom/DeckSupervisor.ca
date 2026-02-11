@@ -610,18 +610,6 @@ function PrintPage() {
     setIsPrintingAllInstructors(true)
 
     try {
-      let schematicCover: Blob | null = null
-      let schematicBlank: Blob | null = null
-      if (instructorExtras.schematicCoverPage) {
-        const result = await fetchSchematicCoverWithBlank(
-          instructorCoverOrientation,
-          undefined,
-          true,
-        )
-        schematicCover = result.schematicCover
-        schematicBlank = result.blankPage
-      }
-
       const grouped = groupRostersByInstructor(rosterGroups)
       const orderedNames =
         instructorNames.length > 0
@@ -636,8 +624,37 @@ function PrintPage() {
 
       const pdfs: Blob[] = []
       let shouldRefresh = false
+      let baseSchematicCover: Blob | null = null
+      let baseSchematicBlank: Blob | null = null
+
+      if (instructorExtras.schematicCoverPage && !instructorExtras.highlightCoverInstructor) {
+        const result = await fetchSchematicCoverWithBlank(
+          instructorCoverOrientation,
+          undefined,
+          true,
+        )
+        baseSchematicCover = result.schematicCover
+        baseSchematicBlank = result.blankPage
+      }
 
       for (const name of orderedNames) {
+        if (instructorExtras.schematicCoverPage) {
+          if (instructorExtras.highlightCoverInstructor) {
+            const result = await fetchSchematicCoverWithBlank(
+              instructorCoverOrientation,
+              { highlightInstructor: true, selectedInstructor: name },
+              true,
+            )
+            pdfs.push(result.schematicCover)
+            pdfs.push(result.blankPage)
+          } else if (baseSchematicCover) {
+            pdfs.push(baseSchematicCover)
+            if (baseSchematicBlank) {
+              pdfs.push(baseSchematicBlank)
+            }
+          }
+        }
+
         let pdfBlob = await getCachedInstructorPdf(sessionId, selectedDay, name)
         if (!pdfBlob) {
           const rostersToPrint = grouped.get(name) ?? []
@@ -671,12 +688,6 @@ function PrintPage() {
       }
 
       const formData = new FormData()
-      if (schematicCover) {
-        formData.append('pdfs', schematicCover, 'schematic-cover.pdf')
-        if (schematicBlank) {
-          formData.append('pdfs', schematicBlank, 'schematic-blank.pdf')
-        }
-      }
       pdfs.forEach((pdf, index) => {
         formData.append('pdfs', pdf, `instructor-${index + 1}.pdf`)
       })
