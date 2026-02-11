@@ -58,6 +58,7 @@ alter table teams enable row level security;
 alter table team_members enable row level security;
 alter table team_invites enable row level security;
 alter table custom_rosters enable row level security;
+alter table report_cards enable row level security;
 
 drop policy if exists "Profiles insert by owner" on profiles;
 drop policy if exists "Profiles read by owner" on profiles;
@@ -141,3 +142,48 @@ create policy "Custom rosters owner only"
   on custom_rosters for all
   using (owner_id = auth.uid())
   with check (owner_id = auth.uid());
+
+drop policy if exists "Report cards read" on report_cards;
+drop policy if exists "Report cards create" on report_cards;
+drop policy if exists "Report cards update" on report_cards;
+drop policy if exists "Report cards delete" on report_cards;
+
+create policy "Report cards read"
+  on report_cards for select
+  using (
+    created_by = auth.uid()
+    or (
+      team_id is not null
+      and (
+        is_team_owner(team_id, auth.uid())
+        or is_team_member(team_id, auth.uid())
+      )
+    )
+  );
+
+create policy "Report cards create"
+  on report_cards for insert
+  with check (
+    created_by = auth.uid()
+    and (
+      team_id is null
+      or is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  );
+
+create policy "Report cards update"
+  on report_cards for update
+  using (created_by = auth.uid())
+  with check (
+    created_by = auth.uid()
+    and (
+      team_id is null
+      or is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  );
+
+create policy "Report cards delete"
+  on report_cards for delete
+  using (created_by = auth.uid());

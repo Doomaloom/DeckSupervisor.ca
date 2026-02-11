@@ -44,3 +44,20 @@ create table if not exists custom_rosters (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+create table if not exists report_cards (
+  id uuid primary key default gen_random_uuid(),
+  session text not null,
+  day text not null,
+  instructor text not null,
+  number_of_report_cards integer not null check (number_of_report_cards >= 0),
+  team_id uuid references teams(id) on delete cascade,
+  created_by uuid not null references profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (session, day, instructor, team_id)
+);
+
+create index if not exists report_cards_session_team_idx on report_cards(session, team_id);
+create index if not exists report_cards_team_day_idx on report_cards(team_id, day);
+create index if not exists report_cards_created_by_idx on report_cards(created_by);

@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../../app/AuthContext'
+import { useCurrentSession } from '../../app/useCurrentSession'
+import { supabase } from '../../lib/supabaseClient'
 import { useDay } from '../../app/DayContext'
 import { getStudentsForDay, onStudentsUpdated } from '../../lib/storage'
 import type { Student } from '../../types/app'
@@ -27,6 +30,8 @@ const normalizeInstructor = (student: Student) => {
 
 function ReportCardsPage() {
   const { selectedDay } = useDay()
+  const { isGuest, user } = useAuth()
+  const { access, session: currentSession } = useCurrentSession()
   const [students, setStudents] = useState<Student[]>([])
 
   useEffect(() => {
@@ -81,6 +86,84 @@ function ReportCardsPage() {
   }, [students])
 
   const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
+  const sessionLabel = useMemo(() => {
+    const season = currentSession?.session_season?.trim() ?? ''
+    const year = currentSession?.start_date ? new Date(currentSession.start_date).getFullYear() : NaN
+    const yearLabel = Number.isFinite(year) ? String(year) : ''
+    return [season, yearLabel].filter(Boolean).join(' ')
+  }, [currentSession?.session_season, currentSession?.start_date])
+
+  useEffect(() => {
+    if (!selectedDay || isGuest || !user || access.mode !== 'owner' || !sessionLabel) {
+      return
+    }
+
+    const teamId = currentSession?.team_id ?? null
+    const currentNames = new Set(instructorSummaries.map(summary => summary.name))
+    const rows = instructorSummaries.map(summary => ({
+      session: sessionLabel,
+      day: selectedDay,
+      instructor: summary.name,
+      number_of_report_cards: summary.total,
+      team_id: teamId,
+      created_by: user.id,
+      updated_at: new Date().toISOString(),
+    }))
+
+    const buildScope = () => {
+      let query = supabase
+        .from('report_cards')
+        .select('id,instructor')
+        .eq('session', sessionLabel)
+        .eq('day', selectedDay)
+        .eq('created_by', user.id)
+      if (teamId) {
+        query = query.eq('team_id', teamId)
+      } else {
+        query = query.is('team_id', null)
+      }
+      return query
+    }
+
+    const sync = async () => {
+      if (rows.length > 0) {
+        const { error } = await supabase
+          .from('report_cards')
+          .upsert(rows, { onConflict: 'session,day,instructor,team_id' })
+        if (error) {
+          throw error
+        }
+      }
+
+      const { data: existing, error: existingError } = await buildScope()
+      if (existingError) {
+        throw existingError
+      }
+
+      const staleIds = (existing ?? [])
+        .filter(row => !currentNames.has((row.instructor ?? '').trim()))
+        .map(row => row.id)
+
+      if (staleIds.length > 0) {
+        const { error: deleteError } = await supabase.from('report_cards').delete().in('id', staleIds)
+        if (deleteError) {
+          throw deleteError
+        }
+      }
+    }
+
+    void sync().catch(error => {
+      console.error('Failed to sync report card totals', error)
+    })
+  }, [
+    access.mode,
+    currentSession?.team_id,
+    instructorSummaries,
+    isGuest,
+    selectedDay,
+    sessionLabel,
+    user,
+  ])
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">

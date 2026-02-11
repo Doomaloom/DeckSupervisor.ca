@@ -95,6 +95,7 @@ alter table session_notes enable row level security;
 alter table roster_level_edits enable row level security;
 alter table roster_student_level_edits enable row level security;
 alter table custom_rosters enable row level security;
+alter table report_cards enable row level security;
 
 drop policy if exists "Sessions read" on sessions;
 drop policy if exists "Sessions create" on sessions;
@@ -256,6 +257,10 @@ drop policy if exists "Custom rosters read" on custom_rosters;
 drop policy if exists "Custom rosters create" on custom_rosters;
 drop policy if exists "Custom rosters update" on custom_rosters;
 drop policy if exists "Custom rosters delete" on custom_rosters;
+drop policy if exists "Report cards read" on report_cards;
+drop policy if exists "Report cards create" on report_cards;
+drop policy if exists "Report cards update" on report_cards;
+drop policy if exists "Report cards delete" on report_cards;
 
 create policy "Roster student edits read"
   on roster_student_level_edits for select
@@ -296,3 +301,43 @@ create policy "Custom rosters update"
 create policy "Custom rosters delete"
   on custom_rosters for delete
   using (can_edit_session(session_id, auth.uid()));
+
+create policy "Report cards read"
+  on report_cards for select
+  using (
+    created_by = auth.uid()
+    or (
+      team_id is not null
+      and (
+        is_team_owner(team_id, auth.uid())
+        or is_team_member(team_id, auth.uid())
+      )
+    )
+  );
+
+create policy "Report cards create"
+  on report_cards for insert
+  with check (
+    created_by = auth.uid()
+    and (
+      team_id is null
+      or is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  );
+
+create policy "Report cards update"
+  on report_cards for update
+  using (created_by = auth.uid())
+  with check (
+    created_by = auth.uid()
+    and (
+      team_id is null
+      or is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  );
+
+create policy "Report cards delete"
+  on report_cards for delete
+  using (created_by = auth.uid());
