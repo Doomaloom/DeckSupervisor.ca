@@ -25,6 +25,15 @@ alter table sessions
 create index if not exists sessions_team_id_idx on sessions(team_id);
 create index if not exists sessions_created_by_idx on sessions(created_by);
 
+alter table custom_rosters
+  add column if not exists session_id uuid references sessions(id) on delete cascade;
+
+alter table custom_rosters
+  alter column session_id set not null;
+
+create index if not exists custom_rosters_session_id_idx on custom_rosters(session_id);
+create index if not exists custom_rosters_owner_session_day_idx on custom_rosters(owner_id, session_id, day);
+
 create table if not exists schematics (
   id uuid primary key default gen_random_uuid(),
   session_id uuid not null unique references sessions(id) on delete cascade,

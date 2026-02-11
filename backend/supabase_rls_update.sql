@@ -94,6 +94,7 @@ alter table session_shares enable row level security;
 alter table session_notes enable row level security;
 alter table roster_level_edits enable row level security;
 alter table roster_student_level_edits enable row level security;
+alter table custom_rosters enable row level security;
 
 drop policy if exists "Sessions read" on sessions;
 drop policy if exists "Sessions create" on sessions;
@@ -250,6 +251,11 @@ drop policy if exists "Roster student edits read" on roster_student_level_edits;
 drop policy if exists "Roster student edits create" on roster_student_level_edits;
 drop policy if exists "Roster student edits update" on roster_student_level_edits;
 drop policy if exists "Roster student edits delete" on roster_student_level_edits;
+drop policy if exists "Custom rosters owner only" on custom_rosters;
+drop policy if exists "Custom rosters read" on custom_rosters;
+drop policy if exists "Custom rosters create" on custom_rosters;
+drop policy if exists "Custom rosters update" on custom_rosters;
+drop policy if exists "Custom rosters delete" on custom_rosters;
 
 create policy "Roster student edits read"
   on roster_student_level_edits for select
@@ -270,3 +276,23 @@ create policy "Roster student edits update"
 create policy "Roster student edits delete"
   on roster_student_level_edits for delete
   using (can_edit_roster(session_id, auth.uid()));
+
+create policy "Custom rosters read"
+  on custom_rosters for select
+  using (can_read_session(session_id, auth.uid()));
+
+create policy "Custom rosters create"
+  on custom_rosters for insert
+  with check (
+    owner_id = auth.uid()
+    and can_edit_session(session_id, auth.uid())
+  );
+
+create policy "Custom rosters update"
+  on custom_rosters for update
+  using (can_edit_session(session_id, auth.uid()))
+  with check (can_edit_session(session_id, auth.uid()));
+
+create policy "Custom rosters delete"
+  on custom_rosters for delete
+  using (can_edit_session(session_id, auth.uid()));

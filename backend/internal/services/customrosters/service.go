@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -26,6 +27,7 @@ type Service struct {
 }
 
 type SaveRosterInput struct {
+	SessionID    string
 	ID           string
 	Day          string
 	ServiceName  string
@@ -103,8 +105,16 @@ func (s *Service) UserIDFromRequest(r *http.Request) (string, error) {
 }
 
 func (s *Service) SaveRoster(ctx context.Context, userID string, input SaveRosterInput) error {
-	if input.ID == "" || input.Day == "" || input.ServiceName == "" {
+	if input.ID == "" || input.SessionID == "" || input.Day == "" || input.ServiceName == "" {
 		return errors.New("missing required roster fields")
+	}
+
+	canEdit, err := s.canEditSession(ctx, userID, input.SessionID)
+	if err != nil {
+		return err
+	}
+	if !canEdit {
+		return errors.New("forbidden")
 	}
 
 	sourceCodes := input.SourceCodes
@@ -113,6 +123,7 @@ func (s *Service) SaveRoster(ctx context.Context, userID string, input SaveRoste
 	}
 	hashes := hashNames(input.StudentNames, s.pepper)
 	payload := map[string]interface{}{
+		"session_id":     input.SessionID,
 		"day":            input.Day,
 		"service_name":   input.ServiceName,
 		"instructor":     strings.TrimSpace(input.Instructor),
@@ -121,7 +132,7 @@ func (s *Service) SaveRoster(ctx context.Context, userID string, input SaveRoste
 		"updated_at":     time.Now().UTC().Format(time.RFC3339),
 	}
 
-	updated, err := s.patchRoster(ctx, userID, input.ID, payload)
+	updated, err := s.patchRoster(ctx, userID, input.SessionID, input.ID, payload)
 	if err != nil {
 		return err
 	}
@@ -135,11 +146,20 @@ func (s *Service) SaveRoster(ctx context.Context, userID string, input SaveRoste
 	return s.insertRoster(ctx, payload)
 }
 
-func (s *Service) ResolveRosters(ctx context.Context, userID, day string, students []StudentRef) ([]ResolvedRoster, error) {
-	if day == "" {
-		return nil, errors.New("missing day")
+func (s *Service) ResolveRosters(ctx context.Context, userID, sessionID, day string, students []StudentRef) ([]ResolvedRoster, error) {
+	if day == "" || sessionID == "" {
+		return nil, errors.New("missing session context")
 	}
-	rows, err := s.fetchRosters(ctx, userID, day)
+
+	canRead, err := s.canReadSession(ctx, userID, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	if !canRead {
+		return nil, errors.New("forbidden")
+	}
+
+	rows, err := s.fetchRosters(ctx, sessionID, day)
 	if err != nil {
 		return nil, err
 	}
@@ -184,11 +204,25 @@ func (s *Service) ResolveRosters(ctx context.Context, userID, day string, studen
 	return resolved, nil
 }
 
-func (s *Service) DeleteRoster(ctx context.Context, userID, rosterID string) error {
-	if rosterID == "" {
-		return errors.New("missing roster id")
+func (s *Service) DeleteRoster(ctx context.Context, userID, sessionID, rosterID string) error {
+	if rosterID == "" || sessionID == "" {
+		return errors.New("missing roster context")
 	}
-	endpoint := fmt.Sprintf("%s/rest/v1/custom_rosters?id=eq.%s&owner_id=eq.%s", s.supabaseURL, rosterID, userID)
+
+	canEdit, err := s.canEditSession(ctx, userID, sessionID)
+	if err != nil {
+		return err
+	}
+	if !canEdit {
+		return errors.New("forbidden")
+	}
+	endpoint := fmt.Sprintf(
+		"%s/rest/v1/custom_rosters?id=eq.%s&owner_id=eq.%s&session_id=eq.%s",
+		s.supabaseURL,
+		url.QueryEscape(rosterID),
+		url.QueryEscape(userID),
+		url.QueryEscape(sessionID),
+	)
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, endpoint, nil)
 	if err != nil {
 		return err
@@ -209,8 +243,14 @@ func (s *Service) DeleteRoster(ctx context.Context, userID, rosterID string) err
 	return nil
 }
 
-func (s *Service) patchRoster(ctx context.Context, userID, rosterID string, payload map[string]interface{}) (bool, error) {
-	endpoint := fmt.Sprintf("%s/rest/v1/custom_rosters?id=eq.%s&owner_id=eq.%s", s.supabaseURL, rosterID, userID)
+func (s *Service) patchRoster(ctx context.Context, userID, sessionID, rosterID string, payload map[string]interface{}) (bool, error) {
+	endpoint := fmt.Sprintf(
+		"%s/rest/v1/custom_rosters?id=eq.%s&owner_id=eq.%s&session_id=eq.%s",
+		s.supabaseURL,
+		url.QueryEscape(rosterID),
+		url.QueryEscape(userID),
+		url.QueryEscape(sessionID),
+	)
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return false, err
@@ -267,8 +307,13 @@ func (s *Service) insertRoster(ctx context.Context, payload map[string]interface
 	return nil
 }
 
-func (s *Service) fetchRosters(ctx context.Context, userID, day string) ([]rosterRow, error) {
-	endpoint := fmt.Sprintf("%s/rest/v1/custom_rosters?owner_id=eq.%s&day=eq.%s&select=id,service_name,instructor,source_codes,student_hashes,created_at", s.supabaseURL, userID, day)
+func (s *Service) fetchRosters(ctx context.Context, sessionID, day string) ([]rosterRow, error) {
+	endpoint := fmt.Sprintf(
+		"%s/rest/v1/custom_rosters?session_id=eq.%s&day=eq.%s&select=id,service_name,instructor,source_codes,student_hashes,created_at",
+		s.supabaseURL,
+		url.QueryEscape(sessionID),
+		url.QueryEscape(day),
+	)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err
@@ -291,6 +336,68 @@ func (s *Service) fetchRosters(ctx context.Context, userID, day string) ([]roste
 		return nil, err
 	}
 	return rows, nil
+}
+
+func (s *Service) canEditSession(ctx context.Context, userID, sessionID string) (bool, error) {
+	endpoint := fmt.Sprintf(
+		"%s/rest/v1/sessions?id=eq.%s&created_by=eq.%s&select=id&limit=1",
+		s.supabaseURL,
+		url.QueryEscape(sessionID),
+		url.QueryEscape(userID),
+	)
+	return s.endpointHasRows(ctx, endpoint)
+}
+
+func (s *Service) canReadSession(ctx context.Context, userID, sessionID string) (bool, error) {
+	canEdit, err := s.canEditSession(ctx, userID, sessionID)
+	if err != nil {
+		return false, err
+	}
+	if canEdit {
+		return true, nil
+	}
+	endpoint := fmt.Sprintf(
+		"%s/rest/v1/session_shares?session_id=eq.%s&shared_with=eq.%s&share_date=eq.%s&select=id&limit=1",
+		s.supabaseURL,
+		url.QueryEscape(sessionID),
+		url.QueryEscape(userID),
+		url.QueryEscape(torontoToday()),
+	)
+	return s.endpointHasRows(ctx, endpoint)
+}
+
+func torontoToday() string {
+	loc, err := time.LoadLocation("America/Toronto")
+	if err != nil {
+		return time.Now().UTC().Format("2006-01-02")
+	}
+	return time.Now().In(loc).Format("2006-01-02")
+}
+
+func (s *Service) endpointHasRows(ctx context.Context, endpoint string) (bool, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return false, err
+	}
+	req.Header.Set("apikey", s.serviceRoleKey)
+	req.Header.Set("Authorization", "Bearer "+s.serviceRoleKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return false, fmt.Errorf("access check failed: %s", resp.Status)
+	}
+
+	var rows []map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&rows); err != nil {
+		return false, err
+	}
+	return len(rows) > 0, nil
 }
 
 func hashNames(names []string, pepper string) []string {

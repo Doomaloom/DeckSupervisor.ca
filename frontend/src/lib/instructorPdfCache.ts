@@ -1,4 +1,4 @@
-import { getCustomRostersForDay, getStudentsForDay } from './storage'
+import { getCustomRosterDayKey, getCustomRostersForDay, getStudentsForDay } from './storage'
 import { getCurrentSessionId as getStoredCurrentSessionId, loadSessions } from './sessionStorage'
 import { buildCustomRosterGroups, buildRosterGroups, sanitizeLevel } from '../features/rosters/utils'
 
@@ -36,7 +36,9 @@ function buildRosterGroupsForDay(day: string) {
   if (!day) {
     return rosterGroups
   }
-  const customRosters = getCustomRostersForDay(day)
+  const sessionId = getCurrentSessionId()
+  const customDayKey = getCustomRosterDayKey(day, sessionId, !sessionId)
+  const customRosters = getCustomRostersForDay(customDayKey)
   if (customRosters.length === 0) {
     return rosterGroups
   }

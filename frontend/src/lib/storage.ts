@@ -200,6 +200,16 @@ export function setCustomRostersForDay(day: string, rosters: CustomRoster[]) {
   saveJson(customRostersKey(), all)
 }
 
+export function getCustomRosterDayKey(day: string, sessionId?: string, isGuest = false): string {
+  if (!day) {
+    return ''
+  }
+  if (isGuest || !sessionId) {
+    return day
+  }
+  return `${day}::${sessionId}`
+}
+
 export function getInstructorCoursesByDay(): InstructorCoursesByDay {
   return loadJson(instructorCoursesKey(), {})
 }

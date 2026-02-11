@@ -6,6 +6,7 @@ type ResolveResponse = {
 
 export async function resolveCustomRosters(
   day: string,
+  sessionId: string,
   students: Student[],
   accessToken: string,
 ): Promise<CustomRoster[]> {
@@ -16,6 +17,7 @@ export async function resolveCustomRosters(
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
+      sessionId,
       day,
       students: students.map(student => ({ id: student.id, name: student.name })),
     }),
@@ -30,6 +32,7 @@ export async function resolveCustomRosters(
 
 export async function saveCustomRoster(
   day: string,
+  sessionId: string,
   roster: CustomRoster,
   students: Student[],
   accessToken: string,
@@ -46,6 +49,7 @@ export async function saveCustomRoster(
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
+      sessionId,
       day,
       roster: {
         id: roster.id,
@@ -64,8 +68,8 @@ export async function saveCustomRoster(
   }
 }
 
-export async function deleteCustomRoster(id: string, accessToken: string): Promise<void> {
-  const response = await fetch(`/api/custom-rosters/${id}`, {
+export async function deleteCustomRoster(id: string, sessionId: string, accessToken: string): Promise<void> {
+  const response = await fetch(`/api/custom-rosters/${id}?sessionId=${encodeURIComponent(sessionId)}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${accessToken}`,

@@ -28,7 +28,7 @@ function RostersPage() {
         isGuest,
     )
     const { customRosters, saveCustomRosters, updateCustomRosterLevel } =
-        useCustomRosters(selectedDay ?? '', students)
+        useCustomRosters(selectedDay ?? '', students, sessionId ?? undefined)
     const customRosterGroups = useMemo(() => {
         const rosterByCode = new Map(rosters.map(roster => [roster.code, roster]))
         const studentsById = new Map(students.map(student => [student.id, student]))

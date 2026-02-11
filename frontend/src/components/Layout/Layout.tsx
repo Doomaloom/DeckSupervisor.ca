@@ -18,7 +18,12 @@ import { useCurrentSession } from '../../app/useCurrentSession'
 import { processCsvAndStore } from '../../lib/api'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
 import { onStorageScopeChanged } from '../../lib/storageScope'
-import { getCustomRostersForDay, getStudentsForDay, setCustomRostersForDay } from '../../lib/storage'
+import {
+    getCustomRosterDayKey,
+    getCustomRostersForDay,
+    getStudentsForDay,
+    setCustomRostersForDay,
+} from '../../lib/storage'
 
 type LayoutProps = {
     children: React.ReactNode
@@ -98,22 +103,24 @@ function Layout({ children }: LayoutProps) {
 
     useEffect(() => {
         const accessToken = session?.access_token
-        if (!selectedDay || !accessToken || !user) {
+        const sessionId = currentSession?.id
+        if (!selectedDay || !accessToken || !user || !sessionId) {
             return
         }
         const students = getStudentsForDay(selectedDay)
         if (students.length === 0) {
             return
         }
+        const localKey = getCustomRosterDayKey(selectedDay, sessionId, false)
         let active = true
         const sync = async () => {
             try {
-                const resolved = await resolveCustomRosters(selectedDay, students, accessToken)
+                const resolved = await resolveCustomRosters(selectedDay, sessionId, students, accessToken)
                 if (!active) {
                     return
                 }
-                if (resolved.length > 0 || getCustomRostersForDay(selectedDay).length > 0) {
-                    setCustomRostersForDay(selectedDay, resolved)
+                if (resolved.length > 0 || getCustomRostersForDay(localKey).length > 0) {
+                    setCustomRostersForDay(localKey, resolved)
                 }
             } catch (error) {
                 console.error('Failed to sync custom rosters', error)
@@ -123,7 +130,7 @@ function Layout({ children }: LayoutProps) {
         return () => {
             active = false
         }
-    }, [selectedDay, session?.access_token, user, scopeVersion])
+    }, [currentSession?.id, selectedDay, session?.access_token, user, scopeVersion])
 
     const navBaseClasses =
         'flex items-center justify-start rounded-[10px] bg-white/10 px-3 py-2 text-accent transition hover:-translate-y-0.5'

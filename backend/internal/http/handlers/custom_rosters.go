@@ -9,8 +9,9 @@ import (
 )
 
 type saveCustomRosterRequest struct {
-	Day    string `json:"day"`
-	Roster struct {
+	SessionID string `json:"sessionId"`
+	Day       string `json:"day"`
+	Roster    struct {
 		ID           string   `json:"id"`
 		ServiceName  string   `json:"serviceName"`
 		Instructor   string   `json:"instructor"`
@@ -21,8 +22,9 @@ type saveCustomRosterRequest struct {
 }
 
 type resolveCustomRosterRequest struct {
-	Day      string `json:"day"`
-	Students []struct {
+	SessionID string `json:"sessionId"`
+	Day       string `json:"day"`
+	Students  []struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"students"`
@@ -51,6 +53,7 @@ func SaveCustomRoster(w http.ResponseWriter, r *http.Request) {
 	}
 
 	input := customrosters.SaveRosterInput{
+		SessionID:    req.SessionID,
 		ID:           req.Roster.ID,
 		Day:          req.Day,
 		ServiceName:  req.Roster.ServiceName,
@@ -91,7 +94,7 @@ func ResolveCustomRosters(w http.ResponseWriter, r *http.Request) {
 		students = append(students, customrosters.StudentRef{ID: student.ID, Name: student.Name})
 	}
 
-	rosters, err := service.ResolveRosters(r.Context(), userID, req.Day, students)
+	rosters, err := service.ResolveRosters(r.Context(), userID, req.SessionID, req.Day, students)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -120,7 +123,13 @@ func DeleteCustomRoster(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := service.DeleteRoster(r.Context(), userID, rosterID); err != nil {
+	sessionID := r.URL.Query().Get("sessionId")
+	if sessionID == "" {
+		http.Error(w, "Missing session id", http.StatusBadRequest)
+		return
+	}
+
+	if err := service.DeleteRoster(r.Context(), userID, sessionID, rosterID); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

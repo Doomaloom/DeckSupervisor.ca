@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useDay } from '../../app/DayContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import {
+  getCustomRosterDayKey,
   getCustomRostersForDay,
   getMasterlistDraftOptions,
   getStudentsForDay,
@@ -426,7 +427,8 @@ function PrintPage() {
     if (!day) {
       return rosterGroups
     }
-    const customRosters = getCustomRostersForDay(day)
+    const customDayKey = getCustomRosterDayKey(day, currentSession?.id, !currentSession?.id)
+    const customRosters = getCustomRostersForDay(customDayKey)
     if (customRosters.length === 0) {
       return rosterGroups
     }
