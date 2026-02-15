@@ -99,7 +99,6 @@ function ReportCardsPage() {
     }
 
     const teamId = currentSession?.team_id ?? null
-    const currentNames = new Set(instructorSummaries.map(summary => summary.name))
     const rows = instructorSummaries.map(summary => ({
       session: sessionLabel,
       day: selectedDay,
@@ -110,45 +109,32 @@ function ReportCardsPage() {
       updated_at: new Date().toISOString(),
     }))
 
-    const buildScope = () => {
-      let query = supabase
+    const sync = async () => {
+      let clearScope = supabase
         .from('report_cards')
-        .select('id,instructor')
+        .delete()
         .eq('session', sessionLabel)
         .eq('day', selectedDay)
         .eq('created_by', user.id)
+
       if (teamId) {
-        query = query.eq('team_id', teamId)
+        clearScope = clearScope.eq('team_id', teamId)
       } else {
-        query = query.is('team_id', null)
-      }
-      return query
-    }
-
-    const sync = async () => {
-      if (rows.length > 0) {
-        const { error } = await supabase
-          .from('report_cards')
-          .upsert(rows, { onConflict: 'session,day,instructor,team_id' })
-        if (error) {
-          throw error
-        }
+        clearScope = clearScope.is('team_id', null)
       }
 
-      const { data: existing, error: existingError } = await buildScope()
-      if (existingError) {
-        throw existingError
+      const { error: clearError } = await clearScope
+      if (clearError) {
+        throw clearError
       }
 
-      const staleIds = (existing ?? [])
-        .filter(row => !currentNames.has((row.instructor ?? '').trim()))
-        .map(row => row.id)
+      if (rows.length === 0) {
+        return
+      }
 
-      if (staleIds.length > 0) {
-        const { error: deleteError } = await supabase.from('report_cards').delete().in('id', staleIds)
-        if (deleteError) {
-          throw deleteError
-        }
+      const { error: insertError } = await supabase.from('report_cards').insert(rows)
+      if (insertError) {
+        throw insertError
       }
     }
 

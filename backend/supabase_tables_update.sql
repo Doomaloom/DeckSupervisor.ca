@@ -109,10 +109,34 @@ create table if not exists report_cards (
   team_id uuid references teams(id) on delete cascade,
   created_by uuid not null references profiles(id) on delete cascade,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (session, day, instructor, team_id)
+  updated_at timestamptz not null default now()
 );
+
+with ranked as (
+  select
+    id,
+    row_number() over (
+      partition by session, day, instructor, created_by, coalesce(team_id::text, '__none__')
+      order by updated_at desc, created_at desc, id desc
+    ) as rn
+  from report_cards
+)
+delete from report_cards using ranked
+where report_cards.id = ranked.id
+  and ranked.rn > 1;
+
+alter table report_cards
+  drop constraint if exists report_cards_session_day_instructor_team_id_key;
+
+alter table report_cards
+  drop constraint if exists report_cards_unique_scope;
 
 create index if not exists report_cards_session_team_idx on report_cards(session, team_id);
 create index if not exists report_cards_team_day_idx on report_cards(team_id, day);
 create index if not exists report_cards_created_by_idx on report_cards(created_by);
+create unique index if not exists report_cards_unique_with_team_idx
+  on report_cards(session, day, instructor, team_id, created_by)
+  where team_id is not null;
+create unique index if not exists report_cards_unique_no_team_idx
+  on report_cards(session, day, instructor, created_by)
+  where team_id is null;
