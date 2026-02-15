@@ -24,6 +24,7 @@ type DbSessionEntry = {
   created_by: string
   session_day: string
   session_season: string | null
+  session_year: number | null
   start_date: string | null
   end_date: string | null
   location: string | null
@@ -56,6 +57,25 @@ const dayNames: Record<string, string> = {
 
 const NO_TEAM_VALUE = '__no_team__'
 
+function getYearFromDate(value: string | null) {
+  if (!value) {
+    return null
+  }
+  const parsed = new Date(value).getFullYear()
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
+function resolveSessionYear(yearInput: string, startDate: string, endDate: string) {
+  const trimmed = yearInput.trim()
+  if (trimmed) {
+    const parsed = Number.parseInt(trimmed, 10)
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed
+    }
+  }
+  return getYearFromDate(startDate) ?? getYearFromDate(endDate)
+}
+
 function getSessionName(session: SessionEntry) {
   const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
   const season = session.sessionSeason?.trim()
@@ -68,8 +88,8 @@ function getSessionName(session: SessionEntry) {
 function getDbSessionName(session: DbSessionEntry) {
   const dayLabel = session.session_day ? dayNames[session.session_day] ?? session.session_day : ''
   const season = session.session_season?.trim()
-  const year = session.start_date ? new Date(session.start_date).getFullYear() : NaN
-  const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+  const year = session.session_year ?? getYearFromDate(session.start_date)
+  const yearLabel = year ? String(year) : ''
   const parts = [dayLabel, season, yearLabel].filter(Boolean)
   return parts.length ? parts.join(' ') : 'Session'
 }
@@ -83,6 +103,7 @@ function Dashboard() {
   )
   const [sessionDay, setSessionDay] = useState('')
   const [sessionSeason, setSessionSeason] = useState('')
+  const [sessionYear, setSessionYear] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [instructors, setInstructors] = useState<InstructorEntry[]>([{ name: '' }])
@@ -154,6 +175,7 @@ function Dashboard() {
     }
 
     const hasTeam = selectedTeamId !== NO_TEAM_VALUE
+    const sessionYearValue = resolveSessionYear(sessionYear, startDate, endDate)
 
     if (hasTeam && !location) {
       setSaveMessage('Select a location before saving.')
@@ -166,6 +188,7 @@ function Dashboard() {
       created_by: user!.id,
       session_day: sessionDay,
       session_season: sessionSeason || null,
+      session_year: sessionYearValue,
       start_date: startDate || null,
       end_date: endDate || null,
       location: location || null,
@@ -238,6 +261,16 @@ function Dashboard() {
   }, [dbSessions, isGuest, sessionsVersion, activePanel])
 
   useEffect(() => {
+    if (sessionYear || !startDate) {
+      return
+    }
+    const derivedYear = getYearFromDate(startDate)
+    if (derivedYear) {
+      setSessionYear(String(derivedYear))
+    }
+  }, [sessionYear, startDate])
+
+  useEffect(() => {
     if (!currentSessionId) {
       setSelectedDay('')
     }
@@ -291,7 +324,7 @@ function Dashboard() {
       const { data } = await supabase
         .from('sessions')
         .select(
-          'id,team_id,created_by,session_day,session_season,start_date,end_date,location,instructors',
+          'id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors',
         )
         .eq('created_by', user.id)
       setDbSessions(data ?? [])
@@ -308,7 +341,7 @@ function Dashboard() {
       const { data } = await supabase
         .from('session_shares')
         .select(
-          'id,share_date,allow_roster_edits,sessions(id,team_id,created_by,session_day,session_season,start_date,end_date,location,instructors)',
+          'id,share_date,allow_roster_edits,sessions(id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors)',
         )
         .eq('shared_with', user.id)
         .eq('share_date', today)
@@ -409,6 +442,18 @@ function Dashboard() {
                         </option>
                       ))}
                     </select>
+                  </label>
+                  <label className="flex flex-col gap-2 font-semibold text-secondary">
+                    Session Year
+                    <input
+                      className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                      type="number"
+                      min={2000}
+                      max={2100}
+                      value={sessionYear}
+                      onChange={event => setSessionYear(event.target.value)}
+                      placeholder="e.g. 2026"
+                    />
                   </label>
                   <label className="flex flex-col gap-2 font-semibold text-secondary">
                     Start Date

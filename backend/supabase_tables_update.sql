@@ -10,6 +10,7 @@ create table if not exists sessions (
   created_by uuid not null references profiles(id) on delete restrict,
   session_day text not null,
   session_season text,
+  session_year integer,
   start_date date,
   end_date date,
   location text,
@@ -19,11 +20,18 @@ create table if not exists sessions (
 );
 
 alter table sessions
+  add column if not exists session_year integer,
   alter column team_id drop not null,
   alter column location drop not null;
 
+update sessions
+set session_year = extract(year from start_date)::integer
+where session_year is null
+  and start_date is not null;
+
 create index if not exists sessions_team_id_idx on sessions(team_id);
 create index if not exists sessions_created_by_idx on sessions(created_by);
+create index if not exists sessions_team_season_year_idx on sessions(team_id, session_season, session_year);
 
 alter table custom_rosters
   add column if not exists session_id uuid references sessions(id) on delete cascade;

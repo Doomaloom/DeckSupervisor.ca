@@ -15,6 +15,7 @@ import {
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
+import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { processCsvAndStore } from '../../lib/api'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
 import { onStorageScopeChanged } from '../../lib/storageScope'
@@ -33,6 +34,7 @@ type SessionEntry = {
     id: string
     sessionDay: string
     sessionSeason: string
+    sessionYear?: number | null
     startDate: string
 }
 
@@ -49,8 +51,9 @@ const dayNames: Record<string, string> = {
 function getSessionName(session: SessionEntry) {
     const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
     const season = session.sessionSeason?.trim()
-    const year = session.startDate ? new Date(session.startDate).getFullYear() : NaN
-    const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+    const startYear = session.startDate ? new Date(session.startDate).getFullYear() : NaN
+    const year = session.sessionYear ?? (Number.isFinite(startYear) && startYear > 0 ? startYear : null)
+    const yearLabel = year ? String(year) : ''
     const parts = [dayLabel, season, yearLabel].filter(Boolean)
     return parts.length ? parts.join(' ') : 'Session'
 }
@@ -60,6 +63,7 @@ function Layout({ children }: LayoutProps) {
     const { selectedDay } = useDay()
     const { accountType, completeProfile, isGuest, needsProfile, profile, session, signOut, user } = useAuth()
     const { session: currentSession } = useCurrentSession()
+    const { currentTeam, loading: teamLoading } = useCurrentTeam()
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
     const [scopeVersion, setScopeVersion] = useState(0)
     const [profileFirstName, setProfileFirstName] = useState('')
@@ -75,10 +79,12 @@ function Layout({ children }: LayoutProps) {
         const sessionDay = currentSession.session_day || ''
         const sessionSeason = currentSession.session_season ?? ''
         const startDate = currentSession.start_date ?? ''
+        const sessionYear = currentSession.session_year ?? null
         return getSessionName({
             id: currentSession.id,
             sessionDay,
             sessionSeason,
+            sessionYear,
             startDate,
         })
     }, [currentSession, scopeVersion])
@@ -228,6 +234,15 @@ function Layout({ children }: LayoutProps) {
                         <h3 className="text-[0.95rem] font-semibold">Current Session</h3>
                         <div className="w-full rounded-2xl border border-secondary/30 bg-accent px-4 py-2 text-sm text-secondary">
                             {currentSessionName || 'No session selected'}
+                        </div>
+                    </div>
+                )}
+
+                {!isSidebarCollapsed && accountType === 'full_time' && (
+                    <div className="flex flex-col gap-2">
+                        <h3 className="text-[0.95rem] font-semibold">Current Team</h3>
+                        <div className="w-full rounded-2xl border border-secondary/30 bg-accent px-4 py-2 text-sm text-secondary">
+                            {currentTeam?.name || (teamLoading ? 'Loading teams...' : 'No team selected')}
                         </div>
                     </div>
                 )}

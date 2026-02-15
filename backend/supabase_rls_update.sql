@@ -43,7 +43,19 @@ set row_security = off
 as $$
   select
     is_session_owner(p_session_id, p_uid)
-    or is_session_shared_today(p_session_id, p_uid);
+    or is_session_shared_today(p_session_id, p_uid)
+    or exists (
+      select 1
+      from sessions s
+      join profiles p on p.id = p_uid
+      where s.id = p_session_id
+        and s.team_id is not null
+        and p.account_type = 'full_time'
+        and (
+          is_team_owner(s.team_id, p_uid)
+          or is_team_member(s.team_id, p_uid)
+        )
+    );
 $$;
 
 create or replace function can_edit_session(p_session_id uuid, p_uid uuid)

@@ -44,13 +44,38 @@ function getSessionName(session: SessionEntry) {
   return parts.length ? parts.join(' ') : 'Session'
 }
 
-function getDbSessionName(sessionDay: string, sessionSeason: string | null, startDate: string | null) {
+function getDbSessionName(
+  sessionDay: string,
+  sessionSeason: string | null,
+  sessionYear: number | null,
+  startDate: string | null,
+) {
   const dayLabel = sessionDay ? dayNames[sessionDay] ?? sessionDay : ''
   const season = sessionSeason?.trim()
-  const year = startDate ? new Date(startDate).getFullYear() : NaN
-  const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+  const yearFromDate = startDate ? new Date(startDate).getFullYear() : NaN
+  const year = sessionYear ?? (Number.isFinite(yearFromDate) && yearFromDate > 0 ? yearFromDate : null)
+  const yearLabel = year ? String(year) : ''
   const parts = [dayLabel, season, yearLabel].filter(Boolean)
   return parts.length ? parts.join(' ') : 'Session'
+}
+
+function getYearFromDate(value: string) {
+  if (!value) {
+    return null
+  }
+  const year = new Date(value).getFullYear()
+  return Number.isFinite(year) && year > 0 ? year : null
+}
+
+function resolveSessionYear(yearInput: string, startDate: string, endDate: string) {
+  const trimmed = yearInput.trim()
+  if (trimmed) {
+    const parsed = Number.parseInt(trimmed, 10)
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed
+    }
+  }
+  return getYearFromDate(startDate) ?? getYearFromDate(endDate)
 }
 
 function ManageSessionsPage() {
@@ -60,6 +85,7 @@ function ManageSessionsPage() {
   const { session: currentSessionRecord, access } = useCurrentSession()
   const [editSessionDay, setEditSessionDay] = useState('')
   const [editSessionSeason, setEditSessionSeason] = useState('')
+  const [editSessionYear, setEditSessionYear] = useState('')
   const [editStartDate, setEditStartDate] = useState('')
   const [editEndDate, setEditEndDate] = useState('')
   const [editLocation, setEditLocation] = useState('')
@@ -133,6 +159,9 @@ function ManageSessionsPage() {
     const dbSession = currentSessionRecord
     setEditSessionDay(dbSession?.session_day ?? '')
     setEditSessionSeason(dbSession?.session_season ?? '')
+    const dbYear = dbSession?.session_year
+    const startYear = dbSession?.start_date ? getYearFromDate(dbSession.start_date) : null
+    setEditSessionYear(dbYear ? String(dbYear) : startYear ? String(startYear) : '')
     setEditStartDate(dbSession?.start_date ?? '')
     setEditEndDate(dbSession?.end_date ?? '')
     setEditLocation(dbSession?.location ?? '')
@@ -209,11 +238,13 @@ function ManageSessionsPage() {
     if (!user) {
       return
     }
+    const sessionYearValue = resolveSessionYear(editSessionYear, editStartDate, editEndDate)
     const { error } = await supabase
       .from('sessions')
       .update({
         session_day: editSessionDay,
         session_season: editSessionSeason || null,
+        session_year: sessionYearValue,
         start_date: editStartDate || null,
         end_date: editEndDate || null,
         location: editLocation || null,
@@ -293,6 +324,7 @@ function ManageSessionsPage() {
                   {getDbSessionName(
                     currentSessionRecord?.session_day ?? '',
                     currentSessionRecord?.session_season ?? null,
+                    currentSessionRecord?.session_year ?? null,
                     currentSessionRecord?.start_date ?? null,
                   )}
                 </h3>
@@ -344,6 +376,18 @@ function ManageSessionsPage() {
                       </option>
                     ))}
                   </select>
+                </label>
+                <label className="flex flex-col gap-2 font-semibold text-secondary">
+                  Session Year
+                  <input
+                    className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                    type="number"
+                    min={2000}
+                    max={2100}
+                    value={editSessionYear}
+                    onChange={event => setEditSessionYear(event.target.value)}
+                    placeholder="e.g. 2026"
+                  />
                 </label>
                 <label className="flex flex-col gap-2 font-semibold text-secondary">
                   Start Date

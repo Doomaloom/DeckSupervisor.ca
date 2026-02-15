@@ -88,10 +88,11 @@ function ReportCardsPage() {
   const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
   const sessionLabel = useMemo(() => {
     const season = currentSession?.session_season?.trim() ?? ''
-    const year = currentSession?.start_date ? new Date(currentSession.start_date).getFullYear() : NaN
-    const yearLabel = Number.isFinite(year) ? String(year) : ''
+    const startYear = currentSession?.start_date ? new Date(currentSession.start_date).getFullYear() : NaN
+    const year = currentSession?.session_year ?? (Number.isFinite(startYear) ? startYear : null)
+    const yearLabel = year ? String(year) : ''
     return [season, yearLabel].filter(Boolean).join(' ')
-  }, [currentSession?.session_season, currentSession?.start_date])
+  }, [currentSession?.session_season, currentSession?.session_year, currentSession?.start_date])
 
   useEffect(() => {
     if (!selectedDay || isGuest || !user || access.mode !== 'owner' || !sessionLabel) {

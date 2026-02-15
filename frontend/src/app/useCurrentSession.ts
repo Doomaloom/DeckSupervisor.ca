@@ -11,6 +11,7 @@ export type SessionRecord = {
   created_by: string
   session_day: string
   session_season: string | null
+  session_year: number | null
   start_date: string | null
   end_date: string | null
   location: string | null
@@ -64,6 +65,7 @@ export function useCurrentSession() {
                   created_by: '',
                   session_day: local.sessionDay,
                   session_season: local.sessionSeason ?? null,
+                  session_year: local.startDate ? new Date(local.startDate).getFullYear() : null,
                   start_date: local.startDate ?? null,
                   end_date: local.endDate ?? null,
                   location: null,
@@ -80,7 +82,7 @@ export function useCurrentSession() {
       const { data: sessionRow, error } = await supabase
         .from('sessions')
         .select(
-          'id,team_id,created_by,session_day,session_season,start_date,end_date,location,instructors',
+          'id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors',
         )
         .eq('id', sessionId)
         .maybeSingle()

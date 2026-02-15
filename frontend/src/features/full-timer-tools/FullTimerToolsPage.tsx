@@ -1,9 +1,134 @@
-import React, { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useCurrentTeam } from '../../app/useCurrentTeam'
+import { supabase } from '../../lib/supabaseClient'
+
+type TeamSessionRow = {
+  id: string
+  session_season: string | null
+  session_year: number | null
+  start_date: string | null
+}
+
+type SessionTermOption = {
+  key: string
+  season: string
+  year: number
+  label: string
+  sessionCount: number
+}
+
+const seasonRank: Record<string, number> = {
+  winter: 0,
+  spring: 1,
+  summer: 2,
+  fall: 3,
+}
+
+function getYearFromDate(value: string | null) {
+  if (!value) {
+    return null
+  }
+  const year = new Date(value).getFullYear()
+  return Number.isFinite(year) && year > 0 ? year : null
+}
+
+function toTitleCase(value: string) {
+  if (!value) {
+    return ''
+  }
+  return value.slice(0, 1).toUpperCase() + value.slice(1).toLowerCase()
+}
 
 function FullTimerToolsPage() {
+  const { teams, currentTeam, currentTeamId, loading: teamsLoading, setCurrentTeamId } = useCurrentTeam()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [lastFilename, setLastFilename] = useState<string | null>(null)
+  const [teamSessions, setTeamSessions] = useState<TeamSessionRow[]>([])
+  const [sessionsLoading, setSessionsLoading] = useState(false)
+  const [selectedTermKey, setSelectedTermKey] = useState('')
+
+  useEffect(() => {
+    if (!currentTeamId) {
+      setTeamSessions([])
+      return
+    }
+    let active = true
+    const load = async () => {
+      setSessionsLoading(true)
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('id,session_season,session_year,start_date')
+        .eq('team_id', currentTeamId)
+      if (!active) {
+        return
+      }
+      if (error) {
+        console.error('Failed to load team sessions', error)
+        setTeamSessions([])
+        setSessionsLoading(false)
+        return
+      }
+      setTeamSessions((data ?? []) as TeamSessionRow[])
+      setSessionsLoading(false)
+    }
+    void load()
+    return () => {
+      active = false
+    }
+  }, [currentTeamId])
+
+  const sessionTerms = useMemo(() => {
+    const grouped = new Map<string, SessionTermOption>()
+    teamSessions.forEach(session => {
+      const season = session.session_season?.trim() ?? ''
+      const year = session.session_year ?? getYearFromDate(session.start_date)
+      if (!season || !year) {
+        return
+      }
+      const normalizedSeason = season.toLowerCase()
+      const key = `${normalizedSeason}-${year}`
+      const existing = grouped.get(key)
+      if (existing) {
+        grouped.set(key, { ...existing, sessionCount: existing.sessionCount + 1 })
+        return
+      }
+      grouped.set(key, {
+        key,
+        season: normalizedSeason,
+        year,
+        label: `${toTitleCase(season)} ${year}`,
+        sessionCount: 1,
+      })
+    })
+    return Array.from(grouped.values()).sort((a, b) => {
+      if (a.year !== b.year) {
+        return b.year - a.year
+      }
+      const rankA = seasonRank[a.season] ?? 99
+      const rankB = seasonRank[b.season] ?? 99
+      if (rankA !== rankB) {
+        return rankA - rankB
+      }
+      return a.label.localeCompare(b.label)
+    })
+  }, [teamSessions])
+
+  useEffect(() => {
+    if (sessionTerms.length === 0) {
+      setSelectedTermKey('')
+      return
+    }
+    const hasSelected = sessionTerms.some(term => term.key === selectedTermKey)
+    if (!hasSelected) {
+      setSelectedTermKey(sessionTerms[0].key)
+    }
+  }, [selectedTermKey, sessionTerms])
+
+  const selectedTerm = useMemo(
+    () => sessionTerms.find(term => term.key === selectedTermKey) ?? null,
+    [selectedTermKey, sessionTerms],
+  )
 
   const handleGenerate = async () => {
     if (!selectedFile) {
@@ -65,6 +190,67 @@ function FullTimerToolsPage() {
       </div>
 
       <section className="flex flex-col gap-4">
+        <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary/70">
+            Full Timer View Scope
+          </p>
+          <h3 className="mt-2 text-lg font-semibold">Team + Session</h3>
+          <p className="mt-2 text-secondary">
+            Pick the team and term you want to view. Session terms are grouped by season and year,
+            not weekday.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
+              Team
+              <select
+                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                value={currentTeamId}
+                onChange={event => setCurrentTeamId(event.target.value)}
+                disabled={teamsLoading}
+              >
+                <option value="">Select a team</option>
+                {teams.map(team => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
+              Session Term
+              <select
+                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                value={selectedTermKey}
+                onChange={event => setSelectedTermKey(event.target.value)}
+                disabled={!currentTeamId || sessionsLoading || sessionTerms.length === 0}
+              >
+                <option value="">Select a session term</option>
+                {sessionTerms.map(term => (
+                  <option key={term.key} value={term.key}>
+                    {term.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {!currentTeamId ? (
+            <p className="mt-3 text-sm text-secondary/70">
+              Select a team to load session terms.
+            </p>
+          ) : sessionsLoading ? (
+            <p className="mt-3 text-sm text-secondary/70">Loading session terms...</p>
+          ) : sessionTerms.length === 0 ? (
+            <p className="mt-3 text-sm text-secondary/70">
+              No term data found for this team. Make sure sessions have season + year.
+            </p>
+          ) : selectedTerm ? (
+            <p className="mt-3 text-sm font-semibold text-secondary">
+              Current scope: {currentTeam?.name} - {selectedTerm.label} ({selectedTerm.sessionCount}{' '}
+              day sessions)
+            </p>
+          ) : null}
+        </div>
+
         <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary/70">
             Tool 1

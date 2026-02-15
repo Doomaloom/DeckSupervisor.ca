@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { getTorontoDate } from '../../lib/torontoDate'
+import { clearCurrentTeamId, setCurrentTeamId } from '../../lib/teamStorage'
 
 type TeamEntry = {
   id: string
@@ -36,6 +37,7 @@ type SessionEntry = {
   team_id: string | null
   session_day: string
   session_season: string | null
+  session_year: number | null
   start_date: string | null
   end_date: string | null
 }
@@ -53,8 +55,9 @@ const dayNames: Record<string, string> = {
 function getSessionLabel(session: SessionEntry) {
   const dayLabel = session.session_day ? dayNames[session.session_day] ?? session.session_day : ''
   const season = session.session_season?.trim()
-  const year = session.start_date ? new Date(session.start_date).getFullYear() : NaN
-  const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+  const startYear = session.start_date ? new Date(session.start_date).getFullYear() : NaN
+  const year = session.session_year ?? (Number.isFinite(startYear) && startYear > 0 ? startYear : null)
+  const yearLabel = year ? String(year) : ''
   const parts = [dayLabel, season, yearLabel].filter(Boolean)
   return parts.length ? parts.join(' ') : 'Session'
 }
@@ -94,12 +97,14 @@ function TeamPage() {
       setTeams(rows)
       if (rows.length === 0) {
         setActiveTeamId('')
+        clearCurrentTeamId()
         setLocationsInput('')
         return
       }
       const hasActive = rows.some(team => team.id === activeTeamId)
       if (!hasActive) {
         setActiveTeamId(rows[0].id)
+        setCurrentTeamId(rows[0].id)
         setLocationsInput((rows[0].available_locations ?? []).join(', '))
       }
     }
@@ -122,7 +127,7 @@ function TeamPage() {
     const loadSessions = async () => {
       const { data } = await supabase
         .from('sessions')
-        .select('id,team_id,session_day,session_season,start_date,end_date')
+        .select('id,team_id,session_day,session_season,session_year,start_date,end_date')
         .eq('created_by', user.id)
       setUserSessions((data ?? []) as SessionEntry[])
     }
@@ -208,6 +213,7 @@ function TeamPage() {
       if (data) {
         setTeams(current => [...current, data])
         setActiveTeamId(data.id)
+        setCurrentTeamId(data.id)
         setTeamName('')
         setLocationsInput((data.available_locations ?? []).join(', '))
         setMessage('Team created.')
@@ -510,7 +516,11 @@ function TeamPage() {
             <select
               className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
               value={activeTeamId}
-              onChange={event => setActiveTeamId(event.target.value)}
+              onChange={event => {
+                const nextId = event.target.value
+                setActiveTeamId(nextId)
+                setCurrentTeamId(nextId)
+              }}
             >
               {teams.map(team => (
                 <option key={team.id} value={team.id}>
