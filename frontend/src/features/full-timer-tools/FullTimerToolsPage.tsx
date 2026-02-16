@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
+import { createTermKey, formatTermLabel, useCurrentTerm } from '../../app/useCurrentTerm'
 import { supabase } from '../../lib/supabaseClient'
 
 type TeamSessionRow = {
@@ -41,12 +42,12 @@ function toTitleCase(value: string) {
 
 function FullTimerToolsPage() {
   const { teams, currentTeam, currentTeamId, loading: teamsLoading, setCurrentTeamId } = useCurrentTeam()
+  const { currentTermKey, setCurrentTermKey, clearCurrentTerm } = useCurrentTerm()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [lastFilename, setLastFilename] = useState<string | null>(null)
   const [teamSessions, setTeamSessions] = useState<TeamSessionRow[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(false)
-  const [selectedTermKey, setSelectedTermKey] = useState('')
 
   useEffect(() => {
     if (!currentTeamId) {
@@ -87,7 +88,10 @@ function FullTimerToolsPage() {
         return
       }
       const normalizedSeason = season.toLowerCase()
-      const key = `${normalizedSeason}-${year}`
+      const key = createTermKey(normalizedSeason, year)
+      if (!key) {
+        return
+      }
       const existing = grouped.get(key)
       if (existing) {
         grouped.set(key, { ...existing, sessionCount: existing.sessionCount + 1 })
@@ -97,7 +101,7 @@ function FullTimerToolsPage() {
         key,
         season: normalizedSeason,
         year,
-        label: `${toTitleCase(season)} ${year}`,
+        label: formatTermLabel(season, year) || `${toTitleCase(season)} ${year}`,
         sessionCount: 1,
       })
     })
@@ -115,19 +119,19 @@ function FullTimerToolsPage() {
   }, [teamSessions])
 
   useEffect(() => {
-    if (sessionTerms.length === 0) {
-      setSelectedTermKey('')
+    if (!currentTeamId || sessionTerms.length === 0) {
+      clearCurrentTerm()
       return
     }
-    const hasSelected = sessionTerms.some(term => term.key === selectedTermKey)
+    const hasSelected = sessionTerms.some(term => term.key === currentTermKey)
     if (!hasSelected) {
-      setSelectedTermKey(sessionTerms[0].key)
+      setCurrentTermKey(sessionTerms[0].key)
     }
-  }, [selectedTermKey, sessionTerms])
+  }, [clearCurrentTerm, currentTeamId, currentTermKey, sessionTerms, setCurrentTermKey])
 
   const selectedTerm = useMemo(
-    () => sessionTerms.find(term => term.key === selectedTermKey) ?? null,
-    [selectedTermKey, sessionTerms],
+    () => sessionTerms.find(term => term.key === currentTermKey) ?? null,
+    [currentTermKey, sessionTerms],
   )
 
   const handleGenerate = async () => {
@@ -205,7 +209,10 @@ function FullTimerToolsPage() {
               <select
                 className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
                 value={currentTeamId}
-                onChange={event => setCurrentTeamId(event.target.value)}
+                onChange={event => {
+                  setCurrentTeamId(event.target.value)
+                  clearCurrentTerm()
+                }}
                 disabled={teamsLoading}
               >
                 <option value="">Select a team</option>
@@ -220,8 +227,8 @@ function FullTimerToolsPage() {
               Session Term
               <select
                 className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                value={selectedTermKey}
-                onChange={event => setSelectedTermKey(event.target.value)}
+                value={currentTermKey}
+                onChange={event => setCurrentTermKey(event.target.value)}
                 disabled={!currentTeamId || sessionsLoading || sessionTerms.length === 0}
               >
                 <option value="">Select a session term</option>

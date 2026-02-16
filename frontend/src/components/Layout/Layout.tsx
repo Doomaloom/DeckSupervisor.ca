@@ -17,6 +17,7 @@ import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
+import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { processCsvAndStore } from '../../lib/api'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
 import { onStorageScopeChanged } from '../../lib/storageScope'
@@ -65,6 +66,7 @@ function Layout({ children }: LayoutProps) {
     const { accountType, completeProfile, isGuest, needsProfile, profile, session, signOut, user } = useAuth()
     const { session: currentSession } = useCurrentSession()
     const { currentTeam, loading: teamLoading } = useCurrentTeam()
+    const { currentTerm } = useCurrentTerm()
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
     const [scopeVersion, setScopeVersion] = useState(0)
     const [profileFirstName, setProfileFirstName] = useState('')
@@ -74,6 +76,9 @@ function Layout({ children }: LayoutProps) {
     const isCurrentPage = (path: string) => location.pathname === path
     const pageTitle = getPageTitle(location.pathname)
     const currentSessionName = useMemo(() => {
+        if (accountType === 'full_time') {
+            return currentTerm?.label ?? ''
+        }
         if (!currentSession) {
             return ''
         }
@@ -88,7 +93,7 @@ function Layout({ children }: LayoutProps) {
             sessionYear,
             startDate,
         })
-    }, [currentSession, scopeVersion])
+    }, [accountType, currentSession, currentTerm, scopeVersion])
 
     useEffect(() => {
         if (!needsProfile) {
@@ -263,9 +268,11 @@ function Layout({ children }: LayoutProps) {
 
                 {!isSidebarCollapsed && (
                     <div className="flex flex-col gap-2">
-                        <h3 className="text-[0.95rem] font-semibold">Current Session</h3>
+                        <h3 className="text-[0.95rem] font-semibold">
+                            {accountType === 'full_time' ? 'Current Session Term' : 'Current Session'}
+                        </h3>
                         <div className="w-full rounded-2xl border border-secondary/30 bg-accent px-4 py-2 text-sm text-secondary">
-                            {currentSessionName || 'No session selected'}
+                            {currentSessionName || (accountType === 'full_time' ? 'No term selected' : 'No session selected')}
                         </div>
                     </div>
                 )}

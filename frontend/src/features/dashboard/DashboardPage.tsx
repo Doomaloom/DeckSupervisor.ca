@@ -2,9 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
+import { createTermKey, formatTermLabel, useCurrentTerm } from '../../app/useCurrentTerm'
+import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { supabase } from '../../lib/supabaseClient'
 import { getTorontoDate } from '../../lib/torontoDate'
-import { getCurrentSessionId, loadSessions, saveSessions, setCurrentSessionId } from '../../lib/sessionStorage'
+import {
+  clearCurrentSessionId,
+  getCurrentSessionId,
+  loadSessions,
+  saveSessions,
+  setCurrentSessionId,
+} from '../../lib/sessionStorage'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 
 type InstructorEntry = { name: string }
@@ -31,10 +39,19 @@ type DbSessionEntry = {
   instructors: InstructorEntry[]
 }
 
-type TeamEntry = {
+type TeamTermSessionRow = {
   id: string
-  name: string
-  available_locations: string[]
+  session_season: string | null
+  session_year: number | null
+  start_date: string | null
+}
+
+type SessionTermOption = {
+  key: string
+  season: string
+  year: number
+  label: string
+  sessionCount: number
 }
 
 type SharedSessionEntry = {
@@ -56,6 +73,13 @@ const dayNames: Record<string, string> = {
 }
 
 const NO_TEAM_VALUE = '__no_team__'
+
+const seasonRank: Record<string, number> = {
+  winter: 0,
+  spring: 1,
+  summer: 2,
+  fall: 3,
+}
 
 function getYearFromDate(value: string | null) {
   if (!value) {
@@ -97,7 +121,9 @@ function getDbSessionName(session: DbSessionEntry) {
 function Dashboard() {
   const navigate = useNavigate()
   const { setSelectedDay } = useDay()
-  const { isGuest, user } = useAuth()
+  const { accountType, isGuest, user } = useAuth()
+  const { teams, currentTeamId, setCurrentTeamId, loading: teamsLoading } = useCurrentTeam()
+  const { currentTerm, currentTermKey, setCurrentTermKey, clearCurrentTerm } = useCurrentTerm()
   const [activePanel, setActivePanel] = useState<'options' | 'new-session' | 'select-session'>(
     'options',
   )
@@ -112,8 +138,9 @@ function Dashboard() {
   const [selectedTeamId, setSelectedTeamId] = useState('')
   const [availableLocations, setAvailableLocations] = useState<string[]>([])
   const [location, setLocation] = useState('')
-  const [teams, setTeams] = useState<TeamEntry[]>([])
   const [dbSessions, setDbSessions] = useState<DbSessionEntry[]>([])
+  const [teamTermSessions, setTeamTermSessions] = useState<TeamTermSessionRow[]>([])
+  const [teamTermSessionsLoading, setTeamTermSessionsLoading] = useState(false)
   const [sharedSessions, setSharedSessions] = useState<SharedSessionEntry[]>([])
   const [currentSessionId, setCurrentSessionIdState] = useState(() => getCurrentSessionId())
   const [selectMessage, setSelectMessage] = useState('')
@@ -241,6 +268,21 @@ function Dashboard() {
     handleSelectDbSession(entry.sessions)
   }
 
+  const handleSelectFullTimeTeam = (teamId: string) => {
+    setCurrentTeamId(teamId)
+    clearCurrentTerm()
+    clearCurrentSessionId()
+    setCurrentSessionIdState('')
+    setSelectedDay('')
+  }
+
+  const handleSelectFullTimeTerm = (termKey: string) => {
+    setCurrentTermKey(termKey)
+    clearCurrentSessionId()
+    setCurrentSessionIdState('')
+    setSelectedDay('')
+  }
+
 
   const sessions = useMemo(() => {
     if (isGuest) {
@@ -260,6 +302,45 @@ function Dashboard() {
       })
   }, [dbSessions, isGuest, sessionsVersion, activePanel])
 
+  const fullTimeSessionTerms = useMemo(() => {
+    const grouped = new Map<string, SessionTermOption>()
+    teamTermSessions.forEach(session => {
+      const season = session.session_season?.trim() ?? ''
+      const year = session.session_year ?? getYearFromDate(session.start_date)
+      if (!season || !year) {
+        return
+      }
+      const normalizedSeason = season.toLowerCase()
+      const key = createTermKey(normalizedSeason, year)
+      if (!key) {
+        return
+      }
+      const existing = grouped.get(key)
+      if (existing) {
+        grouped.set(key, { ...existing, sessionCount: existing.sessionCount + 1 })
+        return
+      }
+      grouped.set(key, {
+        key,
+        season: normalizedSeason,
+        year,
+        label: formatTermLabel(season, year),
+        sessionCount: 1,
+      })
+    })
+    return Array.from(grouped.values()).sort((a, b) => {
+      if (a.year !== b.year) {
+        return b.year - a.year
+      }
+      const rankA = seasonRank[a.season] ?? 99
+      const rankB = seasonRank[b.season] ?? 99
+      if (rankA !== rankB) {
+        return rankA - rankB
+      }
+      return a.label.localeCompare(b.label)
+    })
+  }, [teamTermSessions])
+
   useEffect(() => {
     if (sessionYear || !startDate) {
       return
@@ -277,44 +358,81 @@ function Dashboard() {
   }, [currentSessionId, setSelectedDay])
 
   useEffect(() => {
-    if (isGuest || !user) {
+    if (accountType === 'full_time' && activePanel !== 'options') {
+      setActivePanel('options')
+    }
+  }, [accountType, activePanel])
+
+  useEffect(() => {
+    if (isGuest) {
       return
     }
-    const loadTeams = async () => {
-      const [{ data: memberRows }, { data: ownedRows }] = await Promise.all([
-        supabase.from('team_members').select('team_id').eq('user_id', user.id),
-        supabase.from('teams').select('id,name,available_locations').eq('owner_id', user.id),
-      ])
-
-      const memberIds = new Set((memberRows ?? []).map(row => row.team_id))
-      const ownedTeams = ownedRows ?? []
-      const ownedIds = new Set(ownedTeams.map(team => team.id))
-      const allIds = Array.from(new Set([...Array.from(memberIds), ...Array.from(ownedIds)]))
-
-      let memberTeams: TeamEntry[] = []
-      if (allIds.length > 0) {
-        const { data } = await supabase
-          .from('teams')
-          .select('id,name,available_locations')
-          .in('id', allIds)
-        memberTeams = data ?? []
-      }
-
-      const merged = new Map<string, TeamEntry>()
-      ;[...ownedTeams, ...memberTeams].forEach(team => merged.set(team.id, team))
-      const nextTeams = Array.from(merged.values())
-      setTeams(nextTeams)
-
-      if (nextTeams.length === 1 && !selectedTeamId) {
-        setSelectedTeamId(nextTeams[0].id)
-        setAvailableLocations(nextTeams[0].available_locations ?? [])
-        if (!location && nextTeams[0].available_locations?.length) {
-          setLocation(nextTeams[0].available_locations[0])
-        }
-      }
+    const hasSelected = teams.some(team => team.id === selectedTeamId)
+    if (hasSelected) {
+      return
     }
-    void loadTeams()
-  }, [isGuest, location, selectedTeamId, user])
+    if (currentTeamId && teams.some(team => team.id === currentTeamId)) {
+      setSelectedTeamId(currentTeamId)
+      return
+    }
+    if (teams.length > 0) {
+      setSelectedTeamId(teams[0].id)
+      return
+    }
+    setSelectedTeamId('')
+  }, [currentTeamId, isGuest, selectedTeamId, teams])
+
+  useEffect(() => {
+    if (accountType !== 'full_time' || !currentTeamId) {
+      setTeamTermSessions([])
+      setTeamTermSessionsLoading(false)
+      return
+    }
+    let active = true
+    const loadTeamSessions = async () => {
+      setTeamTermSessionsLoading(true)
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('id,session_season,session_year,start_date')
+        .eq('team_id', currentTeamId)
+      if (!active) {
+        return
+      }
+      if (error) {
+        console.error('Failed to load team terms', error)
+        setTeamTermSessions([])
+        setTeamTermSessionsLoading(false)
+        return
+      }
+      setTeamTermSessions((data ?? []) as TeamTermSessionRow[])
+      setTeamTermSessionsLoading(false)
+    }
+    void loadTeamSessions()
+    return () => {
+      active = false
+    }
+  }, [accountType, currentTeamId])
+
+  useEffect(() => {
+    if (accountType !== 'full_time') {
+      return
+    }
+    if (!currentTeamId || fullTimeSessionTerms.length === 0) {
+      clearCurrentTerm()
+      return
+    }
+    const hasCurrentTerm = fullTimeSessionTerms.some(term => term.key === currentTermKey)
+    if (!hasCurrentTerm) {
+      setCurrentTermKey(fullTimeSessionTerms[0].key)
+    }
+  }, [
+    accountType,
+    clearCurrentTerm,
+    currentTeamId,
+    currentTermKey,
+    fullTimeSessionTerms,
+    setCurrentTermKey,
+  ])
 
   useEffect(() => {
     if (isGuest || !user) {
@@ -377,7 +495,7 @@ function Dashboard() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      {activePanel !== 'options' && (
+      {accountType !== 'full_time' && activePanel !== 'options' && (
         <button
           type="button"
           className="flex w-fit items-center gap-2 rounded-full bg-secondary px-4 py-2 text-accent transition hover:-translate-y-0.5 hover:bg-primary"
@@ -389,20 +507,83 @@ function Dashboard() {
       <div className="flex min-h-[75vh] w-full flex-col items-center justify-center gap-6">
         {activePanel === 'options' ? (
           <>
-            <button
-              type="button"
-              className="w-80 rounded-card border-2 border-secondary/20 bg-accent px-8 py-10 text-center text-xl font-semibold text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary"
-              onClick={() => setActivePanel('new-session')}
-            >
-              Start New Session
-            </button>
-            <button
-              type="button"
-              className="w-80 rounded-card border-2 border-secondary/20 bg-accent px-8 py-10 text-center text-xl font-semibold text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary"
-              onClick={() => setActivePanel('select-session')}
-            >
-              Select Existing Session
-            </button>
+            {accountType === 'full_time' ? (
+              <div className="w-full max-w-3xl rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary/70">
+                  Full-Time Scope
+                </p>
+                <h2 className="mt-2 text-xl font-semibold">Select Team + Session Term</h2>
+                <p className="mt-2 text-sm text-secondary/80">
+                  Choose the team and session term for your full-time view. Terms are season and year
+                  only.
+                </p>
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
+                    Select Team
+                    <select
+                      className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                      value={currentTeamId}
+                      onChange={event => handleSelectFullTimeTeam(event.target.value)}
+                      disabled={teamsLoading}
+                    >
+                      <option value="">Select a team</option>
+                      {teams.map(team => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
+                    Select Session Term
+                    <select
+                      className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                      value={currentTermKey}
+                      onChange={event => handleSelectFullTimeTerm(event.target.value)}
+                      disabled={!currentTeamId || teamTermSessionsLoading || fullTimeSessionTerms.length === 0}
+                    >
+                      <option value="">Select a term</option>
+                      {fullTimeSessionTerms.map(term => (
+                        <option key={term.key} value={term.key}>
+                          {term.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                {!currentTeamId ? (
+                  <p className="mt-3 text-sm text-secondary/70">Select a team to load session terms.</p>
+                ) : teamTermSessionsLoading ? (
+                  <p className="mt-3 text-sm text-secondary/70">Loading session terms...</p>
+                ) : fullTimeSessionTerms.length === 0 ? (
+                  <p className="mt-3 text-sm text-secondary/70">
+                    No session terms found for this team yet.
+                  </p>
+                ) : currentTerm ? (
+                  <p className="mt-3 text-sm font-semibold text-secondary">
+                    Current term: {currentTerm.label}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {accountType !== 'full_time' ? (
+              <>
+                <button
+                  type="button"
+                  className="w-80 rounded-card border-2 border-secondary/20 bg-accent px-8 py-10 text-center text-xl font-semibold text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary"
+                  onClick={() => setActivePanel('new-session')}
+                >
+                  Start New Session
+                </button>
+                <button
+                  type="button"
+                  className="w-80 rounded-card border-2 border-secondary/20 bg-accent px-8 py-10 text-center text-xl font-semibold text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary"
+                  onClick={() => setActivePanel('select-session')}
+                >
+                  Select Existing Session
+                </button>
+              </>
+            ) : null}
           </>
         ) : activePanel === 'new-session' ? (
           <div className="w-full max-w-5xl">
