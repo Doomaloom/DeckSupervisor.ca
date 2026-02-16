@@ -11,6 +11,7 @@ import {
     ClockIcon,
     UserCircleIcon,
     UserGroupIcon,
+    UserPlusIcon,
 } from '@heroicons/react/24/outline'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
@@ -147,7 +148,7 @@ function Layout({ children }: LayoutProps) {
         ? `${profile.first_name} ${profile.last_name}`.trim()
         : profile?.email ?? user?.email ?? 'Guest'
     const accountLabel = accountType === 'full_time' ? 'Full-time' : user ? 'Part-time' : 'Guest'
-    const navItems = [
+    const standardNavItems = [
         {
             to: '/',
             label: 'Home',
@@ -183,20 +184,6 @@ function Layout({ children }: LayoutProps) {
             label: 'Notes',
             icon: <DocumentTextIcon className="h-5 w-5" />,
         },
-        ...(accountType === 'full_time'
-            ? [
-                {
-                    to: '/full-timer-tools',
-                    label: 'Full Timer Tools',
-                    icon: <ClockIcon className="h-5 w-5" />,
-                },
-                {
-                    to: '/team',
-                    label: 'Team',
-                    icon: <UserGroupIcon className="h-5 w-5" />,
-                },
-            ]
-            : []),
         {
             to: '/account',
             label: 'Account',
@@ -204,10 +191,55 @@ function Layout({ children }: LayoutProps) {
         },
     ]
 
+    const fullTimeNavItems = [
+        {
+            to: '/',
+            label: 'Home',
+            icon: <HomeIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/requests',
+            label: 'Requests',
+            icon: <UserPlusIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/schematic',
+            label: 'Schematic',
+            icon: <CalendarDaysIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/report-cards',
+            label: 'Report Cards',
+            icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/staff-notes',
+            label: 'Notes',
+            icon: <DocumentTextIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/full-timer-tools',
+            label: 'Full Timer Tools',
+            icon: <ClockIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/team',
+            label: 'Team',
+            icon: <UserGroupIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/account',
+            label: 'Account',
+            icon: <UserCircleIcon className="h-5 w-5" />,
+        },
+    ]
+
+    const navItems = accountType === 'full_time' ? fullTimeNavItems : standardNavItems
+
     return (
         <div className="flex h-screen overflow-hidden">
             <aside
-                className={`flex h-screen shrink-0 flex-col gap-6 overflow-y-auto bg-primary p-6 text-accent transition-[width] duration-300 ${isSidebarCollapsed ? 'w-[84px]' : 'w-72'
+                className={`flex h-screen shrink-0 flex-col gap-6 overflow-y-auto bg-primary px-6 pt-6 pb-6 text-accent transition-[width] duration-300 ${isSidebarCollapsed ? 'w-[84px]' : 'w-72'
                     }`}
             >
                 <div className="flex flex-col gap-1.5">
@@ -247,31 +279,6 @@ function Layout({ children }: LayoutProps) {
                     </div>
                 )}
 
-                {!isSidebarCollapsed && (
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-[0.95rem] font-semibold">Account</h3>
-                        <div className="rounded-2xl border border-secondary/30 bg-accent px-4 py-2 text-sm text-secondary">
-                            <p className="font-semibold">{displayName}</p>
-                            <p className="text-xs uppercase tracking-wide text-secondary/70">{accountLabel}</p>
-                        </div>
-                        {isGuest ? (
-                            <Link
-                                to="/sign-in"
-                                className="rounded-2xl bg-secondary px-3 py-2 text-center text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
-                            >
-                                Sign In
-                            </Link>
-                        ) : (
-                            <button
-                                type="button"
-                                className="rounded-2xl border border-secondary/40 px-3 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
-                                onClick={() => void signOut()}
-                            >
-                                Sign Out
-                            </button>
-                        )}
-                    </div>
-                )}
 
                 {!isSidebarCollapsed && (
                     <div className="flex flex-col gap-2">
@@ -328,6 +335,34 @@ function Layout({ children }: LayoutProps) {
                         </Link>
                     ))}
                 </nav>
+
+
+                {!isSidebarCollapsed && (
+                    <div className="flex flex-col gap-2 sticky bottom-0 mt-auto">
+                        <h3 className="text-[0.95rem] font-semibold">Account</h3>
+                        <div className="rounded-2xl border border-secondary/30 bg-accent px-4 py-2 text-sm text-secondary">
+                            <p className="font-semibold">{displayName}</p>
+                            <p className="text-xs uppercase tracking-wide text-secondary/70">{accountLabel}</p>
+                        </div>
+                        {isGuest ? (
+                            <Link
+                                to="/sign-in"
+                                className="rounded-2xl bg-secondary px-3 py-2 text-center text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
+                            >
+                                Sign In
+                            </Link>
+                        ) : (
+                            <button
+                                type="button"
+                                className="rounded-2xl border border-secondary/40 px-3 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                                onClick={() => void signOut()}
+                            >
+                                Sign Out
+                            </button>
+                        )}
+                    </div>
+                )}
+
             </aside>
 
             <main className="flex min-h-0 flex-1 overflow-y-auto p-8">
@@ -393,6 +428,7 @@ function Layout({ children }: LayoutProps) {
 function getPageTitle(pathname: string) {
     switch (pathname) {
         case '/': return 'Home'
+        case '/requests': return 'Requests'
         case '/manage-sessions': return 'Manage Sessions'
         case '/rosters': return 'Class Rosters'
         case '/schematic': return 'Class Schedule'

@@ -7,6 +7,7 @@ import SchematicPage from '../features/schematic/SchematicPage'
 import ReportCardsPage from '../features/report-cards/ReportCardsPage'
 import StaffNotesPage from '../features/staff-notes/StaffNotesPage'
 import FullTimerToolsPage from '../features/full-timer-tools/FullTimerToolsPage'
+import RequestsPage from '../features/requests/RequestsPage'
 import SignInPage from '../features/auth/SignInPage'
 import AccountPage from '../features/account/AccountPage'
 import TeamPage from '../features/teams/TeamPage'
@@ -46,6 +47,14 @@ function AppRoutes() {
       <Route path="/schematic" element={<SchematicPage />} />
       <Route path="/report-cards" element={<ReportCardsPage />} />
       <Route path="/staff-notes" element={<StaffNotesPage />} />
+      <Route
+        path="/requests"
+        element={
+          <RequireFullTime>
+            <RequestsPage />
+          </RequireFullTime>
+        }
+      />
       <Route
         path="/full-timer-tools"
         element={
