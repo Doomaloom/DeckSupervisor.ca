@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
+import { useCurrentTeam } from '../../app/useCurrentTeam'
+import { useCurrentTerm } from '../../app/useCurrentTerm'
+import { getSessionTermLabel, syncReportCardsForDay } from '../../lib/reportCardSync'
 import { supabase } from '../../lib/supabaseClient'
 import { useDay } from '../../app/DayContext'
 import { getStudentsForDay, onStudentsUpdated } from '../../lib/storage'
@@ -18,6 +21,11 @@ type InstructorSummary = {
   levels: LevelCount[]
 }
 
+type EmployeeReportCardTotal = {
+  name: string
+  total: number
+}
+
 const normalizeLevel = (student: Student) => {
   const value = (student.service_name || student.level || '').trim()
   return value || 'Unknown'
@@ -30,21 +38,92 @@ const normalizeInstructor = (student: Student) => {
 
 function ReportCardsPage() {
   const { selectedDay } = useDay()
-  const { isGuest, user } = useAuth()
+  const { accountType, isGuest, user } = useAuth()
   const { access, session: currentSession } = useCurrentSession()
+  const { currentTeam, currentTeamId } = useCurrentTeam()
+  const { currentTerm } = useCurrentTerm()
   const [students, setStudents] = useState<Student[]>([])
+  const [employeeTotals, setEmployeeTotals] = useState<EmployeeReportCardTotal[]>([])
+  const [employeeTotalsLoading, setEmployeeTotalsLoading] = useState(false)
+  const [syncWarning, setSyncWarning] = useState('')
 
   useEffect(() => {
+    if (accountType === 'full_time') {
+      setStudents([])
+      return
+    }
     setStudents(getStudentsForDay(selectedDay))
-  }, [selectedDay])
+  }, [accountType, selectedDay])
 
   useEffect(() => {
+    if (accountType === 'full_time') {
+      return () => {}
+    }
     return onStudentsUpdated(day => {
       if (day === selectedDay) {
         setStudents(getStudentsForDay(selectedDay))
       }
     })
-  }, [selectedDay])
+  }, [accountType, selectedDay])
+
+  useEffect(() => {
+    if (accountType !== 'full_time') {
+      setEmployeeTotals([])
+      setEmployeeTotalsLoading(false)
+      return
+    }
+    if (!currentTeamId || !currentTerm?.label) {
+      setEmployeeTotals([])
+      setEmployeeTotalsLoading(false)
+      return
+    }
+
+    let active = true
+    const loadEmployeeTotals = async () => {
+      setEmployeeTotalsLoading(true)
+      const { data, error } = await supabase
+        .from('report_cards')
+        .select('instructor,number_of_report_cards')
+        .eq('team_id', currentTeamId)
+        .eq('session', currentTerm.label)
+
+      if (!active) {
+        return
+      }
+      if (error) {
+        console.error('Failed to load full-time report card totals', error)
+        setEmployeeTotals([])
+        setEmployeeTotalsLoading(false)
+        return
+      }
+
+      const collator = new Intl.Collator('en', { sensitivity: 'base' })
+      const totalsByEmployee = new Map<string, number>()
+
+      ;(data ?? []).forEach(row => {
+        const name = (row.instructor ?? '').trim() || 'Unassigned'
+        const count = Math.max(0, row.number_of_report_cards ?? 0)
+        totalsByEmployee.set(name, (totalsByEmployee.get(name) ?? 0) + count)
+      })
+
+      const totals = Array.from(totalsByEmployee.entries())
+        .map(([name, total]) => ({ name, total }))
+        .sort((a, b) => {
+          if (a.total !== b.total) {
+            return b.total - a.total
+          }
+          return collator.compare(a.name, b.name)
+        })
+
+      setEmployeeTotals(totals)
+      setEmployeeTotalsLoading(false)
+    }
+
+    void loadEmployeeTotals()
+    return () => {
+      active = false
+    }
+  }, [accountType, currentTeamId, currentTerm?.label])
 
   const { instructorSummaries, lessonBlockTotals, totalStudents } = useMemo(() => {
     const instructorMap = new Map<string, Map<string, number>>()
@@ -86,69 +165,62 @@ function ReportCardsPage() {
   }, [students])
 
   const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
-  const sessionLabel = useMemo(() => {
-    const season = currentSession?.session_season?.trim() ?? ''
-    const startYear = currentSession?.start_date ? new Date(currentSession.start_date).getFullYear() : NaN
-    const year = currentSession?.session_year ?? (Number.isFinite(startYear) ? startYear : null)
-    const yearLabel = year ? String(year) : ''
-    return [season, yearLabel].filter(Boolean).join(' ')
-  }, [currentSession?.session_season, currentSession?.session_year, currentSession?.start_date])
+  const totalEmployeeReportCards = useMemo(
+    () => employeeTotals.reduce((sum, employee) => sum + employee.total, 0),
+    [employeeTotals],
+  )
+  const sessionLabel = useMemo(
+    () =>
+      getSessionTermLabel(
+        currentSession?.session_season,
+        currentSession?.session_year,
+        currentSession?.start_date,
+      ),
+    [currentSession?.session_season, currentSession?.session_year, currentSession?.start_date],
+  )
 
   useEffect(() => {
-    if (!selectedDay || isGuest || !user || access.mode !== 'owner' || !sessionLabel) {
+    if (
+      accountType === 'full_time' ||
+      !selectedDay ||
+      isGuest ||
+      !user ||
+      access.mode !== 'owner' ||
+      !sessionLabel
+    ) {
+      setSyncWarning('')
       return
     }
 
-    const teamId = currentSession?.team_id ?? null
-    const rows = instructorSummaries.map(summary => ({
-      session: sessionLabel,
-      day: selectedDay,
-      instructor: summary.name,
-      number_of_report_cards: summary.total,
-      team_id: teamId,
-      created_by: user.id,
-      updated_at: new Date().toISOString(),
-    }))
-
     const sync = async () => {
-      let clearScope = supabase
-        .from('report_cards')
-        .delete()
-        .eq('session', sessionLabel)
-        .eq('day', selectedDay)
-        .eq('created_by', user.id)
-
-      if (teamId) {
-        clearScope = clearScope.eq('team_id', teamId)
-      } else {
-        clearScope = clearScope.is('team_id', null)
-      }
-
-      const { error: clearError } = await clearScope
-      if (clearError) {
-        throw clearError
-      }
-
-      if (rows.length === 0) {
+      const result = await syncReportCardsForDay({
+        day: selectedDay,
+        students,
+        sessionLabel,
+        teamId: currentSession?.team_id ?? null,
+        userId: user.id,
+      })
+      if (result.status === 'blocked_unassigned') {
+        setSyncWarning(
+          'Report card totals were not saved because some students are missing instructor assignments. Assign instructors in Schematic and save, then return to Report Cards.',
+        )
         return
       }
-
-      const { error: insertError } = await supabase.from('report_cards').insert(rows)
-      if (insertError) {
-        throw insertError
-      }
+      setSyncWarning('')
     }
 
     void sync().catch(error => {
       console.error('Failed to sync report card totals', error)
+      setSyncWarning('Failed to sync report card totals. Please try again.')
     })
   }, [
+    accountType,
     access.mode,
     currentSession?.team_id,
-    instructorSummaries,
     isGuest,
     selectedDay,
     sessionLabel,
+    students,
     user,
   ])
 
@@ -163,15 +235,68 @@ function ReportCardsPage() {
           </p>
           <h2 className="mt-3 text-2xl font-semibold">Report Cards</h2>
           <p className="mt-2 max-w-2xl text-secondary">
-            Overview of report card counts by instructor and lesson block.
+            {accountType === 'full_time'
+              ? 'Overview of total report card counts by employee for the selected team and term.'
+              : 'Overview of report card counts by instructor and lesson block.'}
           </p>
-          <p className="mt-3 text-sm font-semibold text-secondary/80">
-            Day: <span className="font-semibold">{dayLabel}</span>
-          </p>
+          {accountType === 'full_time' ? (
+            <>
+              <p className="mt-3 text-sm font-semibold text-secondary/80">
+                Team: <span className="font-semibold">{currentTeam?.name ?? 'No team selected'}</span>
+              </p>
+              <p className="mt-1 text-sm font-semibold text-secondary/80">
+                Session Term: <span className="font-semibold">{currentTerm?.label ?? 'No term selected'}</span>
+              </p>
+            </>
+          ) : (
+            <p className="mt-3 text-sm font-semibold text-secondary/80">
+              Day: <span className="font-semibold">{dayLabel}</span>
+            </p>
+          )}
         </div>
       </div>
 
-      {!selectedDay ? (
+      {accountType === 'full_time' ? (
+        !currentTeamId ? (
+          <div className="rounded-card border-2 border-secondary/20 bg-bg p-6 text-secondary">
+            Select a team on the home page to view employee report card totals.
+          </div>
+        ) : !currentTerm ? (
+          <div className="rounded-card border-2 border-secondary/20 bg-bg p-6 text-secondary">
+            Select a session term on the home page to view employee report card totals.
+          </div>
+        ) : employeeTotalsLoading ? (
+          <div className="rounded-card border-2 border-secondary/20 bg-bg p-6 text-secondary">
+            Loading employee report card totals...
+          </div>
+        ) : employeeTotals.length === 0 ? (
+          <div className="rounded-card border-2 border-secondary/20 bg-bg p-6 text-secondary">
+            No report card totals found for {currentTeam?.name ?? 'this team'} in {currentTerm.label}.
+          </div>
+        ) : (
+          <section className="flex flex-col gap-4">
+            <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <h3 className="text-lg font-semibold">Employee Report Card Totals</h3>
+                <span className="text-sm font-semibold text-secondary/80">
+                  Session total: {totalEmployeeReportCards}
+                </span>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {employeeTotals.map(employee => (
+                  <div
+                    key={`employee-total-${employee.name}`}
+                    className="flex items-center justify-between rounded-2xl border border-secondary/20 bg-bg px-4 py-3"
+                  >
+                    <span className="text-sm font-semibold text-secondary">{employee.name}</span>
+                    <span className="text-sm font-semibold text-secondary">{employee.total}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )
+      ) : !selectedDay ? (
         <div className="rounded-card border-2 border-secondary/20 bg-bg p-6 text-secondary">
           Select a day to see report card counts.
         </div>
@@ -181,6 +306,11 @@ function ReportCardsPage() {
         </div>
       ) : (
         <>
+          {syncWarning ? (
+            <div className="rounded-card border-2 border-danger/40 bg-accent p-4 text-sm font-semibold text-danger shadow-md">
+              {syncWarning}
+            </div>
+          ) : null}
           <section className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <h3 className="text-lg font-semibold">Lesson Block Overview</h3>

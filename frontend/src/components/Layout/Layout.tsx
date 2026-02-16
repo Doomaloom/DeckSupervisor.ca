@@ -20,13 +20,16 @@ import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { processCsvAndStore } from '../../lib/api'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
+import { getSessionTermLabel, syncReportCardsForDay } from '../../lib/reportCardSync'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 import {
     getCustomRosterDayKey,
     getCustomRostersForDay,
+    getInstructorsForDay,
     getStudentsForDay,
     setCustomRostersForDay,
 } from '../../lib/storage'
+import type { InstructorEntry } from '../../types/app'
 
 type LayoutProps = {
     children: React.ReactNode
@@ -64,7 +67,7 @@ function Layout({ children }: LayoutProps) {
     const location = useLocation()
     const { selectedDay } = useDay()
     const { accountType, completeProfile, isGuest, needsProfile, profile, session, signOut, user } = useAuth()
-    const { session: currentSession } = useCurrentSession()
+    const { access, session: currentSession } = useCurrentSession()
     const { currentTeam, loading: teamLoading } = useCurrentTeam()
     const { currentTerm } = useCurrentTerm()
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
@@ -305,8 +308,66 @@ function Layout({ children }: LayoutProps) {
                                         return
                                     }
                                     try {
-                                        await processCsvAndStore(uploaded, selectedDay)
-                                        alert('Roster uploaded. You can view it in Rosters or Schematic.')
+                                        const instructorConfig = getInstructorsForDay(selectedDay)
+                                        const uploadInstructors: InstructorEntry[] = []
+                                        if (instructorConfig) {
+                                            const count = Math.max(
+                                                instructorConfig.names.length,
+                                                instructorConfig.codes.length,
+                                            )
+                                            for (let index = 0; index < count; index += 1) {
+                                                const name = (instructorConfig.names[index] ?? '').trim()
+                                                const codes = (instructorConfig.codes[index] ?? '').trim()
+                                                if (!name || !codes) {
+                                                    continue
+                                                }
+                                                uploadInstructors.push({ name, codes })
+                                            }
+                                        }
+                                        await processCsvAndStore(uploaded, selectedDay, uploadInstructors)
+
+                                        const canSyncReportCards =
+                                            accountType !== 'full_time' &&
+                                            !isGuest &&
+                                            Boolean(user?.id) &&
+                                            access.mode === 'owner' &&
+                                            Boolean(currentSession)
+
+                                        if (!canSyncReportCards || !currentSession || !user?.id) {
+                                            alert('Roster uploaded. You can view it in Rosters or Schematic.')
+                                            return
+                                        }
+
+                                        const sessionLabel = getSessionTermLabel(
+                                            currentSession.session_season,
+                                            currentSession.session_year,
+                                            currentSession.start_date,
+                                        )
+
+                                        if (!sessionLabel) {
+                                            alert(
+                                                'Roster uploaded. Report card totals were not synced because this session term is incomplete.',
+                                            )
+                                            return
+                                        }
+
+                                        const dayStudents = getStudentsForDay(selectedDay)
+                                        const syncResult = await syncReportCardsForDay({
+                                            day: selectedDay,
+                                            students: dayStudents,
+                                            sessionLabel,
+                                            teamId: currentSession.team_id ?? null,
+                                            userId: user.id,
+                                        })
+
+                                        if (syncResult.status === 'blocked_unassigned') {
+                                            alert(
+                                                'Roster uploaded. Report card totals were not synced because some students are missing instructor assignments. Assign instructors in Schematic and save, then return to Report Cards.',
+                                            )
+                                            return
+                                        }
+
+                                        alert('Roster uploaded and report card totals synced for the selected day.')
                                     } catch (error) {
                                         console.error(error)
                                         alert('Failed to process the CSV file.')

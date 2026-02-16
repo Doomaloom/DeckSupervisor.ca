@@ -81,6 +81,18 @@ function resolveSessionYear(yearInput: string, startDate: string, endDate: strin
   return getYearFromDate(startDate) ?? getYearFromDate(endDate)
 }
 
+function getSessionTermLabel(
+  sessionSeason: string | null | undefined,
+  sessionYear: number | null,
+  startDate: string | null | undefined,
+) {
+  const season = sessionSeason?.trim() ?? ''
+  const startYear = startDate ? getYearFromDate(startDate) : null
+  const year = sessionYear ?? startYear
+  const yearLabel = year ? String(year) : ''
+  return [season, yearLabel].filter(Boolean).join(' ')
+}
+
 function ManageSessionsPage() {
   const navigate = useNavigate()
   const { setSelectedDay } = useDay()
@@ -265,19 +277,43 @@ function ManageSessionsPage() {
     if (!user) {
       return
     }
+    if (!currentSessionRecord) {
+      setEditMessage('Session data is not ready yet. Please try again.')
+      return
+    }
+
+    const previousTeamId = currentSessionRecord.team_id ?? null
+    const previousSessionDay = currentSessionRecord.session_day ?? ''
+    const previousSessionLabel = getSessionTermLabel(
+      currentSessionRecord.session_season,
+      currentSessionRecord.session_year,
+      currentSessionRecord.start_date,
+    )
+
     const sessionYearValue = resolveSessionYear(editSessionYear, editStartDate, editEndDate)
+    const nextTeamId = editTeamId && editTeamId !== NO_TEAM_VALUE ? editTeamId : null
+    const nextSessionDay = editSessionDay
+    const nextSessionLabel = getSessionTermLabel(editSessionSeason || null, sessionYearValue, editStartDate)
+
+    const didReportCardScopeChange =
+      previousTeamId !== nextTeamId ||
+      previousSessionDay !== nextSessionDay ||
+      previousSessionLabel !== nextSessionLabel
+
+    const updateTimestamp = new Date().toISOString()
+
     const { data: updatedSession, error } = await supabase
       .from('sessions')
       .update({
-        team_id: editTeamId && editTeamId !== NO_TEAM_VALUE ? editTeamId : null,
+        team_id: nextTeamId,
         session_day: editSessionDay,
         session_season: editSessionSeason || null,
         session_year: sessionYearValue,
         start_date: editStartDate || null,
         end_date: editEndDate || null,
-        location: editTeamId && editTeamId !== NO_TEAM_VALUE ? editLocation || null : null,
+        location: nextTeamId ? editLocation || null : null,
         instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
-        updated_at: new Date().toISOString(),
+        updated_at: updateTimestamp,
       })
       .eq('id', currentSessionId)
       .eq('created_by', user.id)
@@ -292,6 +328,56 @@ function ManageSessionsPage() {
       setEditMessage('Session update did not apply. Confirm you own this session and try again.')
       return
     }
+
+    if (didReportCardScopeChange) {
+      try {
+        let clearDestinationScope = supabase
+          .from('report_cards')
+          .delete()
+          .eq('created_by', user.id)
+          .eq('session', nextSessionLabel)
+          .eq('day', nextSessionDay)
+
+        if (nextTeamId) {
+          clearDestinationScope = clearDestinationScope.eq('team_id', nextTeamId)
+        } else {
+          clearDestinationScope = clearDestinationScope.is('team_id', null)
+        }
+
+        const { error: clearDestinationError } = await clearDestinationScope
+        if (clearDestinationError) {
+          throw clearDestinationError
+        }
+
+        let updateSourceScope = supabase
+          .from('report_cards')
+          .update({
+            team_id: nextTeamId,
+            session: nextSessionLabel,
+            day: nextSessionDay,
+            updated_at: updateTimestamp,
+          })
+          .eq('created_by', user.id)
+          .eq('session', previousSessionLabel)
+          .eq('day', previousSessionDay)
+
+        if (previousTeamId) {
+          updateSourceScope = updateSourceScope.eq('team_id', previousTeamId)
+        } else {
+          updateSourceScope = updateSourceScope.is('team_id', null)
+        }
+
+        const { error: syncReportCardsError } = await updateSourceScope
+        if (syncReportCardsError) {
+          throw syncReportCardsError
+        }
+      } catch (syncError) {
+        console.error('Failed to sync related report card scope', syncError)
+        setEditMessage('Session updated, but related report card data could not be fully synchronized.')
+        return
+      }
+    }
+
     setEditMessage('Session updated.')
   }
 

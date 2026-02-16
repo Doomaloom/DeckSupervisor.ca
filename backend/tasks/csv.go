@@ -63,6 +63,7 @@ func ProcessCSV(records [][]string, instructorMap map[string]string, fallbackDay
 		location := getByName(row, []string{"Location", "Facility"})
 		schedule := getByName(row, []string{"EventSchedule", "Schedule"})
 		phone := getByName(row, []string{"AttendeePhone", "Phone"})
+		instructorFromRow := getByName(row, []string{"Instructor", "Instructor Name", "InstructorName", "Teacher", "Staff"})
 
 		name := getByName(row, []string{"AttendeeName", "Name"})
 		if strings.Contains(name, ",") {
@@ -89,7 +90,10 @@ func ProcessCSV(records [][]string, instructorMap map[string]string, fallbackDay
 			schedule = day
 		}
 
-		instructor := instructorMap[code]
+		instructor := strings.TrimSpace(instructorMap[code])
+		if instructor == "" {
+			instructor = strings.TrimSpace(instructorFromRow)
+		}
 		level := serviceName
 
 		roster, ok := classMap[code]
@@ -105,6 +109,8 @@ func ProcessCSV(records [][]string, instructorMap map[string]string, fallbackDay
 				Students:    []RosterStudent{},
 			}
 			classMap[code] = roster
+		} else if roster.Instructor == "" && instructor != "" {
+			roster.Instructor = instructor
 		}
 
 		roster.Students = append(roster.Students, RosterStudent{
