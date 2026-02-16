@@ -268,21 +268,17 @@ function Dashboard() {
     handleSelectDbSession(entry.sessions)
   }
 
+  const resetCurrentSessionScope = () => {
+    clearCurrentSessionId()
+    setCurrentSessionIdState('')
+    setSelectedDay('')
+  }
+
   const handleSelectFullTimeTeam = (teamId: string) => {
     setCurrentTeamId(teamId)
     clearCurrentTerm()
-    clearCurrentSessionId()
-    setCurrentSessionIdState('')
-    setSelectedDay('')
+    resetCurrentSessionScope()
   }
-
-  const handleSelectFullTimeTerm = (termKey: string) => {
-    setCurrentTermKey(termKey)
-    clearCurrentSessionId()
-    setCurrentSessionIdState('')
-    setSelectedDay('')
-  }
-
 
   const sessions = useMemo(() => {
     if (isGuest) {
@@ -340,6 +336,59 @@ function Dashboard() {
       return a.label.localeCompare(b.label)
     })
   }, [teamTermSessions])
+
+  const fullTimeTermYears = useMemo(() => {
+    const years = new Set<number>()
+    fullTimeSessionTerms.forEach(term => years.add(term.year))
+    return Array.from(years).sort((a, b) => b - a)
+  }, [fullTimeSessionTerms])
+
+  const selectedFullTimeTermYear = currentTerm?.year ?? null
+
+  const fullTimeTermsForSelectedYear = useMemo(() => {
+    if (!selectedFullTimeTermYear) {
+      return []
+    }
+    return fullTimeSessionTerms.filter(term => term.year === selectedFullTimeTermYear)
+  }, [fullTimeSessionTerms, selectedFullTimeTermYear])
+
+  const handleSelectFullTimeYear = (yearInput: string) => {
+    if (!yearInput) {
+      clearCurrentTerm()
+      resetCurrentSessionScope()
+      return
+    }
+    const parsedYear = Number.parseInt(yearInput, 10)
+    if (!Number.isFinite(parsedYear) || parsedYear <= 0) {
+      return
+    }
+    const nextTerm = fullTimeSessionTerms.find(term => term.year === parsedYear)
+    if (!nextTerm) {
+      clearCurrentTerm()
+      resetCurrentSessionScope()
+      return
+    }
+    setCurrentTermKey(nextTerm.key)
+    resetCurrentSessionScope()
+  }
+
+  const handleSelectFullTimeSeason = (season: string) => {
+    if (!season) {
+      clearCurrentTerm()
+      resetCurrentSessionScope()
+      return
+    }
+    const year = selectedFullTimeTermYear
+    if (!year) {
+      return
+    }
+    const nextKey = createTermKey(season, year)
+    if (!nextKey || !fullTimeSessionTerms.some(term => term.key === nextKey)) {
+      return
+    }
+    setCurrentTermKey(nextKey)
+    resetCurrentSessionScope()
+  }
 
   useEffect(() => {
     if (sessionYear || !startDate) {
@@ -517,7 +566,7 @@ function Dashboard() {
                   Choose the team and session term for your full-time view. Terms are season and year
                   only.
                 </p>
-                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                   <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
                     Select Team
                     <select
@@ -535,19 +584,41 @@ function Dashboard() {
                     </select>
                   </label>
                   <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
-                    Select Session Term
+                    Select Year
                     <select
                       className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                      value={currentTermKey}
-                      onChange={event => handleSelectFullTimeTerm(event.target.value)}
-                      disabled={!currentTeamId || teamTermSessionsLoading || fullTimeSessionTerms.length === 0}
+                      value={selectedFullTimeTermYear ? String(selectedFullTimeTermYear) : ''}
+                      onChange={event => handleSelectFullTimeYear(event.target.value)}
+                      disabled={!currentTeamId || teamTermSessionsLoading || fullTimeTermYears.length === 0}
                     >
-                      <option value="">Select a term</option>
-                      {fullTimeSessionTerms.map(term => (
-                        <option key={term.key} value={term.key}>
-                          {term.label}
+                      <option value="">Select a year</option>
+                      {fullTimeTermYears.map(year => (
+                        <option key={year} value={String(year)}>
+                          {year}
                         </option>
                       ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
+                    Select Season
+                    <select
+                      className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                      value={currentTerm?.season ?? ''}
+                      onChange={event => handleSelectFullTimeSeason(event.target.value)}
+                      disabled={!currentTeamId || teamTermSessionsLoading || fullTimeTermsForSelectedYear.length === 0}
+                    >
+                      <option value="">Select a season</option>
+                      {seasonOptions.map(season => {
+                        const normalizedSeason = season.toLowerCase()
+                        const hasSeason = fullTimeTermsForSelectedYear.some(
+                          term => term.season === normalizedSeason,
+                        )
+                        return (
+                          <option key={season} value={normalizedSeason} disabled={!hasSeason}>
+                            {season}
+                          </option>
+                        )
+                      })}
                     </select>
                   </label>
                 </div>

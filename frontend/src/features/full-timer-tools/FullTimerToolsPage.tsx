@@ -25,6 +25,8 @@ const seasonRank: Record<string, number> = {
   fall: 3,
 }
 
+const seasonOptions = ['Winter', 'Spring', 'Summer', 'Fall']
+
 function getYearFromDate(value: string | null) {
   if (!value) {
     return null
@@ -118,6 +120,12 @@ function FullTimerToolsPage() {
     })
   }, [teamSessions])
 
+  const sessionTermYears = useMemo(() => {
+    const years = new Set<number>()
+    sessionTerms.forEach(term => years.add(term.year))
+    return Array.from(years).sort((a, b) => b - a)
+  }, [sessionTerms])
+
   useEffect(() => {
     if (!currentTeamId || sessionTerms.length === 0) {
       clearCurrentTerm()
@@ -133,6 +141,47 @@ function FullTimerToolsPage() {
     () => sessionTerms.find(term => term.key === currentTermKey) ?? null,
     [currentTermKey, sessionTerms],
   )
+
+  const selectedTermYear = selectedTerm?.year ?? null
+
+  const sessionTermsForSelectedYear = useMemo(() => {
+    if (!selectedTermYear) {
+      return []
+    }
+    return sessionTerms.filter(term => term.year === selectedTermYear)
+  }, [selectedTermYear, sessionTerms])
+
+  const handleSelectTermYear = (yearInput: string) => {
+    if (!yearInput) {
+      clearCurrentTerm()
+      return
+    }
+    const parsedYear = Number.parseInt(yearInput, 10)
+    if (!Number.isFinite(parsedYear) || parsedYear <= 0) {
+      return
+    }
+    const nextTerm = sessionTerms.find(term => term.year === parsedYear)
+    if (!nextTerm) {
+      clearCurrentTerm()
+      return
+    }
+    setCurrentTermKey(nextTerm.key)
+  }
+
+  const handleSelectTermSeason = (season: string) => {
+    if (!season) {
+      clearCurrentTerm()
+      return
+    }
+    if (!selectedTermYear) {
+      return
+    }
+    const nextKey = createTermKey(season, selectedTermYear)
+    if (!nextKey || !sessionTerms.some(term => term.key === nextKey)) {
+      return
+    }
+    setCurrentTermKey(nextKey)
+  }
 
   const handleGenerate = async () => {
     if (!selectedFile) {
@@ -203,7 +252,7 @@ function FullTimerToolsPage() {
             Pick the team and term you want to view. Session terms are grouped by season and year,
             not weekday.
           </p>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
             <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
               Team
               <select
@@ -224,19 +273,41 @@ function FullTimerToolsPage() {
               </select>
             </label>
             <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
-              Session Term
+              Session Year
               <select
                 className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                value={currentTermKey}
-                onChange={event => setCurrentTermKey(event.target.value)}
-                disabled={!currentTeamId || sessionsLoading || sessionTerms.length === 0}
+                value={selectedTermYear ? String(selectedTermYear) : ''}
+                onChange={event => handleSelectTermYear(event.target.value)}
+                disabled={!currentTeamId || sessionsLoading || sessionTermYears.length === 0}
               >
-                <option value="">Select a session term</option>
-                {sessionTerms.map(term => (
-                  <option key={term.key} value={term.key}>
-                    {term.label}
+                <option value="">Select a year</option>
+                {sessionTermYears.map(year => (
+                  <option key={year} value={String(year)}>
+                    {year}
                   </option>
                 ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
+              Session Season
+              <select
+                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                value={selectedTerm?.season ?? ''}
+                onChange={event => handleSelectTermSeason(event.target.value)}
+                disabled={!currentTeamId || sessionsLoading || sessionTermsForSelectedYear.length === 0}
+              >
+                <option value="">Select a season</option>
+                {seasonOptions.map(season => {
+                  const normalizedSeason = season.toLowerCase()
+                  const hasSeason = sessionTermsForSelectedYear.some(
+                    term => term.season === normalizedSeason,
+                  )
+                  return (
+                    <option key={season} value={normalizedSeason} disabled={!hasSeason}>
+                      {season}
+                    </option>
+                  )
+                })}
               </select>
             </label>
           </div>
