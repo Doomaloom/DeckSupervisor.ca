@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
+import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { supabase } from '../../lib/supabaseClient'
 import { clearCurrentSessionId, getCurrentSessionId, loadSessions, saveSessions } from '../../lib/sessionStorage'
@@ -34,6 +35,8 @@ const dayNames: Record<string, string> = {
   Sa: 'Saturday',
   Su: 'Sunday',
 }
+
+const NO_TEAM_VALUE = '__no_team__'
 
 function getSessionName(session: SessionEntry) {
   const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
@@ -82,10 +85,12 @@ function ManageSessionsPage() {
   const navigate = useNavigate()
   const { setSelectedDay } = useDay()
   const { isGuest, user } = useAuth()
+  const { teams, loading: teamsLoading } = useCurrentTeam()
   const { session: currentSessionRecord, access } = useCurrentSession()
   const [editSessionDay, setEditSessionDay] = useState('')
   const [editSessionSeason, setEditSessionSeason] = useState('')
   const [editSessionYear, setEditSessionYear] = useState('')
+  const [editTeamId, setEditTeamId] = useState(NO_TEAM_VALUE)
   const [editStartDate, setEditStartDate] = useState('')
   const [editEndDate, setEditEndDate] = useState('')
   const [editLocation, setEditLocation] = useState('')
@@ -148,6 +153,7 @@ function ManageSessionsPage() {
       const localSession = currentSession as SessionEntry
       setEditSessionDay(localSession.sessionDay)
       setEditSessionSeason(localSession.sessionSeason ?? '')
+      setEditTeamId(NO_TEAM_VALUE)
       setEditStartDate(localSession.startDate)
       setEditEndDate(localSession.endDate)
       setEditInstructors(localSession.instructors.length ? localSession.instructors : [{ name: '' }])
@@ -162,6 +168,7 @@ function ManageSessionsPage() {
     const dbYear = dbSession?.session_year
     const startYear = dbSession?.start_date ? getYearFromDate(dbSession.start_date) : null
     setEditSessionYear(dbYear ? String(dbYear) : startYear ? String(startYear) : '')
+    setEditTeamId(dbSession?.team_id ?? NO_TEAM_VALUE)
     setEditStartDate(dbSession?.start_date ?? '')
     setEditEndDate(dbSession?.end_date ?? '')
     setEditLocation(dbSession?.location ?? '')
@@ -172,16 +179,22 @@ function ManageSessionsPage() {
   }, [currentSession])
 
   useEffect(() => {
-    if (isGuest || !currentSessionRecord?.team_id) {
+    if (isGuest || !editTeamId || editTeamId === NO_TEAM_VALUE) {
       setAvailableLocations([])
       setTeamName('')
+      return
+    }
+    const selectedTeam = teams.find(team => team.id === editTeamId)
+    if (selectedTeam) {
+      setTeamName(selectedTeam.name)
+      setAvailableLocations(selectedTeam.available_locations ?? [])
       return
     }
     const loadTeam = async () => {
       const { data } = await supabase
         .from('teams')
         .select('id,name,available_locations')
-        .eq('id', currentSessionRecord.team_id)
+        .eq('id', editTeamId)
         .maybeSingle()
       if (!data) {
         setAvailableLocations([])
@@ -193,7 +206,21 @@ function ManageSessionsPage() {
       setAvailableLocations(team.available_locations ?? [])
     }
     void loadTeam()
-  }, [currentSessionRecord, isGuest])
+  }, [editTeamId, isGuest, teams])
+
+  useEffect(() => {
+    if (isGuest || !editTeamId || editTeamId === NO_TEAM_VALUE) {
+      setEditLocation('')
+      return
+    }
+    if (availableLocations.length === 0) {
+      setEditLocation('')
+      return
+    }
+    if (!editLocation || !availableLocations.includes(editLocation)) {
+      setEditLocation(availableLocations[0])
+    }
+  }, [availableLocations, editLocation, editTeamId, isGuest])
 
   useEffect(() => {
     if (!currentSessionId) {
@@ -239,23 +266,30 @@ function ManageSessionsPage() {
       return
     }
     const sessionYearValue = resolveSessionYear(editSessionYear, editStartDate, editEndDate)
-    const { error } = await supabase
+    const { data: updatedSession, error } = await supabase
       .from('sessions')
       .update({
+        team_id: editTeamId && editTeamId !== NO_TEAM_VALUE ? editTeamId : null,
         session_day: editSessionDay,
         session_season: editSessionSeason || null,
         session_year: sessionYearValue,
         start_date: editStartDate || null,
         end_date: editEndDate || null,
-        location: editLocation || null,
+        location: editTeamId && editTeamId !== NO_TEAM_VALUE ? editLocation || null : null,
         instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
         updated_at: new Date().toISOString(),
       })
       .eq('id', currentSessionId)
       .eq('created_by', user.id)
+      .select('id')
+      .maybeSingle()
 
     if (error) {
       setEditMessage(error.message)
+      return
+    }
+    if (!updatedSession) {
+      setEditMessage('Session update did not apply. Confirm you own this session and try again.')
       return
     }
     setEditMessage('Session updated.')
@@ -408,22 +442,40 @@ function ManageSessionsPage() {
                   />
                 </label>
                 {!isGuest ? (
-                  <label className="flex flex-col gap-2 font-semibold text-secondary">
-                    Location (optional)
-                    <select
-                      className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
-                      value={editLocation}
-                      onChange={event => setEditLocation(event.target.value)}
-                      disabled={!currentSessionRecord?.team_id}
-                    >
-                      <option value="">Select a location</option>
-                      {availableLocations.map(option => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <>
+                    <label className="flex flex-col gap-2 font-semibold text-secondary">
+                      Team
+                      <select
+                        className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                        value={editTeamId}
+                        onChange={event => setEditTeamId(event.target.value)}
+                        disabled={teamsLoading}
+                      >
+                        <option value={NO_TEAM_VALUE}>No team</option>
+                        {teams.map(team => (
+                          <option key={team.id} value={team.id}>
+                            {team.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="flex flex-col gap-2 font-semibold text-secondary">
+                      Location (optional)
+                      <select
+                        className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                        value={editLocation}
+                        onChange={event => setEditLocation(event.target.value)}
+                        disabled={!editTeamId || editTeamId === NO_TEAM_VALUE}
+                      >
+                        <option value="">Select a location</option>
+                        {availableLocations.map(option => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </>
                 ) : null}
                 <div className="flex flex-col gap-2">
                   <span className="font-semibold text-secondary">Upload Roster (optional)</span>
