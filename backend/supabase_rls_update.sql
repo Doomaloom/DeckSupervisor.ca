@@ -86,12 +86,70 @@ as $$
     );
 $$;
 
+create or replace function can_read_profile(p_profile_id uuid, p_uid uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+set row_security = off
+as $$
+  select
+    p_profile_id = p_uid
+    or exists (
+      select 1
+      from team_members my_team
+      join team_members other_team
+        on other_team.team_id = my_team.team_id
+      where my_team.user_id = p_uid
+        and other_team.user_id = p_profile_id
+    )
+    or exists (
+      select 1
+      from teams t
+      join team_members tm on tm.team_id = t.id
+      where t.owner_id = p_uid
+        and tm.user_id = p_profile_id
+    )
+    or exists (
+      select 1
+      from team_invites ti
+      where ti.invitee_id = p_profile_id
+        and ti.status = 'pending'
+        and is_team_owner(ti.team_id, p_uid)
+    )
+    or exists (
+      select 1
+      from teams t
+      join team_members tm on tm.team_id = t.id
+      where t.owner_id = p_profile_id
+        and tm.user_id = p_uid
+    );
+$$;
+
+create or replace function guard_profile_account_type()
+returns trigger
+language plpgsql
+as $$
+begin
+  if auth.role() = 'authenticated' then
+    if tg_op = 'INSERT' and coalesce(new.account_type, 'part_time') <> 'part_time' then
+      raise exception 'account_type must default to part_time';
+    end if;
+    if tg_op = 'UPDATE' and new.account_type <> old.account_type then
+      raise exception 'account_type cannot be changed';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
 grant execute on function toronto_today() to authenticated;
 grant execute on function is_session_owner(uuid, uuid) to authenticated;
 grant execute on function is_session_shared_today(uuid, uuid) to authenticated;
 grant execute on function can_read_session(uuid, uuid) to authenticated;
 grant execute on function can_edit_session(uuid, uuid) to authenticated;
 grant execute on function can_edit_roster(uuid, uuid) to authenticated;
+grant execute on function can_read_profile(uuid, uuid) to authenticated;
 
 revoke execute on function toronto_today() from anon;
 revoke execute on function is_session_owner(uuid, uuid) from anon;
@@ -99,7 +157,14 @@ revoke execute on function is_session_shared_today(uuid, uuid) from anon;
 revoke execute on function can_read_session(uuid, uuid) from anon;
 revoke execute on function can_edit_session(uuid, uuid) from anon;
 revoke execute on function can_edit_roster(uuid, uuid) from anon;
+revoke execute on function can_read_profile(uuid, uuid) from anon;
 
+drop trigger if exists profiles_account_type_guard on profiles;
+create trigger profiles_account_type_guard
+before insert or update on profiles
+for each row execute function guard_profile_account_type();
+
+alter table profiles enable row level security;
 alter table sessions enable row level security;
 alter table schematics enable row level security;
 alter table session_shares enable row level security;
@@ -108,6 +173,54 @@ alter table roster_level_edits enable row level security;
 alter table roster_student_level_edits enable row level security;
 alter table custom_rosters enable row level security;
 alter table report_cards enable row level security;
+alter table team_invites enable row level security;
+
+drop policy if exists "Profiles insert by owner" on profiles;
+drop policy if exists "Profiles read by owner" on profiles;
+drop policy if exists "Profiles read by full-time" on profiles;
+drop policy if exists "Profiles read by related teams" on profiles;
+drop policy if exists "Profiles update by owner" on profiles;
+
+create policy "Profiles insert by owner"
+  on profiles for insert
+  with check (
+    id = auth.uid()
+    and coalesce(account_type, 'part_time') = 'part_time'
+  );
+
+create policy "Profiles read by owner"
+  on profiles for select
+  using (id = auth.uid());
+
+create policy "Profiles read by related teams"
+  on profiles for select
+  using (can_read_profile(id, auth.uid()));
+
+create policy "Profiles update by owner"
+  on profiles for update
+  using (id = auth.uid())
+  with check (id = auth.uid());
+
+drop policy if exists "Team invites read by invitee" on team_invites;
+drop policy if exists "Team invites create by owner" on team_invites;
+drop policy if exists "Team invites update by invitee or owner" on team_invites;
+drop policy if exists "Team invites update via rpc only" on team_invites;
+
+create policy "Team invites read by invitee"
+  on team_invites for select
+  using (invitee_id = auth.uid() or is_team_owner(team_id, auth.uid()));
+
+create policy "Team invites create by owner"
+  on team_invites for insert
+  with check (
+    is_team_owner(team_id, auth.uid())
+    and status = 'pending'
+  );
+
+create policy "Team invites update via rpc only"
+  on team_invites for update
+  using (false)
+  with check (false);
 
 drop policy if exists "Sessions read" on sessions;
 drop policy if exists "Sessions create" on sessions;

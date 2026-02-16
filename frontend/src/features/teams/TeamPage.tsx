@@ -16,7 +16,6 @@ type ProfileResult = {
   first_name: string
   last_name: string
   email: string
-  account_type: 'part_time' | 'full_time'
 }
 
 type InviteEntry = {
@@ -228,20 +227,24 @@ function TeamPage() {
       setSearchResults([])
       return
     }
+    if (!activeTeamId) {
+      setMessage('Select a team first.')
+      return
+    }
     setLoading(true)
     setMessage('')
     try {
       const query = searchQuery.trim()
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id,first_name,last_name,email,account_type')
-        .eq('account_type', 'part_time')
-        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+      const { data, error } = await supabase.rpc('search_invitable_part_time_profiles', {
+        p_team_id: activeTeamId,
+        p_query: query,
+        p_limit: 25,
+      })
       if (error) {
         setMessage(error.message)
         return
       }
-      setSearchResults((data ?? []).filter(profile => profile.id !== user.id))
+      setSearchResults((data ?? []) as ProfileResult[])
     } finally {
       setLoading(false)
     }
@@ -273,8 +276,13 @@ function TeamPage() {
 
   const handleRevokeInvite = async (invite: InviteEntry) => {
     setLoading(true)
+    setMessage('')
     try {
-      await supabase.from('team_invites').update({ status: 'revoked' }).eq('id', invite.id)
+      const { error } = await supabase.rpc('revoke_team_invite', { invite_id: invite.id })
+      if (error) {
+        setMessage(error.message)
+        return
+      }
       setInvites(current => current.filter(item => item.id !== invite.id))
     } finally {
       setLoading(false)

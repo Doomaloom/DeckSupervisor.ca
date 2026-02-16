@@ -105,9 +105,14 @@ function AccountPage() {
   }
 
   const handleDeclineInvite = async (invite: InviteEntry) => {
+    setInviteError('')
     setLoading(true)
     try {
-      await supabase.from('team_invites').update({ status: 'declined' }).eq('id', invite.id)
+      const { error } = await supabase.rpc('decline_team_invite', { invite_id: invite.id })
+      if (error) {
+        setInviteError(error.message)
+        return
+      }
       setInvites(current => current.filter(item => item.id !== invite.id))
     } finally {
       setLoading(false)

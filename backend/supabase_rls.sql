@@ -38,11 +38,56 @@ as $$
   );
 $$;
 
-create or replace function prevent_account_type_change()
+create or replace function can_read_profile(profile_id uuid, uid uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+set row_security = off
+as $$
+  select
+    profile_id = uid
+    or exists (
+      select 1
+      from team_members my_team
+      join team_members other_team
+        on other_team.team_id = my_team.team_id
+      where my_team.user_id = uid
+        and other_team.user_id = profile_id
+    )
+    or exists (
+      select 1
+      from teams t
+      join team_members tm on tm.team_id = t.id
+      where t.owner_id = uid
+        and tm.user_id = profile_id
+    )
+    or exists (
+      select 1
+      from team_invites ti
+      where ti.invitee_id = profile_id
+        and ti.status = 'pending'
+        and is_team_owner(ti.team_id, uid)
+    )
+    or exists (
+      select 1
+      from teams t
+      join team_members tm on tm.team_id = t.id
+      where t.owner_id = profile_id
+        and tm.user_id = uid
+    );
+$$;
+
+create or replace function guard_profile_account_type()
 returns trigger as $$
 begin
-  if auth.role() = 'authenticated' and new.account_type <> old.account_type then
-    raise exception 'account_type cannot be changed';
+  if auth.role() = 'authenticated' then
+    if tg_op = 'INSERT' and coalesce(new.account_type, 'part_time') <> 'part_time' then
+      raise exception 'account_type must default to part_time';
+    end if;
+    if tg_op = 'UPDATE' and new.account_type <> old.account_type then
+      raise exception 'account_type cannot be changed';
+    end if;
   end if;
   return new;
 end;
@@ -50,8 +95,8 @@ $$ language plpgsql;
 
 drop trigger if exists profiles_account_type_guard on profiles;
 create trigger profiles_account_type_guard
-before update on profiles
-for each row execute function prevent_account_type_change();
+before insert or update on profiles
+for each row execute function guard_profile_account_type();
 
 alter table profiles enable row level security;
 alter table teams enable row level security;
@@ -63,19 +108,23 @@ alter table report_cards enable row level security;
 drop policy if exists "Profiles insert by owner" on profiles;
 drop policy if exists "Profiles read by owner" on profiles;
 drop policy if exists "Profiles read by full-time" on profiles;
+drop policy if exists "Profiles read by related teams" on profiles;
 drop policy if exists "Profiles update by owner" on profiles;
 
 create policy "Profiles insert by owner"
   on profiles for insert
-  with check (id = auth.uid());
+  with check (
+    id = auth.uid()
+    and coalesce(account_type, 'part_time') = 'part_time'
+  );
 
 create policy "Profiles read by owner"
   on profiles for select
   using (id = auth.uid());
 
-create policy "Profiles read by full-time"
+create policy "Profiles read by related teams"
   on profiles for select
-  using (is_full_time(auth.uid()));
+  using (can_read_profile(id, auth.uid()));
 
 create policy "Profiles update by owner"
   on profiles for update
@@ -125,6 +174,7 @@ create policy "Team members remove by owner"
 drop policy if exists "Team invites read by invitee" on team_invites;
 drop policy if exists "Team invites create by owner" on team_invites;
 drop policy if exists "Team invites update by invitee or owner" on team_invites;
+drop policy if exists "Team invites update via rpc only" on team_invites;
 
 create policy "Team invites read by invitee"
   on team_invites for select
@@ -132,11 +182,15 @@ create policy "Team invites read by invitee"
 
 create policy "Team invites create by owner"
   on team_invites for insert
-  with check (is_team_owner(team_id, auth.uid()));
+  with check (
+    is_team_owner(team_id, auth.uid())
+    and status = 'pending'
+  );
 
-create policy "Team invites update by invitee or owner"
+create policy "Team invites update via rpc only"
   on team_invites for update
-  using (invitee_id = auth.uid() or is_team_owner(team_id, auth.uid()));
+  using (false)
+  with check (false);
 
 create policy "Custom rosters owner only"
   on custom_rosters for all
