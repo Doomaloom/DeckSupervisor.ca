@@ -12,6 +12,7 @@ type SchematicBoardProps = {
     scheduleStartMinutes: number
     instructorOptions: string[]
     sessionLabel: string
+    readOnly?: boolean
     onInstructorChange: (columnIndex: number, value: string) => void
     onColumnDrop: (columnIndex: number) => void
     onCourseDrop: (course: Course, columnIndex: number) => void
@@ -26,6 +27,7 @@ function SchematicBoard({
     scheduleStartMinutes,
     instructorOptions,
     sessionLabel,
+    readOnly = false,
     onInstructorChange,
     onColumnDrop,
     onCourseDrop,
@@ -71,6 +73,7 @@ function SchematicBoard({
                                     instructorOptions={instructorOptions}
                                     scheduleHeightRem={scheduleHeightRem}
                                     scheduleStartMinutes={scheduleStartMinutes}
+                                    readOnly={readOnly}
                                     onInstructorChange={onInstructorChange}
                                     onColumnDrop={onColumnDrop}
                                     onCourseDrop={onCourseDrop}

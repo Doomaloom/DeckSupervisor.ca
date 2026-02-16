@@ -11,6 +11,7 @@ type InstructorColumnProps = {
     instructorOptions: string[]
     scheduleHeightRem: number
     scheduleStartMinutes: number
+    readOnly?: boolean
     onInstructorChange: (columnIndex: number, value: string) => void
     onColumnDrop: (columnIndex: number) => void
     onCourseDrop: (course: Course, columnIndex: number) => void
@@ -24,6 +25,7 @@ function InstructorColumn({
     instructorOptions,
     scheduleHeightRem,
     scheduleStartMinutes,
+    readOnly = false,
     onInstructorChange,
     onColumnDrop,
     onCourseDrop,
@@ -38,18 +40,24 @@ function InstructorColumn({
             onDrop={() => onColumnDrop(columnIndex)}
         >
             <div className={`border border-black bg-accent p-2 ${columnBorderClass}`}>
-                <select
-                    className="w-full rounded-none border border-black bg-white px-2 py-1 text-sm text-black"
-                    value={instructor}
-                    onChange={event => onInstructorChange(columnIndex, event.target.value)}
-                >
-                    <option value="">{`Instructor ${columnIndex + 1}`}</option>
-                    {instructorOptions.map(name => (
-                        <option key={`${columnIndex}-${name}`} value={name}>
-                            {name}
-                        </option>
-                    ))}
-                </select>
+                {readOnly ? (
+                    <div className="w-full rounded-none border border-black bg-white px-2 py-1 text-sm text-black">
+                        {instructor || `Instructor ${columnIndex + 1}`}
+                    </div>
+                ) : (
+                    <select
+                        className="w-full rounded-none border border-black bg-white px-2 py-1 text-sm text-black"
+                        value={instructor}
+                        onChange={event => onInstructorChange(columnIndex, event.target.value)}
+                    >
+                        <option value="">{`Instructor ${columnIndex + 1}`}</option>
+                        {instructorOptions.map(name => (
+                            <option key={`${columnIndex}-${name}`} value={name}>
+                                {name}
+                            </option>
+                        ))}
+                    </select>
+                )}
             </div>
             <div
                 className={`relative border border-black border-t-0 bg-bg ${columnBorderClass}`}
@@ -66,6 +74,7 @@ function InstructorColumn({
                             course={course}
                             capacity={capacity}
                             capacityClass={capacityClass}
+                            draggable={!readOnly}
                             onDragStart={event => onCourseDragStart(event, course, columnIndex)}
                             onDrop={() => onCourseDrop(course, columnIndex)}
                             style={{

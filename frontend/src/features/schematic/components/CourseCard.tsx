@@ -6,15 +6,24 @@ type CourseCardProps = {
     capacity: number
     capacityClass: string
     style: React.CSSProperties
+    draggable?: boolean
     onDragStart: (event: React.DragEvent<HTMLDivElement>) => void
     onDrop: () => void
 }
 
-function CourseCard({ course, capacity, capacityClass, style, onDragStart, onDrop }: CourseCardProps) {
+function CourseCard({
+    course,
+    capacity,
+    capacityClass,
+    style,
+    draggable = true,
+    onDragStart,
+    onDrop,
+}: CourseCardProps) {
     return (
         <div
             className="absolute left-0 right-0 flex flex-col overflow-hidden border border-black bg-white text-xs text-black"
-            draggable
+            draggable={draggable}
             onDragStart={onDragStart}
             onDragOver={event => event.preventDefault()}
             onDrop={onDrop}
