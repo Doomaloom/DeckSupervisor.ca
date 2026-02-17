@@ -29,7 +29,26 @@ export type InstructorPdfPacket = {
   instructors: InstructorPdfEntry[]
 }
 
-const pendingPrefetches = new Map<string, Promise<void>>()
+type PrefetchProgress = {
+  name: string
+  completed: number
+  total: number
+}
+
+type PrefetchOptions = {
+  concurrency?: number
+  incremental?: boolean
+  onStart?: (total: number) => void
+  onProgress?: (progress: PrefetchProgress) => void
+}
+
+export type PrefetchResult = {
+  total: number
+  completed: number
+  failed: string[]
+}
+
+const pendingPrefetches = new Map<string, Promise<PrefetchResult>>()
 
 const mapWithConcurrency = async <T, R>(
   items: T[],
@@ -210,13 +229,16 @@ export async function getCachedInstructorPdf(
   return match?.blob ?? null
 }
 
-export async function prefetchInstructorPacket(day: string): Promise<void> {
+export async function prefetchInstructorPacket(
+  day: string,
+  options: PrefetchOptions = {},
+): Promise<PrefetchResult> {
   if (typeof window === 'undefined') {
-    return
+    return { total: 0, completed: 0, failed: [] }
   }
   const sessionId = getCurrentSessionId()
   if (!sessionId || !day) {
-    return
+    return { total: 0, completed: 0, failed: [] }
   }
   const key = getPacketKey(sessionId, day)
   const existing = pendingPrefetches.get(key)
@@ -242,59 +264,95 @@ export async function prefetchInstructorPacket(day: string): Promise<void> {
 
     const sessionName = getCurrentSessionName() || FALLBACK_SESSION_NAME
     const groupedEntries = Array.from(grouped.entries())
+    const total = groupedEntries.length
+    let completed = 0
+    const failed: string[] = []
+
+    options.onStart?.(total)
+
     const entries = await mapWithConcurrency(
       groupedEntries,
-      PREFETCH_CONCURRENCY,
+      options.concurrency ?? PREFETCH_CONCURRENCY,
       async ([name, rosters]) => {
-        const response = await fetch('/api/attendance-pdf', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            session: sessionName,
-            filename: name,
-            rosters: rosters.map(roster => ({
-              template: sanitizeLevel(roster.level),
-              roster: {
-                code: roster.code,
-                level: roster.level,
-                serviceName: roster.serviceName,
-                time: roster.time,
-                instructor: roster.instructor,
-                location: roster.location,
-                schedule: roster.schedule,
-                students: roster.students.map(student => ({
-                  name: student.name,
-                })),
-              },
-            })),
-          }),
-        })
+        try {
+          const response = await fetch('/api/attendance-pdf', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              session: sessionName,
+              filename: name,
+              rosters: rosters.map(roster => ({
+                template: sanitizeLevel(roster.level),
+                roster: {
+                  code: roster.code,
+                  level: roster.level,
+                  serviceName: roster.serviceName,
+                  time: roster.time,
+                  instructor: roster.instructor,
+                  location: roster.location,
+                  schedule: roster.schedule,
+                  students: roster.students.map(student => ({
+                    name: student.name,
+                  })),
+                },
+              })),
+            }),
+          })
 
-        if (!response.ok) {
-          const message = await response.text()
-          throw new Error(message || `Failed to prefetch instructor packet for ${name}`)
-        }
+          if (!response.ok) {
+            const message = await response.text()
+            throw new Error(message || `Failed to prefetch instructor packet for ${name}`)
+          }
 
-        return {
-          name,
-          blob: await response.blob(),
+          const blob = await response.blob()
+          if (options.incremental) {
+            await upsertInstructorPdf(sessionId, day, name, blob)
+          }
+          completed += 1
+          options.onProgress?.({
+            name,
+            completed,
+            total,
+          })
+
+          return {
+            name,
+            blob,
+          }
+        } catch (error) {
+          failed.push(name)
+          console.error(`Failed to prefetch instructor PDF for ${name}`, error)
+          return null
         }
       },
     )
 
-    const packet: InstructorPdfPacket = {
-      key,
-      sessionId,
-      day,
-      generatedAt: Date.now(),
-      instructors: entries,
+    if (!options.incremental) {
+      const packet: InstructorPdfPacket = {
+        key,
+        sessionId,
+        day,
+        generatedAt: Date.now(),
+        instructors: entries.filter((entry): entry is InstructorPdfEntry => entry !== null),
+      }
+      await saveInstructorPacket(packet)
     }
-    await saveInstructorPacket(packet)
+
+    return {
+      total,
+      completed,
+      failed,
+    }
   })()
     .catch(error => {
       console.error('Failed to prefetch instructor PDFs', error)
+      return {
+        total: 0,
+        completed: 0,
+        failed: [],
+      }
     })
     .finally(() => {
       pendingPrefetches.delete(key)

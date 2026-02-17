@@ -7,6 +7,7 @@ type InstructorOptionsModalProps = {
   cachedInstructors: Record<string, boolean>
   busyInstructors: Record<string, boolean>
   isRefreshing: boolean
+  refreshLabel?: string
   isPrintingAll: boolean
   extras: {
     schematicCoverPage: boolean
@@ -28,6 +29,7 @@ function InstructorOptionsModal({
   cachedInstructors,
   busyInstructors,
   isRefreshing,
+  refreshLabel,
   isPrintingAll,
   extras,
   coverOrientation,
@@ -68,7 +70,7 @@ function InstructorOptionsModal({
             onClick={onRefresh}
             disabled={isRefreshing}
           >
-            {isRefreshing ? 'Refreshing...' : 'Refresh PDFs'}
+            {isRefreshing ? (refreshLabel ?? 'Refreshing...') : 'Refresh PDFs'}
           </button>
         </div>
       </div>

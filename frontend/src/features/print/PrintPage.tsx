@@ -113,6 +113,12 @@ function PrintPage() {
   > | null>(null)
   const [busyInstructors, setBusyInstructors] = useState<Record<string, boolean>>({})
   const [isRefreshingInstructorPdfs, setIsRefreshingInstructorPdfs] = useState(false)
+  const [refreshingCachedInstructors, setRefreshingCachedInstructors] = useState<
+    Record<string, boolean>
+  >({})
+  const [refreshProgress, setRefreshProgress] = useState<{ completed: number; total: number } | null>(
+    null,
+  )
   const [isPrintingAllInstructors, setIsPrintingAllInstructors] = useState(false)
   const [instructorExtras, setInstructorExtras] = useState({
     schematicCoverPage: false,
@@ -606,11 +612,31 @@ function PrintPage() {
       return
     }
     setIsRefreshingInstructorPdfs(true)
+    setRefreshingCachedInstructors({})
+    setRefreshProgress(null)
     try {
-      await prefetchInstructorPacket(selectedDay)
+      const result = await prefetchInstructorPacket(selectedDay, {
+        concurrency: 1,
+        incremental: true,
+        onStart: total => {
+          setRefreshProgress({ completed: 0, total })
+        },
+        onProgress: ({ name, completed, total }) => {
+          setRefreshingCachedInstructors(current => ({
+            ...current,
+            [name]: true,
+          }))
+          setRefreshProgress({ completed, total })
+        },
+      })
       await refreshCachedPacket()
+      if (result.failed.length > 0) {
+        alert(`Some instructor PDFs could not be refreshed: ${result.failed.join(', ')}`)
+      }
     } finally {
       setIsRefreshingInstructorPdfs(false)
+      setRefreshProgress(null)
+      setRefreshingCachedInstructors({})
     }
   }
 
@@ -1112,10 +1138,15 @@ function PrintPage() {
             acc[entry.name] = true
             return acc
           },
-          {},
-        ) ?? {}}
+          { ...refreshingCachedInstructors },
+        ) ?? refreshingCachedInstructors}
         busyInstructors={busyInstructors}
         isRefreshing={isRefreshingInstructorPdfs}
+        refreshLabel={
+          isRefreshingInstructorPdfs && refreshProgress
+            ? `Refreshing ${refreshProgress.completed}/${refreshProgress.total}`
+            : undefined
+        }
         isPrintingAll={isPrintingAllInstructors}
         extras={instructorExtras}
         coverOrientation={instructorCoverOrientation}
