@@ -15,6 +15,7 @@ import type { Student } from '../../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
 import type { Course, DragState } from '../types'
 import { buildColumns, buildCourses, coursesOverlap } from '../utils/courses'
+import { normalizeCourseCodeForCompare } from '../utils/courseCode'
 import { canPlaceCourses, canReplaceByStart, canSwapSingleCourses, findContiguousSwapIndices } from '../utils/drag'
 import { buildTimeLabels } from '../utils/time'
 
@@ -96,9 +97,14 @@ export function useSchematicSchedule(selectedDay: string | null) {
         const stored = access.mode === 'guest' ? getScheduleForDay(selectedDay) : remoteSchedule
 
         if (stored && stored.codes.length > 0) {
-            const courseMap = new Map(courses.map(course => [course.code, course]))
+            const courseMap = new Map(courses.map(course => [normalizeCourseCodeForCompare(course.code), course]))
             const nextColumns = stored.codes
-                .map(codes => codes.split(',').map(code => courseMap.get(code)).filter(Boolean) as Course[])
+                .map(codes =>
+                    codes
+                        .split(',')
+                        .map(code => courseMap.get(normalizeCourseCodeForCompare(code)))
+                        .filter(Boolean) as Course[],
+                )
                 .filter(column => column.length > 0)
             setColumns(nextColumns.length ? nextColumns : initialColumns)
             setInstructors(stored.instructors ?? [])

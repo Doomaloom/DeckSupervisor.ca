@@ -1,4 +1,4 @@
-import type { ClassRoster, InstructorEntry, Student } from '../types/app'
+import type { ClassRoster, ExtractedClass, InstructorEntry, Student } from '../types/app'
 import { setStudentsForDay } from './storage'
 
 type ProcessCsvResponse = {
@@ -6,6 +6,12 @@ type ProcessCsvResponse = {
   day?: string
   total: number
   classes: ClassRoster[]
+}
+
+type ExtractClassesResponse = {
+  success: boolean
+  total: number
+  classes: ExtractedClass[]
 }
 
 function rosterToStudents(rosters: ClassRoster[]): Student[] {
@@ -66,4 +72,20 @@ export async function processCsvAndStore(
     })
   }
   return data
+}
+
+export async function extractClassesFromCsv(file: File): Promise<ExtractClassesResponse> {
+  const formData = new FormData()
+  formData.append('csv_file', file)
+
+  const response = await fetch('/api/extract-classes', {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to extract classes from CSV')
+  }
+
+  return (await response.json()) as ExtractClassesResponse
 }

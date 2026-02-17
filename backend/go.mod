@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/chromedp/cdproto v0.0.0-20241003230502-a4a8f7c660df
 	github.com/chromedp/chromedp v0.10.1
+	github.com/go-gota/gota v0.12.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/gorilla/mux v1.8.0
 	github.com/pdfcpu/pdfcpu v0.8.1
@@ -34,5 +35,6 @@ require (
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
+	gonum.org/v1/gonum v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

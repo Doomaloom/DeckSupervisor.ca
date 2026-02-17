@@ -10,6 +10,7 @@ import (
 func NewRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/process-csv", handlers.ProcessCSV).Methods("POST")
+	r.HandleFunc("/api/extract-classes", handlers.ExtractClasses).Methods("POST")
 	r.HandleFunc("/api/masterlist", handlers.Masterlist).Methods("POST")
 	r.HandleFunc("/api/masterlist-rosters", handlers.MasterlistRosters).Methods("POST")
 	r.HandleFunc("/api/attendance-pdf", handlers.AttendancePDF).Methods("POST")

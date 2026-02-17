@@ -73,3 +73,16 @@ export type CustomRoster = {
   studentIds: string[]
   createdAt: string
 }
+
+export type ExtractedClass = {
+  dayOfWeek: string
+  sessionSeason: string
+  sessionYear: number
+  courseCode: string
+  serviceName: string
+  location: string
+  startTime24: string
+  endTime24: string
+  durationMinutes: number
+  studentCount: number
+}

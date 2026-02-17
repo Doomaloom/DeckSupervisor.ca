@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useCurrentTeam } from '../../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../../app/useCurrentTerm'
-import { getStudentsForDay, onStudentsUpdated } from '../../../lib/storage'
+import {
+    getExtractedClassesForScope,
+    onExtractedClassesUpdated,
+} from '../../../lib/extractedClassesStorage'
 import { supabase } from '../../../lib/supabaseClient'
-import type { Student } from '../../../types/app'
+import type { ExtractedClass } from '../../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES, dayNames } from '../constants'
 import type { Course } from '../types'
-import { buildColumns, buildCourses } from '../utils/courses'
-import { buildTimeLabels } from '../utils/time'
+import { normalizeCourseCodeForCompare } from '../utils/courseCode'
+import { buildTimeLabels, timeToMinutes } from '../utils/time'
 
 const NO_LOCATION_KEY = '__no_location__'
 
@@ -51,6 +54,10 @@ function normalizeLocation(value: string | null | undefined) {
     return (value ?? '').trim()
 }
 
+function normalizeLocationMatch(value: string | null | undefined) {
+    return normalizeLocation(value).toLowerCase()
+}
+
 function locationToKey(value: string) {
     return value || NO_LOCATION_KEY
 }
@@ -69,7 +76,7 @@ export function useFullTimeSchematicView(enabled: boolean) {
     const [loadingSchematics, setLoadingSchematics] = useState(false)
     const [selectedDay, setSelectedDay] = useState('')
     const [selectedLocationKey, setSelectedLocationKey] = useState('')
-    const [dayStudents, setDayStudents] = useState<Student[]>([])
+    const [extractedClasses, setExtractedClasses] = useState<ExtractedClass[]>([])
 
     useEffect(() => {
         if (!enabled) {
@@ -159,16 +166,22 @@ export function useFullTimeSchematicView(enabled: boolean) {
             return []
         }
 
-        const uniqueLocations = new Set<string>()
+        const uniqueLocations = new Map<string, string>()
         termSessions
             .filter(session => session.session_day === selectedDay)
-            .forEach(session => uniqueLocations.add(normalizeLocation(session.location)))
+            .forEach(session => {
+                const location = normalizeLocation(session.location)
+                const locationMatch = normalizeLocationMatch(location)
+                if (!uniqueLocations.has(locationMatch)) {
+                    uniqueLocations.set(locationMatch, location)
+                }
+            })
 
-        return Array.from(uniqueLocations)
-            .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
-            .map(location => ({
-                key: locationToKey(location),
-                value: location,
+        return Array.from(uniqueLocations.entries())
+            .sort((a, b) => a[1].localeCompare(b[1], 'en', { sensitivity: 'base' }))
+            .map(([locationMatch, location]) => ({
+                key: locationToKey(locationMatch),
+                value: locationMatch,
                 label: location || 'No location',
             }))
     }, [selectedDay, termSessions])
@@ -202,14 +215,17 @@ export function useFullTimeSchematicView(enabled: boolean) {
         const candidates = termSessions.filter(
             session =>
                 session.session_day === selectedDay &&
-                normalizeLocation(session.location) === selectedLocation,
+                normalizeLocationMatch(session.location) === selectedLocation,
         )
 
         if (candidates.length === 0) {
             return null
         }
 
-        return [...candidates].sort((a, b) => {
+        const candidatesWithSchematic = candidates.filter(session => schematicsBySession.has(session.id))
+        const preferredCandidates = candidatesWithSchematic.length > 0 ? candidatesWithSchematic : candidates
+
+        return [...preferredCandidates].sort((a, b) => {
             const updatedAtA = new Date(a.updated_at).getTime()
             const updatedAtB = new Date(b.updated_at).getTime()
             if (updatedAtA !== updatedAtB) {
@@ -217,7 +233,7 @@ export function useFullTimeSchematicView(enabled: boolean) {
             }
             return a.id.localeCompare(b.id)
         })[0]
-    }, [selectedDay, selectedLocation, selectedLocationKey, termSessions])
+    }, [schematicsBySession, selectedDay, selectedLocation, selectedLocationKey, termSessions])
 
     useEffect(() => {
         if (!enabled) {
@@ -276,27 +292,21 @@ export function useFullTimeSchematicView(enabled: boolean) {
     }, [enabled, termSessions])
 
     useEffect(() => {
-        if (!enabled) {
-            setDayStudents([])
-            return
-        }
-        if (!selectedDay) {
-            setDayStudents([])
-            return
-        }
-        setDayStudents(getStudentsForDay(selectedDay))
-    }, [enabled, selectedDay])
-
-    useEffect(() => {
-        if (!enabled) {
+        if (!enabled || !currentTeamId || !currentTerm?.key) {
+            setExtractedClasses([])
             return () => {}
         }
-        return onStudentsUpdated(day => {
-            if (day === selectedDay) {
-                setDayStudents(getStudentsForDay(selectedDay))
+
+        const scopeKey = `${currentTeamId}::${currentTerm.key}`
+        const load = () => setExtractedClasses(getExtractedClassesForScope(currentTeamId, currentTerm.key))
+        load()
+
+        return onExtractedClassesUpdated(updatedScopeKey => {
+            if (updatedScopeKey === scopeKey) {
+                load()
             }
         })
-    }, [enabled, selectedDay])
+    }, [currentTeamId, currentTerm?.key, enabled])
 
     const selectedSessionSchematic = useMemo(() => {
         if (!selectedSession) {
@@ -305,55 +315,137 @@ export function useFullTimeSchematicView(enabled: boolean) {
         return schematicsBySession.get(selectedSession.id) ?? null
     }, [schematicsBySession, selectedSession])
 
-    const selectedLocationStudents = useMemo(
-        () =>
-            dayStudents.filter(
-                student => normalizeLocation(student.location) === selectedLocation,
-            ),
-        [dayStudents, selectedLocation],
-    )
+    const selectedLocationClasses = useMemo(() => {
+        return extractedClasses.filter(classEntry => {
+            if (classEntry.dayOfWeek !== selectedDay) {
+                return false
+            }
+            if (normalizeLocationMatch(classEntry.location) !== selectedLocation) {
+                return false
+            }
+            if (currentTerm) {
+                const entrySeason = classEntry.sessionSeason.trim().toLowerCase()
+                if (entrySeason && entrySeason !== currentTerm.season) {
+                    return false
+                }
+                if (classEntry.sessionYear > 0 && classEntry.sessionYear !== currentTerm.year) {
+                    return false
+                }
+            }
+            return classEntry.courseCode.trim().length > 0
+        })
+    }, [currentTerm, extractedClasses, selectedDay, selectedLocation])
 
-    const courses = useMemo(() => buildCourses(selectedLocationStudents), [selectedLocationStudents])
+    const courses = useMemo(() => {
+        const sortedClasses = [...selectedLocationClasses].sort((a, b) => {
+            if (a.startTime24 !== b.startTime24) {
+                return a.startTime24.localeCompare(b.startTime24)
+            }
+            if (a.endTime24 !== b.endTime24) {
+                return a.endTime24.localeCompare(b.endTime24)
+            }
+            return a.courseCode.localeCompare(b.courseCode)
+        })
 
-    const columns = useMemo(() => {
-        const initialColumns = buildColumns(courses)
+        const seenCodes = new Set<string>()
+        const next: Course[] = []
+
+        sortedClasses.forEach(classEntry => {
+            const code = classEntry.courseCode.trim()
+            if (!code || seenCodes.has(code)) {
+                return
+            }
+
+            const startMinutes = timeToMinutes(classEntry.startTime24)
+            const rawEndMinutes = timeToMinutes(classEntry.endTime24)
+            const endMinutes = rawEndMinutes >= startMinutes ? rawEndMinutes : rawEndMinutes + 24 * 60
+
+            let runningTime = classEntry.durationMinutes
+            if (runningTime <= 0) {
+                runningTime = endMinutes - startMinutes
+            }
+            if (runningTime <= 0) {
+                return
+            }
+
+            seenCodes.add(code)
+            next.push({
+                code,
+                level: classEntry.serviceName.trim() || code,
+                runningTime,
+                startTime: classEntry.startTime24,
+                endTime: classEntry.endTime24,
+                startMinutes,
+                endMinutes,
+                studentCount: Math.max(classEntry.studentCount, 0),
+            })
+        })
+
+        return next
+    }, [selectedLocationClasses])
+
+    const mappedDbSchedule = useMemo(() => {
         const remoteCodes = selectedSessionSchematic?.codes ?? []
+        const remoteInstructors = selectedSessionSchematic?.instructors ?? []
 
         if (remoteCodes.length === 0) {
-            return initialColumns
+            return {
+                columns: [] as Course[][],
+                instructors: [] as string[],
+            }
         }
 
-        const courseMap = new Map(courses.map(course => [course.code, course]))
-        const mappedColumns = remoteCodes
-            .map(encoded => encoded.split(',').map(code => courseMap.get(code)).filter(Boolean) as Course[])
-            .filter(column => column.length > 0)
+        const courseMap = new Map(courses.map(course => [normalizeCourseCodeForCompare(course.code), course]))
+        const mapped = remoteCodes
+            .map((encoded, index) => ({
+                courses: encoded
+                    .split(',')
+                    .map(code => courseMap.get(normalizeCourseCodeForCompare(code)))
+                    .filter(Boolean) as Course[],
+                instructor: remoteInstructors[index] ?? '',
+            }))
+            .filter(entry => entry.courses.length > 0)
 
-        return mappedColumns.length > 0 ? mappedColumns : initialColumns
+        return {
+            columns: mapped.map(entry => entry.courses),
+            instructors: mapped.map(entry => entry.instructor),
+        }
     }, [courses, selectedSessionSchematic])
 
-    const instructors = useMemo(() => {
-        const remoteInstructors = selectedSessionSchematic?.instructors ?? []
-        if (remoteInstructors.length === 0) {
-            return columns.map(() => '')
-        }
-        return columns.map((_, index) => remoteInstructors[index] ?? '')
-    }, [columns, selectedSessionSchematic])
+    const renderedCourses = useMemo(() => mappedDbSchedule.columns.flat(), [mappedDbSchedule.columns])
+
+    const hasDbSchematic = Boolean(selectedSessionSchematic)
+    const hasExtractedClassesForLocation = courses.length > 0
+    const hasMappedSchematicColumns = mappedDbSchedule.columns.length > 0
+    const canRenderBoard =
+        Boolean(selectedSession) &&
+        hasDbSchematic &&
+        hasExtractedClassesForLocation &&
+        hasMappedSchematicColumns
+
+    const columns = mappedDbSchedule.columns
+    const instructors = mappedDbSchedule.instructors
 
     const scheduleStartMinutes = useMemo(() => {
-        if (courses.length === 0) {
+        if (renderedCourses.length === 0) {
             return 0
         }
-        const earliest = Math.min(...courses.map(course => course.startMinutes))
+        const earliest = Math.min(...renderedCourses.map(course => course.startMinutes))
         return earliest - (earliest % SLOT_MINUTES)
-    }, [courses])
+    }, [renderedCourses])
 
     const timeLabels = useMemo(() => {
-        const earliest = courses[0]?.startTime ?? ''
-        const latest = courses.reduce((latestEnd, course) => {
+        const earliest = renderedCourses.reduce((current, course) => {
+            if (!current || course.startMinutes < current.startMinutes) {
+                return course
+            }
+            return current
+        }, renderedCourses[0])?.startTime ?? ''
+        const latest = renderedCourses.reduce((latestEnd, course) => {
             return course.endTime > latestEnd ? course.endTime : latestEnd
         }, '00:00')
         return buildTimeLabels(earliest, latest)
-    }, [courses])
+    }, [renderedCourses])
 
     const scheduleHeightRem = Math.max(timeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
 
@@ -374,7 +466,10 @@ export function useFullTimeSchematicView(enabled: boolean) {
         setSelectedLocationKey,
         selectedSession,
         selectedSessionSchematic,
-        selectedLocationStudents,
+        hasDbSchematic,
+        hasExtractedClassesForLocation,
+        hasMappedSchematicColumns,
+        canRenderBoard,
         termSessions,
         columns,
         instructors,

@@ -18,8 +18,9 @@ import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
-import { processCsvAndStore } from '../../lib/api'
+import { extractClassesFromCsv, processCsvAndStore } from '../../lib/api'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
+import { setExtractedClassesForScope } from '../../lib/extractedClassesStorage'
 import { getSessionTermLabel, syncReportCardsForDay } from '../../lib/reportCardSync'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 import {
@@ -68,7 +69,7 @@ function Layout({ children }: LayoutProps) {
     const { selectedDay } = useDay()
     const { accountType, completeProfile, isGuest, needsProfile, profile, session, signOut, user } = useAuth()
     const { access, session: currentSession } = useCurrentSession()
-    const { currentTeam, loading: teamLoading } = useCurrentTeam()
+    const { currentTeam, currentTeamId, loading: teamLoading } = useCurrentTeam()
     const { currentTerm } = useCurrentTerm()
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
     const [scopeVersion, setScopeVersion] = useState(0)
@@ -326,6 +327,22 @@ function Layout({ children }: LayoutProps) {
                                         }
                                         await processCsvAndStore(uploaded, selectedDay, uploadInstructors)
 
+                                        let extractedCached = false
+                                        if (accountType === 'full_time') {
+                                            const extracted = await extractClassesFromCsv(uploaded)
+                                            console.log('[extract-classes] response', {
+                                                total: extracted.total,
+                                                sample: extracted.classes.slice(0, 5),
+                                                teamId: currentTeamId,
+                                                termKey: currentTerm?.key ?? null,
+                                                selectedDay,
+                                            })
+                                            if (currentTeamId && currentTerm?.key) {
+                                                setExtractedClassesForScope(currentTeamId, currentTerm.key, extracted.classes)
+                                                extractedCached = true
+                                            }
+                                        }
+
                                         const canSyncReportCards =
                                             accountType !== 'full_time' &&
                                             !isGuest &&
@@ -334,6 +351,14 @@ function Layout({ children }: LayoutProps) {
                                             Boolean(currentSession)
 
                                         if (!canSyncReportCards || !currentSession || !user?.id) {
+                                            if (accountType === 'full_time' && extractedCached) {
+                                                alert('Roster uploaded and classes extracted for the current team term schematic.')
+                                                return
+                                            }
+                                            if (accountType === 'full_time') {
+                                                alert('Roster uploaded. Select both a team and term to cache classes for schematic visualization.')
+                                                return
+                                            }
                                             alert('Roster uploaded. You can view it in Rosters or Schematic.')
                                             return
                                         }

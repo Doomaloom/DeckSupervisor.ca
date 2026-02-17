@@ -11,12 +11,22 @@ import { useSchematicSchedule } from './hooks/useSchematicSchedule'
 
 function SchematicPage() {
     const { accountType } = useAuth()
-    const { selectedDay } = useDay()
+    const { selectedDay, setSelectedDay } = useDay()
     const { access, session } = useCurrentSession()
     const { currentTeam, currentTeamId } = useCurrentTeam()
     const { currentTerm } = useCurrentTerm()
 
     const fullTimeView = useFullTimeSchematicView(accountType === 'full_time')
+
+    React.useEffect(() => {
+        if (accountType !== 'full_time') {
+            return
+        }
+        if (selectedDay === fullTimeView.selectedDay) {
+            return
+        }
+        setSelectedDay(fullTimeView.selectedDay)
+    }, [accountType, fullTimeView.selectedDay, selectedDay, setSelectedDay])
 
     const {
         columns,
@@ -70,7 +80,10 @@ function SchematicPage() {
                                     type="button"
                                     className={tabButtonClass(isActive, isDisabled)}
                                     disabled={isDisabled}
-                                    onClick={() => fullTimeView.setSelectedDay(day.key)}
+                                    onClick={() => {
+                                        fullTimeView.setSelectedDay(day.key)
+                                        setSelectedDay(day.key)
+                                    }}
                                 >
                                     {day.label}
                                 </button>
@@ -143,13 +156,22 @@ function SchematicPage() {
                     <div className="rounded-card border-2 border-secondary/30 bg-bg p-4 text-sm font-semibold text-secondary">
                         Loading saved schematic...
                     </div>
-                ) : !fullTimeView.selectedSessionSchematic ? (
+                ) : !fullTimeView.hasDbSchematic ? (
                     <div className="rounded-card border-2 border-secondary/30 bg-bg p-4 text-sm font-semibold text-secondary">
-                        No saved schematic exists for this session yet.
+                        No saved schematic entry exists in the database for this team term day and location.
                     </div>
-                ) : fullTimeView.selectedLocationStudents.length === 0 ? (
+                ) : !fullTimeView.hasExtractedClassesForLocation ? (
                     <div className="rounded-card border-2 border-secondary/30 bg-bg p-4 text-sm font-semibold text-secondary">
-                        Upload roster data for this day and location to render the schematic time grid.
+                        No extracted local classes found for this day and location. Upload the roster CSV for this
+                        team term.
+                    </div>
+                ) : !fullTimeView.hasMappedSchematicColumns ? (
+                    <div className="rounded-card border-2 border-secondary/30 bg-bg p-4 text-sm font-semibold text-secondary">
+                        Saved schematic course IDs do not match extracted local class course IDs for this location.
+                    </div>
+                ) : !fullTimeView.canRenderBoard ? (
+                    <div className="rounded-card border-2 border-secondary/30 bg-bg p-4 text-sm font-semibold text-secondary">
+                        Unable to render schematic until both database and local storage requirements are met.
                     </div>
                 ) : (
                     <SchematicBoard
