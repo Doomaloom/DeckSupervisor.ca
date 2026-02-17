@@ -30,6 +30,35 @@ import { useSchematicSchedule } from '../schematic/hooks/useSchematicSchedule'
 import { getCapacity } from '../schematic/utils/capacity'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
+const INSTRUCTOR_PDF_CONCURRENCY = 2
+
+const mapWithConcurrency = async <T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> => {
+  if (items.length === 0) {
+    return []
+  }
+
+  const workerCount = Math.max(1, Math.min(items.length, Math.floor(concurrency) || 1))
+  const results = new Array<R>(items.length)
+  let nextIndex = 0
+
+  const worker = async () => {
+    while (true) {
+      const currentIndex = nextIndex
+      nextIndex += 1
+      if (currentIndex >= items.length) {
+        return
+      }
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex)
+    }
+  }
+
+  await Promise.all(Array.from({ length: workerCount }, () => worker()))
+  return results
+}
 
 const formatGeneratedDate = (date: Date) =>
   date.toLocaleDateString('en-US', {
@@ -484,6 +513,9 @@ function PrintPage() {
     if (activeModal !== 'instructors') {
       return
     }
+    if (selectedDay) {
+      void prefetchInstructorPacket(selectedDay)
+    }
     let isActive = true
     const loadPacket = async () => {
       if (!selectedDay) {
@@ -622,8 +654,51 @@ function PrintPage() {
         return
       }
 
-      const pdfs: Blob[] = []
+      const sheetResults = await mapWithConcurrency(
+        orderedNames,
+        INSTRUCTOR_PDF_CONCURRENCY,
+        async name => {
+          const cached = await getCachedInstructorPdf(sessionId, selectedDay, name)
+          if (cached) {
+            return { name, pdfBlob: cached, fromCache: true }
+          }
+
+          const rostersToPrint = grouped.get(name) ?? []
+          if (rostersToPrint.length === 0) {
+            return null
+          }
+
+          const response = await fetch('/api/attendance-pdf', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(buildInstructorPayload(rostersToPrint, name)),
+          })
+
+          if (!response.ok) {
+            const message = await response.text()
+            throw new Error(message || `Failed to generate sheets for ${name}`)
+          }
+
+          return {
+            name,
+            pdfBlob: await response.blob(),
+            fromCache: false,
+          }
+        },
+      )
+
       let shouldRefresh = false
+      for (const result of sheetResults) {
+        if (!result || result.fromCache) {
+          continue
+        }
+        await upsertInstructorPdf(sessionId, selectedDay, result.name, result.pdfBlob)
+        shouldRefresh = true
+      }
+
+      const pdfs: Blob[] = []
       let baseSchematicCover: Blob | null = null
       let baseSchematicBlank: Blob | null = null
 
@@ -637,7 +712,11 @@ function PrintPage() {
         baseSchematicBlank = result.blankPage
       }
 
-      for (const name of orderedNames) {
+      for (const result of sheetResults) {
+        if (!result) {
+          continue
+        }
+        const { name, pdfBlob } = result
         if (instructorExtras.schematicCoverPage) {
           if (instructorExtras.highlightCoverInstructor) {
             const result = await fetchSchematicCoverWithBlank(
@@ -653,30 +732,6 @@ function PrintPage() {
               pdfs.push(baseSchematicBlank)
             }
           }
-        }
-
-        let pdfBlob = await getCachedInstructorPdf(sessionId, selectedDay, name)
-        if (!pdfBlob) {
-          const rostersToPrint = grouped.get(name) ?? []
-          if (rostersToPrint.length === 0) {
-            continue
-          }
-          const response = await fetch('/api/attendance-pdf', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(buildInstructorPayload(rostersToPrint, name)),
-          })
-
-          if (!response.ok) {
-            const message = await response.text()
-            throw new Error(message || `Failed to generate sheets for ${name}`)
-          }
-
-          pdfBlob = await response.blob()
-          await upsertInstructorPdf(sessionId, selectedDay, name, pdfBlob)
-          shouldRefresh = true
         }
         pdfs.push(pdfBlob)
       }

@@ -7,6 +7,7 @@ const DB_VERSION = 1
 const STORE_NAME = 'instructorPackets'
 
 const FALLBACK_SESSION_NAME = 'Summer 2025'
+const PREFETCH_CONCURRENCY = 2
 
 type SessionEntry = {
   id: string
@@ -29,6 +30,34 @@ export type InstructorPdfPacket = {
 }
 
 const pendingPrefetches = new Map<string, Promise<void>>()
+
+const mapWithConcurrency = async <T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> => {
+  if (items.length === 0) {
+    return []
+  }
+
+  const workerCount = Math.max(1, Math.min(items.length, Math.floor(concurrency) || 1))
+  const results = new Array<R>(items.length)
+  let nextIndex = 0
+
+  const worker = async () => {
+    while (true) {
+      const currentIndex = nextIndex
+      nextIndex += 1
+      if (currentIndex >= items.length) {
+        return
+      }
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex)
+    }
+  }
+
+  await Promise.all(Array.from({ length: workerCount }, () => worker()))
+  return results
+}
 
 function buildRosterGroupsForDay(day: string) {
   const students = getStudentsForDay(day)
@@ -212,42 +241,48 @@ export async function prefetchInstructorPacket(day: string): Promise<void> {
     })
 
     const sessionName = getCurrentSessionName() || FALLBACK_SESSION_NAME
-    const entries: InstructorPdfEntry[] = []
+    const groupedEntries = Array.from(grouped.entries())
+    const entries = await mapWithConcurrency(
+      groupedEntries,
+      PREFETCH_CONCURRENCY,
+      async ([name, rosters]) => {
+        const response = await fetch('/api/attendance-pdf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session: sessionName,
+            filename: name,
+            rosters: rosters.map(roster => ({
+              template: sanitizeLevel(roster.level),
+              roster: {
+                code: roster.code,
+                level: roster.level,
+                serviceName: roster.serviceName,
+                time: roster.time,
+                instructor: roster.instructor,
+                location: roster.location,
+                schedule: roster.schedule,
+                students: roster.students.map(student => ({
+                  name: student.name,
+                })),
+              },
+            })),
+          }),
+        })
 
-    for (const [name, rosters] of grouped.entries()) {
-      const response = await fetch('/api/attendance-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          session: sessionName,
-          filename: name,
-          rosters: rosters.map(roster => ({
-            template: sanitizeLevel(roster.level),
-            roster: {
-              code: roster.code,
-              level: roster.level,
-              serviceName: roster.serviceName,
-              time: roster.time,
-              instructor: roster.instructor,
-              location: roster.location,
-              schedule: roster.schedule,
-              students: roster.students.map(student => ({
-                name: student.name,
-              })),
-            },
-          })),
-        }),
-      })
+        if (!response.ok) {
+          const message = await response.text()
+          throw new Error(message || `Failed to prefetch instructor packet for ${name}`)
+        }
 
-      if (!response.ok) {
-        const message = await response.text()
-        throw new Error(message || `Failed to prefetch instructor packet for ${name}`)
-      }
-      const pdfBlob = await response.blob()
-      entries.push({ name, blob: pdfBlob })
-    }
+        return {
+          name,
+          blob: await response.blob(),
+        }
+      },
+    )
 
     const packet: InstructorPdfPacket = {
       key,

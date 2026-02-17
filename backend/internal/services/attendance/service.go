@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -23,6 +24,7 @@ import (
 const (
 	DefaultSessionName      = "Summer 2025"
 	DefaultAttendanceLayout = "SplashFitness"
+	DefaultRenderWorkers    = 2
 )
 
 var (
@@ -97,10 +99,7 @@ func Generate(ctx context.Context, req Request) ([]byte, string, error) {
 	if len(items) > 1 {
 		rendered, err := renderManyTabs(ctx, session, items)
 		if err != nil {
-			rendered, err = renderSequential(ctx, session, items)
-			if err != nil {
-				return nil, "", fmt.Errorf("unable to render attendance PDF: %w", err)
-			}
+			return nil, "", fmt.Errorf("unable to render attendance PDF: %w", err)
 		}
 		pdfs = rendered
 	} else {
@@ -199,9 +198,6 @@ func templatesDir() (string, error) {
 }
 
 func renderPDF(ctx context.Context, templatePath string, data pdfPayload) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, 25*time.Second)
-	defer cancel()
-
 	allocatorOptions, err := buildChromeAllocatorOptions()
 	if err != nil {
 		return nil, err
@@ -210,10 +206,20 @@ func renderPDF(ctx context.Context, templatePath string, data pdfPayload) ([]byt
 	allocatorCtx, allocatorCancel := chromedp.NewExecAllocator(ctx, allocatorOptions...)
 	defer allocatorCancel()
 
-	taskCtx, taskCancel := chromedp.NewContext(allocatorCtx)
-	defer taskCancel()
+	browserCtx, browserCancel := chromedp.NewContext(allocatorCtx)
+	defer browserCancel()
 
-	return renderPDFWithContext(taskCtx, templatePath, data)
+	return renderPDFInTab(browserCtx, templatePath, data)
+}
+
+func renderPDFInTab(browserCtx context.Context, templatePath string, data pdfPayload) ([]byte, error) {
+	tabCtx, tabCancel := chromedp.NewContext(browserCtx)
+	defer tabCancel()
+
+	tabCtx, timeoutCancel := context.WithTimeout(tabCtx, 25*time.Second)
+	defer timeoutCancel()
+
+	return renderPDFWithContext(tabCtx, templatePath, data)
 }
 
 func buildChromeAllocatorOptions() ([]chromedp.ExecAllocatorOption, error) {
@@ -373,31 +379,77 @@ func renderManyTabs(ctx context.Context, session string, items []Item) ([][]byte
 
 	output := make([][]byte, len(jobs))
 	errs := make([]error, len(jobs))
-	var wg sync.WaitGroup
-	wg.Add(len(jobs))
 
-	for i := range jobs {
-		index := i
-		job := jobs[i]
+	allocatorOptions, err := buildChromeAllocatorOptions()
+	if err != nil {
+		return nil, err
+	}
+
+	allocatorCtx, allocatorCancel := chromedp.NewExecAllocator(ctx, allocatorOptions...)
+	defer allocatorCancel()
+
+	browserCtx, browserCancel := chromedp.NewContext(allocatorCtx)
+	defer browserCancel()
+
+	workerCount := attendanceRenderWorkers()
+	if workerCount > len(jobs) {
+		workerCount = len(jobs)
+	}
+	if workerCount < 1 {
+		workerCount = 1
+	}
+
+	jobIndexes := make(chan int, len(jobs))
+	var wg sync.WaitGroup
+	wg.Add(workerCount)
+
+	for worker := 0; worker < workerCount; worker++ {
 		go func() {
 			defer wg.Done()
-			pdfBytes, err := renderPDF(ctx, job.templatePath, job.payload)
-			if err != nil {
-				errs[index] = fmt.Errorf("attendance item %d: %w", index+1, err)
-				return
+			for index := range jobIndexes {
+				job := jobs[index]
+				pdfBytes, err := renderPDFInTab(browserCtx, job.templatePath, job.payload)
+				if err != nil {
+					errs[index] = fmt.Errorf("attendance item %d: %w", index+1, err)
+					continue
+				}
+				output[index] = pdfBytes
 			}
-			output[index] = pdfBytes
 		}()
 	}
+
+	for i := range jobs {
+		jobIndexes <- i
+	}
+	close(jobIndexes)
 	wg.Wait()
 
-	for _, err := range errs {
+	for index, err := range errs {
 		if err != nil {
-			return nil, err
+			pdfBytes, retryErr := renderPDF(ctx, jobs[index].templatePath, jobs[index].payload)
+			if retryErr != nil {
+				return nil, fmt.Errorf("attendance item %d: %w", index+1, retryErr)
+			}
+			output[index] = pdfBytes
 		}
 	}
 
 	return output, nil
+}
+
+func attendanceRenderWorkers() int {
+	raw := strings.TrimSpace(os.Getenv("ATTENDANCE_PDF_CONCURRENCY"))
+	if raw == "" {
+		return DefaultRenderWorkers
+	}
+	parsed, err := strconv.Atoi(raw)
+	if err != nil || parsed < 1 {
+		return DefaultRenderWorkers
+	}
+	if parsed > 6 {
+		return 6
+	}
+	return parsed
 }
 
 func stripScriptTags(html string) string {
