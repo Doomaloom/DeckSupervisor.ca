@@ -15,8 +15,7 @@ func ProcessMasterListFromRosters(rosters []ClassRoster, options FormatOptions) 
 		totalStudents += len(roster.Students)
 	}
 
-	records := make([][]string, 0, totalStudents+1)
-	records = append(records, []string{"EventID", "EventTime", "ServiceName", "AttendeeName", "AttendeePhone"})
+	rows := make([]csvRow, 0, totalStudents)
 	instructorMap := map[string]string{}
 
 	for _, roster := range rosters {
@@ -48,19 +47,19 @@ func ProcessMasterListFromRosters(rosters []ClassRoster, options FormatOptions) 
 				}
 			}
 
-			records = append(records, []string{
-				code,
-				eventTime,
-				rowService,
-				name,
-				phone,
+			rows = append(rows, csvRow{
+				normalizeHeader("EventID"):       code,
+				normalizeHeader("EventTime"):     eventTime,
+				normalizeHeader("ServiceName"):   rowService,
+				normalizeHeader("AttendeeName"):  name,
+				normalizeHeader("AttendeePhone"): phone,
 			})
 		}
 	}
 
-	if len(records) == 1 {
+	if len(rows) == 0 {
 		return MasterListResult{}, fmt.Errorf("no student rows to process")
 	}
 
-	return ProcessMasterList(records, options, instructorMap)
+	return ProcessMasterListRows(rows, options, instructorMap)
 }

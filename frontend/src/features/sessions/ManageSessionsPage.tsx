@@ -5,7 +5,13 @@ import { useAuth } from '../../app/AuthContext'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { supabase } from '../../lib/supabaseClient'
-import { clearCurrentSessionId, getCurrentSessionId, loadSessions, saveSessions } from '../../lib/sessionStorage'
+import {
+  clearCurrentSessionId,
+  getCurrentSessionId,
+  loadSessions,
+  saveSessions,
+  setCurrentSessionId,
+} from '../../lib/sessionStorage'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 
 type InstructorEntry = { name: string }
@@ -271,6 +277,9 @@ function ManageSessionsPage() {
       saveSessions(updatedSessions)
       setEditMessage('Session updated.')
       setSessionsVersion(version => version + 1)
+      setCurrentSessionId(currentSessionId)
+      setCurrentSessionIdState(currentSessionId)
+      setSelectedDay(editSessionDay || '')
       return
     }
 
@@ -374,11 +383,17 @@ function ManageSessionsPage() {
       } catch (syncError) {
         console.error('Failed to sync related report card scope', syncError)
         setEditMessage('Session updated, but related report card data could not be fully synchronized.')
+        setCurrentSessionId(currentSessionId)
+        setCurrentSessionIdState(currentSessionId)
+        setSelectedDay(editSessionDay || '')
         return
       }
     }
 
     setEditMessage('Session updated.')
+    setCurrentSessionId(currentSessionId)
+    setCurrentSessionIdState(currentSessionId)
+    setSelectedDay(editSessionDay || '')
   }
 
   const handleDeleteSession = async () => {

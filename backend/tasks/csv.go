@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -23,56 +24,40 @@ type ClassRoster struct {
 	Students    []RosterStudent `json:"students"`
 }
 
-func ProcessCSV(records [][]string, instructorMap map[string]string, fallbackDay string) ([]ClassRoster, int, error) {
-	if len(records) < 2 {
+func ProcessCSVFromCSV(csvReader io.Reader, instructorMap map[string]string, fallbackDay string) ([]ClassRoster, int, error) {
+	rows, err := readCSVRows(csvReader)
+	if err != nil {
+		return nil, 0, err
+	}
+	return ProcessCSVRows(rows, instructorMap, fallbackDay)
+}
+
+func ProcessCSVRows(rows []csvRow, instructorMap map[string]string, fallbackDay string) ([]ClassRoster, int, error) {
+	if len(rows) == 0 {
 		return nil, 0, fmt.Errorf("no rows to process")
-	}
-
-	headers := records[0]
-	headerIndex := map[string]int{}
-	for i, header := range headers {
-		normalized := normalizeHeader(header)
-		if normalized == "" {
-			continue
-		}
-		headerIndex[normalized] = i
-	}
-
-	getByName := func(row []string, names []string) string {
-		for _, name := range names {
-			if idx, ok := headerIndex[normalizeHeader(name)]; ok && idx < len(row) {
-				return strings.TrimSpace(row[idx])
-			}
-		}
-		return ""
 	}
 
 	classMap := map[string]*ClassRoster{}
 	totalStudents := 0
 
-	for i := 1; i < len(records); i++ {
-		row := records[i]
-		if len(row) == 0 {
-			continue
-		}
+	for _, row := range rows {
+		serviceName := rowValue(row, "ServiceName", "Service", "Service Name")
+		code := rowValue(row, "EventID", "Event Id", "ClassCode", "Code")
+		day := rowValue(row, "DayOfTheWeek", "Day Of The Week", "DayOfWeek", "Day")
+		timeValue := rowValue(row, "EventTime", "Time")
+		location := rowValue(row, "Location", "Facility")
+		schedule := rowValue(row, "EventSchedule", "Schedule")
+		phone := rowValue(row, "AttendeePhone", "Phone")
+		instructorFromRow := rowValue(row, "Instructor", "Instructor Name", "InstructorName", "Teacher", "Staff")
 
-		serviceName := getByName(row, []string{"ServiceName", "Service", "Service Name"})
-		code := getByName(row, []string{"EventID", "Event Id", "ClassCode", "Code"})
-		day := getByName(row, []string{"Day", "DayOfWeek"})
-		timeValue := getByName(row, []string{"EventTime", "Time"})
-		location := getByName(row, []string{"Location", "Facility"})
-		schedule := getByName(row, []string{"EventSchedule", "Schedule"})
-		phone := getByName(row, []string{"AttendeePhone", "Phone"})
-		instructorFromRow := getByName(row, []string{"Instructor", "Instructor Name", "InstructorName", "Teacher", "Staff"})
-
-		name := getByName(row, []string{"AttendeeName", "Name"})
+		name := rowValue(row, "AttendeeName", "Name")
 		if strings.Contains(name, ",") {
 			parts := strings.SplitN(name, ",", 2)
 			name = strings.TrimSpace(parts[1]) + " " + strings.TrimSpace(parts[0])
 		}
 		if name == "" {
-			firstName := getByName(row, []string{"FirstName", "First Name"})
-			lastName := getByName(row, []string{"LastName", "Last Name"})
+			firstName := rowValue(row, "FirstName", "First Name")
+			lastName := rowValue(row, "LastName", "Last Name")
 			if firstName != "" || lastName != "" {
 				name = strings.TrimSpace(strings.Join([]string{firstName, lastName}, " "))
 			}

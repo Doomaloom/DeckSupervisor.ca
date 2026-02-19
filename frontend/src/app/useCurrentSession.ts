@@ -30,10 +30,17 @@ export function useCurrentSession() {
   const [access, setAccess] = useState<SessionAccess>({ mode: 'guest', allowRosterEdits: false })
   const [loading, setLoading] = useState(true)
   const [sessionId, setSessionId] = useState(() => getCurrentSessionId())
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
-    const unsubscribe = onCurrentSessionChanged(id => setSessionId(id))
-    const scopeUnsubscribe = onStorageScopeChanged(() => setSessionId(getCurrentSessionId()))
+    const unsubscribe = onCurrentSessionChanged(id => {
+      setSessionId(id)
+      setRefreshKey(value => value + 1)
+    })
+    const scopeUnsubscribe = onStorageScopeChanged(() => {
+      setSessionId(getCurrentSessionId())
+      setRefreshKey(value => value + 1)
+    })
     return () => {
       unsubscribe()
       scopeUnsubscribe()
@@ -136,7 +143,7 @@ export function useCurrentSession() {
     return () => {
       active = false
     }
-  }, [isGuest, sessionId, user])
+  }, [isGuest, refreshKey, sessionId, user])
 
   return {
     sessionId,

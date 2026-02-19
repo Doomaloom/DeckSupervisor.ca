@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -22,13 +21,6 @@ func Masterlist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-
-	reader := csv.NewReader(file)
-	records, err := reader.ReadAll()
-	if err != nil {
-		http.Error(w, "Error reading CSV", http.StatusBadRequest)
-		return
-	}
 
 	options := tasks.FormatOptions{
 		TimeHeaders:       r.FormValue("time_headers") != "",
@@ -62,7 +54,7 @@ func Masterlist(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result, err := tasks.ProcessMasterList(records, options, instructorMap)
+	result, err := tasks.ProcessMasterListFromCSV(file, options, instructorMap)
 	if err != nil {
 		http.Error(w, "Error processing CSV", http.StatusInternalServerError)
 		return

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/csv"
 	"net/http"
 
 	"cob-aquatics/internal/services/schematic"
@@ -20,14 +19,7 @@ func SchematicMaker(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	reader := csv.NewReader(file)
-	records, err := reader.ReadAll()
-	if err != nil {
-		http.Error(w, "Error reading CSV", http.StatusBadRequest)
-		return
-	}
-
-	output, err := schematic.BuildFromCSV(records)
+	output, err := schematic.BuildFromCSVReader(file)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
