@@ -44,7 +44,7 @@ export const createEmptyReportData = (sessionInstructors: string[]): SessionRepo
   staff: {
     performance: sessionInstructors.map(instructor => ({ instructor, text: '' })),
     strengthWeakness: sessionInstructors.map(instructor => ({ instructor, text: '' })),
-    successionPlans: '',
+    successionPlans: [],
     instructorCovers: [],
   },
   lessonStructure: {
@@ -111,7 +111,12 @@ export const normalizeReportData = (value: unknown, sessionInstructors: string[]
     staff: {
       performance: mergeInstructorRows(performance, sessionInstructors),
       strengthWeakness: mergeInstructorRows(strengthWeakness, sessionInstructors),
-      successionPlans: toStringValue(staff.successionPlans),
+      successionPlans: toObjectArray(staff.successionPlans)
+        .map(item => ({
+          instructor: toStringValue(item.instructor).trim(),
+          text: toStringValue(item.text),
+        }))
+        .filter(item => item.instructor),
       instructorCovers: toObjectArray(staff.instructorCovers)
         .map(item => ({
           instructor: toStringValue(item.instructor),
@@ -182,3 +187,69 @@ export const normalizeReportData = (value: unknown, sessionInstructors: string[]
 }
 
 export const defaultReportTitle = () => `Report - ${new Date().toLocaleString()}`
+
+type StrengthWeaknessLists = {
+  strengths: string[]
+  weaknesses: string[]
+}
+
+const STRENGTHS_PREFIX = 'strengths:'
+const WEAKNESSES_PREFIX = '|weaknesses:'
+const WEAKNESSES_ONLY_PREFIX = 'weaknesses:'
+const EMPTY_LIST_ITEM_TOKEN = '__EMPTY__'
+
+const splitList = (value: string): string[] =>
+  value === ''
+    ? []
+    : value
+        .split('|')
+        .map(item => (item === EMPTY_LIST_ITEM_TOKEN ? '' : item.trim()))
+
+export const parseStrengthWeakness = (value: string): StrengthWeaknessLists => {
+  const text = value.trim()
+  if (!text) {
+    return { strengths: [], weaknesses: [] }
+  }
+
+  if (text.startsWith(STRENGTHS_PREFIX)) {
+    const weaknessIndex = text.indexOf(WEAKNESSES_PREFIX)
+    if (weaknessIndex >= 0) {
+      const strengthsPart = text.slice(STRENGTHS_PREFIX.length, weaknessIndex)
+      const weaknessesPart = text.slice(weaknessIndex + WEAKNESSES_PREFIX.length)
+      return {
+        strengths: splitList(strengthsPart),
+        weaknesses: splitList(weaknessesPart),
+      }
+    }
+  }
+
+  if (text.startsWith(WEAKNESSES_ONLY_PREFIX)) {
+    return {
+      strengths: [],
+      weaknesses: splitList(text.slice(WEAKNESSES_ONLY_PREFIX.length)),
+    }
+  }
+
+  return {
+    strengths: [],
+    weaknesses: [text],
+  }
+}
+
+export const sanitizeStrengthWeaknessItem = (value: string) => value.replaceAll('|', '')
+
+const encodeStrengthWeaknessItem = (value: string) => {
+  const cleaned = sanitizeStrengthWeaknessItem(value).trim()
+  return cleaned === '' ? EMPTY_LIST_ITEM_TOKEN : cleaned
+}
+
+export const serializeStrengthWeakness = ({ strengths, weaknesses }: StrengthWeaknessLists) => {
+  const cleanStrengths = strengths.map(encodeStrengthWeaknessItem)
+  const cleanWeaknesses = weaknesses.map(encodeStrengthWeaknessItem)
+
+  if (cleanStrengths.length === 0 && cleanWeaknesses.length === 0) {
+    return ''
+  }
+
+  return `strengths:${cleanStrengths.join('|')}|weaknesses:${cleanWeaknesses.join('|')}`
+}

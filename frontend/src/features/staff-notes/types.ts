@@ -73,7 +73,7 @@ export type SessionReportData = {
   staff: {
     performance: InstructorTextEntry[]
     strengthWeakness: InstructorTextEntry[]
-    successionPlans: string
+    successionPlans: InstructorTextEntry[]
     instructorCovers: InstructorCoverEntry[]
   }
   lessonStructure: {
