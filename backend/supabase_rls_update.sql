@@ -169,6 +169,7 @@ alter table sessions enable row level security;
 alter table schematics enable row level security;
 alter table session_shares enable row level security;
 alter table session_notes enable row level security;
+alter table session_reports enable row level security;
 alter table roster_level_edits enable row level security;
 alter table roster_student_level_edits enable row level security;
 alter table custom_rosters enable row level security;
@@ -318,6 +319,10 @@ drop policy if exists "Session notes read" on session_notes;
 drop policy if exists "Session notes create" on session_notes;
 drop policy if exists "Session notes update" on session_notes;
 drop policy if exists "Session notes delete" on session_notes;
+drop policy if exists "Session reports read" on session_reports;
+drop policy if exists "Session reports create" on session_reports;
+drop policy if exists "Session reports update" on session_reports;
+drop policy if exists "Session reports delete" on session_reports;
 
 create policy "Session notes read"
   on session_notes for select
@@ -343,6 +348,35 @@ create policy "Session notes update"
 
 create policy "Session notes delete"
   on session_notes for delete
+  using (
+    created_by = auth.uid()
+    or can_edit_session(session_id, auth.uid())
+  );
+
+create policy "Session reports read"
+  on session_reports for select
+  using (can_read_session(session_id, auth.uid()));
+
+create policy "Session reports create"
+  on session_reports for insert
+  with check (
+    created_by = auth.uid()
+    and can_read_session(session_id, auth.uid())
+  );
+
+create policy "Session reports update"
+  on session_reports for update
+  using (
+    created_by = auth.uid()
+    or can_edit_session(session_id, auth.uid())
+  )
+  with check (
+    created_by = auth.uid()
+    or can_edit_session(session_id, auth.uid())
+  );
+
+create policy "Session reports delete"
+  on session_reports for delete
   using (
     created_by = auth.uid()
     or can_edit_session(session_id, auth.uid())
