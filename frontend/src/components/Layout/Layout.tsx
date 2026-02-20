@@ -304,12 +304,14 @@ function Layout({ children }: LayoutProps) {
                                     if (!uploaded) {
                                         return
                                     }
-                                    if (!selectedDay) {
+                                    const requiresSelectedDay = accountType !== 'full_time'
+                                    if (requiresSelectedDay && !selectedDay) {
                                         alert('Please select a day before uploading.')
                                         return
                                     }
+                                    const uploadDay = selectedDay || ''
                                     try {
-                                        const instructorConfig = getInstructorsForDay(selectedDay)
+                                        const instructorConfig = uploadDay ? getInstructorsForDay(uploadDay) : null
                                         const uploadInstructors: InstructorEntry[] = []
                                         if (instructorConfig) {
                                             const count = Math.max(
@@ -325,7 +327,7 @@ function Layout({ children }: LayoutProps) {
                                                 uploadInstructors.push({ name, codes })
                                             }
                                         }
-                                        await processCsvAndStore(uploaded, selectedDay, uploadInstructors)
+                                        await processCsvAndStore(uploaded, uploadDay, uploadInstructors)
 
                                         let extractedCached = false
                                         if (accountType === 'full_time') {
@@ -335,7 +337,7 @@ function Layout({ children }: LayoutProps) {
                                                 sample: extracted.classes.slice(0, 5),
                                                 teamId: currentTeamId,
                                                 termKey: currentTerm?.key ?? null,
-                                                selectedDay,
+                                                selectedDay: uploadDay,
                                             })
                                             if (currentTeamId && currentTerm?.key) {
                                                 setExtractedClassesForScope(currentTeamId, currentTerm.key, extracted.classes)
@@ -376,9 +378,9 @@ function Layout({ children }: LayoutProps) {
                                             return
                                         }
 
-                                        const dayStudents = getStudentsForDay(selectedDay)
+                                        const dayStudents = getStudentsForDay(uploadDay)
                                         const syncResult = await syncReportCardsForDay({
-                                            day: selectedDay,
+                                            day: uploadDay,
                                             students: dayStudents,
                                             sessionLabel,
                                             teamId: currentSession.team_id ?? null,
