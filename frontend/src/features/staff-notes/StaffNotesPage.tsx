@@ -23,7 +23,7 @@ const createId = () =>
 
 function StaffNotesPage() {
   const { accountType, isGuest, user } = useAuth()
-  const { sessionId: currentSessionId, access } = useCurrentSession()
+  const { sessionId: currentSessionId, session: currentSession, access } = useCurrentSession()
   const { currentTeamId } = useCurrentTeam()
   const { currentTerm } = useCurrentTerm()
   const isFullTime = accountType === 'full_time'
@@ -36,6 +36,24 @@ function StaffNotesPage() {
   const [noteText, setNoteText] = useState('')
   const [employeeName, setEmployeeName] = useState('')
   const [todoText, setTodoText] = useState('')
+
+  const currentSessionContext = useMemo(
+    () =>
+      formatSessionContext(
+        currentSession?.session_day ?? null,
+        currentSession?.location ?? null,
+        currentSession?.session_season ?? null,
+        currentSession?.session_year ?? null,
+        currentSession?.start_date ?? null,
+      ),
+    [
+      currentSession?.location,
+      currentSession?.session_day,
+      currentSession?.session_season,
+      currentSession?.session_year,
+      currentSession?.start_date,
+    ],
+  )
 
   const {
     reports,
@@ -60,6 +78,7 @@ function StaffNotesPage() {
   } = useSessionReports({
     activeTab,
     sessionId,
+    currentSessionContext,
     isSessionReady,
     isGuest,
     isFullTime,
@@ -114,7 +133,7 @@ function StaffNotesPage() {
               reportData: normalizeReportData(item.reportData, instructorNames),
               createdBy: item.createdBy,
               authorName: item.authorName ?? 'Guest',
-              sessionContext: item.sessionContext,
+              sessionContext: item.sessionContext || currentSessionContext || undefined,
             }
           })
           .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -176,7 +195,13 @@ function StaffNotesPage() {
         const sessionMap = new Map(
           scopedSessions.map(session => [
             session.id,
-            formatSessionContext(session.session_day ?? null, session.location ?? null),
+            formatSessionContext(
+              session.session_day ?? null,
+              session.location ?? null,
+              session.session_season ?? null,
+              session.session_year ?? null,
+              session.start_date ?? null,
+            ),
           ]),
         )
         const sessionIds = scopedSessions.map(session => session.id)
@@ -374,6 +399,7 @@ function StaffNotesPage() {
           reportData: normalizeReportData(row.report_data, instructorNames),
           createdBy: row.created_by,
           authorName: authorNameById.get(row.created_by) ?? 'Unknown author',
+          sessionContext: currentSessionContext || undefined,
         }))
 
         setLoadedReports(mappedReports)
@@ -422,6 +448,7 @@ function StaffNotesPage() {
     clearReports,
     currentTeamId,
     currentTerm,
+    currentSessionContext,
     instructorNames,
     isFullTime,
     isGuest,

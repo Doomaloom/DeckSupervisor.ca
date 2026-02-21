@@ -18,6 +18,7 @@ const createId = () =>
 type UseSessionReportsArgs = {
   activeTab: TabKey
   sessionId: string | null
+  currentSessionContext: string
   isSessionReady: boolean
   isGuest: boolean
   isFullTime: boolean
@@ -53,6 +54,7 @@ type ExportPayload = {
 export function useSessionReports({
   activeTab,
   sessionId,
+  currentSessionContext,
   isSessionReady,
   isGuest,
   isFullTime,
@@ -256,6 +258,7 @@ export function useSessionReports({
         title,
         reportData: nextReportData,
         authorName: 'Guest',
+        sessionContext: currentSessionContext || undefined,
       }
       const next = [entry, ...reports]
       setReports(next)
@@ -294,6 +297,7 @@ export function useSessionReports({
       reportData: normalizeReportData(data.report_data, instructorNames),
       createdBy: data.created_by,
       authorName: 'You',
+      sessionContext: currentSessionContext || undefined,
     }
 
     setReports(current => [entry, ...current.filter(item => item.id !== entry.id)])
@@ -305,6 +309,7 @@ export function useSessionReports({
     instructorNames,
     isGuest,
     persistReport,
+    currentSessionContext,
     reportRevision,
     reports,
     sessionId,
@@ -376,7 +381,7 @@ export function useSessionReports({
 
     const payload: ExportPayload = {
       title: normalizedTitle,
-      sessionContext: selectedReport.sessionContext ?? '',
+      sessionContext: selectedReport.sessionContext || currentSessionContext,
       authorName: selectedReport.authorName ?? '',
       createdAt: selectedReport.createdAt,
       updatedAt: selectedReport.updatedAt,
@@ -444,7 +449,7 @@ export function useSessionReports({
     } finally {
       setIsExportingReport(false)
     }
-  }, [persistReport, reportDraft, reportRevision, reportTitle, selectedReport])
+  }, [currentSessionContext, persistReport, reportDraft, reportRevision, reportTitle, selectedReport])
 
   useEffect(() => {
     if (activeTab !== 'report') {

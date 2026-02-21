@@ -47,9 +47,24 @@ export const getSessionYear = (sessionYear: number | null, startDate: string | n
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
 }
 
-export const formatSessionContext = (day: string | null, location: string | null) => {
+export const formatSessionContext = (
+  day: string | null,
+  location: string | null,
+  season?: string | null,
+  sessionYear?: number | null,
+  startDate?: string | null,
+) => {
   const dayLabel = day ? dayNames[day] ?? day : ''
+  const seasonLabel = (season ?? '').trim()
+  const year = getSessionYear(sessionYear ?? null, startDate ?? null)
+  const yearLabel = year ? String(year) : ''
   const locationLabel = (location ?? '').trim()
-  const parts = [dayLabel, locationLabel].filter(Boolean)
-  return parts.join(' | ')
+  const sessionLabel = [dayLabel, seasonLabel, yearLabel].filter(Boolean).join(' ')
+  if (!sessionLabel) {
+    return locationLabel
+  }
+  if (!locationLabel) {
+    return sessionLabel
+  }
+  return `${sessionLabel} | ${locationLabel}`
 }
