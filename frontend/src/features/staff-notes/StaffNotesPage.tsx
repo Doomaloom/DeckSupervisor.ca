@@ -53,6 +53,8 @@ function StaffNotesPage() {
     handleSelectReport,
     handleCreateReport,
     handleDeleteReport,
+    handleExportReport,
+    isExportingReport,
     setLoadedReports,
     clearReports,
   } = useSessionReports({
@@ -640,6 +642,8 @@ function StaffNotesPage() {
               selectedReport={selectedReport}
               canEditSelectedReport={canEditSelectedReport}
               onDeleteReport={handleDeleteReport}
+              onExportReport={handleExportReport}
+              isExportingReport={isExportingReport}
               reportStatus={reportStatus}
               reportTitle={reportTitle}
               onReportTitleChange={handleReportTitleChange}

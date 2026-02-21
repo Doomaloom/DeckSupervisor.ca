@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabaseClient'
 import type { ReportItem, SessionReportData, TabKey } from '../types'
-import { createEmptyReportData, defaultReportTitle, normalizeReportData } from '../utils/reportData'
+import {
+  createEmptyReportData,
+  defaultReportTitle,
+  normalizeReportData,
+  parseStrengthWeakness,
+} from '../utils/reportData'
 import { buildStorageKey, saveJson } from '../utils/storage'
 import { useReportInstructorOptions } from './useReportInstructorOptions'
 
@@ -21,6 +26,30 @@ type UseSessionReportsArgs = {
   instructorNames: string[]
 }
 
+type ExportStrengthWeaknessEntry = {
+  instructor: string
+  strengths: string[]
+  weaknesses: string[]
+}
+
+type ExportPayload = {
+  title: string
+  sessionContext: string
+  authorName: string
+  createdAt: string
+  updatedAt: string
+  staff: {
+    performance: { instructor: string; text: string }[]
+    strengthWeakness: ExportStrengthWeaknessEntry[]
+    successionPlans: { instructor: string; text: string }[]
+    instructorCovers: { instructor: string; coveredBy: string; details: string }[]
+  }
+  lessonStructure: SessionReportData['lessonStructure']
+  safetyFacility: SessionReportData['safetyFacility']
+  parentCustomerFeedback: SessionReportData['parentCustomerFeedback']
+  projectsInitiatives: SessionReportData['projectsInitiatives']
+}
+
 export function useSessionReports({
   activeTab,
   sessionId,
@@ -36,6 +65,7 @@ export function useSessionReports({
   const [reportTitle, setReportTitle] = useState('')
   const [reportDraft, setReportDraft] = useState<SessionReportData>(() => createEmptyReportData([]))
   const [reportStatus, setReportStatus] = useState('')
+  const [isExportingReport, setIsExportingReport] = useState(false)
   const [reportRevision, setReportRevision] = useState(0)
   const [lastSavedReportRevision, setLastSavedReportRevision] = useState(0)
   const reportSaveTimerRef = useRef<number | null>(null)
@@ -322,6 +352,100 @@ export function useSessionReports({
     sessionId,
   ])
 
+  const handleExportReport = useCallback(async () => {
+    if (!selectedReport) {
+      return
+    }
+
+    if (reportSaveTimerRef.current !== null) {
+      window.clearTimeout(reportSaveTimerRef.current)
+    }
+    await persistReport(reportRevision)
+
+    const normalizedTitle = reportTitle.trim() || selectedReport.title || 'Session Report'
+    const strengthWeakness = reportDraft.staff.strengthWeakness
+      .map(entry => {
+        const parsed = parseStrengthWeakness(entry.text)
+        return {
+          instructor: entry.instructor.trim(),
+          strengths: parsed.strengths.map(item => item.trim()).filter(Boolean),
+          weaknesses: parsed.weaknesses.map(item => item.trim()).filter(Boolean),
+        }
+      })
+      .filter(entry => entry.instructor || entry.strengths.length > 0 || entry.weaknesses.length > 0)
+
+    const payload: ExportPayload = {
+      title: normalizedTitle,
+      sessionContext: selectedReport.sessionContext ?? '',
+      authorName: selectedReport.authorName ?? '',
+      createdAt: selectedReport.createdAt,
+      updatedAt: selectedReport.updatedAt,
+      staff: {
+        performance: reportDraft.staff.performance
+          .map(entry => ({
+            instructor: entry.instructor.trim(),
+            text: entry.text,
+          }))
+          .filter(entry => entry.instructor || entry.text.trim()),
+        strengthWeakness,
+        successionPlans: reportDraft.staff.successionPlans
+          .map(entry => ({
+            instructor: entry.instructor.trim(),
+            text: entry.text,
+          }))
+          .filter(entry => entry.instructor || entry.text.trim()),
+        instructorCovers: reportDraft.staff.instructorCovers
+          .map(entry => ({
+            instructor: entry.instructor.trim(),
+            coveredBy: entry.coveredBy.trim(),
+            details: entry.details,
+          }))
+          .filter(entry => entry.instructor || entry.coveredBy || entry.details.trim()),
+      },
+      lessonStructure: reportDraft.lessonStructure,
+      safetyFacility: reportDraft.safetyFacility,
+      parentCustomerFeedback: reportDraft.parentCustomerFeedback,
+      projectsInitiatives: reportDraft.projectsInitiatives,
+    }
+
+    setIsExportingReport(true)
+    try {
+      const response = await fetch('/api/session-report-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const message = await response.text()
+        throw new Error(message || 'Failed to export report PDF')
+      }
+
+      const pdfBlob = await response.blob()
+      const contentDisposition = response.headers.get('Content-Disposition') ?? ''
+      const filenameMatch = /filename="?([^";]+)"?/i.exec(contentDisposition)
+      const fallbackBase = normalizedTitle.replace(/[^a-z0-9-_]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+      const filename = filenameMatch?.[1] ?? `${fallbackBase || 'session-report'}.pdf`
+
+      const blobURL = window.URL.createObjectURL(pdfBlob)
+      const link = document.createElement('a')
+      link.href = blobURL
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(blobURL)
+    } catch (error) {
+      console.error(error)
+      const message = error instanceof Error ? error.message : 'Failed to export report PDF.'
+      alert(message)
+    } finally {
+      setIsExportingReport(false)
+    }
+  }, [persistReport, reportDraft, reportRevision, reportTitle, selectedReport])
+
   useEffect(() => {
     if (activeTab !== 'report') {
       return
@@ -394,6 +518,7 @@ export function useSessionReports({
     reportTitle,
     reportDraft,
     reportStatus,
+    isExportingReport,
     selectedReport,
     canCreateReports,
     canEditSelectedReport,
@@ -404,6 +529,7 @@ export function useSessionReports({
     handleSelectReport,
     handleCreateReport,
     handleDeleteReport,
+    handleExportReport,
     setLoadedReports,
     clearReports,
   }

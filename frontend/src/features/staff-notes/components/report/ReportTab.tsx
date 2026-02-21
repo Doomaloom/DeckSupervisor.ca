@@ -15,6 +15,8 @@ function ReportTab({
   selectedReport,
   canEditSelectedReport,
   onDeleteReport,
+  onExportReport,
+  isExportingReport,
   reportStatus,
   reportTitle,
   onReportTitleChange,
@@ -59,6 +61,16 @@ function ReportTab({
               disabled={!isSessionReady}
             >
               Delete Report
+            </button>
+          ) : null}
+          {selectedReport ? (
+            <button
+              type="button"
+              className="rounded-2xl bg-secondary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={onExportReport}
+              disabled={!isSessionReady || isExportingReport}
+            >
+              {isExportingReport ? 'Exporting...' : 'Export Report'}
             </button>
           ) : null}
         </div>

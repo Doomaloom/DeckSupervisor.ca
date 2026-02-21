@@ -21,6 +21,8 @@ export type ReportTabProps = {
   selectedReport: ReportItem | null
   canEditSelectedReport: boolean
   onDeleteReport: () => void
+  onExportReport: () => void
+  isExportingReport: boolean
   reportStatus: string
   reportTitle: string
   onReportTitleChange: (value: string) => void
