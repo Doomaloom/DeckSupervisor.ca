@@ -203,19 +203,18 @@ const splitList = (value: string): string[] =>
     ? []
     : value
         .split('|')
-        .map(item => (item === EMPTY_LIST_ITEM_TOKEN ? '' : item.trim()))
+        .map(item => (item === EMPTY_LIST_ITEM_TOKEN ? '' : item))
 
 export const parseStrengthWeakness = (value: string): StrengthWeaknessLists => {
-  const text = value.trim()
-  if (!text) {
+  if (value.trim() === '') {
     return { strengths: [], weaknesses: [] }
   }
 
-  if (text.startsWith(STRENGTHS_PREFIX)) {
-    const weaknessIndex = text.indexOf(WEAKNESSES_PREFIX)
+  if (value.startsWith(STRENGTHS_PREFIX)) {
+    const weaknessIndex = value.indexOf(WEAKNESSES_PREFIX)
     if (weaknessIndex >= 0) {
-      const strengthsPart = text.slice(STRENGTHS_PREFIX.length, weaknessIndex)
-      const weaknessesPart = text.slice(weaknessIndex + WEAKNESSES_PREFIX.length)
+      const strengthsPart = value.slice(STRENGTHS_PREFIX.length, weaknessIndex)
+      const weaknessesPart = value.slice(weaknessIndex + WEAKNESSES_PREFIX.length)
       return {
         strengths: splitList(strengthsPart),
         weaknesses: splitList(weaknessesPart),
@@ -223,24 +222,24 @@ export const parseStrengthWeakness = (value: string): StrengthWeaknessLists => {
     }
   }
 
-  if (text.startsWith(WEAKNESSES_ONLY_PREFIX)) {
+  if (value.startsWith(WEAKNESSES_ONLY_PREFIX)) {
     return {
       strengths: [],
-      weaknesses: splitList(text.slice(WEAKNESSES_ONLY_PREFIX.length)),
+      weaknesses: splitList(value.slice(WEAKNESSES_ONLY_PREFIX.length)),
     }
   }
 
   return {
     strengths: [],
-    weaknesses: [text],
+    weaknesses: [value],
   }
 }
 
 export const sanitizeStrengthWeaknessItem = (value: string) => value.replaceAll('|', '')
 
 const encodeStrengthWeaknessItem = (value: string) => {
-  const cleaned = sanitizeStrengthWeaknessItem(value).trim()
-  return cleaned === '' ? EMPTY_LIST_ITEM_TOKEN : cleaned
+  const cleaned = sanitizeStrengthWeaknessItem(value)
+  return cleaned.trim() === '' ? EMPTY_LIST_ITEM_TOKEN : cleaned
 }
 
 export const serializeStrengthWeakness = ({ strengths, weaknesses }: StrengthWeaknessLists) => {
