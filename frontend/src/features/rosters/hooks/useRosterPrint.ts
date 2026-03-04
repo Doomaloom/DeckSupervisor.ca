@@ -21,6 +21,38 @@ function getSessionName(sessionDay: string, sessionSeason: string | null, startD
     return parts.length ? parts.join(' ') : ''
 }
 
+function openPdfPrintDialog(pdfBlob: Blob, existingWindow?: Window | null) {
+    const blobUrl = window.URL.createObjectURL(pdfBlob)
+    const printWindow = existingWindow ?? window.open(blobUrl, '_blank')
+
+    if (!printWindow) {
+        window.URL.revokeObjectURL(blobUrl)
+        alert('Pop-up blocked. Please allow pop-ups to print.')
+        return
+    }
+
+    if (existingWindow) {
+        printWindow.location.href = blobUrl
+    }
+
+    const cleanup = () => {
+        window.URL.revokeObjectURL(blobUrl)
+    }
+
+    printWindow.addEventListener('beforeunload', cleanup, { once: true })
+
+    const triggerPrint = () => {
+        printWindow.focus()
+        printWindow.print()
+    }
+
+    printWindow.onload = () => {
+        setTimeout(triggerPrint, 1000)
+    }
+
+    setTimeout(triggerPrint, 3000)
+}
+
 export function useRosterPrint() {
     const { session: currentSession } = useCurrentSession()
     const handlePrintRoster = async (roster: RosterGroup) => {
@@ -32,6 +64,12 @@ export function useRosterPrint() {
                   currentSession.start_date ?? null,
               )
             : 'Summer 2025'
+        const printWindow = window.open('', '_blank')
+        if (!printWindow) {
+            alert('Pop-up blocked. Please allow pop-ups to print.')
+            return
+        }
+        printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
 
         try {
             const response = await fetch('/api/attendance-pdf', {
@@ -63,49 +101,11 @@ export function useRosterPrint() {
             }
 
             const pdfBlob = await response.blob()
-            const blobUrl = window.URL.createObjectURL(pdfBlob)
-            const iframe = document.createElement('iframe')
-            iframe.style.display = 'none'
-            iframe.src = blobUrl
-            document.body.appendChild(iframe)
-
-            iframe.onload = () => {
-                let cleanedUp = false
-                const cleanup = () => {
-                    if (cleanedUp) {
-                        return
-                    }
-                    cleanedUp = true
-                    window.URL.revokeObjectURL(blobUrl)
-                    if (iframe.parentNode) {
-                        document.body.removeChild(iframe)
-                    }
-                }
-
-                const handleAfterPrint = () => {
-                    cleanup()
-                }
-
-                const win = iframe.contentWindow
-                if (win) {
-                    win.addEventListener('afterprint', handleAfterPrint)
-                }
-                window.addEventListener('afterprint', handleAfterPrint, { once: true })
-
-                try {
-                    win?.focus()
-                    win?.print()
-                } catch (error) {
-                    console.error('Print failed', error)
-                    cleanup()
-                    return
-                }
-
-                setTimeout(cleanup, 15000)
-            }
+            openPdfPrintDialog(pdfBlob, printWindow)
         } catch (error) {
             console.error(error)
             alert('Unable to generate attendance PDF. Please try again.')
+            printWindow.close()
         }
     }
 
