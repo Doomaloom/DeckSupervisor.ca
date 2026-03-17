@@ -5,7 +5,7 @@ import { getCustomRosterDayKey, getCustomRostersForDay, setCustomRostersForDay }
 import type { CustomRoster, Student } from '../../../types/app'
 
 export function useCustomRosters(selectedDay: string, students: Student[], sessionId?: string) {
-    const { session, user } = useAuth()
+    const { user } = useAuth()
     const [customRosters, setCustomRosters] = useState<CustomRoster[]>([])
     const customRostersRef = useRef<CustomRoster[]>([])
 
@@ -16,8 +16,7 @@ export function useCustomRosters(selectedDay: string, students: Student[], sessi
         }
         let active = true
         const load = async () => {
-            const accessToken = session?.access_token
-            const isGuestMode = !accessToken || !user
+            const isGuestMode = !user
             const localKey = getCustomRosterDayKey(selectedDay, sessionId, isGuestMode)
             if (isGuestMode || !sessionId) {
                 const stored = getCustomRostersForDay(localKey)
@@ -28,7 +27,7 @@ export function useCustomRosters(selectedDay: string, students: Student[], sessi
                 return
             }
             try {
-                const resolved = await resolveCustomRosters(selectedDay, sessionId, students, accessToken)
+                const resolved = await resolveCustomRosters(selectedDay, sessionId, students)
                 if (active) {
                     setCustomRosters(resolved)
                     customRostersRef.current = resolved
@@ -47,7 +46,7 @@ export function useCustomRosters(selectedDay: string, students: Student[], sessi
         return () => {
             active = false
         }
-    }, [selectedDay, session?.access_token, sessionId, students, user])
+    }, [selectedDay, sessionId, students, user])
 
     const saveCustomRosters = async (next: CustomRoster[]) => {
         const previous = customRostersRef.current
@@ -56,19 +55,18 @@ export function useCustomRosters(selectedDay: string, students: Student[], sessi
         if (!selectedDay) {
             return
         }
-        const isGuestMode = !session?.access_token || !user
+        const isGuestMode = !user
         const localKey = getCustomRosterDayKey(selectedDay, sessionId, isGuestMode)
         setCustomRostersForDay(localKey, next)
-        const accessToken = session?.access_token
-        if (!accessToken || !user || !sessionId) {
+        if (!user || !sessionId) {
             return
         }
         const nextIds = new Set(next.map(roster => roster.id))
         const deleted = previous.filter(roster => !nextIds.has(roster.id))
         try {
             await Promise.all([
-                ...deleted.map(roster => deleteCustomRoster(roster.id, sessionId, accessToken)),
-                ...next.map(roster => saveCustomRoster(selectedDay, sessionId, roster, students, accessToken)),
+                ...deleted.map(roster => deleteCustomRoster(roster.id, sessionId)),
+                ...next.map(roster => saveCustomRoster(selectedDay, sessionId, roster, students)),
             ])
         } catch (error) {
             console.error('Failed to save custom rosters', error)

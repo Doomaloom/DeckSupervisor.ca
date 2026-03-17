@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	authsvc "cob-aquatics/internal/services/auth"
 )
 
 type Service struct {
@@ -76,7 +78,21 @@ func NewServiceFromEnv() (*Service, error) {
 
 func (s *Service) UserIDFromRequest(r *http.Request) (string, string, error) {
 	auth := strings.TrimSpace(r.Header.Get("Authorization"))
-	if auth == "" || !strings.HasPrefix(auth, "Bearer ") {
+	if auth == "" {
+		authService, err := authsvc.NewServiceFromEnv()
+		if err != nil {
+			return "", "", err
+		}
+		session, _, err := authService.SessionFromRequest(r)
+		if err != nil || session == nil {
+			return "", "", errors.New("missing auth token")
+		}
+		if session.User.ID == "" || strings.TrimSpace(session.AccessToken) == "" {
+			return "", "", errors.New("missing auth token")
+		}
+		return session.User.ID, session.AccessToken, nil
+	}
+	if !strings.HasPrefix(auth, "Bearer ") {
 		return "", "", errors.New("missing auth token")
 	}
 

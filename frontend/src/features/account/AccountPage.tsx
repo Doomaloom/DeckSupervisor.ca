@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
-import { supabase } from '../../lib/supabaseClient'
+import { acceptTeamInvite, declineTeamInvite, fetchAccountData } from '../../lib/serverApi'
 
 type InviteEntry = {
   id: string
@@ -39,19 +39,9 @@ function AccountPage() {
       return
     }
     const loadData = async () => {
-      const [{ data: inviteRows }, { data: membershipRows }] = await Promise.all([
-        supabase
-          .from('team_invites')
-          .select('id,team_id,status,teams(name)')
-          .eq('invitee_id', user.id)
-          .eq('status', 'pending'),
-        supabase
-          .from('team_members')
-          .select('team_id,role,teams(name)')
-          .eq('user_id', user.id),
-      ])
-      setInvites(inviteRows ?? [])
-      setMemberships(membershipRows ?? [])
+      const data = await fetchAccountData()
+      setInvites(data.invites ?? [])
+      setMemberships(data.memberships ?? [])
     }
     void loadData()
   }, [user])
@@ -81,24 +71,12 @@ function AccountPage() {
     setLoading(true)
     setInviteError('')
     try {
-      const { error } = await supabase.rpc('accept_team_invite', { invite_id: invite.id })
-      if (error) {
-        setInviteError(error.message)
-        return
-      }
-      const [{ data: inviteRows }, { data: membershipRows }] = await Promise.all([
-        supabase
-          .from('team_invites')
-          .select('id,team_id,status,teams(name)')
-          .eq('invitee_id', user.id)
-          .eq('status', 'pending'),
-        supabase
-          .from('team_members')
-          .select('team_id,role,teams(name)')
-          .eq('user_id', user.id),
-      ])
-      setInvites(inviteRows ?? [])
-      setMemberships(membershipRows ?? [])
+      await acceptTeamInvite(invite.id)
+      const data = await fetchAccountData()
+      setInvites(data.invites ?? [])
+      setMemberships(data.memberships ?? [])
+    } catch (error) {
+      setInviteError(error instanceof Error ? error.message : 'Failed to accept invite')
     } finally {
       setLoading(false)
     }
@@ -108,12 +86,10 @@ function AccountPage() {
     setInviteError('')
     setLoading(true)
     try {
-      const { error } = await supabase.rpc('decline_team_invite', { invite_id: invite.id })
-      if (error) {
-        setInviteError(error.message)
-        return
-      }
+      await declineTeamInvite(invite.id)
       setInvites(current => current.filter(item => item.id !== invite.id))
+    } catch (error) {
+      setInviteError(error instanceof Error ? error.message : 'Failed to decline invite')
     } finally {
       setLoading(false)
     }

@@ -9,7 +9,7 @@ import {
     setStudentsForDay,
 } from '../../../lib/storage'
 import { useCurrentSession } from '../../../app/useCurrentSession'
-import { supabase } from '../../../lib/supabaseClient'
+import { fetchSchematic, upsertSchematic } from '../../../lib/serverApi'
 import { prefetchInstructorPacket } from '../../../lib/instructorPdfCache'
 import type { Student } from '../../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
@@ -68,15 +68,11 @@ export function useSchematicSchedule(selectedDay: string | null) {
         }
         let active = true
         const loadRemote = async () => {
-            const { data } = await supabase
-                .from('schematics')
-                .select('data')
-                .eq('session_id', sessionId)
-                .maybeSingle()
+            const response = await fetchSchematic(sessionId)
             if (!active) {
                 return
             }
-            const dataValue = data?.data as { codes?: string[]; instructors?: string[] } | undefined
+            const dataValue = response.schematic?.data as { codes?: string[]; instructors?: string[] } | undefined
             if (dataValue?.codes?.length) {
                 setRemoteSchedule({
                     codes: dataValue.codes ?? [],
@@ -294,17 +290,10 @@ export function useSchematicSchedule(selectedDay: string | null) {
                 codes,
                 instructors,
             }
-            const { error } = await supabase
-                .from('schematics')
-                .upsert({
-                    session_id: sessionId,
-                    data: nextRemoteSchedule,
-                    created_by: currentSession.created_by,
-                    updated_at: new Date().toISOString(),
-                }, { onConflict: 'session_id' })
-
-            if (error) {
-                alert(`Failed to save schedule: ${error.message}`)
+            try {
+                await upsertSchematic(sessionId, nextRemoteSchedule)
+            } catch (error) {
+                alert(`Failed to save schedule: ${error instanceof Error ? error.message : 'Unknown error'}`)
                 return
             }
 

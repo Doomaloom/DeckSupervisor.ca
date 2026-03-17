@@ -1,3 +1,4 @@
+import { getStoredItem, removeStoredItem, setStoredItem } from './browserStorage'
 import { getScopedKey } from './storageScope'
 
 const currentTermKey = () => getScopedKey('currentTermKey')
@@ -7,14 +8,14 @@ export function getCurrentTermKey(): string {
   if (typeof window === 'undefined') {
     return ''
   }
-  return window.localStorage.getItem(currentTermKey()) ?? ''
+  return getStoredItem(currentTermKey()) ?? ''
 }
 
 export function setCurrentTermKey(key: string) {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem(currentTermKey(), key)
+  setStoredItem(currentTermKey(), key)
   window.dispatchEvent(new CustomEvent(CURRENT_TERM_EVENT, { detail: { key } }))
 }
 
@@ -22,7 +23,7 @@ export function clearCurrentTermKey() {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.removeItem(currentTermKey())
+  removeStoredItem(currentTermKey())
   window.dispatchEvent(new CustomEvent(CURRENT_TERM_EVENT, { detail: { key: '' } }))
 }
 

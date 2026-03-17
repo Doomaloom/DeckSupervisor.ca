@@ -5,7 +5,7 @@ import {
     getExtractedClassesForScope,
     onExtractedClassesUpdated,
 } from '../../../lib/extractedClassesStorage'
-import { supabase } from '../../../lib/supabaseClient'
+import { fetchSchematics, fetchTeamSessions } from '../../../lib/serverApi'
 import type { ExtractedClass } from '../../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES, dayNames } from '../constants'
 import type { Course } from '../types'
@@ -93,22 +93,16 @@ export function useFullTimeSchematicView(enabled: boolean) {
         let active = true
         const loadSessions = async () => {
             setLoadingSessions(true)
-            const { data, error } = await supabase
-                .from('sessions')
-                .select('id,session_day,session_season,session_year,start_date,location,updated_at')
-                .eq('team_id', currentTeamId)
-
-            if (!active) {
-                return
-            }
-            if (error) {
+            try {
+                const response = await fetchTeamSessions(currentTeamId, 'id,session_day,session_season,session_year,start_date,location,updated_at')
+                if (!active) {
+                    return
+                }
+                setTeamSessions((response.sessions ?? []) as TeamSessionRow[])
+            } catch (error) {
                 console.error('Failed to load team sessions for full-time schematic view', error)
                 setTeamSessions([])
-                setLoadingSessions(false)
-                return
             }
-
-            setTeamSessions((data ?? []) as TeamSessionRow[])
             setLoadingSessions(false)
         }
 
@@ -252,36 +246,30 @@ export function useFullTimeSchematicView(enabled: boolean) {
 
         const loadSchematics = async () => {
             setLoadingSchematics(true)
-            const { data, error } = await supabase
-                .from('schematics')
-                .select('session_id,data')
-                .in('session_id', sessionIds)
-
-            if (!active) {
-                return
-            }
-            if (error) {
-                console.error('Failed to load schematics for full-time view', error)
-                setSchematicsBySession(new Map())
-                setLoadingSchematics(false)
-                return
-            }
-
-            const next = new Map<string, SchematicPayload>()
-            ;(data ?? []).forEach(row => {
-                const schematicRow = row as SchematicRow
-                const codes = schematicRow.data?.codes ?? []
-                const instructors = schematicRow.data?.instructors ?? []
-                if (codes.length === 0) {
+            try {
+                const response = await fetchSchematics(sessionIds)
+                if (!active) {
                     return
                 }
-                next.set(schematicRow.session_id, {
-                    codes,
-                    instructors,
+                const data = response.schematics ?? []
+                const next = new Map<string, SchematicPayload>()
+                ;(data ?? []).forEach(row => {
+                    const schematicRow = row as SchematicRow
+                    const codes = schematicRow.data?.codes ?? []
+                    const instructors = schematicRow.data?.instructors ?? []
+                    if (codes.length === 0) {
+                        return
+                    }
+                    next.set(schematicRow.session_id, {
+                        codes,
+                        instructors,
+                    })
                 })
-            })
-
-            setSchematicsBySession(next)
+                setSchematicsBySession(next)
+            } catch (error) {
+                console.error('Failed to load schematics for full-time view', error)
+                setSchematicsBySession(new Map())
+            }
             setLoadingSchematics(false)
         }
 

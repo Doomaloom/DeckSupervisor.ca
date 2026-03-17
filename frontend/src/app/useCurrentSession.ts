@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from './AuthContext'
-import { supabase } from '../lib/supabaseClient'
+import { fetchCurrentSession } from '../lib/serverApi'
 import { getCurrentSessionId, loadSessions, onCurrentSessionChanged } from '../lib/sessionStorage'
-import { getTorontoDate } from '../lib/torontoDate'
 import { onStorageScopeChanged } from '../lib/storageScope'
 
 export type SessionRecord = {
@@ -79,57 +78,27 @@ export function useCurrentSession() {
         return
       }
 
-      const { data: sessionRow, error } = await supabase
-        .from('sessions')
-        .select(
-          'id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors',
-        )
-        .eq('id', sessionId)
-        .maybeSingle()
-
-      if (!active) {
+      try {
+        const data = await fetchCurrentSession(sessionId)
+        if (!active) {
+          return
+        }
+        if (!data.session) {
+          setSession(null)
+          setAccess({ mode: 'none', allowRosterEdits: false })
+          setLoading(false)
+          return
+        }
+        setSession(data.session as SessionRecord)
+        setAccess(data.access)
+        setLoading(false)
         return
-      }
-
-      if (error || !sessionRow) {
+      } catch {
         setSession(null)
         setAccess({ mode: 'none', allowRosterEdits: false })
         setLoading(false)
         return
       }
-
-      const sessionRecord = sessionRow as SessionRecord
-      setSession(sessionRecord)
-
-      if (sessionRecord.created_by === user.id) {
-        setAccess({ mode: 'owner', allowRosterEdits: true })
-        setLoading(false)
-        return
-      }
-
-      const today = getTorontoDate()
-      const { data: shareRow } = await supabase
-        .from('session_shares')
-        .select('allow_roster_edits,share_date')
-        .eq('session_id', sessionId)
-        .eq('shared_with', user.id)
-        .eq('share_date', today)
-        .maybeSingle()
-
-      if (!active) {
-        return
-      }
-
-      if (shareRow) {
-        setAccess({
-          mode: 'shared',
-          allowRosterEdits: shareRow.allow_roster_edits ?? false,
-          shareDate: shareRow.share_date,
-        })
-      } else {
-        setAccess({ mode: 'none', allowRosterEdits: false })
-      }
-      setLoading(false)
     }
 
     void load()

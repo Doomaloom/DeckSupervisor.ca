@@ -1,5 +1,5 @@
 import type { Student } from '../types/app'
-import { supabase } from './supabaseClient'
+import { syncReportCards } from './serverApi'
 
 const UNASSIGNED_LABEL = 'Unassigned'
 
@@ -8,7 +8,6 @@ type SyncReportCardsForDayParams = {
   students: Student[]
   sessionLabel: string
   teamId: string | null
-  userId: string
 }
 
 export type SyncReportCardsForDayResult =
@@ -37,9 +36,7 @@ export async function syncReportCardsForDay({
   students,
   sessionLabel,
   teamId,
-  userId,
 }: SyncReportCardsForDayParams): Promise<SyncReportCardsForDayResult> {
-  const totalsByInstructor = new Map<string, number>()
   let hasUnassignedInstructors = false
 
   students.forEach(student => {
@@ -48,52 +45,12 @@ export async function syncReportCardsForDay({
       hasUnassignedInstructors = true
       return
     }
-    totalsByInstructor.set(instructor, (totalsByInstructor.get(instructor) ?? 0) + 1)
   })
 
   if (hasUnassignedInstructors) {
     return { status: 'blocked_unassigned' }
   }
-
-  let clearScope = supabase
-    .from('report_cards')
-    .delete()
-    .eq('session', sessionLabel)
-    .eq('day', day)
-    .eq('created_by', userId)
-
-  if (teamId) {
-    clearScope = clearScope.eq('team_id', teamId)
-  } else {
-    clearScope = clearScope.is('team_id', null)
-  }
-
-  const { error: clearError } = await clearScope
-  if (clearError) {
-    throw clearError
-  }
-
-  if (totalsByInstructor.size === 0) {
-    return { status: 'empty' }
-  }
-
-  const updatedAt = new Date().toISOString()
-  const rows = Array.from(totalsByInstructor.entries()).map(([instructor, total]) => ({
-    session: sessionLabel,
-    day,
-    instructor,
-    number_of_report_cards: total,
-    team_id: teamId,
-    created_by: userId,
-    updated_at: updatedAt,
-  }))
-
-  const { error: insertError } = await supabase.from('report_cards').insert(rows)
-  if (insertError) {
-    throw insertError
-  }
-
-  return { status: 'synced' }
+  return syncReportCards({ day, students, sessionLabel, teamId })
 }
 
 export function isUnassignedInstructor(name: string) {

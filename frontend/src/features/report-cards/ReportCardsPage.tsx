@@ -4,7 +4,7 @@ import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { getSessionTermLabel, syncReportCardsForDay } from '../../lib/reportCardSync'
-import { supabase } from '../../lib/supabaseClient'
+import { fetchReportCardTotals } from '../../lib/serverApi'
 import { useDay } from '../../app/DayContext'
 import { getStudentsForDay, onStudentsUpdated } from '../../lib/storage'
 import type { Student } from '../../types/app'
@@ -81,41 +81,35 @@ function ReportCardsPage() {
     let active = true
     const loadEmployeeTotals = async () => {
       setEmployeeTotalsLoading(true)
-      const { data, error } = await supabase
-        .from('report_cards')
-        .select('instructor,number_of_report_cards')
-        .eq('team_id', currentTeamId)
-        .eq('session', currentTerm.label)
+      try {
+        const response = await fetchReportCardTotals(currentTeamId, currentTerm.label)
+        if (!active) {
+          return
+        }
+        const data = response.totals ?? []
+        const collator = new Intl.Collator('en', { sensitivity: 'base' })
+        const totalsByEmployee = new Map<string, number>()
 
-      if (!active) {
-        return
-      }
-      if (error) {
-        console.error('Failed to load full-time report card totals', error)
-        setEmployeeTotals([])
-        setEmployeeTotalsLoading(false)
-        return
-      }
-
-      const collator = new Intl.Collator('en', { sensitivity: 'base' })
-      const totalsByEmployee = new Map<string, number>()
-
-      ;(data ?? []).forEach(row => {
-        const name = (row.instructor ?? '').trim() || 'Unassigned'
-        const count = Math.max(0, row.number_of_report_cards ?? 0)
-        totalsByEmployee.set(name, (totalsByEmployee.get(name) ?? 0) + count)
-      })
-
-      const totals = Array.from(totalsByEmployee.entries())
-        .map(([name, total]) => ({ name, total }))
-        .sort((a, b) => {
-          if (a.total !== b.total) {
-            return b.total - a.total
-          }
-          return collator.compare(a.name, b.name)
+        ;(data ?? []).forEach(row => {
+          const name = (row.instructor ?? '').trim() || 'Unassigned'
+          const count = Math.max(0, row.number_of_report_cards ?? 0)
+          totalsByEmployee.set(name, (totalsByEmployee.get(name) ?? 0) + count)
         })
 
-      setEmployeeTotals(totals)
+        const totals = Array.from(totalsByEmployee.entries())
+          .map(([name, total]) => ({ name, total }))
+          .sort((a, b) => {
+            if (a.total !== b.total) {
+              return b.total - a.total
+            }
+            return collator.compare(a.name, b.name)
+          })
+
+        setEmployeeTotals(totals)
+      } catch (error) {
+        console.error('Failed to load full-time report card totals', error)
+        setEmployeeTotals([])
+      }
       setEmployeeTotalsLoading(false)
     }
 
@@ -198,7 +192,6 @@ function ReportCardsPage() {
         students,
         sessionLabel,
         teamId: currentSession?.team_id ?? null,
-        userId: user.id,
       })
       if (result.status === 'blocked_unassigned') {
         setSyncWarning(

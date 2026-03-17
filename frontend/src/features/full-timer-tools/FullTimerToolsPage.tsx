@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { createTermKey, formatTermLabel, useCurrentTerm } from '../../app/useCurrentTerm'
-import { supabase } from '../../lib/supabaseClient'
+import { fetchTeamSessions } from '../../lib/serverApi'
 
 type TeamSessionRow = {
   id: string
@@ -59,20 +59,16 @@ function FullTimerToolsPage() {
     let active = true
     const load = async () => {
       setSessionsLoading(true)
-      const { data, error } = await supabase
-        .from('sessions')
-        .select('id,session_season,session_year,start_date')
-        .eq('team_id', currentTeamId)
-      if (!active) {
-        return
-      }
-      if (error) {
+      try {
+        const response = await fetchTeamSessions(currentTeamId, 'id,session_season,session_year,start_date')
+        if (!active) {
+          return
+        }
+        setTeamSessions((response.sessions ?? []) as TeamSessionRow[])
+      } catch (error) {
         console.error('Failed to load team sessions', error)
         setTeamSessions([])
-        setSessionsLoading(false)
-        return
       }
-      setTeamSessions((data ?? []) as TeamSessionRow[])
       setSessionsLoading(false)
     }
     void load()

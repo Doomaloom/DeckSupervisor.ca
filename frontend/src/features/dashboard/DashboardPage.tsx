@@ -4,8 +4,8 @@ import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
 import { createTermKey, formatTermLabel, useCurrentTerm } from '../../app/useCurrentTerm'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
-import { supabase } from '../../lib/supabaseClient'
 import { getTorontoDate } from '../../lib/torontoDate'
+import { createSession, fetchMySessions, fetchSharedSessionsToday, fetchTeamSessions } from '../../lib/serverApi'
 import {
   clearCurrentSessionId,
   getCurrentSessionId,
@@ -222,9 +222,10 @@ function Dashboard() {
       instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
     }
 
-    const { error } = await supabase.from('sessions').insert(payload)
-    if (error) {
-      setSaveMessage(error.message)
+    try {
+      await createSession(payload)
+    } catch (error) {
+      setSaveMessage(error instanceof Error ? error.message : 'Failed to save session')
       return
     }
     setCurrentSessionId(id)
@@ -440,20 +441,16 @@ function Dashboard() {
     let active = true
     const loadTeamSessions = async () => {
       setTeamTermSessionsLoading(true)
-      const { data, error } = await supabase
-        .from('sessions')
-        .select('id,session_season,session_year,start_date')
-        .eq('team_id', currentTeamId)
-      if (!active) {
-        return
-      }
-      if (error) {
+      try {
+        const response = await fetchTeamSessions(currentTeamId, 'id,session_season,session_year,start_date')
+        if (!active) {
+          return
+        }
+        setTeamTermSessions((response.sessions ?? []) as TeamTermSessionRow[])
+      } catch (error) {
         console.error('Failed to load team terms', error)
         setTeamTermSessions([])
-        setTeamTermSessionsLoading(false)
-        return
       }
-      setTeamTermSessions((data ?? []) as TeamTermSessionRow[])
       setTeamTermSessionsLoading(false)
     }
     void loadTeamSessions()
@@ -488,13 +485,8 @@ function Dashboard() {
       return
     }
     const loadSessionsFromDb = async () => {
-      const { data } = await supabase
-        .from('sessions')
-        .select(
-          'id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors',
-        )
-        .eq('created_by', user.id)
-      setDbSessions(data ?? [])
+      const data = await fetchMySessions()
+      setDbSessions((data.sessions ?? []) as DbSessionEntry[])
     }
     void loadSessionsFromDb()
   }, [isGuest, user, sessionsVersion])
@@ -505,14 +497,8 @@ function Dashboard() {
     }
     const loadShared = async () => {
       const today = getTorontoDate()
-      const { data } = await supabase
-        .from('session_shares')
-        .select(
-          'id,share_date,allow_roster_edits,sessions(id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors)',
-        )
-        .eq('shared_with', user.id)
-        .eq('share_date', today)
-      setSharedSessions(data ?? [])
+      const data = await fetchSharedSessionsToday()
+      setSharedSessions((data.sharedSessions ?? []).filter((item: SharedSessionEntry) => item.share_date === today))
     }
     void loadShared()
   }, [isGuest, user])

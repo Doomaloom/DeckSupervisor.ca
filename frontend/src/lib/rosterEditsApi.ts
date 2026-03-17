@@ -1,4 +1,8 @@
-import { supabase } from './supabaseClient'
+import {
+  fetchRosterEdits as fetchRosterEditsRequest,
+  upsertRosterLevelEdit as upsertRosterLevelEditRequest,
+  upsertRosterStudentLevelEdit as upsertRosterStudentLevelEditRequest,
+} from './serverApi'
 
 export type RosterLevelEdit = {
   code: string
@@ -46,19 +50,13 @@ async function hashName(value: string): Promise<string> {
 }
 
 export async function fetchRosterLevelEdits(sessionId: string): Promise<RosterLevelEdit[]> {
-  const { data } = await supabase
-    .from('roster_level_edits')
-    .select('code,level')
-    .eq('session_id', sessionId)
-  return (data ?? []) as RosterLevelEdit[]
+  const data = await fetchRosterEditsRequest(sessionId)
+  return data.rosterEdits ?? []
 }
 
 export async function fetchRosterStudentEdits(sessionId: string): Promise<StudentLevelEdit[]> {
-  const { data } = await supabase
-    .from('roster_student_level_edits')
-    .select('code,student_name_hash,level')
-    .eq('session_id', sessionId)
-  return (data ?? []) as StudentLevelEdit[]
+  const data = await fetchRosterEditsRequest(sessionId)
+  return data.studentEdits ?? []
 }
 
 export async function upsertRosterLevelEdit(
@@ -67,16 +65,12 @@ export async function upsertRosterLevelEdit(
   code: string,
   level: string,
 ) {
-  return supabase.from('roster_level_edits').upsert(
-    {
-      session_id: sessionId,
-      created_by: createdBy,
-      code,
-      level,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'session_id,code' },
-  )
+  return upsertRosterLevelEditRequest({
+    session_id: sessionId,
+    created_by: createdBy,
+    code,
+    level,
+  })
 }
 
 export async function upsertRosterStudentLevelEdit(
@@ -90,17 +84,13 @@ export async function upsertRosterStudentLevelEdit(
   if (!hash) {
     return null
   }
-  return supabase.from('roster_student_level_edits').upsert(
-    {
-      session_id: sessionId,
-      created_by: createdBy,
-      code,
-      student_name_hash: hash,
-      level,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'session_id,code,student_name_hash' },
-  )
+  return upsertRosterStudentLevelEditRequest({
+    session_id: sessionId,
+    created_by: createdBy,
+    code,
+    student_name_hash: hash,
+    level,
+  })
 }
 
 export async function hashStudentNames(names: string[]): Promise<Map<string, string>> {

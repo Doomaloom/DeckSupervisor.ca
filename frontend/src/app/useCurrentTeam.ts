@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from './AuthContext'
-import { supabase } from '../lib/supabaseClient'
+import { fetchCurrentTeams } from '../lib/serverApi'
 import {
   clearCurrentTeamId,
   getCurrentTeamId,
@@ -47,47 +47,28 @@ export function useCurrentTeam() {
       }
 
       setLoading(true)
-      const [{ data: memberRows }, { data: ownedRows }] = await Promise.all([
-        supabase.from('team_members').select('team_id').eq('user_id', user.id),
-        supabase.from('teams').select('id,name,available_locations').eq('owner_id', user.id),
-      ])
-
-      if (!active) {
-        return
-      }
-
-      const memberIds = new Set((memberRows ?? []).map(row => (row as TeamMembershipRow).team_id))
-      const ownedTeams = (ownedRows ?? []) as TeamRecord[]
-      const ownedIds = new Set(ownedTeams.map(team => team.id))
-      const allIds = Array.from(new Set([...Array.from(memberIds), ...Array.from(ownedIds)]))
-
-      let memberTeams: TeamRecord[] = []
-      if (allIds.length > 0) {
-        const { data } = await supabase
-          .from('teams')
-          .select('id,name,available_locations')
-          .in('id', allIds)
+      try {
+        const data = await fetchCurrentTeams()
         if (!active) {
           return
         }
-        memberTeams = (data ?? []) as TeamRecord[]
-      }
-
-      const merged = new Map<string, TeamRecord>()
-      ;[...ownedTeams, ...memberTeams].forEach(team => merged.set(team.id, team))
-      const nextTeams = Array.from(merged.values()).sort((a, b) => a.name.localeCompare(b.name))
-
-      setTeams(nextTeams)
-      const hasCurrent = nextTeams.some(team => team.id === currentTeamId)
-      if (!hasCurrent) {
-        const fallback = nextTeams[0]?.id ?? ''
-        if (fallback) {
-          setCurrentTeamIdStorage(fallback)
-          setCurrentTeamIdState(fallback)
-        } else {
-          clearCurrentTeamId()
-          setCurrentTeamIdState('')
+        const nextTeams = (data.teams ?? []) as TeamRecord[]
+        setTeams(nextTeams)
+        const hasCurrent = nextTeams.some(team => team.id === currentTeamId)
+        if (!hasCurrent) {
+          const fallback = nextTeams[0]?.id ?? ''
+          if (fallback) {
+            setCurrentTeamIdStorage(fallback)
+            setCurrentTeamIdState(fallback)
+          } else {
+            clearCurrentTeamId()
+            setCurrentTeamIdState('')
+          }
         }
+        setLoading(false)
+        return
+      } catch (error) {
+        console.error('Failed to load teams', error)
       }
       setLoading(false)
     }

@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
-import { supabase } from '../../lib/supabaseClient'
 
 function SignInPage() {
   const navigate = useNavigate()
-  const { isGuest, user } = useAuth()
+  const { isGuest, signIn, signUp, user } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
@@ -18,41 +17,16 @@ function SignInPage() {
     setIsSubmitting(true)
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-        })
-        if (error) {
-          setErrorMessage(error.message)
-          return
-        }
-        setErrorMessage('Check your email for a confirmation link.')
+        const message = await signUp(email.trim(), password)
+        setErrorMessage(message || 'Check your email for a confirmation link.')
         return
       }
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      })
-      if (error) {
-        setErrorMessage(error.message)
-        return
-      }
+      await signIn(email.trim(), password)
       navigate('/')
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Authentication failed')
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  const handleGoogleSignIn = async () => {
-    setErrorMessage('')
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    })
-    if (error) {
-      setErrorMessage(error.message)
     }
   }
 
@@ -77,17 +51,8 @@ function SignInPage() {
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
       <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
         <h2 className="text-xl font-semibold">Sign in</h2>
-        <p className="mt-2 text-sm text-secondary/70">
-          Use email + password or Google to access your account.
-        </p>
-        <button
-          type="button"
-          className="mt-4 w-full rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
-          onClick={handleGoogleSignIn}
-        >
-          Continue with Google
-        </button>
-        <div className="mt-6 border-t border-secondary/20 pt-6">
+        <p className="mt-2 text-sm text-secondary/70">Use email + password to access your account.</p>
+        <div className="mt-6 pt-2">
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             <input
               className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"

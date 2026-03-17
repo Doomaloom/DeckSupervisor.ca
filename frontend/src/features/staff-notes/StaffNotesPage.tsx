@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../app/AuthContext'
+import { getStoredItem, setStoredItem } from '../../lib/browserStorage'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { getCurrentSessionId } from '../../lib/instructorPdfCache'
 import { getScopedKey } from '../../lib/storageScope'
-import { supabase } from '../../lib/supabaseClient'
+import {
+  createSessionNote,
+  deleteSessionNote,
+  fetchSessionNotes,
+  updateSessionNote,
+} from '../../lib/serverApi'
 import { useSessionInstructors } from '../print/hooks/useSessionInstructors'
 
 type NoteTabKey = 'general' | 'recognition' | 'feedback' | 'coaching'
@@ -53,13 +59,13 @@ const loadJson = <T,>(key: string, fallback: T): T => {
     return fallback
   }
   try {
-    const value = window.localStorage.getItem(key)
+    const value = getStoredItem(key)
     if (!value) {
       return fallback
     }
     return JSON.parse(value) as T
   } catch (error) {
-    console.error(`Failed to parse ${key} from localStorage`, error)
+    console.error(`Failed to parse ${key} from session storage`, error)
     return fallback
   }
 }
@@ -68,7 +74,7 @@ const saveJson = <T,>(key: string, value: T) => {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem(key, JSON.stringify(value))
+  setStoredItem(key, JSON.stringify(value))
 }
 
 function StaffNotesPage() {
@@ -106,13 +112,8 @@ function StaffNotesPage() {
     }
 
     const loadFromDb = async () => {
-      const { data } = await supabase
-        .from('session_notes')
-        .select('id,created_at,note_type,text,employee_name,done')
-        .eq('session_id', sessionId)
-        .order('created_at', { ascending: false })
-
-      const rows = data ?? []
+      const data = await fetchSessionNotes(sessionId)
+      const rows = data.notes ?? []
       if (activeTab === 'todo') {
         setTodos(
           rows
@@ -171,31 +172,30 @@ function StaffNotesPage() {
       setNotes(next)
       saveJson(buildStorageKey(sessionId, activeTab), next)
     } else if (user?.id && (access.mode === 'owner' || access.mode === 'shared')) {
-      const { data, error } = await supabase
-        .from('session_notes')
-        .insert({
+      try {
+        const { note: data } = await createSessionNote({
           session_id: sessionId,
-          created_by: user.id,
           note_type: activeTab,
           text: trimmed,
           employee_name: employeeName.trim() || null,
         })
-        .select('id,created_at,text,employee_name')
-        .single()
-      if (error || !data) {
+        if (!data) {
+          return
+        }
+        setNotes(current => [
+          {
+            id: data.id,
+            createdAt: data.created_at,
+            text: data.text,
+            employeeName: data.employee_name ?? undefined,
+          },
+          ...current,
+        ])
+      } catch (error) {
         console.error('Failed to add note', error)
-        alert(`Failed to add note: ${error?.message ?? 'Unknown error'}`)
+        alert(`Failed to add note: ${error instanceof Error ? error.message : 'Unknown error'}`)
         return
       }
-      setNotes(current => [
-        {
-          id: data.id,
-          createdAt: data.created_at,
-          text: data.text,
-          employeeName: data.employee_name ?? undefined,
-        },
-        ...current,
-      ])
     }
     setNoteText('')
     setEmployeeName('')
@@ -211,7 +211,7 @@ function StaffNotesPage() {
       saveJson(buildStorageKey(sessionId, activeTab), next)
       return
     }
-    void supabase.from('session_notes').delete().eq('id', id)
+    void deleteSessionNote(id)
     setNotes(current => current.filter(item => item.id !== id))
   }
 
@@ -234,31 +234,30 @@ function StaffNotesPage() {
       setTodos(next)
       saveJson(buildStorageKey(sessionId, activeTab), next)
     } else if (user?.id && (access.mode === 'owner' || access.mode === 'shared')) {
-      const { data, error } = await supabase
-        .from('session_notes')
-        .insert({
+      try {
+        const { note: data } = await createSessionNote({
           session_id: sessionId,
-          created_by: user.id,
           note_type: 'todo',
           text: trimmed,
           done: false,
         })
-        .select('id,created_at,text,done')
-        .single()
-      if (error || !data) {
+        if (!data) {
+          return
+        }
+        setTodos(current => [
+          {
+            id: data.id,
+            createdAt: data.created_at,
+            text: data.text,
+            done: data.done ?? false,
+          },
+          ...current,
+        ])
+      } catch (error) {
         console.error('Failed to add todo', error)
-        alert(`Failed to add todo: ${error?.message ?? 'Unknown error'}`)
+        alert(`Failed to add todo: ${error instanceof Error ? error.message : 'Unknown error'}`)
         return
       }
-      setTodos(current => [
-        {
-          id: data.id,
-          createdAt: data.created_at,
-          text: data.text,
-          done: data.done ?? false,
-        },
-        ...current,
-      ])
     }
     setTodoText('')
   }
@@ -276,7 +275,7 @@ function StaffNotesPage() {
     const updated = todos.map(item => (item.id === id ? { ...item, done: !item.done } : item))
     const target = updated.find(item => item.id === id)
     if (target) {
-      void supabase.from('session_notes').update({ done: target.done }).eq('id', id)
+      void updateSessionNote(id, { done: target.done })
     }
     setTodos(updated)
   }
@@ -291,7 +290,7 @@ function StaffNotesPage() {
       saveJson(buildStorageKey(sessionId, activeTab), next)
       return
     }
-    void supabase.from('session_notes').delete().eq('id', id)
+    void deleteSessionNote(id)
     setTodos(current => current.filter(item => item.id !== id))
   }
 

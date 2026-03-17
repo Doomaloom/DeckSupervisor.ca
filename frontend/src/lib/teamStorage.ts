@@ -1,3 +1,4 @@
+import { getStoredItem, removeStoredItem, setStoredItem } from './browserStorage'
 import { getScopedKey } from './storageScope'
 
 const currentTeamKey = () => getScopedKey('currentTeamId')
@@ -7,14 +8,14 @@ export function getCurrentTeamId(): string {
   if (typeof window === 'undefined') {
     return ''
   }
-  return window.localStorage.getItem(currentTeamKey()) ?? ''
+  return getStoredItem(currentTeamKey()) ?? ''
 }
 
 export function setCurrentTeamId(id: string) {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem(currentTeamKey(), id)
+  setStoredItem(currentTeamKey(), id)
   window.dispatchEvent(new CustomEvent(CURRENT_TEAM_EVENT, { detail: { id } }))
 }
 
@@ -22,7 +23,7 @@ export function clearCurrentTeamId() {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.removeItem(currentTeamKey())
+  removeStoredItem(currentTeamKey())
   window.dispatchEvent(new CustomEvent(CURRENT_TEAM_EVENT, { detail: { id: '' } }))
 }
 

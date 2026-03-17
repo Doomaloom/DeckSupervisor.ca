@@ -1,6 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabaseClient'
+import {
+  bootstrapAuthSession,
+  onAuthSessionChanged,
+  type AuthUser,
+  signInWithPassword,
+  signOut as signOutFromBackend,
+  signUpWithPassword,
+  type BrowserSession,
+} from '../lib/authClient'
+import { fetchAccountData, updateProfile as updateProfileRequest } from '../lib/serverApi'
 import { setStorageScope } from '../lib/storageScope'
 
 export type Profile = {
@@ -13,13 +21,15 @@ export type Profile = {
 }
 
 type AuthContextValue = {
-  session: Session | null
-  user: User | null
+  session: BrowserSession | null
+  user: AuthUser | null
   profile: Profile | null
   loading: boolean
   isGuest: boolean
   accountType: Profile['account_type'] | null
   needsProfile: boolean
+  signIn: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string) => Promise<string>
   refreshProfile: () => Promise<void>
   completeProfile: (firstName: string, lastName: string, location?: string) => Promise<void>
   signOut: () => Promise<void>
@@ -28,73 +38,74 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<BrowserSession | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const loadProfile = useCallback(async (activeUser: User | null) => {
+  const loadProfile = useCallback(async (activeUser: AuthUser | null) => {
     if (!activeUser) {
       setProfile(null)
       return
     }
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id,email,first_name,last_name,location,account_type')
-      .eq('id', activeUser.id)
-      .maybeSingle()
-    if (error) {
+    try {
+      const data = await fetchAccountData()
+      setProfile(data.profile)
+    } catch (error) {
       console.error('Failed to load profile', error)
       setProfile(null)
-      return
     }
-    if (data) {
-      setProfile(data)
-      return
-    }
-
-    const { error: insertError } = await supabase.from('profiles').insert({
-      id: activeUser.id,
-      email: activeUser.email ?? '',
-    })
-    if (insertError) {
-      console.error('Failed to create profile', insertError)
-      setProfile(null)
-      return
-    }
-    const { data: createdProfile } = await supabase
-      .from('profiles')
-      .select('id,email,first_name,last_name,location,account_type')
-      .eq('id', activeUser.id)
-      .maybeSingle()
-    setProfile(createdProfile ?? null)
   }, [])
 
   useEffect(() => {
     let mounted = true
-    supabase.auth.getSession().then(({ data }) => {
+    const applySession = async (nextSession: BrowserSession | null) => {
       if (!mounted) {
         return
       }
-      setSession(data.session)
-      setUser(data.session?.user ?? null)
-      setStorageScope(data.session?.user?.id ?? 'guest')
-      void loadProfile(data.session?.user ?? null)
-      setLoading(false)
-    })
-
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)
-      setUser(nextSession?.user ?? null)
-      setStorageScope(nextSession?.user?.id ?? 'guest')
-      void loadProfile(nextSession?.user ?? null)
+      const nextUser = nextSession?.user ?? null
+      setUser(nextUser)
+      setStorageScope(nextUser?.id ?? 'guest')
+      await loadProfile(nextUser)
+      if (mounted) {
+        setLoading(false)
+      }
+    }
+
+    void bootstrapAuthSession()
+      .then(applySession)
+      .catch(error => {
+        console.error('Failed to bootstrap auth session', error)
+        if (mounted) {
+          setSession(null)
+          setUser(null)
+          setProfile(null)
+          setStorageScope('guest')
+          setLoading(false)
+        }
+      })
+    const unsubscribe = onAuthSessionChanged(nextSession => {
+      void applySession(nextSession)
     })
 
     return () => {
       mounted = false
-      subscription.subscription.unsubscribe()
+      unsubscribe()
     }
   }, [loadProfile])
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    const nextSession = await signInWithPassword(email, password)
+    if (!nextSession) {
+      throw new Error('Failed to establish session')
+    }
+  }, [])
+
+  const signUp = useCallback(async (email: string, password: string) => {
+    const result = await signUpWithPassword(email, password)
+    return result.message ?? ''
+  }, [])
 
   const refreshProfile = useCallback(async () => {
     await loadProfile(user)
@@ -120,8 +131,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (location !== undefined) {
         payload.location = location ?? null
       }
-      const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' })
-      if (error) {
+      try {
+        await updateProfileRequest(payload)
+      } catch (error) {
         console.error('Failed to save profile', error)
         return
       }
@@ -131,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut()
+    await signOutFromBackend()
     setSession(null)
     setUser(null)
     setProfile(null)
@@ -147,11 +159,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isGuest: !user,
       accountType: profile?.account_type ?? null,
       needsProfile: Boolean(user && (!profile?.first_name || !profile?.last_name)),
+      signIn,
+      signUp,
       refreshProfile,
       completeProfile,
       signOut,
     }),
-    [completeProfile, loading, profile, refreshProfile, session, signOut, user]
+    [completeProfile, loading, profile, refreshProfile, session, signIn, signOut, signUp, user]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

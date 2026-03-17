@@ -7,7 +7,7 @@ import {
     setStudentsForDay,
 } from '../../../lib/storage'
 import { fetchRosterLevelEdits, fetchRosterStudentEdits, hashStudentNames } from '../../../lib/rosterEditsApi'
-import { supabase } from '../../../lib/supabaseClient'
+import { fetchSchematic } from '../../../lib/serverApi'
 import type { Student } from '../../../types/app'
 import { buildRosterGroups } from '../utils'
 
@@ -76,15 +76,11 @@ export function useRosterData(selectedDay: string, sessionId?: string, isGuest?:
         }
         let active = true
         const loadSchematic = async () => {
-            const { data } = await supabase
-                .from('schematics')
-                .select('data')
-                .eq('session_id', sessionId)
-                .maybeSingle()
+            const response = await fetchSchematic(sessionId)
             if (!active) {
                 return
             }
-            const value = (data?.data ?? null) as RemoteSchematicData | null
+            const value = (response.schematic?.data ?? null) as RemoteSchematicData | null
             setRemoteSchematic(value)
             if (selectedDay) {
                 setInstructorsForDay(selectedDay, {

@@ -1,4 +1,5 @@
 import type { ExtractedClass } from '../types/app'
+import { getStoredItem, setStoredItem } from './browserStorage'
 import { getScopedKey } from './storageScope'
 
 const extractedClassesKey = () => getScopedKey('extractedClassesByScope')
@@ -12,13 +13,13 @@ function loadJson<T>(key: string, fallback: T): T {
   }
 
   try {
-    const value = window.localStorage.getItem(key)
+    const value = getStoredItem(key)
     if (!value) {
       return fallback
     }
     return JSON.parse(value) as T
   } catch (error) {
-    console.error(`Failed to parse ${key} from localStorage`, error)
+    console.error(`Failed to parse ${key} from session storage`, error)
     return fallback
   }
 }
@@ -27,7 +28,7 @@ function saveJson<T>(key: string, value: T) {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem(key, JSON.stringify(value))
+  setStoredItem(key, JSON.stringify(value))
 }
 
 function toScopeKey(teamId: string, termKey: string) {

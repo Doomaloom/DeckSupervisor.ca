@@ -4,8 +4,8 @@ import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentSession } from '../../app/useCurrentSession'
-import { supabase } from '../../lib/supabaseClient'
 import { clearCurrentSessionId, getCurrentSessionId, loadSessions, saveSessions } from '../../lib/sessionStorage'
+import { deleteSession, fetchCurrentTeams, updateSession } from '../../lib/serverApi'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 
 type InstructorEntry = { name: string }
@@ -203,11 +203,8 @@ function ManageSessionsPage() {
       return
     }
     const loadTeam = async () => {
-      const { data } = await supabase
-        .from('teams')
-        .select('id,name,available_locations')
-        .eq('id', editTeamId)
-        .maybeSingle()
+      const response = await fetchCurrentTeams()
+      const data = response.teams.find(team => team.id === editTeamId)
       if (!data) {
         setAvailableLocations([])
         setTeamName('')
@@ -302,9 +299,8 @@ function ManageSessionsPage() {
 
     const updateTimestamp = new Date().toISOString()
 
-    const { data: updatedSession, error } = await supabase
-      .from('sessions')
-      .update({
+    try {
+      await updateSession(currentSessionId, {
         team_id: nextTeamId,
         session_day: editSessionDay,
         session_season: editSessionSeason || null,
@@ -314,68 +310,20 @@ function ManageSessionsPage() {
         location: nextTeamId ? editLocation || null : null,
         instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
         updated_at: updateTimestamp,
+        report_card_sync: didReportCardScopeChange
+          ? {
+              previousTeamId,
+              previousSessionDay,
+              previousSessionLabel,
+              nextTeamId,
+              nextSessionDay,
+              nextSessionLabel,
+            }
+          : undefined,
       })
-      .eq('id', currentSessionId)
-      .eq('created_by', user.id)
-      .select('id')
-      .maybeSingle()
-
-    if (error) {
-      setEditMessage(error.message)
+    } catch (error) {
+      setEditMessage(error instanceof Error ? error.message : 'Failed to update session')
       return
-    }
-    if (!updatedSession) {
-      setEditMessage('Session update did not apply. Confirm you own this session and try again.')
-      return
-    }
-
-    if (didReportCardScopeChange) {
-      try {
-        let clearDestinationScope = supabase
-          .from('report_cards')
-          .delete()
-          .eq('created_by', user.id)
-          .eq('session', nextSessionLabel)
-          .eq('day', nextSessionDay)
-
-        if (nextTeamId) {
-          clearDestinationScope = clearDestinationScope.eq('team_id', nextTeamId)
-        } else {
-          clearDestinationScope = clearDestinationScope.is('team_id', null)
-        }
-
-        const { error: clearDestinationError } = await clearDestinationScope
-        if (clearDestinationError) {
-          throw clearDestinationError
-        }
-
-        let updateSourceScope = supabase
-          .from('report_cards')
-          .update({
-            team_id: nextTeamId,
-            session: nextSessionLabel,
-            day: nextSessionDay,
-            updated_at: updateTimestamp,
-          })
-          .eq('created_by', user.id)
-          .eq('session', previousSessionLabel)
-          .eq('day', previousSessionDay)
-
-        if (previousTeamId) {
-          updateSourceScope = updateSourceScope.eq('team_id', previousTeamId)
-        } else {
-          updateSourceScope = updateSourceScope.is('team_id', null)
-        }
-
-        const { error: syncReportCardsError } = await updateSourceScope
-        if (syncReportCardsError) {
-          throw syncReportCardsError
-        }
-      } catch (syncError) {
-        console.error('Failed to sync related report card scope', syncError)
-        setEditMessage('Session updated, but related report card data could not be fully synchronized.')
-        return
-      }
     }
 
     setEditMessage('Session updated.')
@@ -403,9 +351,10 @@ function ManageSessionsPage() {
     if (!user) {
       return
     }
-    const { error } = await supabase.from('sessions').delete().eq('id', currentSessionId)
-    if (error) {
-      setEditMessage(error.message)
+    try {
+      await deleteSession(currentSessionId)
+    } catch (error) {
+      setEditMessage(error instanceof Error ? error.message : 'Failed to delete session')
       return
     }
     clearCurrentSessionId()

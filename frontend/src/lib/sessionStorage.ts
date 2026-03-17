@@ -1,3 +1,4 @@
+import { getStoredItem, removeStoredItem, setStoredItem } from './browserStorage'
 import { getScopedKey } from './storageScope'
 
 const sessionsKey = () => getScopedKey('sessions')
@@ -18,7 +19,7 @@ export function loadSessions(): StoredSessionEntry[] {
   if (typeof window === 'undefined') {
     return []
   }
-  const stored = window.localStorage.getItem(sessionsKey())
+  const stored = getStoredItem(sessionsKey())
   if (!stored) {
     return []
   }
@@ -34,21 +35,21 @@ export function saveSessions(sessions: StoredSessionEntry[]) {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem(sessionsKey(), JSON.stringify(sessions))
+  setStoredItem(sessionsKey(), JSON.stringify(sessions))
 }
 
 export function getCurrentSessionId(): string {
   if (typeof window === 'undefined') {
     return ''
   }
-  return window.localStorage.getItem(currentSessionKey()) ?? ''
+  return getStoredItem(currentSessionKey()) ?? ''
 }
 
 export function setCurrentSessionId(id: string) {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem(currentSessionKey(), id)
+  setStoredItem(currentSessionKey(), id)
   window.dispatchEvent(new CustomEvent(CURRENT_SESSION_EVENT, { detail: { id } }))
 }
 
@@ -56,7 +57,7 @@ export function clearCurrentSessionId() {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.removeItem(currentSessionKey())
+  removeStoredItem(currentSessionKey())
   window.dispatchEvent(new CustomEvent(CURRENT_SESSION_EVENT, { detail: { id: '' } }))
 }
 

@@ -1,7 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
-import { supabase } from '../../lib/supabaseClient'
+import {
+  createSessionShare,
+  createTeam,
+  createTeamInvite,
+  fetchMemberTeams,
+  fetchMySessions,
+  fetchOwnedTeams,
+  fetchTeamDetails,
+  fetchTeamMembers,
+  removeTeamMember,
+  revokeTeamInvite,
+  searchInvitableProfiles,
+  updateTeam,
+} from '../../lib/serverApi'
 import { getTorontoDate } from '../../lib/torontoDate'
 import { clearCurrentTeamId, setCurrentTeamId } from '../../lib/teamStorage'
 
@@ -87,12 +100,8 @@ function TeamPage() {
       return
     }
     const loadTeams = async () => {
-      const { data } = await supabase
-        .from('teams')
-        .select('id,name,available_locations')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: true })
-      const rows = data ?? []
+      const response = await fetchOwnedTeams()
+      const rows = (response.teams ?? []) as TeamEntry[]
       setTeams(rows)
       if (rows.length === 0) {
         setActiveTeamId('')
@@ -115,20 +124,14 @@ function TeamPage() {
       return
     }
     const loadMemberTeams = async () => {
-      const { data } = await supabase
-        .from('team_members')
-        .select('team_id,teams(id,name,available_locations)')
-        .eq('user_id', user.id)
-      const rows = (data ?? []) as { team_id: string; teams: TeamEntry | null }[]
+      const response = await fetchMemberTeams()
+      const rows = (response.teams ?? []) as { team_id: string; teams: TeamEntry | null }[]
       const nextTeams = rows.map(row => row.teams).filter(Boolean) as TeamEntry[]
       setMemberTeams(nextTeams)
     }
     const loadSessions = async () => {
-      const { data } = await supabase
-        .from('sessions')
-        .select('id,team_id,session_day,session_season,session_year,start_date,end_date')
-        .eq('created_by', user.id)
-      setUserSessions((data ?? []) as SessionEntry[])
+      const response = await fetchMySessions()
+      setUserSessions((response.sessions ?? []) as SessionEntry[])
     }
     void loadMemberTeams()
     void loadSessions()
@@ -139,19 +142,9 @@ function TeamPage() {
       return
     }
     const loadTeamDetails = async () => {
-      const [{ data: inviteRows }, { data: memberRows }] = await Promise.all([
-        supabase
-          .from('team_invites')
-          .select('id,invitee_id,status,profiles(first_name,last_name,email)')
-          .eq('team_id', activeTeamId)
-          .eq('status', 'pending'),
-        supabase
-          .from('team_members')
-          .select('user_id,role,profiles(first_name,last_name,email)')
-          .eq('team_id', activeTeamId),
-      ])
-      setInvites(inviteRows ?? [])
-      setMembers(memberRows ?? [])
+      const response = await fetchTeamDetails(activeTeamId)
+      setInvites((response.invites ?? []) as InviteEntry[])
+      setMembers((response.members ?? []) as MemberEntry[])
     }
     void loadTeamDetails()
   }, [accountType, activeTeamId, user])
@@ -179,11 +172,8 @@ function TeamPage() {
       return
     }
     const loadMembers = async () => {
-      const { data } = await supabase
-        .from('team_members')
-        .select('user_id,role,profiles(first_name,last_name,email)')
-        .eq('team_id', session.team_id)
-      const rows = (data ?? []) as MemberEntry[]
+      const response = await fetchTeamMembers(session.team_id)
+      const rows = (response.members ?? []) as MemberEntry[]
       setShareMembers(rows.filter(member => member.user_id !== user.id))
     }
     void loadMembers()
@@ -200,15 +190,8 @@ function TeamPage() {
     setLoading(true)
     setMessage('')
     try {
-      const { data, error } = await supabase
-        .from('teams')
-        .insert({ name: teamName.trim(), owner_id: user.id, available_locations: locations })
-        .select('id,name,available_locations')
-        .single()
-      if (error) {
-        setMessage(error.message)
-        return
-      }
+      const response = await createTeam({ name: teamName.trim(), available_locations: locations })
+      const data = response.team as TeamEntry | undefined
       if (data) {
         setTeams(current => [...current, data])
         setActiveTeamId(data.id)
@@ -235,16 +218,8 @@ function TeamPage() {
     setMessage('')
     try {
       const query = searchQuery.trim()
-      const { data, error } = await supabase.rpc('search_invitable_part_time_profiles', {
-        p_team_id: activeTeamId,
-        p_query: query,
-        p_limit: 25,
-      })
-      if (error) {
-        setMessage(error.message)
-        return
-      }
-      setSearchResults((data ?? []) as ProfileResult[])
+      const response = await searchInvitableProfiles(activeTeamId, query)
+      setSearchResults((response.results ?? []) as ProfileResult[])
     } finally {
       setLoading(false)
     }
@@ -257,18 +232,13 @@ function TeamPage() {
     setLoading(true)
     setMessage('')
     try {
-      const { data, error } = await supabase
-        .from('team_invites')
-        .insert({ team_id: activeTeamId, invitee_id: profile.id, status: 'pending' })
-        .select('id,invitee_id,status,profiles(first_name,last_name,email)')
-        .single()
-      if (error) {
-        setMessage(error.message)
-        return
-      }
+      const response = await createTeamInvite(activeTeamId, profile.id)
+      const data = response.invite
       if (data) {
         setInvites(current => [...current, data])
       }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Failed to invite user')
     } finally {
       setLoading(false)
     }
@@ -278,12 +248,10 @@ function TeamPage() {
     setLoading(true)
     setMessage('')
     try {
-      const { error } = await supabase.rpc('revoke_team_invite', { invite_id: invite.id })
-      if (error) {
-        setMessage(error.message)
-        return
-      }
+      await revokeTeamInvite(invite.id)
       setInvites(current => current.filter(item => item.id !== invite.id))
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Failed to revoke invite')
     } finally {
       setLoading(false)
     }
@@ -300,20 +268,15 @@ function TeamPage() {
     setLoading(true)
     setMessage('')
     try {
-      const { error } = await supabase
-        .from('teams')
-        .update({ available_locations: locations })
-        .eq('id', activeTeamId)
-      if (error) {
-        setMessage(error.message)
-        return
-      }
+      await updateTeam(activeTeamId, { available_locations: locations })
       setTeams(current =>
         current.map(team =>
           team.id === activeTeamId ? { ...team, available_locations: locations } : team,
         ),
       )
       setMessage('Locations updated.')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Failed to update locations')
     } finally {
       setLoading(false)
     }
@@ -327,19 +290,16 @@ function TeamPage() {
     setLoading(true)
     setShareMessage('')
     try {
-      const { error } = await supabase.from('session_shares').insert({
+      await createSessionShare({
         session_id: shareSessionId,
         share_date: shareDate,
-        shared_by: user.id,
         shared_with: shareMemberId,
         allow_roster_edits: shareAllowEdits,
       })
-      if (error) {
-        setShareMessage(error.message)
-        return
-      }
       setShareMessage('Session shared.')
       setShareMemberId('')
+    } catch (error) {
+      setShareMessage(error instanceof Error ? error.message : 'Failed to share session')
     } finally {
       setLoading(false)
     }
@@ -351,11 +311,7 @@ function TeamPage() {
     }
     setLoading(true)
     try {
-      await supabase
-        .from('team_members')
-        .delete()
-        .eq('team_id', activeTeamId)
-        .eq('user_id', member.user_id)
+      await removeTeamMember(activeTeamId, member.user_id)
       setMembers(current => current.filter(item => item.user_id !== member.user_id))
     } finally {
       setLoading(false)

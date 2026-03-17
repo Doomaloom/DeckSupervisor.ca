@@ -6,6 +6,7 @@ import type {
   ScheduleConfig,
   Student,
 } from '../types/app'
+import { getStoredItem, setStoredItem } from './browserStorage'
 import { getScopedKey } from './storageScope'
 
 const selectedDayKey = () => getScopedKey('selectedDay')
@@ -41,13 +42,13 @@ function loadJson<T>(key: string, fallback: T): T {
   }
 
   try {
-    const value = window.localStorage.getItem(key)
+    const value = getStoredItem(key)
     if (!value) {
       return fallback
     }
     return JSON.parse(value) as T
   } catch (error) {
-    console.error(`Failed to parse ${key} from localStorage`, error)
+    console.error(`Failed to parse ${key} from session storage`, error)
     return fallback
   }
 }
@@ -56,21 +57,21 @@ function saveJson<T>(key: string, value: T) {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem(key, JSON.stringify(value))
+  setStoredItem(key, JSON.stringify(value))
 }
 
 export function getSelectedDay(): string {
   if (typeof window === 'undefined') {
     return ''
   }
-  return window.localStorage.getItem(selectedDayKey()) ?? ''
+  return getStoredItem(selectedDayKey()) ?? ''
 }
 
 export function setSelectedDay(day: string) {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem(selectedDayKey(), day)
+  setStoredItem(selectedDayKey(), day)
 }
 
 export function getFormatOptions(): FormatOptions {

@@ -1,3 +1,5 @@
+import { getStoredItem, setStoredItem } from './browserStorage'
+
 const SCOPE_KEY = 'cob:storageScope'
 const SCOPE_EVENT = 'cob:storage-scope-changed'
 const DEFAULT_SCOPE = 'guest'
@@ -12,7 +14,7 @@ export function getStorageScope(): string {
     cachedScope = DEFAULT_SCOPE
     return cachedScope
   }
-  const stored = window.localStorage.getItem(SCOPE_KEY)
+  const stored = getStoredItem(SCOPE_KEY)
   cachedScope = stored || DEFAULT_SCOPE
   return cachedScope
 }
@@ -22,7 +24,7 @@ export function setStorageScope(scope: string) {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem(SCOPE_KEY, cachedScope)
+  setStoredItem(SCOPE_KEY, cachedScope)
   window.dispatchEvent(new CustomEvent(SCOPE_EVENT, { detail: { scope: cachedScope } }))
 }
 

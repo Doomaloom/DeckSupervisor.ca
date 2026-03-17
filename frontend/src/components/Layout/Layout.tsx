@@ -67,7 +67,7 @@ function getSessionName(session: SessionEntry) {
 function Layout({ children }: LayoutProps) {
     const location = useLocation()
     const { selectedDay } = useDay()
-    const { accountType, completeProfile, isGuest, needsProfile, profile, session, signOut, user } = useAuth()
+    const { accountType, completeProfile, isGuest, needsProfile, profile, signOut, user } = useAuth()
     const { access, session: currentSession } = useCurrentSession()
     const { currentTeam, currentTeamId, loading: teamLoading } = useCurrentTeam()
     const { currentTerm } = useCurrentTerm()
@@ -118,9 +118,8 @@ function Layout({ children }: LayoutProps) {
     }, [])
 
     useEffect(() => {
-        const accessToken = session?.access_token
         const sessionId = currentSession?.id
-        if (!selectedDay || !accessToken || !user || !sessionId) {
+        if (!selectedDay || !user || !sessionId) {
             return
         }
         const students = getStudentsForDay(selectedDay)
@@ -131,7 +130,7 @@ function Layout({ children }: LayoutProps) {
         let active = true
         const sync = async () => {
             try {
-                const resolved = await resolveCustomRosters(selectedDay, sessionId, students, accessToken)
+                const resolved = await resolveCustomRosters(selectedDay, sessionId, students)
                 if (!active) {
                     return
                 }
@@ -146,7 +145,7 @@ function Layout({ children }: LayoutProps) {
         return () => {
             active = false
         }
-    }, [currentSession?.id, selectedDay, session?.access_token, user, scopeVersion])
+    }, [currentSession?.id, selectedDay, user, scopeVersion])
 
     const navBaseClasses =
         'flex items-center justify-start rounded-[10px] bg-white/10 px-3 py-2 text-accent transition hover:-translate-y-0.5'
