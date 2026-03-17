@@ -379,12 +379,11 @@ function PrintPage() {
       return
     }
 
-    const printWindow = window.open('', '_blank')
+    const printWindow = openPrintWindow()
     if (!printWindow) {
       alert('Pop-up blocked. Please allow pop-ups to print.')
       return
     }
-    printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
 
     try {
       const highlightOptions = {
@@ -432,23 +431,10 @@ function PrintPage() {
           pdfs.push(await fetchSchematicPdf(payload))
         }
 
-        const formData = new FormData()
-        pdfs.forEach((pdf, index) => {
-          formData.append('pdfs', pdf, `schematic-${index + 1}.pdf`)
-        })
-        formData.append('filename', 'schematic')
-
-        const concatResponse = await fetch('/api/concat-pdfs', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!concatResponse.ok) {
-          const message = await concatResponse.text()
-          throw new Error(message || 'Failed to combine schematic PDFs.')
-        }
-
-        const combined = await concatResponse.blob()
+        const combined = await concatPdfs(
+          pdfs.map((pdf, index) => ({ blob: pdf, filename: `schematic-${index + 1}.pdf` })),
+          'schematic',
+        )
         openPdfPrintDialog(combined, printWindow)
       } else {
         const payload = buildSchematicPayload(schematicOptions.orientation, highlightOptions)
@@ -513,6 +499,35 @@ function PrintPage() {
     }
 
     setTimeout(triggerPrint, 3000)
+  }
+
+  const openPrintWindow = () => {
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      return null
+    }
+    printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
+    return printWindow
+  }
+
+  const concatPdfs = async (pdfs: Array<{ blob: Blob; filename: string }>, filename: string) => {
+    const formData = new FormData()
+    pdfs.forEach(pdf => {
+      formData.append('pdfs', pdf.blob, pdf.filename)
+    })
+    formData.append('filename', filename)
+
+    const response = await fetch('/api/concat-pdfs', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const message = await response.text()
+      throw new Error(message || 'Failed to combine PDFs.')
+    }
+
+    return response.blob()
   }
 
   useEffect(() => {
@@ -825,12 +840,11 @@ function PrintPage() {
       return
     }
 
-    const printWindow = window.open('', '_blank')
+    const printWindow = openPrintWindow()
     if (!printWindow) {
       alert('Pop-up blocked. Please allow pop-ups to print.')
       return
     }
-    printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
 
     setBusyInstructors(current => ({
       ...current,
@@ -853,25 +867,14 @@ function PrintPage() {
       const cached = await getCachedInstructorPdf(sessionId, selectedDay, name)
       if (cached) {
         if (schematicCover) {
-          const formData = new FormData()
-          formData.append('pdfs', schematicCover, 'schematic-cover.pdf')
-          if (schematicBlank) {
-            formData.append('pdfs', schematicBlank, 'schematic-blank.pdf')
-          }
-          formData.append('pdfs', cached, `instructor-${name}.pdf`)
-          formData.append('filename', `instructor-${name}`)
-
-          const concatResponse = await fetch('/api/concat-pdfs', {
-            method: 'POST',
-            body: formData,
-          })
-
-          if (!concatResponse.ok) {
-            const message = await concatResponse.text()
-            throw new Error(message || 'Failed to combine schematic cover and instructor sheet.')
-          }
-
-          const combined = await concatResponse.blob()
+          const combined = await concatPdfs(
+            [
+              { blob: schematicCover, filename: 'schematic-cover.pdf' },
+              ...(schematicBlank ? [{ blob: schematicBlank, filename: 'schematic-blank.pdf' }] : []),
+              { blob: cached, filename: `instructor-${name}.pdf` },
+            ],
+            `instructor-${name}`,
+          )
           openPdfPrintDialog(combined, printWindow)
         } else {
           openPdfPrintDialog(cached, printWindow)
@@ -904,25 +907,14 @@ function PrintPage() {
       await upsertInstructorPdf(sessionId, selectedDay, name, pdfBlob)
       await refreshCachedPacket()
       if (schematicCover) {
-        const formData = new FormData()
-        formData.append('pdfs', schematicCover, 'schematic-cover.pdf')
-        if (schematicBlank) {
-          formData.append('pdfs', schematicBlank, 'schematic-blank.pdf')
-        }
-        formData.append('pdfs', pdfBlob, `instructor-${name}.pdf`)
-        formData.append('filename', `instructor-${name}`)
-
-        const concatResponse = await fetch('/api/concat-pdfs', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!concatResponse.ok) {
-          const message = await concatResponse.text()
-          throw new Error(message || 'Failed to combine schematic cover and instructor sheet.')
-        }
-
-        const combined = await concatResponse.blob()
+        const combined = await concatPdfs(
+          [
+            { blob: schematicCover, filename: 'schematic-cover.pdf' },
+            ...(schematicBlank ? [{ blob: schematicBlank, filename: 'schematic-blank.pdf' }] : []),
+            { blob: pdfBlob, filename: `instructor-${name}.pdf` },
+          ],
+          `instructor-${name}`,
+        )
         openPdfPrintDialog(combined, printWindow)
       } else {
         openPdfPrintDialog(pdfBlob, printWindow)
@@ -1018,12 +1010,11 @@ function PrintPage() {
     const generatedDate = formatGeneratedDate(new Date())
     const sessionWeek = getSessionWeek(currentSession?.start_date ?? '') ?? 1
 
-    const printWindow = window.open('', '_blank')
+    const printWindow = openPrintWindow()
     if (!printWindow) {
       alert('Pop-up blocked. Please allow pop-ups to print.')
       return
     }
-    printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
 
     try {
       let schematicCover: Blob | null = null
@@ -1056,25 +1047,14 @@ function PrintPage() {
       const masterlistBlob = await response.blob()
 
       if (schematicCover) {
-        const formData = new FormData()
-        formData.append('pdfs', schematicCover, 'schematic-cover.pdf')
-        if (schematicBlank) {
-          formData.append('pdfs', schematicBlank, 'schematic-blank.pdf')
-        }
-        formData.append('pdfs', masterlistBlob, 'masterlist.pdf')
-        formData.append('filename', 'masterlist')
-
-        const concatResponse = await fetch('/api/concat-pdfs', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!concatResponse.ok) {
-          const message = await concatResponse.text()
-          throw new Error(message || 'Failed to combine schematic cover and masterlist.')
-        }
-
-        const combined = await concatResponse.blob()
+        const combined = await concatPdfs(
+          [
+            { blob: schematicCover, filename: 'schematic-cover.pdf' },
+            ...(schematicBlank ? [{ blob: schematicBlank, filename: 'schematic-blank.pdf' }] : []),
+            { blob: masterlistBlob, filename: 'masterlist.pdf' },
+          ],
+          'masterlist',
+        )
         openPdfPrintDialog(combined, printWindow)
       } else {
         openPdfPrintDialog(masterlistBlob, printWindow)
@@ -1090,9 +1070,252 @@ function PrintPage() {
     }
   }
 
+  const buildDay1MasterlistBlob = async () => {
+    if (!selectedDay) {
+      throw new Error('Please select a day before printing Day 1 materials.')
+    }
+
+    const rosterGroups = buildRosterGroupsForDay(selectedDay)
+    if (rosterGroups.length === 0) {
+      throw new Error('No roster data found for the selected day.')
+    }
+
+    const rosters = rosterGroups.flatMap(roster => {
+      const mappedStudents = roster.students.map(student => ({
+        name: student.name,
+        phone: student.phone,
+        instructor: student.instructor,
+        level: student.level,
+        code: student.code,
+      }))
+
+      if (!roster.code.startsWith('custom-')) {
+        return [
+          {
+            code: roster.code,
+            serviceName: roster.serviceName,
+            day: selectedDay,
+            time: roster.time,
+            location: roster.location,
+            schedule: roster.schedule,
+            instructor: roster.instructor,
+            students: mappedStudents.map(({ code: _code, ...student }) => student),
+          },
+        ]
+      }
+
+      const studentsByOriginalCode = new Map<
+        string,
+        Array<{ name: string; phone: string; instructor: string; level: string }>
+      >()
+      mappedStudents.forEach(student => {
+        const originalCode = student.code?.trim()
+        if (!originalCode) {
+          return
+        }
+        const bucket = studentsByOriginalCode.get(originalCode)
+        const studentPayload = {
+          name: student.name,
+          phone: student.phone,
+          instructor: student.instructor,
+          level: student.level,
+        }
+        if (bucket) {
+          bucket.push(studentPayload)
+        } else {
+          studentsByOriginalCode.set(originalCode, [studentPayload])
+        }
+      })
+
+      return Array.from(studentsByOriginalCode.entries()).map(([code, students]) => ({
+        code,
+        serviceName: roster.serviceName,
+        day: selectedDay,
+        time: roster.time,
+        location: roster.location,
+        schedule: roster.schedule,
+        instructor: roster.instructor,
+        students,
+      }))
+    })
+
+    const response = await fetch('/api/masterlist-rosters', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        rosters,
+        options: masterlistFormatOptions,
+        sessionName: sessionTitle || 'Summer 2025',
+        generatedDate: formatGeneratedDate(new Date()),
+        sessionWeek: getSessionWeek(currentSession?.start_date ?? '') ?? 1,
+      }),
+    })
+
+    if (!response.ok) {
+      const message = await response.text()
+      throw new Error(message || 'Failed to generate masterlist.')
+    }
+
+    const masterlistBlob = await response.blob()
+    const pdfs: Array<{ blob: Blob; filename: string }> = []
+
+    if (day1Options.schematicCovers) {
+      const result = await fetchSchematicCoverWithBlank(coverOrientation)
+      pdfs.push({ blob: result.schematicCover, filename: 'schematic-cover.pdf' })
+      pdfs.push({ blob: result.blankPage, filename: 'schematic-blank.pdf' })
+    }
+
+    pdfs.push({ blob: masterlistBlob, filename: 'masterlist.pdf' })
+    if (day1Options.extraMasterlistCopy) {
+      pdfs.push({ blob: masterlistBlob, filename: 'masterlist-copy.pdf' })
+    }
+
+    if (pdfs.length === 1) {
+      return masterlistBlob
+    }
+
+    return concatPdfs(pdfs, 'day1-masterlist')
+  }
+
+  const buildDay1InstructorBlob = async (name: string) => {
+    if (!selectedDay) {
+      throw new Error('Please select a day before printing Day 1 materials.')
+    }
+
+    const sessionId = getCurrentSessionId()
+    if (!sessionId) {
+      throw new Error('Please select a session before printing.')
+    }
+
+    const rosterGroups = buildRosterGroupsForDay(selectedDay)
+    const rostersToPrint = rosterGroups.filter(roster => roster.instructor === name)
+    if (rostersToPrint.length === 0) {
+      throw new Error(`No classes found for ${name}.`)
+    }
+
+    let pdfBlob = await getCachedInstructorPdf(sessionId, selectedDay, name)
+    if (!pdfBlob) {
+      const response = await fetch('/api/attendance-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(buildInstructorPayload(rostersToPrint, name)),
+      })
+
+      if (!response.ok) {
+        const message = await response.text()
+        throw new Error(message || `Failed to generate sheets for ${name}`)
+      }
+
+      pdfBlob = await response.blob()
+      await upsertInstructorPdf(sessionId, selectedDay, name, pdfBlob)
+    }
+
+    if (!day1Options.schematicCovers) {
+      return pdfBlob
+    }
+
+    const result = await fetchSchematicCoverWithBlank(coverOrientation, undefined, true)
+    return concatPdfs(
+      [
+        { blob: result.schematicCover, filename: 'schematic-cover.pdf' },
+        { blob: result.blankPage, filename: 'schematic-blank.pdf' },
+        { blob: pdfBlob, filename: `instructor-${name}.pdf` },
+      ],
+      `day1-instructor-${name}`,
+    )
+  }
+
+  const handlePrintDay1 = async () => {
+    if (!selectedDay) {
+      alert('Please select a day before printing Day 1 materials.')
+      return
+    }
+
+    if (schematicPreview.columns.length === 0) {
+      alert('No schematic data found for the selected day.')
+      return
+    }
+
+    const rosterGroups = buildRosterGroupsForDay(selectedDay)
+    if (rosterGroups.length === 0) {
+      alert('No roster data found for the selected day.')
+      return
+    }
+
+    const grouped = groupRostersByInstructor(rosterGroups)
+    const orderedNames =
+      instructorNames.length > 0
+        ? instructorNames.filter(name => grouped.has(name))
+        : Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b))
+
+    if (orderedNames.length === 0) {
+      alert('No instructor sheets available to print.')
+      return
+    }
+
+    const printWindows = [
+      openPrintWindow(),
+      openPrintWindow(),
+      ...orderedNames.map(() => openPrintWindow()),
+    ]
+
+    if (printWindows.some(windowRef => !windowRef)) {
+      printWindows.forEach(windowRef => windowRef?.close())
+      alert('Pop-up blocked. Please allow pop-ups to print.')
+      return
+    }
+
+    try {
+      const schematicResponse = await fetch('/api/schematic-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(
+          buildSchematicPayload(schematicOptions.orientation, {
+            highlightInstructor: false,
+            selectedInstructor: 'none',
+          }),
+        ),
+      })
+
+      if (!schematicResponse.ok) {
+        const message = await schematicResponse.text()
+        throw new Error(message || 'Failed to generate schematic PDF.')
+      }
+
+      const schematicBlob = await schematicResponse.blob()
+      openPdfPrintDialog(schematicBlob, printWindows[0])
+
+      const masterlistBlob = await buildDay1MasterlistBlob()
+      openPdfPrintDialog(masterlistBlob, printWindows[1])
+
+      for (const [index, name] of orderedNames.entries()) {
+        const instructorBlob = await buildDay1InstructorBlob(name)
+        openPdfPrintDialog(instructorBlob, printWindows[index + 2])
+      }
+    } catch (error) {
+      console.error(error)
+      printWindows.forEach(windowRef => windowRef?.close())
+      alert(
+        error instanceof Error && error.message
+          ? error.message
+          : 'Unable to generate Day 1 print materials.',
+      )
+    }
+  }
+
   const handlePrint = () => {
+    if (activeModal === 'day1') {
+      void handlePrintDay1()
+      return
+    }
     if (activeModal === 'schematic') {
-      handlePrintSchematic()
+      void handlePrintSchematic()
     }
   }
 
