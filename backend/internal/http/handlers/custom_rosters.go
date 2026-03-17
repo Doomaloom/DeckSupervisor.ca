@@ -40,7 +40,7 @@ func SaveCustomRoster(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Server configuration error", http.StatusInternalServerError)
 		return
 	}
-	userID, err := service.UserIDFromRequest(r)
+	userID, requestToken, err := service.UserIDFromRequest(r)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -62,7 +62,7 @@ func SaveCustomRoster(w http.ResponseWriter, r *http.Request) {
 		StudentNames: req.Roster.StudentNames,
 	}
 
-	if err := service.SaveRoster(r.Context(), userID, input); err != nil {
+	if err := service.SaveRoster(r.Context(), requestToken, userID, input); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -77,7 +77,7 @@ func ResolveCustomRosters(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Server configuration error", http.StatusInternalServerError)
 		return
 	}
-	userID, err := service.UserIDFromRequest(r)
+	userID, requestToken, err := service.UserIDFromRequest(r)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -94,7 +94,7 @@ func ResolveCustomRosters(w http.ResponseWriter, r *http.Request) {
 		students = append(students, customrosters.StudentRef{ID: student.ID, Name: student.Name})
 	}
 
-	rosters, err := service.ResolveRosters(r.Context(), userID, req.SessionID, req.Day, students)
+	rosters, err := service.ResolveRosters(r.Context(), requestToken, userID, req.SessionID, req.Day, students)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -110,7 +110,7 @@ func DeleteCustomRoster(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Server configuration error", http.StatusInternalServerError)
 		return
 	}
-	userID, err := service.UserIDFromRequest(r)
+	userID, requestToken, err := service.UserIDFromRequest(r)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -129,7 +129,7 @@ func DeleteCustomRoster(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := service.DeleteRoster(r.Context(), userID, sessionID, rosterID); err != nil {
+	if err := service.DeleteRoster(r.Context(), requestToken, userID, sessionID, rosterID); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

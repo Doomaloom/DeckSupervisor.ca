@@ -8,20 +8,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
 	"unicode"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type Service struct {
 	supabaseURL    string
 	serviceRoleKey string
-	jwtSecret      string
 	pepper         string
 	httpClient     *http.Client
 }
@@ -62,54 +60,67 @@ type rosterRow struct {
 func NewServiceFromEnv() (*Service, error) {
 	supabaseURL := strings.TrimSpace(os.Getenv("SUPABASE_URL"))
 	serviceRoleKey := strings.TrimSpace(os.Getenv("SUPABASE_SERVICE_ROLE_KEY"))
-	jwtSecret := strings.TrimSpace(os.Getenv("SUPABASE_JWT_SECRET"))
 	pepper := strings.TrimSpace(os.Getenv("CUSTOM_ROSTER_PEPPER"))
 
-	if supabaseURL == "" || serviceRoleKey == "" || jwtSecret == "" || pepper == "" {
+	if supabaseURL == "" || serviceRoleKey == "" || pepper == "" {
 		return nil, errors.New("missing supabase env config")
 	}
 
 	return &Service{
 		supabaseURL:    strings.TrimSuffix(supabaseURL, "/"),
 		serviceRoleKey: serviceRoleKey,
-		jwtSecret:      jwtSecret,
 		pepper:         pepper,
 		httpClient:     &http.Client{Timeout: 15 * time.Second},
 	}, nil
 }
 
-func (s *Service) UserIDFromRequest(r *http.Request) (string, error) {
+func (s *Service) UserIDFromRequest(r *http.Request) (string, string, error) {
 	auth := strings.TrimSpace(r.Header.Get("Authorization"))
 	if auth == "" || !strings.HasPrefix(auth, "Bearer ") {
-		return "", errors.New("missing auth token")
+		return "", "", errors.New("missing auth token")
 	}
-	tokenString := strings.TrimPrefix(auth, "Bearer ")
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		if t.Method.Alg() != jwt.SigningMethodHS256.Alg() {
-			return nil, fmt.Errorf("unexpected signing method: %s", t.Method.Alg())
-		}
-		return []byte(s.jwtSecret), nil
-	})
-	if err != nil || !token.Valid {
-		return "", errors.New("invalid auth token")
+
+	tokenString := strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
+	if tokenString == "" {
+		return "", "", errors.New("missing auth token")
 	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return "", errors.New("invalid auth claims")
+
+	endpoint := fmt.Sprintf("%s/auth/v1/user", s.supabaseURL)
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", "", err
 	}
-	sub, _ := claims["sub"].(string)
-	if sub == "" {
-		return "", errors.New("missing user id")
+	req.Header.Set("apikey", s.serviceRoleKey)
+	req.Header.Set("Authorization", "Bearer "+tokenString)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return "", "", err
 	}
-	return sub, nil
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", errors.New("invalid auth token")
+	}
+
+	var user struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return "", "", errors.New("invalid auth response")
+	}
+	if user.ID == "" {
+		return "", "", errors.New("missing user id")
+	}
+	return user.ID, tokenString, nil
 }
 
-func (s *Service) SaveRoster(ctx context.Context, userID string, input SaveRosterInput) error {
+func (s *Service) SaveRoster(ctx context.Context, requestToken, userID string, input SaveRosterInput) error {
 	if input.ID == "" || input.SessionID == "" || input.Day == "" || input.ServiceName == "" {
 		return errors.New("missing required roster fields")
 	}
 
-	canEdit, err := s.canEditSession(ctx, userID, input.SessionID)
+	canEdit, err := s.canEditSession(ctx, requestToken, userID, input.SessionID)
 	if err != nil {
 		return err
 	}
@@ -132,7 +143,7 @@ func (s *Service) SaveRoster(ctx context.Context, userID string, input SaveRoste
 		"updated_at":     time.Now().UTC().Format(time.RFC3339),
 	}
 
-	updated, err := s.patchRoster(ctx, userID, input.SessionID, input.ID, payload)
+	updated, err := s.patchRoster(ctx, requestToken, userID, input.SessionID, input.ID, payload)
 	if err != nil {
 		return err
 	}
@@ -143,15 +154,15 @@ func (s *Service) SaveRoster(ctx context.Context, userID string, input SaveRoste
 	payload["id"] = input.ID
 	payload["owner_id"] = userID
 	payload["created_at"] = time.Now().UTC().Format(time.RFC3339)
-	return s.insertRoster(ctx, payload)
+	return s.insertRoster(ctx, requestToken, payload)
 }
 
-func (s *Service) ResolveRosters(ctx context.Context, userID, sessionID, day string, students []StudentRef) ([]ResolvedRoster, error) {
+func (s *Service) ResolveRosters(ctx context.Context, requestToken, userID, sessionID, day string, students []StudentRef) ([]ResolvedRoster, error) {
 	if day == "" || sessionID == "" {
 		return nil, errors.New("missing session context")
 	}
 
-	canRead, err := s.canReadSession(ctx, userID, sessionID)
+	canRead, err := s.canReadSession(ctx, requestToken, userID, sessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +170,7 @@ func (s *Service) ResolveRosters(ctx context.Context, userID, sessionID, day str
 		return nil, errors.New("forbidden")
 	}
 
-	rows, err := s.fetchRosters(ctx, sessionID, day)
+	rows, err := s.fetchRosters(ctx, requestToken, sessionID, day)
 	if err != nil {
 		return nil, err
 	}
@@ -204,12 +215,12 @@ func (s *Service) ResolveRosters(ctx context.Context, userID, sessionID, day str
 	return resolved, nil
 }
 
-func (s *Service) DeleteRoster(ctx context.Context, userID, sessionID, rosterID string) error {
+func (s *Service) DeleteRoster(ctx context.Context, requestToken, userID, sessionID, rosterID string) error {
 	if rosterID == "" || sessionID == "" {
 		return errors.New("missing roster context")
 	}
 
-	canEdit, err := s.canEditSession(ctx, userID, sessionID)
+	canEdit, err := s.canEditSession(ctx, requestToken, userID, sessionID)
 	if err != nil {
 		return err
 	}
@@ -227,8 +238,7 @@ func (s *Service) DeleteRoster(ctx context.Context, userID, sessionID, rosterID 
 	if err != nil {
 		return err
 	}
-	req.Header.Set("apikey", s.serviceRoleKey)
-	req.Header.Set("Authorization", "Bearer "+s.serviceRoleKey)
+	s.applyServiceHeaders(req, requestToken)
 	req.Header.Set("Prefer", "return=representation")
 
 	resp, err := s.httpClient.Do(req)
@@ -243,7 +253,7 @@ func (s *Service) DeleteRoster(ctx context.Context, userID, sessionID, rosterID 
 	return nil
 }
 
-func (s *Service) patchRoster(ctx context.Context, userID, sessionID, rosterID string, payload map[string]interface{}) (bool, error) {
+func (s *Service) patchRoster(ctx context.Context, requestToken, userID, sessionID, rosterID string, payload map[string]interface{}) (bool, error) {
 	endpoint := fmt.Sprintf(
 		"%s/rest/v1/custom_rosters?id=eq.%s&owner_id=eq.%s&session_id=eq.%s",
 		s.supabaseURL,
@@ -259,9 +269,7 @@ func (s *Service) patchRoster(ctx context.Context, userID, sessionID, rosterID s
 	if err != nil {
 		return false, err
 	}
-	req.Header.Set("apikey", s.serviceRoleKey)
-	req.Header.Set("Authorization", "Bearer "+s.serviceRoleKey)
-	req.Header.Set("Content-Type", "application/json")
+	s.applyServiceHeaders(req, requestToken)
 	req.Header.Set("Prefer", "return=representation")
 
 	resp, err := s.httpClient.Do(req)
@@ -280,7 +288,7 @@ func (s *Service) patchRoster(ctx context.Context, userID, sessionID, rosterID s
 	return len(rows) > 0, nil
 }
 
-func (s *Service) insertRoster(ctx context.Context, payload map[string]interface{}) error {
+func (s *Service) insertRoster(ctx context.Context, requestToken string, payload map[string]interface{}) error {
 	endpoint := fmt.Sprintf("%s/rest/v1/custom_rosters", s.supabaseURL)
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -290,9 +298,7 @@ func (s *Service) insertRoster(ctx context.Context, payload map[string]interface
 	if err != nil {
 		return err
 	}
-	req.Header.Set("apikey", s.serviceRoleKey)
-	req.Header.Set("Authorization", "Bearer "+s.serviceRoleKey)
-	req.Header.Set("Content-Type", "application/json")
+	s.applyServiceHeaders(req, requestToken)
 	req.Header.Set("Prefer", "return=representation")
 
 	resp, err := s.httpClient.Do(req)
@@ -307,7 +313,7 @@ func (s *Service) insertRoster(ctx context.Context, payload map[string]interface
 	return nil
 }
 
-func (s *Service) fetchRosters(ctx context.Context, sessionID, day string) ([]rosterRow, error) {
+func (s *Service) fetchRosters(ctx context.Context, requestToken, sessionID, day string) ([]rosterRow, error) {
 	endpoint := fmt.Sprintf(
 		"%s/rest/v1/custom_rosters?session_id=eq.%s&day=eq.%s&select=id,service_name,instructor,source_codes,student_hashes,created_at",
 		s.supabaseURL,
@@ -318,9 +324,7 @@ func (s *Service) fetchRosters(ctx context.Context, sessionID, day string) ([]ro
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("apikey", s.serviceRoleKey)
-	req.Header.Set("Authorization", "Bearer "+s.serviceRoleKey)
-	req.Header.Set("Content-Type", "application/json")
+	s.applyServiceHeaders(req, requestToken)
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -338,18 +342,98 @@ func (s *Service) fetchRosters(ctx context.Context, sessionID, day string) ([]ro
 	return rows, nil
 }
 
-func (s *Service) canEditSession(ctx context.Context, userID, sessionID string) (bool, error) {
+func (s *Service) canEditSession(ctx context.Context, requestToken, userID, sessionID string) (bool, error) {
+	if allowed, err := s.sessionAccessRPC(ctx, requestToken, "can_edit_session", userID, sessionID); err == nil {
+		return allowed, nil
+	}
+	return s.legacyCanEditSession(ctx, requestToken, userID, sessionID)
+}
+
+func (s *Service) canReadSession(ctx context.Context, requestToken, userID, sessionID string) (bool, error) {
+	if allowed, err := s.sessionAccessRPC(ctx, requestToken, "can_read_session", userID, sessionID); err == nil {
+		return allowed, nil
+	}
+	return s.legacyCanReadSession(ctx, requestToken, userID, sessionID)
+}
+
+func (s *Service) sessionAccessRPC(
+	ctx context.Context,
+	requestToken string,
+	functionName string,
+	userID string,
+	sessionID string,
+) (bool, error) {
+	endpoint := fmt.Sprintf("%s/rest/v1/rpc/%s", s.supabaseURL, functionName)
+	body, err := json.Marshal(map[string]string{
+		"p_session_id": sessionID,
+		"p_uid":        userID,
+	})
+	if err != nil {
+		return false, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return false, err
+	}
+	s.applyServiceHeaders(req, requestToken)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return false, fmt.Errorf("rpc %s failed: %s", functionName, resp.Status)
+	}
+	payload, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, err
+	}
+	return parseRPCBoolean(payload, functionName)
+}
+
+func parseRPCBoolean(payload []byte, functionName string) (bool, error) {
+	var scalar bool
+	if err := json.Unmarshal(payload, &scalar); err == nil {
+		return scalar, nil
+	}
+
+	var object map[string]bool
+	if err := json.Unmarshal(payload, &object); err == nil {
+		if value, ok := object[functionName]; ok {
+			return value, nil
+		}
+		if value, ok := object["result"]; ok {
+			return value, nil
+		}
+	}
+
+	var rows []map[string]bool
+	if err := json.Unmarshal(payload, &rows); err == nil && len(rows) > 0 {
+		if value, ok := rows[0][functionName]; ok {
+			return value, nil
+		}
+		if value, ok := rows[0]["result"]; ok {
+			return value, nil
+		}
+	}
+
+	return false, errors.New("unexpected rpc response")
+}
+
+func (s *Service) legacyCanEditSession(ctx context.Context, requestToken, userID, sessionID string) (bool, error) {
 	endpoint := fmt.Sprintf(
 		"%s/rest/v1/sessions?id=eq.%s&created_by=eq.%s&select=id&limit=1",
 		s.supabaseURL,
 		url.QueryEscape(sessionID),
 		url.QueryEscape(userID),
 	)
-	return s.endpointHasRows(ctx, endpoint)
+	return s.endpointHasRows(ctx, requestToken, endpoint)
 }
 
-func (s *Service) canReadSession(ctx context.Context, userID, sessionID string) (bool, error) {
-	canEdit, err := s.canEditSession(ctx, userID, sessionID)
+func (s *Service) legacyCanReadSession(ctx context.Context, requestToken, userID, sessionID string) (bool, error) {
+	canEdit, err := s.legacyCanEditSession(ctx, requestToken, userID, sessionID)
 	if err != nil {
 		return false, err
 	}
@@ -363,7 +447,7 @@ func (s *Service) canReadSession(ctx context.Context, userID, sessionID string) 
 		url.QueryEscape(userID),
 		url.QueryEscape(torontoToday()),
 	)
-	return s.endpointHasRows(ctx, endpoint)
+	return s.endpointHasRows(ctx, requestToken, endpoint)
 }
 
 func torontoToday() string {
@@ -374,14 +458,12 @@ func torontoToday() string {
 	return time.Now().In(loc).Format("2006-01-02")
 }
 
-func (s *Service) endpointHasRows(ctx context.Context, endpoint string) (bool, error) {
+func (s *Service) endpointHasRows(ctx context.Context, requestToken, endpoint string) (bool, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return false, err
 	}
-	req.Header.Set("apikey", s.serviceRoleKey)
-	req.Header.Set("Authorization", "Bearer "+s.serviceRoleKey)
-	req.Header.Set("Content-Type", "application/json")
+	s.applyServiceHeaders(req, requestToken)
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -449,4 +531,25 @@ func normalizeName(name string) string {
 		}
 	}
 	return strings.TrimSpace(builder.String())
+}
+
+func (s *Service) applyServiceHeaders(req *http.Request, requestToken string) {
+	req.Header.Set("apikey", s.serviceRoleKey)
+	req.Header.Set("Content-Type", "application/json")
+	if strings.TrimSpace(requestToken) != "" {
+		req.Header.Set("Authorization", "Bearer "+requestToken)
+		return
+	}
+	// Newer Supabase "secret keys" (sb_secret_*) are not JWTs and cannot be used as Bearer tokens.
+	if looksLikeJWT(s.serviceRoleKey) {
+		req.Header.Set("Authorization", "Bearer "+s.serviceRoleKey)
+	}
+}
+
+func looksLikeJWT(value string) bool {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return false
+	}
+	return strings.Count(trimmed, ".") == 2
 }
