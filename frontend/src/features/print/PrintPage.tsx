@@ -4,6 +4,7 @@ import { useCurrentSession } from '../../app/useCurrentSession'
 import {
   getCustomRosterDayKey,
   getCustomRostersForDay,
+  getFormatOptions,
   getMasterlistDraftOptions,
   getStudentsForDay,
   setMasterlistDraftOptions,
@@ -103,10 +104,9 @@ function PrintPage() {
     activeModal === 'instructors' || activeModal === 'schematic',
   )
   const [day1Options, setDay1Options] = useState({
-    singlePrint: true,
-    namePages: false,
-    schematicCovers: false,
-    extraMasterlistCopy: false,
+    schematicCoverPage: false,
+    highlightInstructorName: false,
+    customMasterlistFormat: false,
   })
   const [cachedInstructorPacket, setCachedInstructorPacket] = useState<Awaited<
     ReturnType<typeof getInstructorPacket>
@@ -226,10 +226,23 @@ function PrintPage() {
   }
 
   const handleToggleDay1Option = (key: keyof typeof day1Options) => {
-    setDay1Options(current => ({
-      ...current,
-      [key]: !current[key],
-    }))
+    setDay1Options(current => {
+      if (key === 'schematicCoverPage') {
+        const nextCoverPage = !current.schematicCoverPage
+        return {
+          ...current,
+          schematicCoverPage: nextCoverPage,
+          highlightInstructorName: nextCoverPage ? current.highlightInstructorName : false,
+        }
+      }
+      if (key === 'highlightInstructorName' && !current.schematicCoverPage) {
+        return current
+      }
+      return {
+        ...current,
+        [key]: !current[key],
+      }
+    })
   }
 
   const handleToggleMasterlistExtra = (key: keyof typeof masterlistExtras) => {
@@ -1194,7 +1207,7 @@ function PrintPage() {
       },
       body: JSON.stringify({
         rosters,
-        options: masterlistFormatOptions,
+        options: day1Options.customMasterlistFormat ? masterlistFormatOptions : getFormatOptions(),
         sessionName: sessionTitle || 'Summer 2025',
         generatedDate: formatGeneratedDate(new Date()),
         sessionWeek: getSessionWeek(currentSession?.start_date ?? '') ?? 1,
@@ -1209,16 +1222,13 @@ function PrintPage() {
     const masterlistBlob = await response.blob()
     const pdfs: Array<{ blob: Blob; filename: string }> = []
 
-    if (day1Options.schematicCovers) {
+    if (day1Options.schematicCoverPage) {
       const result = await fetchSchematicCoverWithBlank(coverOrientation)
       pdfs.push({ blob: result.schematicCover, filename: 'schematic-cover.pdf' })
       pdfs.push({ blob: result.blankPage, filename: 'schematic-blank.pdf' })
     }
 
     pdfs.push({ blob: masterlistBlob, filename: 'masterlist.pdf' })
-    if (day1Options.extraMasterlistCopy) {
-      pdfs.push({ blob: masterlistBlob, filename: 'masterlist-copy.pdf' })
-    }
 
     if (pdfs.length === 1) {
       return masterlistBlob
@@ -1262,11 +1272,14 @@ function PrintPage() {
       await upsertInstructorPdf(sessionId, selectedDay, name, pdfBlob)
     }
 
-    if (!day1Options.schematicCovers) {
+    if (!day1Options.schematicCoverPage) {
       return pdfBlob
     }
 
-    const result = await fetchSchematicCoverWithBlank(coverOrientation, undefined, true)
+    const highlight = day1Options.highlightInstructorName
+      ? { highlightInstructor: true, selectedInstructor: name }
+      : undefined
+    const result = await fetchSchematicCoverWithBlank(coverOrientation, highlight, true)
     return concatPdfs(
       [
         { blob: result.schematicCover, filename: 'schematic-cover.pdf' },
@@ -1397,8 +1410,10 @@ function PrintPage() {
       <Day1OptionsModal
         open={activeModal === 'day1'}
         options={day1Options}
+        formatOptions={masterlistFormatOptions}
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleDay1Option}
+        onToggleFormat={handleToggleMasterlistOption}
         onPrint={handlePrint}
       />
       <InstructorOptionsModal
