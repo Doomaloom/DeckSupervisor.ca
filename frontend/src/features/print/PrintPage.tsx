@@ -379,7 +379,7 @@ function PrintPage() {
       return
     }
 
-    const printWindow = openPrintWindow()
+    const printWindow = openPrintWindow('Schematic')
     if (!printWindow) {
       alert('Pop-up blocked. Please allow pop-ups to print.')
       return
@@ -435,11 +435,11 @@ function PrintPage() {
           pdfs.map((pdf, index) => ({ blob: pdf, filename: `schematic-${index + 1}.pdf` })),
           'schematic',
         )
-        openPdfPrintDialog(combined, printWindow)
+        openPdfPrintDialog(combined, printWindow, 'Schematic')
       } else {
         const payload = buildSchematicPayload(schematicOptions.orientation, highlightOptions)
         const pdfBlob = await fetchSchematicPdf(payload)
-        openPdfPrintDialog(pdfBlob, printWindow)
+        openPdfPrintDialog(pdfBlob, printWindow, 'Schematic')
       }
     } catch (error) {
       console.error(error)
@@ -469,9 +469,17 @@ function PrintPage() {
     return [...rosterGroups, ...customGroups]
   }
 
-  const openPdfPrintDialog = (pdfBlob: Blob, existingWindow?: Window | null) => {
+  const escapeHtml = (value: string) =>
+    value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;')
+
+  const openPdfPrintDialog = (pdfBlob: Blob, existingWindow?: Window | null, title = 'Print PDF') => {
     const blobUrl = window.URL.createObjectURL(pdfBlob)
-    const printWindow = existingWindow ?? window.open(blobUrl, '_blank')
+    const printWindow = existingWindow ?? window.open('', '_blank')
 
     if (!printWindow) {
       window.URL.revokeObjectURL(blobUrl)
@@ -479,9 +487,48 @@ function PrintPage() {
       return
     }
 
-    if (existingWindow) {
-      printWindow.location.href = blobUrl
-    }
+    const safeTitle = escapeHtml(title)
+    printWindow.document.open()
+    printWindow.document.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${safeTitle}</title>
+    <style>
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #f5f5f5;
+      }
+      .viewer-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .viewer-bar {
+        flex: 0 0 auto;
+        padding: 10px 14px;
+        font: 600 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #1f2937;
+        background: #ffffff;
+        border-bottom: 1px solid #d1d5db;
+      }
+      .viewer-frame {
+        flex: 1 1 auto;
+        width: 100%;
+        border: 0;
+        background: #525252;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="viewer-shell">
+      <div class="viewer-bar">${safeTitle}</div>
+      <iframe class="viewer-frame" src="${blobUrl}" title="${safeTitle}"></iframe>
+    </div>
+  </body>
+</html>`)
+    printWindow.document.close()
 
     const cleanup = () => {
       window.URL.revokeObjectURL(blobUrl)
@@ -501,12 +548,14 @@ function PrintPage() {
     setTimeout(triggerPrint, 3000)
   }
 
-  const openPrintWindow = () => {
+  const openPrintWindow = (title = 'Preparing PDF') => {
     const printWindow = window.open('', '_blank')
     if (!printWindow) {
       return null
     }
-    printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
+    printWindow.document.write(
+      `<title>${escapeHtml(title)}</title><p style="font-family: sans-serif;">Preparing PDF...</p>`,
+    )
     return printWindow
   }
 
@@ -673,12 +722,11 @@ function PrintPage() {
       return
     }
 
-    const printWindow = window.open('', '_blank')
+    const printWindow = openPrintWindow('Instructor Sheets')
     if (!printWindow) {
       alert('Pop-up blocked. Please allow pop-ups to print.')
       return
     }
-    printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
 
     setIsPrintingAllInstructors(true)
 
@@ -803,7 +851,7 @@ function PrintPage() {
       if (shouldRefresh) {
         await refreshCachedPacket()
       }
-      openPdfPrintDialog(combinedPdf, printWindow)
+      openPdfPrintDialog(combinedPdf, printWindow, 'Instructor Sheets')
     } catch (error) {
       console.error(error)
       const message =
@@ -840,7 +888,7 @@ function PrintPage() {
       return
     }
 
-    const printWindow = openPrintWindow()
+    const printWindow = openPrintWindow(`Instructor - ${name}`)
     if (!printWindow) {
       alert('Pop-up blocked. Please allow pop-ups to print.')
       return
@@ -875,9 +923,9 @@ function PrintPage() {
             ],
             `instructor-${name}`,
           )
-          openPdfPrintDialog(combined, printWindow)
+          openPdfPrintDialog(combined, printWindow, `Instructor - ${name}`)
         } else {
-          openPdfPrintDialog(cached, printWindow)
+          openPdfPrintDialog(cached, printWindow, `Instructor - ${name}`)
         }
         return
       }
@@ -915,9 +963,9 @@ function PrintPage() {
           ],
           `instructor-${name}`,
         )
-        openPdfPrintDialog(combined, printWindow)
+        openPdfPrintDialog(combined, printWindow, `Instructor - ${name}`)
       } else {
-        openPdfPrintDialog(pdfBlob, printWindow)
+        openPdfPrintDialog(pdfBlob, printWindow, `Instructor - ${name}`)
       }
     } catch (error) {
       console.error(error)
@@ -1010,7 +1058,7 @@ function PrintPage() {
     const generatedDate = formatGeneratedDate(new Date())
     const sessionWeek = getSessionWeek(currentSession?.start_date ?? '') ?? 1
 
-    const printWindow = openPrintWindow()
+    const printWindow = openPrintWindow('Masterlist')
     if (!printWindow) {
       alert('Pop-up blocked. Please allow pop-ups to print.')
       return
@@ -1055,9 +1103,9 @@ function PrintPage() {
           ],
           'masterlist',
         )
-        openPdfPrintDialog(combined, printWindow)
+        openPdfPrintDialog(combined, printWindow, 'Masterlist')
       } else {
-        openPdfPrintDialog(masterlistBlob, printWindow)
+        openPdfPrintDialog(masterlistBlob, printWindow, 'Masterlist')
       }
     } catch (error) {
       console.error(error)
@@ -1258,9 +1306,9 @@ function PrintPage() {
     }
 
     const printWindows = [
-      openPrintWindow(),
-      openPrintWindow(),
-      ...orderedNames.map(() => openPrintWindow()),
+      openPrintWindow('Schematic'),
+      openPrintWindow('Masterlist'),
+      ...orderedNames.map(name => openPrintWindow(`Instructor - ${name}`)),
     ]
 
     if (printWindows.some(windowRef => !windowRef)) {
@@ -1289,14 +1337,14 @@ function PrintPage() {
       }
 
       const schematicBlob = await schematicResponse.blob()
-      openPdfPrintDialog(schematicBlob, printWindows[0])
+      openPdfPrintDialog(schematicBlob, printWindows[0], 'Schematic')
 
       const masterlistBlob = await buildDay1MasterlistBlob()
-      openPdfPrintDialog(masterlistBlob, printWindows[1])
+      openPdfPrintDialog(masterlistBlob, printWindows[1], 'Masterlist')
 
       for (const [index, name] of orderedNames.entries()) {
         const instructorBlob = await buildDay1InstructorBlob(name)
-        openPdfPrintDialog(instructorBlob, printWindows[index + 2])
+        openPdfPrintDialog(instructorBlob, printWindows[index + 2], `Instructor - ${name}`)
       }
     } catch (error) {
       console.error(error)
