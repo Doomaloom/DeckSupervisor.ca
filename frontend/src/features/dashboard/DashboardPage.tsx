@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
+import { useCsvImportFlow } from '../../app/CsvImportFlowContext'
 import { createTermKey, formatTermLabel, useCurrentTerm } from '../../app/useCurrentTerm'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { getTorontoDate } from '../../lib/torontoDate'
@@ -20,8 +21,10 @@ type SessionEntry = {
   id: string
   sessionDay: string
   sessionSeason: string
+  sessionYear?: number | null
   startDate: string
   endDate: string
+  location?: string | null
   instructors: InstructorEntry[]
   rosterFileName?: string
 }
@@ -103,8 +106,9 @@ function resolveSessionYear(yearInput: string, startDate: string, endDate: strin
 function getSessionName(session: SessionEntry) {
   const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
   const season = session.sessionSeason?.trim()
-  const year = session.startDate ? new Date(session.startDate).getFullYear() : NaN
-  const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+  const yearFromDate = session.startDate ? new Date(session.startDate).getFullYear() : NaN
+  const year = session.sessionYear ?? (Number.isFinite(yearFromDate) && yearFromDate > 0 ? yearFromDate : null)
+  const yearLabel = year ? String(year) : ''
   const parts = [dayLabel, season, yearLabel].filter(Boolean)
   return parts.length ? parts.join(' ') : 'Session'
 }
@@ -122,6 +126,7 @@ function Dashboard() {
   const navigate = useNavigate()
   const { setSelectedDay } = useDay()
   const { accountType, isGuest, user } = useAuth()
+  const { requestCsvFile } = useCsvImportFlow()
   const { teams, currentTeamId, setCurrentTeamId, loading: teamsLoading } = useCurrentTeam()
   const { currentTerm, currentTermKey, setCurrentTermKey, clearCurrentTerm } = useCurrentTerm()
   const [activePanel, setActivePanel] = useState<'options' | 'new-session' | 'select-session'>(
@@ -176,8 +181,10 @@ function Dashboard() {
         id,
         sessionDay,
         sessionSeason,
+        sessionYear: resolveSessionYear(sessionYear, startDate, endDate),
         startDate,
         endDate,
+        location: null,
         instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
         rosterFileName: rosterFile?.name,
       }
@@ -621,10 +628,27 @@ function Dashboard() {
                     Current term: {currentTerm.label}
                   </p>
                 ) : null}
+                <div className="mt-6">
+                  <button
+                    type="button"
+                    className="w-full rounded-2xl bg-secondary px-5 py-3 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-primary"
+                    onClick={() => requestCsvFile()}
+                    disabled={!currentTeamId || !currentTerm}
+                  >
+                    Upload CSV and Choose Session
+                  </button>
+                </div>
               </div>
             ) : null}
             {accountType !== 'full_time' ? (
               <>
+                <button
+                  type="button"
+                  className="w-80 rounded-card border-2 border-secondary bg-secondary px-8 py-10 text-center text-xl font-semibold text-accent shadow-md transition hover:-translate-y-0.5 hover:bg-primary"
+                  onClick={() => requestCsvFile()}
+                >
+                  Upload CSV and Choose Session
+                </button>
                 <button
                   type="button"
                   className="w-80 rounded-card border-2 border-secondary/20 bg-accent px-8 py-10 text-center text-xl font-semibold text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary"
@@ -855,6 +879,7 @@ function Dashboard() {
                         {localSession.rosterFileName ? (
                           <p>Roster: {localSession.rosterFileName}</p>
                         ) : null}
+                        {localSession.location ? <p>{localSession.location}</p> : null}
                         {isCurrent ? (
                           <p className="font-semibold text-secondary">Current session</p>
                         ) : null}

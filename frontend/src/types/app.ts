@@ -75,6 +75,7 @@ export type CustomRoster = {
 }
 
 export type ExtractedClass = {
+  sessionKey: string
   dayOfWeek: string
   sessionSeason: string
   sessionYear: number
@@ -85,4 +86,45 @@ export type ExtractedClass = {
   endTime24: string
   durationMinutes: number
   studentCount: number
+}
+
+export type ExtractedSession = {
+  sessionKey: string
+  dayOfWeek: string
+  sessionSeason: string
+  sessionYear: number
+  location: string
+  classCount: number
+  studentCount: number
+  courseCodes: string[]
+}
+
+export type CsvMatchedSession = {
+  id: string
+  label: string
+  ownedByUser: boolean
+  session: {
+    id: string
+    team_id: string | null
+    created_by: string
+    session_day: string
+    session_season: string | null
+    session_year: number | null
+    start_date: string | null
+    end_date: string | null
+    location: string | null
+    instructors: { name: string }[]
+  }
+}
+
+export type CsvSessionCandidate = {
+  sessionKey: string
+  dayOfWeek: string
+  sessionSeason: string
+  sessionYear: number
+  location: string
+  classCount: number
+  studentCount: number
+  courseCodes: string[]
+  matchedSession: CsvMatchedSession | null
 }

@@ -15,22 +15,18 @@ import {
 } from '@heroicons/react/24/outline'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
+import { useCsvImportFlow } from '../../app/CsvImportFlowContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
-import { extractClassesFromCsv, processCsvAndStore } from '../../lib/api'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
-import { setExtractedClassesForScope } from '../../lib/extractedClassesStorage'
-import { getSessionTermLabel, syncReportCardsForDay } from '../../lib/reportCardSync'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 import {
     getCustomRosterDayKey,
     getCustomRostersForDay,
-    getInstructorsForDay,
     getStudentsForDay,
     setCustomRostersForDay,
 } from '../../lib/storage'
-import type { InstructorEntry } from '../../types/app'
 
 type LayoutProps = {
     children: React.ReactNode
@@ -68,6 +64,7 @@ function Layout({ children }: LayoutProps) {
     const location = useLocation()
     const { selectedDay } = useDay()
     const { accountType, completeProfile, isGuest, needsProfile, profile, signOut, user } = useAuth()
+    const { requestCsvFile } = useCsvImportFlow()
     const { access, session: currentSession } = useCurrentSession()
     const { currentTeam, currentTeamId, loading: teamLoading } = useCurrentTeam()
     const { currentTerm } = useCurrentTerm()
@@ -292,115 +289,13 @@ function Layout({ children }: LayoutProps) {
 
                 {!isSidebarCollapsed && (
                     <div className="flex flex-col gap-2">
-                        <label className="relative flex h-12 items-center justify-center rounded-[10px] border border-dashed border-white/50 bg-white/10 px-2 text-center text-sm font-medium text-accent transition hover:-translate-y-0.5 hover:bg-hover">
-                            <span>Upload Roster</span>
-                            <input
-                                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                                type="file"
-                                accept=".csv"
-                                onChange={async (event: React.ChangeEvent<HTMLInputElement>) => {
-                                    const uploaded = event.target.files?.[0]
-                                    if (!uploaded) {
-                                        return
-                                    }
-                                    if (!selectedDay) {
-                                        alert('Please select a day before uploading.')
-                                        return
-                                    }
-                                    try {
-                                        const instructorConfig = getInstructorsForDay(selectedDay)
-                                        const uploadInstructors: InstructorEntry[] = []
-                                        if (instructorConfig) {
-                                            const count = Math.max(
-                                                instructorConfig.names.length,
-                                                instructorConfig.codes.length,
-                                            )
-                                            for (let index = 0; index < count; index += 1) {
-                                                const name = (instructorConfig.names[index] ?? '').trim()
-                                                const codes = (instructorConfig.codes[index] ?? '').trim()
-                                                if (!name || !codes) {
-                                                    continue
-                                                }
-                                                uploadInstructors.push({ name, codes })
-                                            }
-                                        }
-                                        await processCsvAndStore(uploaded, selectedDay, uploadInstructors)
-
-                                        let extractedCached = false
-                                        if (accountType === 'full_time') {
-                                            const extracted = await extractClassesFromCsv(uploaded)
-                                            console.log('[extract-classes] response', {
-                                                total: extracted.total,
-                                                sample: extracted.classes.slice(0, 5),
-                                                teamId: currentTeamId,
-                                                termKey: currentTerm?.key ?? null,
-                                                selectedDay,
-                                            })
-                                            if (currentTeamId && currentTerm?.key) {
-                                                setExtractedClassesForScope(currentTeamId, currentTerm.key, extracted.classes)
-                                                extractedCached = true
-                                            }
-                                        }
-
-                                        const canSyncReportCards =
-                                            accountType !== 'full_time' &&
-                                            !isGuest &&
-                                            Boolean(user?.id) &&
-                                            access.mode === 'owner' &&
-                                            Boolean(currentSession)
-
-                                        if (!canSyncReportCards || !currentSession || !user?.id) {
-                                            if (accountType === 'full_time' && extractedCached) {
-                                                alert('Roster uploaded and classes extracted for the current team term schematic.')
-                                                return
-                                            }
-                                            if (accountType === 'full_time') {
-                                                alert('Roster uploaded. Select both a team and term to cache classes for schematic visualization.')
-                                                return
-                                            }
-                                            alert('Roster uploaded. You can view it in Rosters or Schematic.')
-                                            return
-                                        }
-
-                                        const sessionLabel = getSessionTermLabel(
-                                            currentSession.session_season,
-                                            currentSession.session_year,
-                                            currentSession.start_date,
-                                        )
-
-                                        if (!sessionLabel) {
-                                            alert(
-                                                'Roster uploaded. Report card totals were not synced because this session term is incomplete.',
-                                            )
-                                            return
-                                        }
-
-                                        const dayStudents = getStudentsForDay(selectedDay)
-                                        const syncResult = await syncReportCardsForDay({
-                                            day: selectedDay,
-                                            students: dayStudents,
-                                            sessionLabel,
-                                            teamId: currentSession.team_id ?? null,
-                                            userId: user.id,
-                                        })
-
-                                        if (syncResult.status === 'blocked_unassigned') {
-                                            alert(
-                                                'Roster uploaded. Report card totals were not synced because some students are missing instructor assignments. Assign instructors in Schematic and save, then return to Report Cards.',
-                                            )
-                                            return
-                                        }
-
-                                        alert('Roster uploaded and report card totals synced for the selected day.')
-                                    } catch (error) {
-                                        console.error(error)
-                                        alert('Failed to process the CSV file.')
-                                    } finally {
-                                        event.target.value = ''
-                                    }
-                                }}
-                            />
-                        </label>
+                        <button
+                            type="button"
+                            className="flex h-12 items-center justify-center rounded-[10px] border border-dashed border-white/50 bg-white/10 px-2 text-center text-sm font-medium text-accent transition hover:-translate-y-0.5 hover:bg-hover"
+                            onClick={() => requestCsvFile()}
+                        >
+                            Upload Roster
+                        </button>
                     </div>
                 )}
 
@@ -430,7 +325,7 @@ function Layout({ children }: LayoutProps) {
 
 
                 {!isSidebarCollapsed && (
-                    <div className="flex flex-col gap-2 sticky bottom-0 mt-auto">
+                    <div className="sticky bottom-0 mt-auto flex flex-col gap-2 bg-primary px-3 py-3 ">
                         <h3 className="text-[0.95rem] font-semibold">Account</h3>
                         <div className="rounded-2xl border border-secondary/30 bg-accent px-4 py-2 text-sm text-secondary">
                             <p className="font-semibold">{displayName}</p>

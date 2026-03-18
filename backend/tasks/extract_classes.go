@@ -12,6 +12,7 @@ import (
 )
 
 type ExtractedClass struct {
+	SessionKey      string `json:"sessionKey"`
 	DayOfWeek       string `json:"dayOfWeek"`
 	SessionSeason   string `json:"sessionSeason"`
 	SessionYear     int    `json:"sessionYear"`
@@ -24,7 +25,23 @@ type ExtractedClass struct {
 	StudentCount    int    `json:"studentCount"`
 }
 
-func ExtractClassesFromCSV(csvReader io.Reader) ([]ExtractedClass, error) {
+type ExtractedSession struct {
+	SessionKey    string   `json:"sessionKey"`
+	DayOfWeek     string   `json:"dayOfWeek"`
+	SessionSeason string   `json:"sessionSeason"`
+	SessionYear   int      `json:"sessionYear"`
+	Location      string   `json:"location"`
+	ClassCount    int      `json:"classCount"`
+	StudentCount  int      `json:"studentCount"`
+	CourseCodes   []string `json:"courseCodes"`
+}
+
+type ExtractedCSVResult struct {
+	Sessions         []ExtractedSession          `json:"sessions"`
+	ClassesBySession map[string][]ExtractedClass `json:"classesBySession"`
+}
+
+func ExtractClassesFromCSV(csvReader io.Reader) (*ExtractedCSVResult, error) {
 	df := dataframe.ReadCSV(csvReader)
 	if df.Err != nil {
 		return nil, fmt.Errorf("failed to read csv: %w", df.Err)
@@ -32,7 +49,7 @@ func ExtractClassesFromCSV(csvReader io.Reader) ([]ExtractedClass, error) {
 	return ExtractClasses(df.Records())
 }
 
-func ExtractClasses(records [][]string) ([]ExtractedClass, error) {
+func ExtractClasses(records [][]string) (*ExtractedCSVResult, error) {
 	if len(records) < 2 {
 		return nil, fmt.Errorf("no rows to process")
 	}
@@ -79,6 +96,7 @@ func ExtractClasses(records [][]string) ([]ExtractedClass, error) {
 
 		startRaw := getByName(row, []string{"Starts", "Start", "StartTime"})
 		endRaw := getByName(row, []string{"Ends", "End", "EndTime"})
+		eventSchedule := getByName(row, []string{"EventSchedule", "Schedule"})
 		timeRange := getByName(row, []string{"EventTime", "Time"})
 		if startRaw == "" || endRaw == "" {
 			left, right := splitTimeRange(timeRange)
@@ -104,14 +122,14 @@ func ExtractClasses(records [][]string) ([]ExtractedClass, error) {
 			continue
 		}
 
-		sessionSeason, sessionYear := getSeasonAndYear(startDate, endDate)
+		sessionSeason, sessionYear := getSeasonAndYear(eventSchedule, startDate, endDate)
+		sessionKey := BuildExtractedSessionKey(dayValue, sessionSeason, sessionYear, location)
 
 		studentCountFromRoster := parsePositiveInt(getByName(row, []string{"RegTotal", "Registered", "Enrollment", "Students"}))
 		hasAttendee := strings.TrimSpace(getByName(row, []string{"AttendeeName", "Name", "FirstName"})) != ""
 
 		key := strings.Join([]string{
-			dayValue,
-			strings.ToLower(strings.TrimSpace(location)),
+			sessionKey,
 			courseCode,
 			startTime24,
 			endTime24,
@@ -120,6 +138,7 @@ func ExtractClasses(records [][]string) ([]ExtractedClass, error) {
 		existing, exists := classMap[key]
 		if !exists {
 			existing = &ExtractedClass{
+				SessionKey:      sessionKey,
 				DayOfWeek:       dayValue,
 				SessionSeason:   sessionSeason,
 				SessionYear:     sessionYear,
@@ -156,30 +175,87 @@ func ExtractClasses(records [][]string) ([]ExtractedClass, error) {
 		}
 	}
 
-	classes := make([]ExtractedClass, 0, len(classMap))
+	classesBySession := map[string][]ExtractedClass{}
+	sessionCourseCodes := map[string]map[string]struct{}{}
+	sessionMeta := map[string]*ExtractedSession{}
+
 	for _, class := range classMap {
-		classes = append(classes, *class)
+		classesBySession[class.SessionKey] = append(classesBySession[class.SessionKey], *class)
+
+		meta, exists := sessionMeta[class.SessionKey]
+		if !exists {
+			meta = &ExtractedSession{
+				SessionKey:    class.SessionKey,
+				DayOfWeek:     class.DayOfWeek,
+				SessionSeason: class.SessionSeason,
+				SessionYear:   class.SessionYear,
+				Location:      class.Location,
+			}
+			sessionMeta[class.SessionKey] = meta
+			sessionCourseCodes[class.SessionKey] = map[string]struct{}{}
+		}
+
+		meta.ClassCount++
+		meta.StudentCount += class.StudentCount
+		if code := strings.TrimSpace(class.CourseCode); code != "" {
+			sessionCourseCodes[class.SessionKey][code] = struct{}{}
+		}
 	}
 
-	sort.Slice(classes, func(i, j int) bool {
-		dayI := daySortKey(classes[i].DayOfWeek)
-		dayJ := daySortKey(classes[j].DayOfWeek)
+	sessions := make([]ExtractedSession, 0, len(sessionMeta))
+	for sessionKey, meta := range sessionMeta {
+		courseCodes := make([]string, 0, len(sessionCourseCodes[sessionKey]))
+		for code := range sessionCourseCodes[sessionKey] {
+			courseCodes = append(courseCodes, code)
+		}
+		sort.Strings(courseCodes)
+		meta.CourseCodes = courseCodes
+
+		sort.Slice(classesBySession[sessionKey], func(i, j int) bool {
+			left := classesBySession[sessionKey][i]
+			right := classesBySession[sessionKey][j]
+			if left.StartTime24 != right.StartTime24 {
+				return left.StartTime24 < right.StartTime24
+			}
+			if left.EndTime24 != right.EndTime24 {
+				return left.EndTime24 < right.EndTime24
+			}
+			return left.CourseCode < right.CourseCode
+		})
+
+		sessions = append(sessions, *meta)
+	}
+
+	sort.Slice(sessions, func(i, j int) bool {
+		dayI := daySortKey(sessions[i].DayOfWeek)
+		dayJ := daySortKey(sessions[j].DayOfWeek)
 		if dayI != dayJ {
 			return dayI < dayJ
 		}
-		if classes[i].StartTime24 != classes[j].StartTime24 {
-			return classes[i].StartTime24 < classes[j].StartTime24
+		if sessions[i].SessionYear != sessions[j].SessionYear {
+			return sessions[j].SessionYear < sessions[i].SessionYear
 		}
-		if classes[i].EndTime24 != classes[j].EndTime24 {
-			return classes[i].EndTime24 < classes[j].EndTime24
+		seasonI := strings.ToLower(strings.TrimSpace(sessions[i].SessionSeason))
+		seasonJ := strings.ToLower(strings.TrimSpace(sessions[j].SessionSeason))
+		if seasonI != seasonJ {
+			return seasonI < seasonJ
 		}
-		if classes[i].CourseCode != classes[j].CourseCode {
-			return classes[i].CourseCode < classes[j].CourseCode
-		}
-		return classes[i].Location < classes[j].Location
+		return strings.ToLower(strings.TrimSpace(sessions[i].Location)) < strings.ToLower(strings.TrimSpace(sessions[j].Location))
 	})
 
-	return classes, nil
+	return &ExtractedCSVResult{
+		Sessions:         sessions,
+		ClassesBySession: classesBySession,
+	}, nil
+}
+
+func BuildExtractedSessionKey(dayOfWeek, sessionSeason string, sessionYear int, location string) string {
+	return strings.Join([]string{
+		strings.TrimSpace(dayOfWeek),
+		strings.ToLower(strings.TrimSpace(sessionSeason)),
+		strconv.Itoa(sessionYear),
+		strings.ToLower(strings.TrimSpace(location)),
+	}, "|")
 }
 
 func splitTimeRange(value string) (string, string) {
@@ -264,7 +340,10 @@ func extractTimeAndDate(value string) (string, time.Time) {
 	return "", time.Time{}
 }
 
-func getDurationMinutes(startTime24 string, endTime24 string) int {
+func getDurationMinutes(startTime24, endTime24 string) int {
+	if startTime24 == "" || endTime24 == "" {
+		return 0
+	}
 	start, err := time.Parse("15:04", startTime24)
 	if err != nil {
 		return 0
@@ -273,41 +352,73 @@ func getDurationMinutes(startTime24 string, endTime24 string) int {
 	if err != nil {
 		return 0
 	}
-
-	startMinutes := start.Hour()*60 + start.Minute()
-	endMinutes := end.Hour()*60 + end.Minute()
-	if endMinutes < startMinutes {
-		endMinutes += 24 * 60
-	}
-
-	duration := endMinutes - startMinutes
+	duration := int(end.Sub(start).Minutes())
 	if duration <= 0 {
-		return 0
+		duration += 24 * 60
 	}
 	return duration
 }
 
-func getSeasonAndYear(startDate time.Time, endDate time.Time) (string, int) {
-	if !startDate.IsZero() {
-		return seasonForMonth(startDate.Month()), startDate.Year()
+func getSeasonAndYear(eventSchedule string, startDate, endDate time.Time) (string, int) {
+	if scheduleDate := extractScheduleStartDate(eventSchedule); !scheduleDate.IsZero() {
+		return seasonAndYearFromDate(scheduleDate)
 	}
-	if !endDate.IsZero() {
-		return seasonForMonth(endDate.Month()), endDate.Year()
+
+	var source time.Time
+	switch {
+	case !startDate.IsZero():
+		source = startDate
+	case !endDate.IsZero():
+		source = endDate
+	default:
+		return "", 0
 	}
-	return "", 0
+
+	return seasonAndYearFromDate(source)
 }
 
-func seasonForMonth(month time.Month) string {
-	switch month {
-	case time.March, time.April, time.May:
-		return "spring"
-	case time.June, time.July, time.August:
-		return "summer"
-	case time.September, time.October, time.November, time.December:
-		return "fall"
+func seasonAndYearFromDate(source time.Time) (string, int) {
+	month := source.Month()
+	switch {
+	case month >= time.January && month <= time.March:
+		return "Winter", source.Year()
+	case month >= time.April && month <= time.June:
+		return "Spring", source.Year()
+	case month >= time.July && month <= time.September:
+		return "Summer", source.Year()
 	default:
-		return "winter"
+		return "Fall", source.Year()
 	}
+}
+
+func extractScheduleStartDate(value string) time.Time {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return time.Time{}
+	}
+
+	normalized := strings.TrimSpace(strings.TrimPrefix(trimmed, "From "))
+	parts := strings.SplitN(normalized, " to ", 2)
+	if len(parts) == 0 {
+		return time.Time{}
+	}
+
+	startRaw := strings.TrimSpace(parts[0])
+	if startRaw == "" {
+		return time.Time{}
+	}
+
+	for _, layout := range []string{
+		"2006-01-02",
+		"01/02/2006",
+		"1/2/2006",
+	} {
+		if parsed, err := time.Parse(layout, startRaw); err == nil {
+			return parsed
+		}
+	}
+
+	return time.Time{}
 }
 
 func parsePositiveInt(value string) int {
@@ -316,28 +427,28 @@ func parsePositiveInt(value string) int {
 		return 0
 	}
 	parsed, err := strconv.Atoi(trimmed)
-	if err != nil || parsed < 0 {
+	if err != nil || parsed <= 0 {
 		return 0
 	}
 	return parsed
 }
 
 func daySortKey(day string) int {
-	switch normalizeDay(day) {
+	switch strings.TrimSpace(day) {
 	case "Mo":
-		return 0
-	case "Tu":
 		return 1
-	case "We":
+	case "Tu":
 		return 2
-	case "Th":
+	case "We":
 		return 3
-	case "Fr":
+	case "Th":
 		return 4
-	case "Sa":
+	case "Fr":
 		return 5
-	case "Su":
+	case "Sa":
 		return 6
+	case "Su":
+		return 7
 	default:
 		return 99
 	}

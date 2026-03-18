@@ -64,10 +64,12 @@ export function useCurrentSession() {
                   created_by: '',
                   session_day: local.sessionDay,
                   session_season: local.sessionSeason ?? null,
-                  session_year: local.startDate ? new Date(local.startDate).getFullYear() : null,
+                  session_year:
+                    local.sessionYear ??
+                    (local.startDate ? new Date(local.startDate).getFullYear() : null),
                   start_date: local.startDate ?? null,
                   end_date: local.endDate ?? null,
-                  location: null,
+                  location: local.location ?? null,
                   instructors: local.instructors ?? [],
                 }
               : null,

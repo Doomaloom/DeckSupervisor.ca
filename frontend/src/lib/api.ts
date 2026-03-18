@@ -1,4 +1,4 @@
-import type { ClassRoster, ExtractedClass, InstructorEntry, Student } from '../types/app'
+import type { ClassRoster, ExtractedClass, ExtractedSession, InstructorEntry, Student } from '../types/app'
 import { setStudentsForDay } from './storage'
 
 type ProcessCsvResponse = {
@@ -10,8 +10,10 @@ type ProcessCsvResponse = {
 
 type ExtractClassesResponse = {
   success: boolean
-  total: number
-  classes: ExtractedClass[]
+  totalSessions: number
+  totalClasses: number
+  sessions: ExtractedSession[]
+  classesBySession: Record<string, ExtractedClass[]>
 }
 
 function rosterToStudents(rosters: ClassRoster[]): Student[] {
@@ -40,7 +42,8 @@ function rosterToStudents(rosters: ClassRoster[]): Student[] {
 export async function processCsvAndStore(
   file: File,
   day: string,
-  instructors: InstructorEntry[] = []
+  instructors: InstructorEntry[] = [],
+  options?: { courseCodes?: string[] }
 ): Promise<ProcessCsvResponse> {
   const formData = new FormData()
   formData.append('csv_file', file)
@@ -60,8 +63,14 @@ export async function processCsvAndStore(
   }
 
   const data = (await response.json()) as ProcessCsvResponse
-  if (data.classes?.length) {
-    const students = rosterToStudents(data.classes)
+  const allowedCodes = new Set((options?.courseCodes ?? []).map(code => code.trim()).filter(Boolean))
+  const classes =
+    allowedCodes.size > 0
+      ? (data.classes ?? []).filter(roster => allowedCodes.has(roster.code.trim()))
+      : (data.classes ?? [])
+
+  if (classes.length) {
+    const students = rosterToStudents(classes)
     const grouped = students.reduce<Record<string, Student[]>>((acc, student) => {
       acc[student.day] = acc[student.day] || []
       acc[student.day].push(student)
@@ -71,7 +80,11 @@ export async function processCsvAndStore(
       setStudentsForDay(key, list)
     })
   }
-  return data
+  return {
+    ...data,
+    classes,
+    total: classes.reduce((sum, roster) => sum + roster.students.length, 0),
+  }
 }
 
 export async function extractClassesFromCsv(file: File): Promise<ExtractClassesResponse> {

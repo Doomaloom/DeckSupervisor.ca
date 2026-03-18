@@ -9,8 +9,10 @@ export type StoredSessionEntry = {
   id: string
   sessionDay: string
   sessionSeason: string
+  sessionYear?: number | null
   startDate: string
   endDate: string
+  location?: string | null
   instructors: { name: string }[]
   rosterFileName?: string
 }

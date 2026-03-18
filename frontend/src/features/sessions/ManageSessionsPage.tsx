@@ -13,8 +13,10 @@ type SessionEntry = {
   id: string
   sessionDay: string
   sessionSeason: string
+  sessionYear?: number | null
   startDate: string
   endDate: string
+  location?: string | null
   instructors: InstructorEntry[]
   rosterFileName?: string
 }
@@ -41,8 +43,9 @@ const NO_TEAM_VALUE = '__no_team__'
 function getSessionName(session: SessionEntry) {
   const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
   const season = session.sessionSeason?.trim()
-  const year = session.startDate ? new Date(session.startDate).getFullYear() : NaN
-  const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
+  const yearFromDate = session.startDate ? new Date(session.startDate).getFullYear() : NaN
+  const year = session.sessionYear ?? (Number.isFinite(yearFromDate) && yearFromDate > 0 ? yearFromDate : null)
+  const yearLabel = year ? String(year) : ''
   const parts = [dayLabel, season, yearLabel].filter(Boolean)
   return parts.length ? parts.join(' ') : 'Session'
 }
@@ -165,9 +168,11 @@ function ManageSessionsPage() {
       const localSession = currentSession as SessionEntry
       setEditSessionDay(localSession.sessionDay)
       setEditSessionSeason(localSession.sessionSeason ?? '')
+      setEditSessionYear(localSession.sessionYear ? String(localSession.sessionYear) : '')
       setEditTeamId(NO_TEAM_VALUE)
       setEditStartDate(localSession.startDate)
       setEditEndDate(localSession.endDate)
+      setEditLocation(localSession.location ?? '')
       setEditInstructors(localSession.instructors.length ? localSession.instructors : [{ name: '' }])
       setEditRosterFile(null)
       setEditRosterFileName(localSession.rosterFileName)
@@ -259,8 +264,10 @@ function ManageSessionsPage() {
           ...session,
           sessionDay: editSessionDay,
           sessionSeason: editSessionSeason,
+          sessionYear: resolveSessionYear(editSessionYear, editStartDate, editEndDate),
           startDate: editStartDate,
           endDate: editEndDate,
+          location: editLocation || null,
           instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
           rosterFileName: editRosterFile ? editRosterFile.name : editRosterFileName,
         }

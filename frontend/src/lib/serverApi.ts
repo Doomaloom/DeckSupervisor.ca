@@ -1,3 +1,5 @@
+import type { CsvSessionCandidate, ExtractedClass } from '../types/app'
+
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown
 }
@@ -113,6 +115,39 @@ export function fetchTeamSessions(teamId: string, select?: string) {
     params.set('select', select)
   }
   return request<{ sessions: any[] }>(`/api/teams/${encodeURIComponent(teamId)}/sessions?${params.toString()}`)
+}
+
+export async function fetchCsvSessionCandidates(
+  file: File,
+  scope?: { teamId?: string; termSeason?: string; termYear?: number }
+) {
+  const formData = new FormData()
+  formData.append('csv_file', file)
+  if (scope?.teamId) {
+    formData.append('teamId', scope.teamId)
+  }
+  if (scope?.termSeason) {
+    formData.append('termSeason', scope.termSeason)
+  }
+  if (scope?.termYear) {
+    formData.append('termYear', String(scope.termYear))
+  }
+
+  const response = await fetch('/api/csv/session-candidates', {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(message || 'Failed to inspect CSV')
+  }
+
+  return (await response.json()) as {
+    sessions: CsvSessionCandidate[]
+    classesBySession: Record<string, ExtractedClass[]>
+  }
 }
 
 export function fetchOwnedTeams() {
