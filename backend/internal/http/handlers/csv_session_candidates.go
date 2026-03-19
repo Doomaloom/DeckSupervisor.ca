@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/csv"
 	"net/http"
 	"net/url"
 	"sort"
@@ -59,14 +58,7 @@ func CSVSessionCandidates(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	reader := csv.NewReader(file)
-	records, err := reader.ReadAll()
-	if err != nil {
-		http.Error(w, "Error reading CSV", http.StatusBadRequest)
-		return
-	}
-
-	extracted, err := tasks.ExtractClasses(records)
+	extracted, err := tasks.ExtractClassesFromCSV(file)
 	if err != nil {
 		http.Error(w, "Error extracting classes from CSV", http.StatusBadRequest)
 		return
