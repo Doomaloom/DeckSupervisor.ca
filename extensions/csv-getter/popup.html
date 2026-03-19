@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CSV Getter Helper</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <p class="eyebrow">CSV Getter Helper</p>
+      <h1>Run CSV Preset</h1>
+      <p class="copy">
+        Open the CSV getter page first, then choose the location preset to fill filters and click
+        Preview.
+      </p>
+      <label class="field">
+        <span>First Day Of Session</span>
+        <button id="session-date-button" class="date-button" type="button" aria-haspopup="dialog">
+          Select date
+        </button>
+        <input id="session-date" type="hidden" />
+      </label>
+      <section id="date-picker" class="date-picker hidden" aria-label="Calendar date picker">
+        <div class="date-picker-header">
+          <button id="calendar-prev" class="calendar-nav" type="button" aria-label="Previous month">
+            Prev
+          </button>
+          <p id="calendar-label" class="calendar-label"></p>
+          <button id="calendar-next" class="calendar-nav" type="button" aria-label="Next month">
+            Next
+          </button>
+        </div>
+        <div class="calendar-weekdays" aria-hidden="true">
+          <span>Su</span>
+          <span>Mo</span>
+          <span>Tu</span>
+          <span>We</span>
+          <span>Th</span>
+          <span>Fr</span>
+          <span>Sa</span>
+        </div>
+        <div id="calendar-grid" class="calendar-grid"></div>
+      </section>
+      <div class="actions">
+        <button type="button" data-preset="jim_archdekin">Jim Archdekin</button>
+        <button type="button" data-preset="paul_palleschi">Paul Palleschi</button>
+      </div>
+      <p id="status" class="status" role="status"></p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "CSV Getter Helper",
+  "version": "1.0.0",
+  "description": "Runs the CSV getter filter automation on the active tab.",
+  "permissions": [
+    "activeTab",
+    "tabs"
+  ],
+  "browser_action": {
+    "default_title": "CSV Getter Helper",
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "csv-getter-helper@decksupervisor.local"
+    }
+  }
+}
