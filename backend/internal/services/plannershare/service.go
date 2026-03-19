@@ -18,17 +18,17 @@ const (
 )
 
 var (
-	ErrSessionNotFound  = errors.New("shared planner session not found")
+	ErrSessionNotFound     = errors.New("shared planner session not found")
 	ErrParticipantNotFound = errors.New("participant not found")
-	ErrForbidden        = errors.New("forbidden")
+	ErrForbidden           = errors.New("forbidden")
 )
 
 type PlannerDataset struct {
-	SourceFileName string                           `json:"sourceFileName"`
-	ImportedAt     string                           `json:"importedAt"`
-	Sessions       []PlannerSession                 `json:"sessions"`
-	Classes        []PlannerClass                   `json:"classes"`
-	Participants   []PlannerParticipant             `json:"participants"`
+	SourceFileName string                                  `json:"sourceFileName"`
+	ImportedAt     string                                  `json:"importedAt"`
+	Sessions       []PlannerSession                        `json:"sessions"`
+	Classes        []PlannerClass                          `json:"classes"`
+	Participants   []PlannerParticipant                    `json:"participants"`
 	CallRecords    map[string]PlannerParticipantCallRecord `json:"callRecords"`
 }
 
@@ -42,22 +42,22 @@ type PlannerSession struct {
 }
 
 type PlannerClass struct {
-	ClassKey        string `json:"classKey"`
-	EventID         string `json:"eventId"`
-	SessionKey      string `json:"sessionKey"`
-	ServiceName     string `json:"serviceName"`
-	DayOfWeek       string `json:"dayOfWeek"`
-	EventTime       string `json:"eventTime"`
-	Facility        string `json:"facility"`
-	SessionSeason   string `json:"sessionSeason"`
-	SessionYear     int    `json:"sessionYear"`
-	MinimumCapacity int    `json:"minimumCapacity"`
-	MaximumCapacity int    `json:"maximumCapacity"`
-	BookedCount     int    `json:"bookedCount"`
-	WaitlistCount   int    `json:"waitlistCount"`
-	ParticipantIDs  []string `json:"participantIds"`
+	ClassKey              string   `json:"classKey"`
+	EventID               string   `json:"eventId"`
+	SessionKey            string   `json:"sessionKey"`
+	ServiceName           string   `json:"serviceName"`
+	DayOfWeek             string   `json:"dayOfWeek"`
+	EventTime             string   `json:"eventTime"`
+	Facility              string   `json:"facility"`
+	SessionSeason         string   `json:"sessionSeason"`
+	SessionYear           int      `json:"sessionYear"`
+	MinimumCapacity       int      `json:"minimumCapacity"`
+	MaximumCapacity       int      `json:"maximumCapacity"`
+	BookedCount           int      `json:"bookedCount"`
+	WaitlistCount         int      `json:"waitlistCount"`
+	ParticipantIDs        []string `json:"participantIds"`
 	WaitingParticipantIDs []string `json:"waitingParticipantIds"`
-	PlanningStatus  string `json:"planningStatus"`
+	PlanningStatus        string   `json:"planningStatus"`
 }
 
 type PlannerParticipant struct {
@@ -73,21 +73,28 @@ type PlannerParticipant struct {
 }
 
 type PlannerParticipantCallRecord struct {
-	ParticipantID              string `json:"participantId"`
-	ClassKey                   string `json:"classKey"`
-	Status                     string `json:"status"`
-	Notes                      string `json:"notes"`
-	OfferedAlternativeClassKey string `json:"offeredAlternativeClassKey"`
+	ParticipantID               string `json:"participantId"`
+	ClassKey                    string `json:"classKey"`
+	Status                      string `json:"status"`
+	Notes                       string `json:"notes"`
+	OfferedAlternativeClassKey  string `json:"offeredAlternativeClassKey"`
 	AcceptedAlternativeClassKey string `json:"acceptedAlternativeClassKey"`
-	CompletedAt                string `json:"completedAt"`
+	CompletedAt                 string `json:"completedAt"`
 }
 
 type PlannerCallRecordUpdate struct {
-	Status                     *string `json:"status,omitempty"`
-	Notes                      *string `json:"notes,omitempty"`
-	OfferedAlternativeClassKey *string `json:"offeredAlternativeClassKey,omitempty"`
+	Status                      *string `json:"status,omitempty"`
+	Notes                       *string `json:"notes,omitempty"`
+	OfferedAlternativeClassKey  *string `json:"offeredAlternativeClassKey,omitempty"`
 	AcceptedAlternativeClassKey *string `json:"acceptedAlternativeClassKey,omitempty"`
-	CompletedAt                *string `json:"completedAt,omitempty"`
+	CompletedAt                 *string `json:"completedAt,omitempty"`
+}
+
+type SavedStateApplyInput struct {
+	ClassStatuses       map[string]string                  `json:"classStatuses"`
+	CallRecords         map[string]PlannerCallRecordUpdate `json:"callRecords"`
+	LocationOverrides   map[string]string                  `json:"locationOverrides"`
+	CallbackPhoneNumber string                             `json:"callbackPhoneNumber"`
 }
 
 type ShareParticipant struct {
@@ -100,26 +107,26 @@ type ShareParticipant struct {
 }
 
 type ShareSession struct {
-	Code              string             `json:"code"`
-	ShareURL          string             `json:"shareUrl"`
-	HostParticipantID string             `json:"hostParticipantId"`
-	LocationOverrides map[string]string  `json:"locationOverrides"`
-	CallbackPhoneNumber string           `json:"callbackPhoneNumber"`
-	ExpiresAt         time.Time          `json:"expiresAt"`
-	Participants      []ShareParticipant `json:"participants"`
-	Dataset           PlannerDataset     `json:"dataset"`
-	Version           int                `json:"version"`
+	Code                string             `json:"code"`
+	ShareURL            string             `json:"shareUrl"`
+	HostParticipantID   string             `json:"hostParticipantId"`
+	LocationOverrides   map[string]string  `json:"locationOverrides"`
+	CallbackPhoneNumber string             `json:"callbackPhoneNumber"`
+	ExpiresAt           time.Time          `json:"expiresAt"`
+	Participants        []ShareParticipant `json:"participants"`
+	Dataset             PlannerDataset     `json:"dataset"`
+	Version             int                `json:"version"`
 }
 
 type shareRoom struct {
-	Code              string
-	HostParticipantID string
-	LocationOverrides map[string]string
+	Code                string
+	HostParticipantID   string
+	LocationOverrides   map[string]string
 	CallbackPhoneNumber string
-	ExpiresAt         time.Time
-	Version           int
-	Dataset           PlannerDataset
-	Participants      map[string]*ShareParticipant
+	ExpiresAt           time.Time
+	Version             int
+	Dataset             PlannerDataset
+	Participants        map[string]*ShareParticipant
 }
 
 type Service struct {
@@ -153,13 +160,13 @@ func (s *Service) Create(baseURL string, dataset PlannerDataset, displayName str
 	}
 
 	room := &shareRoom{
-		Code:              code,
-		HostParticipantID: participantID,
-		LocationOverrides: normalizeLocationOverrides(locationOverrides),
+		Code:                code,
+		HostParticipantID:   participantID,
+		LocationOverrides:   normalizeLocationOverrides(locationOverrides),
 		CallbackPhoneNumber: strings.TrimSpace(callbackPhoneNumber),
-		ExpiresAt:         now.Add(sessionLifetime),
-		Version:           1,
-		Dataset:           cloneDataset(dataset),
+		ExpiresAt:           now.Add(sessionLifetime),
+		Version:             1,
+		Dataset:             cloneDataset(dataset),
 		Participants: map[string]*ShareParticipant{
 			participantID: {
 				ID:          participantID,
@@ -312,6 +319,53 @@ func (s *Service) UpdateSessionDetails(baseURL, code, participantID string, loca
 	return s.snapshotLocked(baseURL, room), nil
 }
 
+func (s *Service) ApplySavedState(baseURL, code, participantID string, input SavedStateApplyInput) (ShareSession, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	room, err := s.requireParticipantLocked(strings.ToUpper(strings.TrimSpace(code)), participantID)
+	if err != nil {
+		return ShareSession{}, err
+	}
+
+	for index := range room.Dataset.Classes {
+		if status, ok := input.ClassStatuses[room.Dataset.Classes[index].ClassKey]; ok && status != "" {
+			room.Dataset.Classes[index].PlanningStatus = status
+		}
+	}
+
+	for recordID, update := range input.CallRecords {
+		record, ok := room.Dataset.CallRecords[recordID]
+		if !ok {
+			continue
+		}
+		if update.Status != nil {
+			record.Status = *update.Status
+		}
+		if update.Notes != nil {
+			record.Notes = *update.Notes
+		}
+		if update.OfferedAlternativeClassKey != nil {
+			record.OfferedAlternativeClassKey = *update.OfferedAlternativeClassKey
+		}
+		if update.AcceptedAlternativeClassKey != nil {
+			record.AcceptedAlternativeClassKey = *update.AcceptedAlternativeClassKey
+		}
+		if update.CompletedAt != nil {
+			record.CompletedAt = *update.CompletedAt
+		}
+		room.Dataset.CallRecords[recordID] = record
+	}
+
+	if room.HostParticipantID == participantID {
+		room.LocationOverrides = normalizeLocationOverrides(input.LocationOverrides)
+		room.CallbackPhoneNumber = strings.TrimSpace(input.CallbackPhoneNumber)
+	}
+
+	room.Version += 1
+	room.Participants[participantID].LastSeenAt = time.Now().UTC()
+	return s.snapshotLocked(baseURL, room), nil
+}
+
 func (s *Service) requireParticipantLocked(code, participantID string) (*shareRoom, error) {
 	now := time.Now().UTC()
 	s.cleanupLocked(now)
@@ -383,15 +437,15 @@ func (s *Service) snapshotLocked(baseURL string, room *shareRoom) ShareSession {
 		return participants[i].JoinedAt.Before(participants[j].JoinedAt)
 	})
 	return ShareSession{
-		Code:              room.Code,
-		ShareURL:          strings.TrimRight(baseURL, "/") + "/session-planning?share=" + room.Code,
-		HostParticipantID: room.HostParticipantID,
-		LocationOverrides: cloneLocationOverrides(room.LocationOverrides),
+		Code:                room.Code,
+		ShareURL:            strings.TrimRight(baseURL, "/") + "/session-planning?share=" + room.Code,
+		HostParticipantID:   room.HostParticipantID,
+		LocationOverrides:   cloneLocationOverrides(room.LocationOverrides),
 		CallbackPhoneNumber: room.CallbackPhoneNumber,
-		ExpiresAt:         room.ExpiresAt,
-		Participants:      participants,
-		Dataset:           cloneDataset(room.Dataset),
-		Version:           room.Version,
+		ExpiresAt:           room.ExpiresAt,
+		Participants:        participants,
+		Dataset:             cloneDataset(room.Dataset),
+		Version:             room.Version,
 	}
 }
 

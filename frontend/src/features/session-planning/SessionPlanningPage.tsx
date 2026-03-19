@@ -7,14 +7,23 @@ import type {
   PlannerDataset,
 } from '../../types/app'
 import {
+  applyPlannerSaveState,
+  buildPlannerSaveState,
   loadPlannerDataset,
   mergePlannerDatasets,
   parseSessionPlannerCsv,
+  parsePlannerSaveState,
+  plannerSaveStateToSharePayload,
+  plannerSaveStateToText,
   savePlannerDataset,
   updatePlannerCallRecord,
   updatePlannerClassStatus,
 } from '../../lib/sessionPlanner'
-import { updatePlannerShareCallRecord, updatePlannerShareClassStatus } from '../../lib/serverApi'
+import {
+  applyPlannerShareSaveState,
+  updatePlannerShareCallRecord,
+  updatePlannerShareClassStatus,
+} from '../../lib/serverApi'
 import PlannerBoard from './components/PlannerBoard'
 import PlannerCallModal from './components/PlannerCallModal'
 import PlannerDetailsPanel from './components/PlannerDetailsPanel'
@@ -29,10 +38,14 @@ function SessionPlanningPage() {
 
   const [dataset, setDataset] = useState<PlannerDataset | null>(null)
   const [error, setError] = useState('')
+  const [statusMessage, setStatusMessage] = useState('')
   const [isInfoPanelOpen, setIsInfoPanelOpen] = useState(true)
   const [activeCallParticipantId, setActiveCallParticipantId] = useState('')
   const [callScriptMode, setCallScriptMode] = useState<'live' | 'voicemail'>('live')
   const [isPlannedChangesOpen, setIsPlannedChangesOpen] = useState(false)
+  const [selectedDay, setSelectedDay] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState('')
+  const [selectedClassKey, setSelectedClassKey] = useState('')
 
   const {
     applySharedSession,
@@ -83,15 +96,16 @@ function SessionPlanningPage() {
     scheduleHeightRem,
     scheduleStartMinutes,
     selectedClass,
-    selectedClassKey,
-    selectedDay,
-    selectedLocation,
-    setSelectedClassKey,
-    setSelectedDay,
-    setSelectedLocation,
     timeLabels,
     visibleClasses,
-  } = usePlannerViewModel(dataset, activeCallParticipantId)
+  } = usePlannerViewModel(dataset, activeCallParticipantId, {
+    selectedDay,
+    selectedLocation,
+    selectedClassKey,
+    setSelectedDay,
+    setSelectedLocation,
+    setSelectedClassKey,
+  })
 
   const persistLocalDataset = (nextDataset: PlannerDataset) => {
     setDataset(nextDataset)
@@ -106,6 +120,7 @@ function SessionPlanningPage() {
       const parsedDataset = parseSessionPlannerCsv(await file.text(), file.name)
       persistLocalDataset(parsedDataset)
       setError('')
+      setStatusMessage('')
       setIsInfoPanelOpen(true)
       setActiveCallParticipantId('')
       if (shareCode) {
@@ -125,6 +140,7 @@ function SessionPlanningPage() {
       const nextDataset = dataset ? mergePlannerDatasets(dataset, parsedDataset) : parsedDataset
       persistLocalDataset(nextDataset)
       setError('')
+      setStatusMessage('')
       setIsInfoPanelOpen(true)
       if (shareCode) {
         syncQueryParams('')
@@ -150,6 +166,7 @@ function SessionPlanningPage() {
         persistLocalDataset(updatePlannerClassStatus(dataset, classKey, status))
       }
       setError('')
+      setStatusMessage('')
     } catch (statusError) {
       setError(statusError instanceof Error ? statusError.message : 'Failed to update class status.')
     }
@@ -171,6 +188,7 @@ function SessionPlanningPage() {
         persistLocalDataset(updatePlannerCallRecord(dataset, participantId, update))
       }
       setError('')
+      setStatusMessage('')
     } catch (recordError) {
       setError(recordError instanceof Error ? recordError.message : 'Failed to update call record.')
     }
@@ -211,6 +229,80 @@ function SessionPlanningPage() {
     const url = new URL(window.location.href)
     url.searchParams.set('popout', '1')
     window.open(url.toString(), '_blank', 'popup=yes,width=1600,height=980')
+  }
+
+  const downloadPlannerState = () => {
+    if (!dataset) {
+      setError('Load the planner CSVs before saving planner state.')
+      return
+    }
+
+    const state = buildPlannerSaveState({
+      dataset,
+      shareDisplayName,
+      locationOverrides: shareLocationOverrides,
+      callbackPhoneNumber: sharePhoneNumber,
+      selectedDay,
+      selectedLocation,
+      selectedClassKey,
+    })
+    const blob = new Blob([plannerSaveStateToText(state)], { type: 'text/plain;charset=utf-8' })
+    const link = document.createElement('a')
+    const timestamp = state.exportedAt.replace(/[:.]/g, '-')
+    link.href = URL.createObjectURL(blob)
+    link.download = `session-planner-state-${timestamp}.txt`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(link.href)
+    setError('')
+    setStatusMessage('Planner state downloaded. Re-add the matching CSVs before loading it later.')
+  }
+
+  const loadPlannerState = async (file: File | null) => {
+    if (!file) {
+      return
+    }
+    if (!dataset) {
+      setError('Load the planner CSVs before importing a planner state file.')
+      return
+    }
+
+    try {
+      const importedState = parsePlannerSaveState(await file.text())
+      const localRestoreResult = applyPlannerSaveState(dataset, importedState)
+      setShareDisplayName(importedState.shareDisplayName)
+      setSelectedDay(importedState.selection.selectedDay)
+      setSelectedLocation(importedState.selection.selectedLocation)
+      setSelectedClassKey(importedState.selection.selectedClassKey)
+
+      if (shareCode && shareParticipantId) {
+        const response = await applyPlannerShareSaveState(shareCode, {
+          participantId: shareParticipantId,
+          ...plannerSaveStateToSharePayload(importedState),
+        })
+        applySharedSession(response.session)
+      } else {
+        persistLocalDataset(localRestoreResult.dataset)
+      }
+
+      if (!shareCode || isShareHost) {
+        setShareLocationOverrides(importedState.locationOverrides)
+        setSharePhoneNumber(importedState.callbackPhoneNumber)
+      }
+
+      const summary =
+        shareCode && shareParticipantId
+          ? `Planner state loaded. Shared planner metadata was applied to the live session${isShareHost ? '.' : ', except host-only call details.'}`
+          : `Planner state loaded. Restored ${localRestoreResult.matchedClasses} class updates and ${localRestoreResult.matchedCallRecords} call records. Skipped ${localRestoreResult.skippedClasses + localRestoreResult.skippedCallRecords} unmatched items.`
+
+      setError('')
+      setStatusMessage(summary)
+      setIsInfoPanelOpen(true)
+    } catch (loadError) {
+      setStatusMessage('')
+      setError(loadError instanceof Error ? loadError.message : 'Failed to load planner state.')
+    }
   }
 
   const callerName = shareDisplayName.trim() || 'Deck Supervisor'
@@ -287,13 +379,16 @@ function SessionPlanningPage() {
         shareNotice={shareNotice}
         sharePhoneNumber={sharePhoneNumber}
         shareSession={shareSession}
+        statusMessage={statusMessage}
         showPlannedChangesButton={plannedChangeGroups.length > 0}
         onHandleAddUpload={handleAddUpload}
         onHandleUpload={handleUpload}
         onJoinSharedPlanner={joinSharedPlanner}
         onLeaveSharedPlannerSession={leaveSharedPlannerSession}
+        onLoadState={loadPlannerState}
         onOpenPopout={openPopout}
         onOpenPlannedChanges={() => setIsPlannedChangesOpen(true)}
+        onSaveState={downloadPlannerState}
         onSetShareDisplayName={setShareDisplayName}
         onSetShareLocationOverride={(facility, value) =>
           setShareLocationOverrides(current => ({

@@ -301,6 +301,22 @@ export function updatePlannerShareDetails(
   })
 }
 
+export function applyPlannerShareSaveState(
+  code: string,
+  body: {
+    participantId: string
+    classStatuses: Record<string, PlannerClassStatus>
+    callRecords: Record<string, PlannerCallRecordUpdate>
+    locationOverrides: Record<string, string>
+    callbackPhoneNumber: string
+  },
+) {
+  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/save-state`, {
+    method: 'POST',
+    body,
+  })
+}
+
 export function deleteSessionNote(id: string) {
   return request<void>(`/api/session-notes/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }

@@ -10,10 +10,30 @@ import {
   PLANNER_SLOT_HEIGHT_REM,
 } from '../utils/plannerPresentation'
 
-export function usePlannerViewModel(dataset: PlannerDataset | null, activeCallParticipantId: string) {
-  const [selectedDay, setSelectedDay] = useState('')
-  const [selectedLocation, setSelectedLocation] = useState('')
-  const [selectedClassKey, setSelectedClassKey] = useState('')
+type PlannerSelectionState = {
+  selectedDay: string
+  selectedLocation: string
+  selectedClassKey: string
+  setSelectedDay: (value: string) => void
+  setSelectedLocation: (value: string) => void
+  setSelectedClassKey: (value: string) => void
+}
+
+export function usePlannerViewModel(
+  dataset: PlannerDataset | null,
+  activeCallParticipantId: string,
+  selectionState?: PlannerSelectionState,
+) {
+  const [localSelectedDay, setLocalSelectedDay] = useState('')
+  const [localSelectedLocation, setLocalSelectedLocation] = useState('')
+  const [localSelectedClassKey, setLocalSelectedClassKey] = useState('')
+
+  const selectedDay = selectionState?.selectedDay ?? localSelectedDay
+  const selectedLocation = selectionState?.selectedLocation ?? localSelectedLocation
+  const selectedClassKey = selectionState?.selectedClassKey ?? localSelectedClassKey
+  const setSelectedDay = selectionState?.setSelectedDay ?? setLocalSelectedDay
+  const setSelectedLocation = selectionState?.setSelectedLocation ?? setLocalSelectedLocation
+  const setSelectedClassKey = selectionState?.setSelectedClassKey ?? setLocalSelectedClassKey
 
   const availableDays = useMemo(() => {
     if (!dataset) {

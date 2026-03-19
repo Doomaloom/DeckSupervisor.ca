@@ -2,6 +2,7 @@ import type {
   PlannerCallStatus,
   PlannerClass,
   PlannerClassStatus,
+  PlannerCallRecordUpdate,
   PlannerDataset,
   PlannerParticipant,
   PlannerParticipantCallRecord,
@@ -12,6 +13,30 @@ import { getStoredItem, setStoredItem } from './browserStorage'
 import { getScopedKey } from './storageScope'
 
 const plannerDatasetKey = () => getScopedKey('sessionPlannerDataset')
+export const PLANNER_SAVE_STATE_VERSION = 1
+
+export type PlannerSaveState = {
+  version: number
+  exportedAt: string
+  shareDisplayName: string
+  locationOverrides: Record<string, string>
+  callbackPhoneNumber: string
+  selection: {
+    selectedDay: string
+    selectedLocation: string
+    selectedClassKey: string
+  }
+  classStatuses: Record<string, PlannerClassStatus>
+  callRecords: Record<string, PlannerParticipantCallRecord>
+}
+
+export type PlannerSaveStateApplyResult = {
+  dataset: PlannerDataset
+  matchedClasses: number
+  skippedClasses: number
+  matchedCallRecords: number
+  skippedCallRecords: number
+}
 
 type ParsedCsv = {
   rows: string[][]
@@ -602,6 +627,156 @@ export function updatePlannerCallRecord(
   }
 }
 
+export function buildPlannerSaveState(args: {
+  dataset: PlannerDataset
+  shareDisplayName: string
+  locationOverrides: Record<string, string>
+  callbackPhoneNumber: string
+  selectedDay: string
+  selectedLocation: string
+  selectedClassKey: string
+}): PlannerSaveState {
+  return {
+    version: PLANNER_SAVE_STATE_VERSION,
+    exportedAt: new Date().toISOString(),
+    shareDisplayName: args.shareDisplayName.trim(),
+    locationOverrides: normalizeLocationOverrides(args.locationOverrides),
+    callbackPhoneNumber: args.callbackPhoneNumber.trim(),
+    selection: {
+      selectedDay: args.selectedDay,
+      selectedLocation: args.selectedLocation,
+      selectedClassKey: args.selectedClassKey,
+    },
+    classStatuses: Object.fromEntries(
+      args.dataset.classes.map(plannerClass => [plannerClass.classKey, plannerClass.planningStatus]),
+    ),
+    callRecords: Object.fromEntries(
+      Object.entries(args.dataset.callRecords).map(([participantId, record]) => [
+        participantId,
+        normalizePlannerCallRecord(participantId, record, record?.classKey ?? ''),
+      ]),
+    ),
+  }
+}
+
+export function parsePlannerSaveState(text: string): PlannerSaveState {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    throw new Error('The planner state file is not valid JSON.')
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('The planner state file is invalid.')
+  }
+
+  const state = parsed as Partial<PlannerSaveState>
+  if (state.version !== PLANNER_SAVE_STATE_VERSION) {
+    throw new Error('This planner state file version is not supported.')
+  }
+
+  return {
+    version: state.version,
+    exportedAt: typeof state.exportedAt === 'string' ? state.exportedAt : '',
+    shareDisplayName: typeof state.shareDisplayName === 'string' ? state.shareDisplayName : '',
+    locationOverrides: normalizeLocationOverrides(state.locationOverrides),
+    callbackPhoneNumber: typeof state.callbackPhoneNumber === 'string' ? state.callbackPhoneNumber : '',
+    selection: {
+      selectedDay: typeof state.selection?.selectedDay === 'string' ? state.selection.selectedDay : '',
+      selectedLocation:
+        typeof state.selection?.selectedLocation === 'string' ? state.selection.selectedLocation : '',
+      selectedClassKey:
+        typeof state.selection?.selectedClassKey === 'string' ? state.selection.selectedClassKey : '',
+    },
+    classStatuses: normalizeClassStatuses(state.classStatuses),
+    callRecords: normalizeCallRecords(state.callRecords),
+  }
+}
+
+export function applyPlannerSaveState(
+  dataset: PlannerDataset,
+  state: PlannerSaveState,
+): PlannerSaveStateApplyResult {
+  const classKeySet = new Set(dataset.classes.map(plannerClass => plannerClass.classKey))
+  const participantIdSet = new Set(Object.keys(dataset.callRecords))
+
+  let matchedClasses = 0
+  const nextClasses = dataset.classes.map(plannerClass => {
+    const status = state.classStatuses[plannerClass.classKey]
+    if (!status) {
+      return plannerClass
+    }
+    matchedClasses += 1
+    return {
+      ...plannerClass,
+      planningStatus: status,
+    }
+  })
+
+  let matchedCallRecords = 0
+  const nextCallRecords: Record<string, PlannerParticipantCallRecord> = { ...dataset.callRecords }
+  Object.entries(state.callRecords).forEach(([participantId, record]) => {
+    const existingRecord = dataset.callRecords[participantId]
+    if (!existingRecord) {
+      return
+    }
+    matchedCallRecords += 1
+    nextCallRecords[participantId] = normalizePlannerCallRecord(
+      participantId,
+      {
+        ...existingRecord,
+        ...record,
+        participantId,
+        classKey: existingRecord.classKey,
+      },
+      existingRecord.classKey,
+    )
+  })
+
+  return {
+    dataset: {
+      ...dataset,
+      classes: nextClasses,
+      callRecords: nextCallRecords,
+    },
+    matchedClasses,
+    skippedClasses: Object.keys(state.classStatuses).filter(classKey => !classKeySet.has(classKey)).length,
+    matchedCallRecords,
+    skippedCallRecords: Object.keys(state.callRecords).filter(participantId => !participantIdSet.has(participantId))
+      .length,
+  }
+}
+
+export function plannerSaveStateToText(state: PlannerSaveState) {
+  return JSON.stringify(state, null, 2)
+}
+
+export function plannerSaveStateToSharePayload(state: PlannerSaveState): {
+  classStatuses: Record<string, PlannerClassStatus>
+  callRecords: Record<string, PlannerCallRecordUpdate>
+  locationOverrides: Record<string, string>
+  callbackPhoneNumber: string
+} {
+  return {
+    classStatuses: state.classStatuses,
+    callRecords: Object.fromEntries(
+      Object.entries(state.callRecords).map(([participantId, record]) => [
+        participantId,
+        {
+          status: record.status,
+          notes: record.notes,
+          offeredAlternativeClassKey: record.offeredAlternativeClassKey,
+          acceptedAlternativeClassKey: record.acceptedAlternativeClassKey,
+          completedAt: record.completedAt,
+        },
+      ]),
+    ),
+    locationOverrides: state.locationOverrides,
+    callbackPhoneNumber: state.callbackPhoneNumber,
+  }
+}
+
 export function getPlannerClassCapacityBand(plannerClass: PlannerClass) {
   return getCapacityBand(plannerClass)
 }
@@ -672,3 +847,40 @@ export const plannerCallStatusOptions: Array<{ key: PlannerCallStatus; label: st
   { key: 'declined_alternatives', label: 'Declined alternatives' },
   { key: 'accepted_alternative', label: 'Accepted alternative' },
 ]
+
+function normalizeLocationOverrides(input: unknown): Record<string, string> {
+  if (!input || typeof input !== 'object') {
+    return {}
+  }
+  return Object.fromEntries(
+    Object.entries(input as Record<string, unknown>)
+      .map(([facility, value]) => [facility.trim(), typeof value === 'string' ? value.trim() : ''])
+      .filter(([facility, value]) => facility && value),
+  )
+}
+
+function normalizeClassStatuses(input: unknown): Record<string, PlannerClassStatus> {
+  if (!input || typeof input !== 'object') {
+    return {}
+  }
+  return Object.fromEntries(
+    Object.entries(input as Record<string, unknown>).filter((entry): entry is [string, PlannerClassStatus] =>
+      entry[0].trim().length > 0 &&
+      (entry[1] === 'active' || entry[1] === 'pending_cancellation' || entry[1] === 'cancelled'),
+    ),
+  )
+}
+
+function normalizeCallRecords(input: unknown): Record<string, PlannerParticipantCallRecord> {
+  if (!input || typeof input !== 'object') {
+    return {}
+  }
+  return Object.fromEntries(
+    Object.entries(input as Record<string, PlannerParticipantCallRecord | undefined>).map(
+      ([participantId, record]) => [
+        participantId,
+        normalizePlannerCallRecord(participantId, record, record?.classKey ?? ''),
+      ],
+    ),
+  )
+}

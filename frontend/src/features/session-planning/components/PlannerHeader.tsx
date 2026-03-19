@@ -14,13 +14,16 @@ type PlannerHeaderProps = {
   shareNotice: string
   sharePhoneNumber: string
   shareSession: PlannerShareSession | null
+  statusMessage: string
   showPlannedChangesButton: boolean
   onHandleAddUpload: (file: File | null) => void | Promise<void>
   onHandleUpload: (file: File | null) => void | Promise<void>
   onJoinSharedPlanner: () => void | Promise<void>
   onLeaveSharedPlannerSession: () => void | Promise<void>
+  onLoadState: (file: File | null) => void | Promise<void>
   onOpenPopout: () => void
   onOpenPlannedChanges: () => void
+  onSaveState: () => void
   onSetShareDisplayName: (value: string) => void
   onSetShareLocationOverride: (facility: string, value: string) => void
   onSetSharePhoneNumber: (value: string) => void
@@ -42,13 +45,16 @@ function PlannerHeader({
   shareNotice,
   sharePhoneNumber,
   shareSession,
+  statusMessage,
   showPlannedChangesButton,
   onHandleAddUpload,
   onHandleUpload,
   onJoinSharedPlanner,
   onLeaveSharedPlannerSession,
+  onLoadState,
   onOpenPopout,
   onOpenPlannedChanges,
+  onSaveState,
   onSetShareDisplayName,
   onSetShareLocationOverride,
   onSetSharePhoneNumber,
@@ -72,6 +78,26 @@ function PlannerHeader({
           <h2 className="mt-3 text-2xl font-semibold">Session Planning / Reorganization</h2>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={onSaveState}
+            disabled={!dataset}
+          >
+            Save State
+          </button>
+          <label className="relative inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10">
+            <span>Load State</span>
+            <input
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              type="file"
+              accept=".txt,.json"
+              onChange={event => {
+                void onLoadState(event.target.files?.[0] ?? null)
+                event.target.value = ''
+              }}
+            />
+          </label>
           {showPlannedChangesButton ? (
             <button
               type="button"
@@ -327,6 +353,7 @@ function PlannerHeader({
           </div>
         </div>
       ) : null}
+      {statusMessage ? <p className="mt-4 text-sm font-semibold text-primary">{statusMessage}</p> : null}
       {error ? <p className="mt-4 text-sm font-semibold text-danger">{error}</p> : null}
     </div>
   )

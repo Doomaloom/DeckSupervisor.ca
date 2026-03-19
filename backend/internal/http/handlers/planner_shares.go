@@ -14,10 +14,10 @@ import (
 var plannerShareService = plannershare.NewService()
 
 type createPlannerShareRequest struct {
-	DisplayName string                     `json:"displayName"`
-	LocationOverrides map[string]string    `json:"locationOverrides"`
-	CallbackPhoneNumber string             `json:"callbackPhoneNumber"`
-	Dataset     plannershare.PlannerDataset `json:"dataset"`
+	DisplayName         string                      `json:"displayName"`
+	LocationOverrides   map[string]string           `json:"locationOverrides"`
+	CallbackPhoneNumber string                      `json:"callbackPhoneNumber"`
+	Dataset             plannershare.PlannerDataset `json:"dataset"`
 }
 
 type joinPlannerShareRequest struct {
@@ -35,15 +35,23 @@ type updatePlannerClassStatusRequest struct {
 }
 
 type updatePlannerCallRecordRequest struct {
-	ParticipantID      string                             `json:"participantId"`
-	ParticipantRecordID string                            `json:"participantRecordId"`
-	Update             plannershare.PlannerCallRecordUpdate `json:"update"`
+	ParticipantID       string                               `json:"participantId"`
+	ParticipantRecordID string                               `json:"participantRecordId"`
+	Update              plannershare.PlannerCallRecordUpdate `json:"update"`
 }
 
 type updatePlannerShareDetailsRequest struct {
-	ParticipantID string `json:"participantId"`
-	LocationOverrides map[string]string `json:"locationOverrides"`
-	CallbackPhoneNumber string `json:"callbackPhoneNumber"`
+	ParticipantID       string            `json:"participantId"`
+	LocationOverrides   map[string]string `json:"locationOverrides"`
+	CallbackPhoneNumber string            `json:"callbackPhoneNumber"`
+}
+
+type applyPlannerShareSaveStateRequest struct {
+	ParticipantID       string                                          `json:"participantId"`
+	ClassStatuses       map[string]string                               `json:"classStatuses"`
+	CallRecordUpdates   map[string]plannershare.PlannerCallRecordUpdate `json:"callRecords"`
+	LocationOverrides   map[string]string                               `json:"locationOverrides"`
+	CallbackPhoneNumber string                                          `json:"callbackPhoneNumber"`
 }
 
 func CreatePlannerShare(w http.ResponseWriter, r *http.Request) {
@@ -187,6 +195,32 @@ func UpdatePlannerShareDetails(w http.ResponseWriter, r *http.Request) {
 		req.ParticipantID,
 		req.LocationOverrides,
 		req.CallbackPhoneNumber,
+	)
+	if err != nil {
+		writePlannerShareError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{"session": session})
+}
+
+func ApplyPlannerShareSaveState(w http.ResponseWriter, r *http.Request) {
+	var req applyPlannerShareSaveStateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	code := mux.Vars(r)["code"]
+	session, err := plannerShareService.ApplySavedState(
+		requestBaseURL(r),
+		code,
+		req.ParticipantID,
+		plannershare.SavedStateApplyInput{
+			ClassStatuses:       req.ClassStatuses,
+			CallRecords:         req.CallRecordUpdates,
+			LocationOverrides:   req.LocationOverrides,
+			CallbackPhoneNumber: req.CallbackPhoneNumber,
+		},
 	)
 	if err != nil {
 		writePlannerShareError(w, err)
