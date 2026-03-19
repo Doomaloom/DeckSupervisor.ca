@@ -213,7 +213,7 @@ export type PlannerShareSession = {
   code: string
   shareUrl: string
   hostParticipantId: string
-  locationName: string
+  locationOverrides: Record<string, string>
   callbackPhoneNumber: string
   expiresAt: string
   participants: PlannerShareParticipant[]

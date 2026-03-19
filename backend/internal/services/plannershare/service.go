@@ -103,7 +103,7 @@ type ShareSession struct {
 	Code              string             `json:"code"`
 	ShareURL          string             `json:"shareUrl"`
 	HostParticipantID string             `json:"hostParticipantId"`
-	LocationName      string             `json:"locationName"`
+	LocationOverrides map[string]string  `json:"locationOverrides"`
 	CallbackPhoneNumber string           `json:"callbackPhoneNumber"`
 	ExpiresAt         time.Time          `json:"expiresAt"`
 	Participants      []ShareParticipant `json:"participants"`
@@ -114,7 +114,7 @@ type ShareSession struct {
 type shareRoom struct {
 	Code              string
 	HostParticipantID string
-	LocationName      string
+	LocationOverrides map[string]string
 	CallbackPhoneNumber string
 	ExpiresAt         time.Time
 	Version           int
@@ -133,7 +133,7 @@ func NewService() *Service {
 	}
 }
 
-func (s *Service) Create(baseURL string, dataset PlannerDataset, displayName, locationName, callbackPhoneNumber string, isGuest bool) (string, ShareSession, error) {
+func (s *Service) Create(baseURL string, dataset PlannerDataset, displayName string, locationOverrides map[string]string, callbackPhoneNumber string, isGuest bool) (string, ShareSession, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -155,7 +155,7 @@ func (s *Service) Create(baseURL string, dataset PlannerDataset, displayName, lo
 	room := &shareRoom{
 		Code:              code,
 		HostParticipantID: participantID,
-		LocationName:      strings.TrimSpace(locationName),
+		LocationOverrides: normalizeLocationOverrides(locationOverrides),
 		CallbackPhoneNumber: strings.TrimSpace(callbackPhoneNumber),
 		ExpiresAt:         now.Add(sessionLifetime),
 		Version:           1,
@@ -295,7 +295,7 @@ func (s *Service) UpdateCallRecord(baseURL, code, participantID, recordID string
 	return s.snapshotLocked(baseURL, room), nil
 }
 
-func (s *Service) UpdateSessionDetails(baseURL, code, participantID, locationName, callbackPhoneNumber string) (ShareSession, error) {
+func (s *Service) UpdateSessionDetails(baseURL, code, participantID string, locationOverrides map[string]string, callbackPhoneNumber string) (ShareSession, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	room, err := s.requireParticipantLocked(strings.ToUpper(strings.TrimSpace(code)), participantID)
@@ -305,7 +305,7 @@ func (s *Service) UpdateSessionDetails(baseURL, code, participantID, locationNam
 	if room.HostParticipantID != participantID {
 		return ShareSession{}, ErrForbidden
 	}
-	room.LocationName = strings.TrimSpace(locationName)
+	room.LocationOverrides = normalizeLocationOverrides(locationOverrides)
 	room.CallbackPhoneNumber = strings.TrimSpace(callbackPhoneNumber)
 	room.Version += 1
 	room.Participants[participantID].LastSeenAt = time.Now().UTC()
@@ -386,7 +386,7 @@ func (s *Service) snapshotLocked(baseURL string, room *shareRoom) ShareSession {
 		Code:              room.Code,
 		ShareURL:          strings.TrimRight(baseURL, "/") + "/session-planning?share=" + room.Code,
 		HostParticipantID: room.HostParticipantID,
-		LocationName:      room.LocationName,
+		LocationOverrides: cloneLocationOverrides(room.LocationOverrides),
 		CallbackPhoneNumber: room.CallbackPhoneNumber,
 		ExpiresAt:         room.ExpiresAt,
 		Participants:      participants,
@@ -432,6 +432,30 @@ func normalizeDisplayName(value string) string {
 		return "Guest"
 	}
 	return trimmed
+}
+
+func normalizeLocationOverrides(input map[string]string) map[string]string {
+	if len(input) == 0 {
+		return map[string]string{}
+	}
+	normalized := make(map[string]string, len(input))
+	for facility, name := range input {
+		trimmedFacility := strings.TrimSpace(facility)
+		trimmedName := strings.TrimSpace(name)
+		if trimmedFacility == "" || trimmedName == "" {
+			continue
+		}
+		normalized[trimmedFacility] = trimmedName
+	}
+	return normalized
+}
+
+func cloneLocationOverrides(input map[string]string) map[string]string {
+	cloned := make(map[string]string, len(input))
+	for facility, name := range input {
+		cloned[facility] = name
+	}
+	return cloned
 }
 
 func cloneDataset(dataset PlannerDataset) PlannerDataset {

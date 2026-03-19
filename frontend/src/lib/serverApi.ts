@@ -229,7 +229,7 @@ export function updateSessionNote(id: string, body: Record<string, unknown>) {
 export function createPlannerShare(body: {
   dataset: PlannerDataset
   displayName: string
-  locationName: string
+  locationOverrides: Record<string, string>
   callbackPhoneNumber: string
 }) {
   return request<PlannerShareJoinResponse>('/api/planner-shares', {
@@ -293,7 +293,7 @@ export function updatePlannerShareCallRecord(
 
 export function updatePlannerShareDetails(
   code: string,
-  body: { participantId: string; locationName: string; callbackPhoneNumber: string }
+  body: { participantId: string; locationOverrides: Record<string, string>; callbackPhoneNumber: string }
 ) {
   return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/details`, {
     method: 'POST',

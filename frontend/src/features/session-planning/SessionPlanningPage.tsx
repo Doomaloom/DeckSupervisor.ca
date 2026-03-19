@@ -44,7 +44,7 @@ function SessionPlanningPage() {
     leaveSharedPlannerSession,
     shareCode,
     shareDisplayName,
-    shareLocationName,
+    shareLocationOverrides,
     shareNotice,
     shareParticipantId,
     sharePhoneNumber,
@@ -54,7 +54,7 @@ function SessionPlanningPage() {
     stopSharing,
     syncQueryParams,
     setShareDisplayName,
-    setShareLocationName,
+    setShareLocationOverrides,
     setSharePhoneNumber,
   } = usePlannerShareSession({
     location,
@@ -214,7 +214,10 @@ function SessionPlanningPage() {
   }
 
   const callerName = shareDisplayName.trim() || 'Deck Supervisor'
-  const callerLocationName = shareLocationName.trim() || selectedClass?.facility || 'the recreation centre'
+  const callerLocationName =
+    (selectedClass?.facility ? shareLocationOverrides[selectedClass.facility]?.trim() : '') ||
+    selectedClass?.facility ||
+    'the recreation centre'
   const callerPhoneNumber = sharePhoneNumber.trim() || 'our main office number'
   const shouldShowPlanner = Boolean(dataset && (!shareCode || isSharedMode))
   const plannedChangeGroups = useMemo(() => {
@@ -280,7 +283,7 @@ function SessionPlanningPage() {
         isSharingBusy={isSharingBusy}
         shareCode={shareCode}
         shareDisplayName={shareDisplayName}
-        shareLocationName={shareLocationName}
+        shareLocationOverrides={shareLocationOverrides}
         shareNotice={shareNotice}
         sharePhoneNumber={sharePhoneNumber}
         shareSession={shareSession}
@@ -292,7 +295,12 @@ function SessionPlanningPage() {
         onOpenPopout={openPopout}
         onOpenPlannedChanges={() => setIsPlannedChangesOpen(true)}
         onSetShareDisplayName={setShareDisplayName}
-        onSetShareLocationName={setShareLocationName}
+        onSetShareLocationOverride={(facility, value) =>
+          setShareLocationOverrides(current => ({
+            ...current,
+            [facility]: value,
+          }))
+        }
         onSetSharePhoneNumber={setSharePhoneNumber}
         onSaveSharedDetails={saveSharedDetails}
         onStartSharing={startSharing}

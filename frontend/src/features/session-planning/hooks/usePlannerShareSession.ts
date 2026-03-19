@@ -12,7 +12,7 @@ import {
 } from '../../../lib/serverApi'
 
 const SHARE_NAME_STORAGE_KEY = 'plannerShareDisplayName'
-const SHARE_LOCATION_STORAGE_KEY = 'plannerShareLocationName'
+const SHARE_LOCATION_OVERRIDES_STORAGE_KEY = 'plannerShareLocationOverrides'
 const SHARE_PHONE_STORAGE_KEY = 'plannerSharePhoneNumber'
 
 type UsePlannerShareSessionArgs = {
@@ -39,7 +39,7 @@ export function usePlannerShareSession({
   const [shareSession, setShareSession] = useState<PlannerShareSession | null>(null)
   const [shareParticipantId, setShareParticipantId] = useState('')
   const [shareDisplayName, setShareDisplayName] = useState('')
-  const [shareLocationName, setShareLocationName] = useState('')
+  const [shareLocationOverrides, setShareLocationOverrides] = useState<Record<string, string>>({})
   const [sharePhoneNumber, setSharePhoneNumber] = useState('')
   const [shareNotice, setShareNotice] = useState('')
   const [isSharingBusy, setIsSharingBusy] = useState(false)
@@ -52,7 +52,7 @@ export function usePlannerShareSession({
     setShareSession(session)
     setDataset(session.dataset)
     if (session.hostParticipantId !== shareParticipantId) {
-      setShareLocationName(session.locationName)
+      setShareLocationOverrides(session.locationOverrides)
       setSharePhoneNumber(session.callbackPhoneNumber)
     }
   }
@@ -62,9 +62,13 @@ export function usePlannerShareSession({
     if (storedName) {
       setShareDisplayName(storedName)
     }
-    const storedLocationName = getStoredItem(SHARE_LOCATION_STORAGE_KEY)
-    if (storedLocationName) {
-      setShareLocationName(storedLocationName)
+    const storedLocationOverrides = getStoredItem(SHARE_LOCATION_OVERRIDES_STORAGE_KEY)
+    if (storedLocationOverrides) {
+      try {
+        setShareLocationOverrides(JSON.parse(storedLocationOverrides) as Record<string, string>)
+      } catch (error) {
+        console.error('Failed to parse planner location overrides', error)
+      }
     }
     const storedPhoneNumber = getStoredItem(SHARE_PHONE_STORAGE_KEY)
     if (storedPhoneNumber) {
@@ -79,10 +83,8 @@ export function usePlannerShareSession({
   }, [shareDisplayName])
 
   useEffect(() => {
-    if (shareLocationName.trim()) {
-      setStoredItem(SHARE_LOCATION_STORAGE_KEY, shareLocationName.trim())
-    }
-  }, [shareLocationName])
+    setStoredItem(SHARE_LOCATION_OVERRIDES_STORAGE_KEY, JSON.stringify(shareLocationOverrides))
+  }, [shareLocationOverrides])
 
   useEffect(() => {
     if (sharePhoneNumber.trim()) {
@@ -174,7 +176,7 @@ export function usePlannerShareSession({
       const response = await createPlannerShare({
         dataset,
         displayName: nextDisplayName,
-        locationName: shareLocationName.trim(),
+        locationOverrides: shareLocationOverrides,
         callbackPhoneNumber: sharePhoneNumber.trim(),
       })
       setStoredItem(SHARE_NAME_STORAGE_KEY, nextDisplayName)
@@ -257,11 +259,11 @@ export function usePlannerShareSession({
     }
     setIsSharingBusy(true)
     try {
-      const response = await updatePlannerShareDetails(shareCode, {
-        participantId: shareParticipantId,
-        locationName: shareLocationName.trim(),
-        callbackPhoneNumber: sharePhoneNumber.trim(),
-      })
+        const response = await updatePlannerShareDetails(shareCode, {
+          participantId: shareParticipantId,
+          locationOverrides: shareLocationOverrides,
+          callbackPhoneNumber: sharePhoneNumber.trim(),
+        })
       applySharedSession(response.session)
       setError('')
     } catch (shareError) {
@@ -281,7 +283,7 @@ export function usePlannerShareSession({
     leaveSharedPlannerSession,
     shareCode,
     shareDisplayName,
-    shareLocationName,
+    shareLocationOverrides,
     shareNotice,
     shareParticipantId,
     sharePhoneNumber,
@@ -291,7 +293,7 @@ export function usePlannerShareSession({
     stopSharing,
     syncQueryParams,
     setShareDisplayName,
-    setShareLocationName,
+    setShareLocationOverrides,
     setSharePhoneNumber,
   }
 }

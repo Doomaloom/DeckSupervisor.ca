@@ -10,7 +10,7 @@ type PlannerHeaderProps = {
   isSharingBusy: boolean
   shareCode: string
   shareDisplayName: string
-  shareLocationName: string
+  shareLocationOverrides: Record<string, string>
   shareNotice: string
   sharePhoneNumber: string
   shareSession: PlannerShareSession | null
@@ -22,7 +22,7 @@ type PlannerHeaderProps = {
   onOpenPopout: () => void
   onOpenPlannedChanges: () => void
   onSetShareDisplayName: (value: string) => void
-  onSetShareLocationName: (value: string) => void
+  onSetShareLocationOverride: (facility: string, value: string) => void
   onSetSharePhoneNumber: (value: string) => void
   onSaveSharedDetails: () => void | Promise<void>
   onStartSharing: () => void | Promise<void>
@@ -38,7 +38,7 @@ function PlannerHeader({
   isSharingBusy,
   shareCode,
   shareDisplayName,
-  shareLocationName,
+  shareLocationOverrides,
   shareNotice,
   sharePhoneNumber,
   shareSession,
@@ -50,12 +50,18 @@ function PlannerHeader({
   onOpenPopout,
   onOpenPlannedChanges,
   onSetShareDisplayName,
-  onSetShareLocationName,
+  onSetShareLocationOverride,
   onSetSharePhoneNumber,
   onSaveSharedDetails,
   onStartSharing,
   onStopSharing,
 }: PlannerHeaderProps) {
+  const facilities = dataset
+    ? Array.from(new Set(dataset.sessions.map(session => session.facility))).sort((left, right) =>
+        left.localeCompare(right),
+      )
+    : []
+
   return (
     <div id="planner-header" data-component="planner-header" className="rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -137,15 +143,27 @@ function PlannerHeader({
                   placeholder="Your name"
                 />
               </label>
-              <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
-                Location name (optional)
-                <input
-                  className="rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
-                  value={shareLocationName}
-                  onChange={event => onSetShareLocationName(event.target.value)}
-                  placeholder="Recreation centre name"
-                />
-              </label>
+              {facilities.length > 0 ? (
+                <div className="flex min-w-[280px] flex-[1.4] flex-col gap-2">
+                  <p className="text-sm font-semibold text-secondary">Location overrides (optional)</p>
+                  <div className="grid gap-2">
+                    {facilities.map(facility => (
+                      <label
+                        key={facility}
+                        className="grid gap-2 text-sm font-semibold text-secondary md:grid-cols-[minmax(0,180px)_minmax(0,1fr)] md:items-center"
+                      >
+                        <span className="break-words">{facility}</span>
+                        <input
+                          className="rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
+                          value={shareLocationOverrides[facility] ?? ''}
+                          onChange={event => onSetShareLocationOverride(facility, event.target.value)}
+                          placeholder="Recreation centre name"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
                 Callback phone (optional)
                 <input
@@ -253,15 +271,25 @@ function PlannerHeader({
             </p>
             {isShareHost ? (
               <div className="mt-3 flex flex-wrap items-end gap-3">
-                <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
-                  Location name
-                  <input
-                    className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
-                    value={shareLocationName}
-                    onChange={event => onSetShareLocationName(event.target.value)}
-                    placeholder="Recreation centre name"
-                  />
-                </label>
+                <div className="flex min-w-[280px] flex-[1.4] flex-col gap-2">
+                  <p className="text-sm font-semibold text-secondary">Location overrides</p>
+                  <div className="grid gap-2">
+                    {facilities.map(facility => (
+                      <label
+                        key={facility}
+                        className="grid gap-2 text-sm font-semibold text-secondary md:grid-cols-[minmax(0,180px)_minmax(0,1fr)] md:items-center"
+                      >
+                        <span className="break-words">{facility}</span>
+                        <input
+                          className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
+                          value={shareLocationOverrides[facility] ?? ''}
+                          onChange={event => onSetShareLocationOverride(facility, event.target.value)}
+                          placeholder="Recreation centre name"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
                 <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
                   Callback phone
                   <input
@@ -283,8 +311,12 @@ function PlannerHeader({
             ) : (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
-                  <span className="font-semibold">Location name:</span>{' '}
-                  {shareSession.locationName || 'Not provided'}
+                  <span className="font-semibold">Location overrides:</span>{' '}
+                  {Object.keys(shareSession.locationOverrides ?? {}).length > 0
+                    ? Object.entries(shareSession.locationOverrides)
+                        .map(([facility, name]) => `${facility}: ${name}`)
+                        .join(' | ')
+                    : 'Not provided'}
                 </div>
                 <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
                   <span className="font-semibold">Callback phone:</span>{' '}
