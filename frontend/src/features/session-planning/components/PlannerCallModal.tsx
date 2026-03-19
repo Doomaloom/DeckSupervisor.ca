@@ -144,20 +144,28 @@ Again, this is ${callerName} from ${callerLocationName}, and our number is ${cal
                                 ) : (
                                     alternatives.map(option => {
                                         const isSelected = activeCallRecord.offeredAlternativeClassKey === option.classKey
+                                        const isAccepted = activeCallRecord.acceptedAlternativeClassKey === option.classKey
                                         return (
                                             <button
                                                 key={option.classKey}
                                                 type="button"
-                                                className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-secondary/20 bg-accent text-secondary hover:bg-secondary/5'}`}
+                                                className={`min-w-0 rounded-2xl border px-4 py-3 text-left text-sm transition ${isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-secondary/20 bg-accent text-secondary hover:bg-secondary/5'}`}
                                                 onClick={() => void onSetCallRecord(activeCallParticipant.id, {
                                                     offeredAlternativeClassKey: isSelected ? '' : option.classKey,
-                                                    acceptedAlternativeClassKey: isSelected ? '' : activeCallRecord.acceptedAlternativeClassKey,
+                                                    acceptedAlternativeClassKey: isSelected ? '' : isAccepted ? option.classKey : '',
                                                 })}
                                             >
-                                                <p className="font-semibold">
-                                                    {dayNames[option.dayOfWeek] ?? option.dayOfWeek} • {option.eventTime}
-                                                </p>
-                                                <p className="mt-1 text-xs text-current/80">
+                                                <div className="flex min-w-0 items-start justify-between gap-2">
+                                                    <p className="min-w-0 break-words font-semibold">
+                                                        {dayNames[option.dayOfWeek] ?? option.dayOfWeek} • {option.eventTime}
+                                                    </p>
+                                                    {isAccepted ? (
+                                                        <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-emerald-900">
+                                                            Accepted
+                                                        </span>
+                                                    ) : null}
+                                                </div>
+                                                <p className="mt-1 break-words text-xs text-current/80">
                                                     {option.facility} • {option.bookedCount}/{option.maximumCapacity} booked
                                                 </p>
                                             </button>
@@ -177,6 +185,7 @@ Again, this is ${callerName} from ${callerLocationName}, and our number is ${cal
                                     className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${activeCallRecord.status === 'voicemail' ? 'bg-amber-100 text-amber-900' : 'border border-secondary/20 bg-accent text-secondary'}`}
                                     onClick={() => void onSetCallRecord(activeCallParticipant.id, {
                                         status: 'voicemail',
+                                        offeredAlternativeClassKey: '',
                                         acceptedAlternativeClassKey: '',
                                     })}
                                 >
@@ -191,6 +200,7 @@ Again, this is ${callerName} from ${callerLocationName}, and our number is ${cal
                                             return
                                         }
                                         void onSetCallRecord(activeCallParticipant.id, {
+                                            offeredAlternativeClassKey: acceptedKey,
                                             acceptedAlternativeClassKey: acceptedKey,
                                             status: 'accepted_alternative' as PlannerCallStatus,
                                         })

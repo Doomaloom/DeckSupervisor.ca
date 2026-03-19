@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type {
   PlannerCallRecordUpdate,
   PlannerCallStatus,
@@ -21,6 +22,10 @@ type PlannerDetailsPanelProps = {
   startCall: (participantId: string) => void
 }
 
+function formatAlternativeLabel(option: PlannerClass) {
+  return `${dayNames[option.dayOfWeek] ?? option.dayOfWeek} • ${option.eventTime} • ${option.facility}`
+}
+
 function PlannerDetailsPanel({
   alternatives,
   bookedParticipants,
@@ -32,6 +37,8 @@ function PlannerDetailsPanel({
   setIsInfoPanelOpen,
   startCall,
 }: PlannerDetailsPanelProps) {
+  const [openAlternativeParticipantId, setOpenAlternativeParticipantId] = useState('')
+
   if (!isInfoPanelOpen) {
     return null
   }
@@ -185,46 +192,88 @@ function PlannerDetailsPanel({
                         </select>
                       </div>
 
-                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <div className="mt-3 grid gap-3">
                         <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
-                          Offered Alternative
-                          <select
-                            className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
-                            value={callRecord?.offeredAlternativeClassKey ?? ''}
-                            onChange={event =>
-                              void setCallRecord(participant.id, {
-                                offeredAlternativeClassKey: event.target.value,
-                              })
-                            }
-                          >
-                            <option value="">No offer selected</option>
-                            {alternatives.map(option => (
-                              <option key={option.classKey} value={option.classKey}>
-                                {(dayNames[option.dayOfWeek] ?? option.dayOfWeek)} • {option.eventTime} • {option.facility}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-
-                        <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
-                          Accepted Alternative
-                          <select
-                            className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
-                            value={callRecord?.acceptedAlternativeClassKey ?? ''}
-                            onChange={event =>
-                              void setCallRecord(participant.id, {
-                                acceptedAlternativeClassKey: event.target.value,
-                                status: event.target.value ? 'accepted_alternative' : callRecord?.status ?? 'not_started',
-                              })
-                            }
-                          >
-                            <option value="">No acceptance recorded</option>
-                            {alternatives.map(option => (
-                              <option key={option.classKey} value={option.classKey}>
-                                {(dayNames[option.dayOfWeek] ?? option.dayOfWeek)} • {option.eventTime} • {option.facility}
-                              </option>
-                            ))}
-                          </select>
+                          Alternative Option
+                          <div className="relative">
+                            <button
+                              type="button"
+                              className="flex w-full items-start justify-between gap-2 rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-left text-sm text-secondary"
+                              onClick={() =>
+                                setOpenAlternativeParticipantId(current =>
+                                  current === participant.id ? '' : participant.id,
+                                )
+                              }
+                            >
+                              <span className="min-w-0 break-words">
+                                {callRecord?.offeredAlternativeClassKey
+                                  ? formatAlternativeLabel(
+                                      alternatives.find(
+                                        option => option.classKey === callRecord.offeredAlternativeClassKey,
+                                      ) ?? {
+                                        classKey: '',
+                                        eventId: '',
+                                        sessionKey: '',
+                                        serviceName: '',
+                                        dayOfWeek: '',
+                                        eventTime: '',
+                                        facility: '',
+                                        sessionSeason: '',
+                                        sessionYear: 0,
+                                        minimumCapacity: 0,
+                                        maximumCapacity: 0,
+                                        bookedCount: 0,
+                                        waitlistCount: 0,
+                                        participantIds: [],
+                                        waitingParticipantIds: [],
+                                        planningStatus: 'active',
+                                      },
+                                    )
+                                  : 'No alternative selected'}
+                              </span>
+                              <span className="shrink-0 text-secondary/60">
+                                {openAlternativeParticipantId === participant.id ? '▲' : '▼'}
+                              </span>
+                            </button>
+                            {openAlternativeParticipantId === participant.id ? (
+                              <div className="absolute z-10 mt-2 w-full rounded-2xl border border-secondary/20 bg-accent p-2 shadow-lg">
+                                <div className="flex max-h-56 flex-col gap-2 overflow-y-auto pr-1">
+                                  <button
+                                    type="button"
+                                    className="rounded-xl border border-secondary/20 bg-bg px-3 py-2 text-left text-sm text-secondary transition hover:bg-secondary/5"
+                                    onClick={() => {
+                                      void setCallRecord(participant.id, {
+                                        offeredAlternativeClassKey: '',
+                                        acceptedAlternativeClassKey: '',
+                                      })
+                                      setOpenAlternativeParticipantId('')
+                                    }}
+                                  >
+                                    No alternative selected
+                                  </button>
+                                  {alternatives.map(option => (
+                                    <button
+                                      key={option.classKey}
+                                      type="button"
+                                      className="rounded-xl border border-secondary/20 bg-bg px-3 py-2 text-left text-sm text-secondary transition hover:bg-secondary/5"
+                                      onClick={() => {
+                                        void setCallRecord(participant.id, {
+                                          offeredAlternativeClassKey: option.classKey,
+                                          acceptedAlternativeClassKey:
+                                            option.classKey === callRecord?.acceptedAlternativeClassKey
+                                              ? option.classKey
+                                              : '',
+                                        })
+                                        setOpenAlternativeParticipantId('')
+                                      }}
+                                    >
+                                      <span className="break-words">{formatAlternativeLabel(option)}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
                         </label>
                       </div>
 
