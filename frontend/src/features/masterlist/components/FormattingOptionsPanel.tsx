@@ -10,7 +10,7 @@ type FormattingOptionsPanelProps = {
 
 function FormattingOptionsPanel({ formatOptions, onToggle }: FormattingOptionsPanelProps) {
   return (
-    <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+    <div id="formatting-options-panel" data-component="formatting-options-panel" className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
       <h2 className="mb-4 text-center text-xl font-semibold">Formatting Options</h2>
       <div className="flex flex-col gap-2">
         {formatOptionItems.map(option => (

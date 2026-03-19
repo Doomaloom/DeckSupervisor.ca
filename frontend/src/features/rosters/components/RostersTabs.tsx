@@ -10,7 +10,7 @@ type RostersTabsProps = {
 
 function RostersTabs({ activeTab, onChange }: RostersTabsProps) {
     return (
-        <div className="flex w-full gap-3">
+        <div id="rosters-tabs" data-component="rosters-tabs" className="flex w-full gap-3">
             <button type="button" className={tabButtonClass(activeTab === 'default')} onClick={() => onChange('default')}>
                 Rosters
             </button>

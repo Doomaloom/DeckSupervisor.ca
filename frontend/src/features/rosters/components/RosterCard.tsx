@@ -35,7 +35,7 @@ function RosterCard({
     const toggleButtonClass = `${actionButtonClass} ${allowStudentLevelEdits ? 'ring-2 ring-accent/70' : ''}`
 
     return (
-        <div className={containerClass} id={roster.code}>
+        <div className={containerClass} id={roster.code} data-component="roster-card">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold text-secondary">
                     {roster.serviceName} : {roster.time}

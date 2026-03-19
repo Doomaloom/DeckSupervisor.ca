@@ -383,7 +383,7 @@ function ManageSessionsPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <div id="manage-sessions-page" data-component="manage-sessions-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <h2 className="text-2xl font-semibold text-secondary">Manage Sessions</h2>
       {!currentSession ? (
         <p className="mt-2 font-semibold text-secondary">

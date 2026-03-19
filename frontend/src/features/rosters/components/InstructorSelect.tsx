@@ -20,6 +20,7 @@ function InstructorSelect({
 }: InstructorSelectProps) {
     return (
         <select
+            data-component="instructor-select"
             className={selectClass}
             value={value}
             onChange={event => onChange(event.target.value)}

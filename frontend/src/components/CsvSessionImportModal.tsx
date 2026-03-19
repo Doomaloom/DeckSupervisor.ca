@@ -45,8 +45,8 @@ function CsvSessionImportModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="flex max-h-[calc(100vh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-card border border-secondary/20 bg-accent p-6 text-secondary shadow-2xl">
+    <div id="csv-session-import-modal" data-component="csv-session-import-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div data-component="csv-session-import-modal-panel" className="flex max-h-[calc(100vh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-card border border-secondary/20 bg-accent p-6 text-secondary shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary/70">

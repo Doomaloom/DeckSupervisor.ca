@@ -34,9 +34,9 @@ function PlannerCallModal({
         return null
     }
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-card border-2 border-secondary/20 bg-accent p-7 text-secondary shadow-lg">
+  return (
+    <div id="planner-call-modal" data-component="planner-call-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div data-component="planner-call-modal-panel" className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-card border-2 border-secondary/20 bg-accent p-7 text-secondary shadow-lg">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">

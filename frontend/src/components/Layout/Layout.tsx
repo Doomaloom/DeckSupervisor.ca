@@ -255,8 +255,8 @@ function Layout({ children }: LayoutProps) {
 
     if (isPlannerPopout) {
         return (
-            <div className="flex h-screen overflow-hidden bg-bg">
-                <main className="flex min-h-0 flex-1 overflow-y-auto p-6">
+            <div id="layout-popout-shell" data-component="layout-popout-shell" className="flex h-screen overflow-hidden bg-bg">
+                <main id="layout-popout-main" data-component="layout-popout-main" className="flex min-h-0 flex-1 overflow-y-auto p-6">
                     {children}
                 </main>
 
@@ -317,8 +317,10 @@ function Layout({ children }: LayoutProps) {
     }
 
     return (
-        <div className="flex h-screen overflow-hidden">
+        <div id="layout-shell" data-component="layout-shell" className="flex h-screen overflow-hidden">
             <aside
+                id="layout-sidebar"
+                data-component="layout-sidebar"
                 className={`flex h-screen shrink-0 flex-col gap-6 overflow-y-auto bg-primary px-6 pt-6 pb-6 text-accent transition-[width] duration-300 ${isSidebarCollapsed ? 'w-[84px]' : 'w-72'
                     }`}
             >
@@ -374,7 +376,7 @@ function Layout({ children }: LayoutProps) {
                     </div>
                 )}
 
-                <nav className="flex flex-col gap-3">
+                <nav id="layout-nav" data-component="layout-nav" className="flex flex-col gap-3">
                     {navItems.map(item => (
                         <Link
                             key={item.to}
@@ -427,7 +429,7 @@ function Layout({ children }: LayoutProps) {
 
             </aside>
 
-            <main className="flex min-h-0 flex-1 overflow-y-auto p-8">
+            <main id="layout-main" data-component="layout-main" className="flex min-h-0 flex-1 overflow-y-auto p-8">
                 {children}
             </main>
 

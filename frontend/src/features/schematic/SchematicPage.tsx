@@ -194,7 +194,7 @@ function SchematicPage() {
     }
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <div id="schematic-page" data-component="schematic-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <SchematicBoard
                 columns={columns}
                 instructors={instructors}

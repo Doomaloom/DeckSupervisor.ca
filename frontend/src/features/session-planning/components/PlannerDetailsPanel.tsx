@@ -37,7 +37,7 @@ function PlannerDetailsPanel({
   }
 
   return (
-    <div className="flex min-h-[70vh] flex-col gap-4 rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+    <div id="planner-details-panel" data-component="planner-details-panel" className="flex min-h-[70vh] flex-col gap-4 rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
       {!selectedClass || !dataset ? (
         <>
           <div className="flex items-start justify-between gap-3">

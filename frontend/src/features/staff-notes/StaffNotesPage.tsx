@@ -645,7 +645,7 @@ function StaffNotesPage() {
   const isAddTodoDisabled = !isSessionReady || todoText.trim() === '' || !isEditable
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <div id="staff-notes-page" data-component="staff-notes-page" className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <div className="rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
         <h2 className="text-2xl font-semibold">Notes</h2>
         <p className="mt-2 text-base">Capture session notes, employee updates, todos, and reports.</p>

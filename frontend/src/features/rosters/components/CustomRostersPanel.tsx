@@ -183,8 +183,8 @@ function CustomRostersPanel({ rosters, instructorOptions, customRosters, onSave 
     }
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+        <div id="custom-rosters-panel" data-component="custom-rosters-panel" className="flex flex-col gap-6">
+            <div data-component="custom-rosters-panel-card" className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2 className="text-lg font-semibold">Custom Rosters</h2>
                     <button

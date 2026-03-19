@@ -320,7 +320,7 @@ function TeamPage() {
 
   if (isGuest) {
     return (
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+      <div id="team-page" data-component="team-page" className="mx-auto flex w-full max-w-xl flex-col gap-6">
         <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
           <h2 className="text-xl font-semibold">Sign in to manage teams</h2>
           <p className="mt-2 text-sm text-secondary/70">You must be signed in to invite team members.</p>
@@ -337,7 +337,7 @@ function TeamPage() {
 
   if (accountType !== 'full_time') {
     return (
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+      <div id="team-page" data-component="team-page" className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
           <h2 className="text-2xl font-semibold">My Team</h2>
           <p className="mt-2 text-sm text-secondary/70">
@@ -436,7 +436,7 @@ function TeamPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <div id="team-page" data-component="team-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
         <h2 className="text-2xl font-semibold">Teams</h2>
         <p className="mt-2 text-sm text-secondary/70">Create teams and invite part-time staff.</p>

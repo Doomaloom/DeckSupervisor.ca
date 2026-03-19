@@ -97,7 +97,7 @@ function AccountPage() {
 
   if (isGuest) {
     return (
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+      <div id="account-page" data-component="account-page" className="mx-auto flex w-full max-w-xl flex-col gap-6">
         <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
           <h2 className="text-xl font-semibold">Sign in to manage your account</h2>
           <p className="mt-2 text-sm text-secondary/70">
@@ -115,7 +115,7 @@ function AccountPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+    <div id="account-page" data-component="account-page" className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
         <h2 className="text-2xl font-semibold">Account</h2>
         <p className="mt-2 text-sm text-secondary/70">

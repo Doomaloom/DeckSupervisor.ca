@@ -23,7 +23,7 @@ function RosterFiltersBar({
     onSearchChange,
 }: RosterFiltersBarProps) {
     return (
-        <div className={`grid gap-3 md:grid-cols-3 ${rowWidthClass}`}>
+        <div id="roster-filters-bar" data-component="roster-filters-bar" className={`grid gap-3 md:grid-cols-3 ${rowWidthClass}`}>
             <select
                 className={selectClass}
                 value={instructorFilter}

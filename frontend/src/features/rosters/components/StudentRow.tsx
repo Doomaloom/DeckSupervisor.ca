@@ -10,7 +10,7 @@ type StudentRowProps = {
 
 function StudentRow({ student, onLevelChange, disabled = false }: StudentRowProps) {
     return (
-        <div className="mt-3 grid grid-cols-1 items-center gap-3 md:grid-cols-[1.2fr_1fr]">
+        <div id={`student-row-${student.id}`} data-component="student-row" className="mt-3 grid grid-cols-1 items-center gap-3 md:grid-cols-[1.2fr_1fr]">
             <p className="text-secondary">{student.name.replaceAll('"', '')}</p>
             <LevelSelect value={student.level} onChange={value => onLevelChange(student.id, value)} disabled={disabled} />
         </div>

@@ -536,7 +536,7 @@ function Dashboard() {
   }, [])
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <div id="dashboard-page" data-component="dashboard-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       {accountType !== 'full_time' && activePanel !== 'options' && (
         <button
           type="button"

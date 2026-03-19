@@ -218,7 +218,7 @@ function ReportCardsPage() {
   ])
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+    <div id="report-cards-page" data-component="report-cards-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div className="relative overflow-hidden rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-secondary/15" />
         <div className="absolute -bottom-12 left-10 h-24 w-24 rounded-full bg-secondary/10" />

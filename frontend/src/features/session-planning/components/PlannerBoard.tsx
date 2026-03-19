@@ -44,7 +44,7 @@ function PlannerBoard({
   slotMinutes,
 }: PlannerBoardProps) {
   return (
-    <div className="flex min-h-[70vh] flex-col gap-4 rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+    <div id="planner-board" data-component="planner-board" className="flex min-h-[70vh] flex-col gap-4 rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
       <div className="flex flex-wrap gap-2">
         {availableDays.map(day => (
           <button

@@ -24,8 +24,8 @@ function RosterList({
     onToggleStudentLevelEdits,
 }: RosterListProps) {
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-6">
+        <div id="roster-list" data-component="roster-list" className="flex flex-col gap-4">
+            <div data-component="roster-list-content" className="flex flex-col gap-6">
                 {rosters.length === 0 && <p className="text-secondary">{emptyMessage}</p>}
                 {rosters.map(item => (
                     <RosterCard

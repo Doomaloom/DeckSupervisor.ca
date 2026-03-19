@@ -53,7 +53,7 @@ function PlannerHeader({
   onStopSharing,
 }: PlannerHeaderProps) {
   return (
-    <div className="rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
+    <div id="planner-header" data-component="planner-header" className="rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary/70">

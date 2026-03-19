@@ -104,7 +104,7 @@ function RostersPage() {
     }, [])
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <div id="rosters-page" data-component="rosters-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
             <RostersTabs activeTab={activeTab} onChange={setActiveTab} />
             <div className="flex flex-col gap-6">
                 {activeTab === 'custom' ? (

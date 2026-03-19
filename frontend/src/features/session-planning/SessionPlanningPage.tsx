@@ -213,7 +213,7 @@ function SessionPlanningPage() {
   const shouldShowPlanner = Boolean(dataset && (!shareCode || isSharedMode))
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <div id="session-planning-page" data-component="session-planning-page" className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <PlannerHeader
         dataset={dataset}
         error={error}

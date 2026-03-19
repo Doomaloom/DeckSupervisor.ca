@@ -11,6 +11,7 @@ type LevelSelectProps = {
 function LevelSelect({ value, onChange, placeholder, disabled = false }: LevelSelectProps) {
     return (
         <select
+            data-component="level-select"
             className={selectClass}
             value={value}
             onChange={event => onChange(event.target.value)}
