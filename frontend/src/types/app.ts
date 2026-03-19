@@ -93,6 +93,8 @@ export type ExtractedSession = {
   dayOfWeek: string
   sessionSeason: string
   sessionYear: number
+  startDate: string
+  endDate: string
   location: string
   classCount: number
   studentCount: number
@@ -122,6 +124,8 @@ export type CsvSessionCandidate = {
   dayOfWeek: string
   sessionSeason: string
   sessionYear: number
+  startDate: string
+  endDate: string
   location: string
   classCount: number
   studentCount: number

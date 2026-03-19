@@ -14,6 +14,8 @@ type ExtractedClass struct {
 	DayOfWeek       string `json:"dayOfWeek"`
 	SessionSeason   string `json:"sessionSeason"`
 	SessionYear     int    `json:"sessionYear"`
+	StartDate       string `json:"startDate"`
+	EndDate         string `json:"endDate"`
 	CourseCode      string `json:"courseCode"`
 	ServiceName     string `json:"serviceName"`
 	Location        string `json:"location"`
@@ -28,6 +30,8 @@ type ExtractedSession struct {
 	DayOfWeek     string   `json:"dayOfWeek"`
 	SessionSeason string   `json:"sessionSeason"`
 	SessionYear   int      `json:"sessionYear"`
+	StartDate     string   `json:"startDate"`
+	EndDate       string   `json:"endDate"`
 	Location      string   `json:"location"`
 	ClassCount    int      `json:"classCount"`
 	StudentCount  int      `json:"studentCount"`
@@ -61,7 +65,7 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		}
 
 		serviceName := rowValue(row, "ServiceName", "Service", "Service Name", "GroupName", "Level")
-		location := rowValue(row, "Location", "Facility", "MainFacility")
+		location := rowValue(row, "Location", "Facility", "MainFacility", "Main Facility")
 
 		dayValue := normalizeDay(rowValue(row, "DayOfTheWeek", "Day Of The Week"))
 		if dayValue == "" {
@@ -96,6 +100,14 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 			continue
 		}
 
+		scheduleStartDate, scheduleEndDate := extractScheduleDateRange(eventSchedule)
+		if startDate.IsZero() && !scheduleStartDate.IsZero() {
+			startDate = scheduleStartDate
+		}
+		if endDate.IsZero() && !scheduleEndDate.IsZero() {
+			endDate = scheduleEndDate
+		}
+
 		sessionSeason, sessionYear := getSeasonAndYear(eventSchedule, startDate, endDate)
 		sessionKey := BuildExtractedSessionKey(dayValue, sessionSeason, sessionYear, location)
 
@@ -116,6 +128,8 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 				DayOfWeek:       dayValue,
 				SessionSeason:   sessionSeason,
 				SessionYear:     sessionYear,
+				StartDate:       formatDate(startDate),
+				EndDate:         formatDate(endDate),
 				CourseCode:      courseCode,
 				ServiceName:     serviceName,
 				Location:        location,
@@ -138,6 +152,12 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		}
 		if existing.SessionYear == 0 && sessionYear > 0 {
 			existing.SessionYear = sessionYear
+		}
+		if existing.StartDate == "" && !startDate.IsZero() {
+			existing.StartDate = formatDate(startDate)
+		}
+		if existing.EndDate == "" && !endDate.IsZero() {
+			existing.EndDate = formatDate(endDate)
 		}
 
 		if studentCountFromRoster > 0 {
@@ -163,6 +183,8 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 				DayOfWeek:     class.DayOfWeek,
 				SessionSeason: class.SessionSeason,
 				SessionYear:   class.SessionYear,
+				StartDate:     class.StartDate,
+				EndDate:       class.EndDate,
 				Location:      class.Location,
 			}
 			sessionMeta[class.SessionKey] = meta
@@ -171,6 +193,15 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 
 		meta.ClassCount++
 		meta.StudentCount += class.StudentCount
+		if meta.StartDate == "" && class.StartDate != "" {
+			meta.StartDate = class.StartDate
+		}
+		if meta.EndDate == "" && class.EndDate != "" {
+			meta.EndDate = class.EndDate
+		}
+		if meta.Location == "" && class.Location != "" {
+			meta.Location = class.Location
+		}
 		if code := strings.TrimSpace(class.CourseCode); code != "" {
 			sessionCourseCodes[class.SessionKey][code] = struct{}{}
 		}
@@ -366,33 +397,58 @@ func seasonAndYearFromDate(source time.Time) (string, int) {
 }
 
 func extractScheduleStartDate(value string) time.Time {
+	startDate, _ := extractScheduleDateRange(value)
+	return startDate
+}
+
+func extractScheduleDateRange(value string) (time.Time, time.Time) {
 	trimmed := strings.TrimSpace(value)
 	if trimmed == "" {
-		return time.Time{}
+		return time.Time{}, time.Time{}
 	}
 
 	normalized := strings.TrimSpace(strings.TrimPrefix(trimmed, "From "))
 	parts := strings.SplitN(normalized, " to ", 2)
 	if len(parts) == 0 {
-		return time.Time{}
+		return time.Time{}, time.Time{}
 	}
 
 	startRaw := strings.TrimSpace(parts[0])
-	if startRaw == "" {
-		return time.Time{}
+	endRaw := ""
+	if len(parts) > 1 {
+		endRaw = strings.TrimSpace(parts[1])
 	}
 
+	var startDate time.Time
+	var endDate time.Time
 	for _, layout := range []string{
 		"2006-01-02",
 		"01/02/2006",
 		"1/2/2006",
 	} {
-		if parsed, err := time.Parse(layout, startRaw); err == nil {
-			return parsed
+		if startRaw != "" {
+			if parsed, err := time.Parse(layout, startRaw); err == nil {
+				startDate = parsed
+			}
+		}
+		if endRaw != "" {
+			if parsed, err := time.Parse(layout, endRaw); err == nil {
+				endDate = parsed
+			}
+		}
+		if !startDate.IsZero() || !endDate.IsZero() {
+			break
 		}
 	}
 
-	return time.Time{}
+	return startDate, endDate
+}
+
+func formatDate(value time.Time) string {
+	if value.IsZero() {
+		return ""
+	}
+	return value.Format("2006-01-02")
 }
 
 func parsePositiveInt(value string) int {

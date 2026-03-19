@@ -230,7 +230,6 @@ function ManageSessionsPage() {
 
   useEffect(() => {
     if (isGuest || !editTeamId || editTeamId === NO_TEAM_VALUE) {
-      setEditLocation('')
       return
     }
     if (availableLocations.length === 0) {
@@ -515,19 +514,29 @@ function ManageSessionsPage() {
                     </label>
                     <label className="flex flex-col gap-2 font-semibold text-secondary">
                       Location (optional)
-                      <select
-                        className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
-                        value={editLocation}
-                        onChange={event => setEditLocation(event.target.value)}
-                        disabled={!editTeamId || editTeamId === NO_TEAM_VALUE}
-                      >
-                        <option value="">Select a location</option>
-                        {availableLocations.map(option => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
+                      {editTeamId === NO_TEAM_VALUE ? (
+                        <input
+                          className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                          type="text"
+                          value={editLocation}
+                          onChange={event => setEditLocation(event.target.value)}
+                          placeholder="Session location"
+                        />
+                      ) : (
+                        <select
+                          className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                          value={editLocation}
+                          onChange={event => setEditLocation(event.target.value)}
+                          disabled={!editTeamId}
+                        >
+                          <option value="">Select a location</option>
+                          {availableLocations.map(option => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </label>
                   </>
                 ) : null}

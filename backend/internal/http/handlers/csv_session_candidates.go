@@ -16,6 +16,8 @@ type csvSessionCandidate struct {
 	DayOfWeek      string             `json:"dayOfWeek"`
 	SessionSeason  string             `json:"sessionSeason"`
 	SessionYear    int                `json:"sessionYear"`
+	StartDate      string             `json:"startDate"`
+	EndDate        string             `json:"endDate"`
 	Location       string             `json:"location"`
 	ClassCount     int                `json:"classCount"`
 	StudentCount   int                `json:"studentCount"`
@@ -194,6 +196,8 @@ func buildCSVSessionCandidates(extractedSessions []tasks.ExtractedSession, sessi
 			DayOfWeek:     extractedSession.DayOfWeek,
 			SessionSeason: extractedSession.SessionSeason,
 			SessionYear:   extractedSession.SessionYear,
+			StartDate:     extractedSession.StartDate,
+			EndDate:       extractedSession.EndDate,
 			Location:      extractedSession.Location,
 			ClassCount:    extractedSession.ClassCount,
 			StudentCount:  extractedSession.StudentCount,
