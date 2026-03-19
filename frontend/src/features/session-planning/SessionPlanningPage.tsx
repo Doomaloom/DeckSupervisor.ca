@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ArrowsPointingOutIcon } from '@heroicons/react/24/outline'
+import { useLocation } from 'react-router-dom'
 import type { PlannerCallStatus, PlannerClass, PlannerClassStatus, PlannerDataset, PlannerParticipant } from '../../types/app'
 import {
     getPlannerAlternativeClasses,
@@ -137,12 +139,14 @@ function getPlannerBoardStatusClasses(status: PlannerClassStatus, isSelected: bo
 }
 
 function SessionPlanningPage() {
+    const location = useLocation()
     const [dataset, setDataset] = useState<PlannerDataset | null>(null)
     const [selectedDay, setSelectedDay] = useState('')
     const [selectedLocation, setSelectedLocation] = useState('')
     const [selectedClassKey, setSelectedClassKey] = useState('')
     const [isInfoPanelOpen, setIsInfoPanelOpen] = useState(true)
     const [error, setError] = useState('')
+    const isPopout = new URLSearchParams(location.search).get('popout') === '1'
 
     useEffect(() => {
         const stored = loadPlannerDataset()
@@ -324,14 +328,37 @@ function SessionPlanningPage() {
     }
 
     const summary = selectedClass && dataset ? summarizePlannerCalls(dataset, selectedClass.classKey) : null
+    const openPopout = () => {
+        const popoutUrl = `${window.location.origin}/session-planning?popout=1`
+        const popup = window.open(
+            popoutUrl,
+            'session-planning-popout',
+            'popup=yes,width=1600,height=1000,resizable=yes,scrollbars=yes',
+        )
+        popup?.focus()
+    }
 
     return (
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <div className="rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary/70">
-                    Session Planning
-                </p>
-                <h2 className="mt-3 text-2xl font-semibold">Session Planning / Reorganization</h2>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary/70">
+                            Session Planning
+                        </p>
+                        <h2 className="mt-3 text-2xl font-semibold">Session Planning / Reorganization</h2>
+                    </div>
+                    {!isPopout ? (
+                        <button
+                            type="button"
+                            className="inline-flex items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10"
+                            onClick={openPopout}
+                        >
+                            <ArrowsPointingOutIcon className="h-4 w-4" />
+                            Pop Out Planner
+                        </button>
+                    ) : null}
+                </div>
                 <p className="mt-2 max-w-3xl text-secondary/80">
                     Upload a participant CSV to review classes by day and location, flag cancellations,
                     track calls, and offer exact-level alternatives.

@@ -74,6 +74,7 @@ function Layout({ children }: LayoutProps) {
     const [profileFirstName, setProfileFirstName] = useState('')
     const [profileLastName, setProfileLastName] = useState('')
     const [profileError, setProfileError] = useState('')
+    const isPlannerPopout = location.pathname === '/session-planning' && new URLSearchParams(location.search).get('popout') === '1'
 
     const isCurrentPage = (path: string) => location.pathname === path
     const pageTitle = getPageTitle(location.pathname)
@@ -251,6 +252,69 @@ function Layout({ children }: LayoutProps) {
     ]
 
     const navItems = accountType === 'full_time' ? fullTimeNavItems : standardNavItems
+
+    if (isPlannerPopout) {
+        return (
+            <div className="flex h-screen overflow-hidden bg-bg">
+                <main className="flex min-h-0 flex-1 overflow-y-auto p-6">
+                    {children}
+                </main>
+
+                {needsProfile ? (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                        <div className="w-full max-w-md rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-lg">
+                            <h2 className="text-lg font-semibold">Complete your profile</h2>
+                            <p className="mt-2 text-sm text-secondary/70">
+                                Add your first and last name so full-time users can invite you to teams.
+                            </p>
+                            <div className="mt-4 flex flex-col gap-3">
+                                <input
+                                    className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                                    placeholder="First name"
+                                    value={profileFirstName}
+                                    onChange={event => setProfileFirstName(event.target.value)}
+                                />
+                                <input
+                                    className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+                                    placeholder="Last name"
+                                    value={profileLastName}
+                                    onChange={event => setProfileLastName(event.target.value)}
+                                />
+                                {profileError ? (
+                                    <p className="text-sm font-semibold text-danger">{profileError}</p>
+                                ) : null}
+                                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                                    <button
+                                        type="button"
+                                        className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-secondary"
+                                        onClick={async () => {
+                                            const trimmedFirst = profileFirstName.trim()
+                                            const trimmedLast = profileLastName.trim()
+                                            if (!trimmedFirst || !trimmedLast) {
+                                                setProfileError('Please enter your first and last name.')
+                                                return
+                                            }
+                                            setProfileError('')
+                                            await completeProfile(trimmedFirst, trimmedLast)
+                                        }}
+                                    >
+                                        Save Profile
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
+                                        onClick={() => void signOut()}
+                                    >
+                                        Sign Out
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
+            </div>
+        )
+    }
 
     return (
         <div className="flex h-screen overflow-hidden">
