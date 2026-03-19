@@ -17,7 +17,7 @@ import (
 
 type Client struct {
 	supabaseURL string
-	anonKey     string
+	apiKey      string
 	httpClient  *http.Client
 	accessToken string
 	User        authsvc.User
@@ -44,10 +44,24 @@ func NewClientFromRequest(r *http.Request) (*Client, error) {
 
 	return &Client{
 		supabaseURL: strings.TrimSuffix(supabaseURL, "/"),
-		anonKey:     anonKey,
+		apiKey:      anonKey,
 		httpClient:  &http.Client{Timeout: 15 * time.Second},
 		accessToken: session.AccessToken,
 		User:        session.User,
+	}, nil
+}
+
+func NewServiceClientFromEnv() (*Client, error) {
+	supabaseURL := strings.TrimSpace(os.Getenv("SUPABASE_URL"))
+	serviceRoleKey := strings.TrimSpace(os.Getenv("SUPABASE_SERVICE_ROLE_KEY"))
+	if supabaseURL == "" || serviceRoleKey == "" {
+		return nil, errors.New("missing supabase service env config")
+	}
+
+	return &Client{
+		supabaseURL: strings.TrimSuffix(supabaseURL, "/"),
+		apiKey:      serviceRoleKey,
+		httpClient:  &http.Client{Timeout: 15 * time.Second},
 	}, nil
 }
 
@@ -100,8 +114,12 @@ func (c *Client) request(
 	if err != nil {
 		return err
 	}
-	req.Header.Set("apikey", c.anonKey)
-	req.Header.Set("Authorization", "Bearer "+c.accessToken)
+	req.Header.Set("apikey", c.apiKey)
+	if strings.TrimSpace(c.accessToken) != "" {
+		req.Header.Set("Authorization", "Bearer "+c.accessToken)
+	} else if looksLikeJWT(c.apiKey) {
+		req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	if prefer != "" {
 		req.Header.Set("Prefer", prefer)
@@ -133,4 +151,9 @@ func (c *Client) request(
 		return nil
 	}
 	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+func looksLikeJWT(value string) bool {
+	parts := strings.Split(strings.TrimSpace(value), ".")
+	return len(parts) == 3
 }

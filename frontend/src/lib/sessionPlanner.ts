@@ -396,6 +396,7 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
       notes: '',
       offeredAlternativeClassKey: '',
       acceptedAlternativeClassKey: '',
+      completedAt: '',
     }
   })
 
@@ -409,6 +410,54 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
   }
 }
 
+function normalizePlannerCallRecord(
+  participantId: string,
+  record: PlannerParticipantCallRecord | undefined,
+  classKey: string,
+): PlannerParticipantCallRecord {
+  return {
+    participantId,
+    classKey: record?.classKey ?? classKey,
+    status: record?.status ?? 'not_started',
+    notes: record?.notes ?? '',
+    offeredAlternativeClassKey: record?.offeredAlternativeClassKey ?? '',
+    acceptedAlternativeClassKey: record?.acceptedAlternativeClassKey ?? '',
+    completedAt: record?.completedAt ?? '',
+  }
+}
+
+function normalizePlannerDataset(dataset: PlannerDataset): PlannerDataset {
+  const classKeyByParticipantId = new Map<string, string>()
+  dataset.participants.forEach(participant => {
+    classKeyByParticipantId.set(participant.id, participant.classKey)
+  })
+
+  const normalizedCallRecords: Record<string, PlannerParticipantCallRecord> = {}
+  Object.entries(dataset.callRecords ?? {}).forEach(([participantId, record]) => {
+    normalizedCallRecords[participantId] = normalizePlannerCallRecord(
+      participantId,
+      record,
+      classKeyByParticipantId.get(participantId) ?? '',
+    )
+  })
+
+  dataset.participants.forEach(participant => {
+    if (participant.attendeeStatus !== 'booked') {
+      return
+    }
+    normalizedCallRecords[participant.id] = normalizePlannerCallRecord(
+      participant.id,
+      normalizedCallRecords[participant.id],
+      participant.classKey,
+    )
+  })
+
+  return {
+    ...dataset,
+    callRecords: normalizedCallRecords,
+  }
+}
+
 export function loadPlannerDataset(): PlannerDataset | null {
   if (typeof window === 'undefined') {
     return null
@@ -418,7 +467,7 @@ export function loadPlannerDataset(): PlannerDataset | null {
     return null
   }
   try {
-    return JSON.parse(stored) as PlannerDataset
+    return normalizePlannerDataset(JSON.parse(stored) as PlannerDataset)
   } catch (error) {
     console.error('Failed to parse planner dataset', error)
     return null
@@ -429,7 +478,7 @@ export function savePlannerDataset(dataset: PlannerDataset) {
   if (typeof window === 'undefined') {
     return
   }
-  setStoredItem(plannerDatasetKey(), JSON.stringify(dataset))
+  setStoredItem(plannerDatasetKey(), JSON.stringify(normalizePlannerDataset(dataset)))
 }
 
 function mergeUnique(values: string[], additions: string[]) {

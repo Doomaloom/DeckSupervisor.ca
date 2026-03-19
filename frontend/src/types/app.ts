@@ -188,6 +188,7 @@ export type PlannerParticipantCallRecord = {
   notes: string
   offeredAlternativeClassKey: string
   acceptedAlternativeClassKey: string
+  completedAt: string
 }
 
 export type PlannerDataset = {
@@ -230,4 +231,5 @@ export type PlannerCallRecordUpdate = {
   notes?: string
   offeredAlternativeClassKey?: string
   acceptedAlternativeClassKey?: string
+  completedAt?: string
 }

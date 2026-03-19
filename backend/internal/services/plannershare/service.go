@@ -79,6 +79,7 @@ type PlannerParticipantCallRecord struct {
 	Notes                      string `json:"notes"`
 	OfferedAlternativeClassKey string `json:"offeredAlternativeClassKey"`
 	AcceptedAlternativeClassKey string `json:"acceptedAlternativeClassKey"`
+	CompletedAt                string `json:"completedAt"`
 }
 
 type PlannerCallRecordUpdate struct {
@@ -86,6 +87,7 @@ type PlannerCallRecordUpdate struct {
 	Notes                      *string `json:"notes,omitempty"`
 	OfferedAlternativeClassKey *string `json:"offeredAlternativeClassKey,omitempty"`
 	AcceptedAlternativeClassKey *string `json:"acceptedAlternativeClassKey,omitempty"`
+	CompletedAt                *string `json:"completedAt,omitempty"`
 }
 
 type ShareParticipant struct {
@@ -283,6 +285,9 @@ func (s *Service) UpdateCallRecord(baseURL, code, participantID, recordID string
 	}
 	if update.AcceptedAlternativeClassKey != nil {
 		record.AcceptedAlternativeClassKey = *update.AcceptedAlternativeClassKey
+	}
+	if update.CompletedAt != nil {
+		record.CompletedAt = *update.CompletedAt
 	}
 	room.Dataset.CallRecords[recordID] = record
 	room.Version += 1

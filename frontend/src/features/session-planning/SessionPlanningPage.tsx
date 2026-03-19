@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type {
   PlannerCallRecordUpdate,
@@ -19,6 +19,7 @@ import PlannerBoard from './components/PlannerBoard'
 import PlannerCallModal from './components/PlannerCallModal'
 import PlannerDetailsPanel from './components/PlannerDetailsPanel'
 import PlannerHeader from './components/PlannerHeader'
+import PlannerPlannedChangesModal from './components/PlannerPlannedChangesModal'
 import { usePlannerShareSession } from './hooks/usePlannerShareSession'
 import { plannerBoardLayout, usePlannerViewModel } from './hooks/usePlannerViewModel'
 
@@ -31,6 +32,7 @@ function SessionPlanningPage() {
   const [isInfoPanelOpen, setIsInfoPanelOpen] = useState(true)
   const [activeCallParticipantId, setActiveCallParticipantId] = useState('')
   const [callScriptMode, setCallScriptMode] = useState<'live' | 'voicemail'>('live')
+  const [isPlannedChangesOpen, setIsPlannedChangesOpen] = useState(false)
 
   const {
     applySharedSession,
@@ -211,6 +213,57 @@ function SessionPlanningPage() {
   const callerLocationName = shareLocationName.trim() || selectedClass?.facility || 'the recreation centre'
   const callerPhoneNumber = sharePhoneNumber.trim() || 'our main office number'
   const shouldShowPlanner = Boolean(dataset && (!shareCode || isSharedMode))
+  const plannedChangeGroups = useMemo(() => {
+    if (!dataset) {
+      return []
+    }
+
+    return dataset.classes
+      .map(plannerClass => {
+        const rows = plannerClass.participantIds
+          .map(participantId => {
+            const participant = dataset.participants.find(entry => entry.id === participantId)
+            const callRecord = dataset.callRecords[participantId]
+            if (!participant || !callRecord || callRecord.status === 'not_started') {
+              return null
+            }
+            return { participant, callRecord }
+          })
+          .filter(
+            (
+              row,
+            ): row is {
+              participant: (typeof dataset.participants)[number]
+              callRecord: (typeof dataset.callRecords)[string]
+            } => Boolean(row),
+          )
+          .sort((left, right) => {
+            if (left.callRecord.completedAt && !right.callRecord.completedAt) {
+              return 1
+            }
+            if (!left.callRecord.completedAt && right.callRecord.completedAt) {
+              return -1
+            }
+            return left.participant.name.localeCompare(right.participant.name)
+          })
+
+        return rows.length > 0 ? { plannerClass, rows } : null
+      })
+      .filter((group): group is NonNullable<typeof group> => Boolean(group))
+      .sort((left, right) => {
+        if (left.plannerClass.dayOfWeek !== right.plannerClass.dayOfWeek) {
+          return left.plannerClass.dayOfWeek.localeCompare(right.plannerClass.dayOfWeek)
+        }
+        if (left.plannerClass.eventTime !== right.plannerClass.eventTime) {
+          return left.plannerClass.eventTime.localeCompare(right.plannerClass.eventTime)
+        }
+        return left.plannerClass.serviceName.localeCompare(right.plannerClass.serviceName)
+      })
+  }, [dataset])
+
+  const markPlannedChangeComplete = async (participantId: string) => {
+    await setCallRecord(participantId, { completedAt: new Date().toISOString() })
+  }
 
   return (
     <div id="session-planning-page" data-component="session-planning-page" className="mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -227,11 +280,13 @@ function SessionPlanningPage() {
         shareNotice={shareNotice}
         sharePhoneNumber={sharePhoneNumber}
         shareSession={shareSession}
+        showPlannedChangesButton={plannedChangeGroups.length > 0}
         onHandleAddUpload={handleAddUpload}
         onHandleUpload={handleUpload}
         onJoinSharedPlanner={joinSharedPlanner}
         onLeaveSharedPlannerSession={leaveSharedPlannerSession}
         onOpenPopout={openPopout}
+        onOpenPlannedChanges={() => setIsPlannedChangesOpen(true)}
         onSetShareDisplayName={setShareDisplayName}
         onSetShareLocationName={setShareLocationName}
         onSetSharePhoneNumber={setSharePhoneNumber}
@@ -298,6 +353,14 @@ function SessionPlanningPage() {
         onSetCallScriptMode={setCallScriptMode}
         selectedClass={selectedClass}
       />
+
+      {isPlannedChangesOpen ? (
+        <PlannerPlannedChangesModal
+          groups={plannedChangeGroups}
+          onClose={() => setIsPlannedChangesOpen(false)}
+          onMarkComplete={markPlannedChangeComplete}
+        />
+      ) : null}
     </div>
   )
 }

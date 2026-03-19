@@ -360,18 +360,57 @@ func CreateSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	profile, err := loadOrCreateProfile(r, client)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	var payload map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	payload["created_by"] = client.User.ID
+	teamID, _ := payload["team_id"].(string)
+	if teamID = strings.TrimSpace(teamID); teamID != "" {
+		if !userCanCreateSessionForTeam(r, client, teamID) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+	}
+	payload["created_by"] = profile.ID
+	serviceClient, err := supabasesvc.NewServiceClientFromEnv()
+	if err != nil {
+		http.Error(w, "Server configuration error", http.StatusInternalServerError)
+		return
+	}
 	var rows []map[string]any
-	if err := client.Post(r.Context(), "/rest/v1/sessions", nil, payload, "return=representation", &rows); err != nil {
+	if err := serviceClient.Post(r.Context(), "/rest/v1/sessions", nil, payload, "return=representation", &rows); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	writeJSON(w, map[string]any{"session": firstMap(rows)})
+}
+
+func userCanCreateSessionForTeam(r *http.Request, client *supabasesvc.Client, teamID string) bool {
+	ownedQuery := url.Values{}
+	ownedQuery.Set("id", "eq."+teamID)
+	ownedQuery.Set("owner_id", "eq."+client.User.ID)
+	ownedQuery.Set("select", "id")
+	ownedQuery.Set("limit", "1")
+	var owned []teamRow
+	if err := client.Get(r.Context(), "/rest/v1/teams", ownedQuery, &owned); err == nil && len(owned) > 0 {
+		return true
+	}
+
+	memberQuery := url.Values{}
+	memberQuery.Set("team_id", "eq."+teamID)
+	memberQuery.Set("user_id", "eq."+client.User.ID)
+	memberQuery.Set("select", "team_id")
+	memberQuery.Set("limit", "1")
+	var members []struct {
+		TeamID string `json:"team_id"`
+	}
+	return client.Get(r.Context(), "/rest/v1/team_members", memberQuery, &members) == nil && len(members) > 0
 }
 
 func UpdateSession(w http.ResponseWriter, r *http.Request) {

@@ -14,11 +14,13 @@ type PlannerHeaderProps = {
   shareNotice: string
   sharePhoneNumber: string
   shareSession: PlannerShareSession | null
+  showPlannedChangesButton: boolean
   onHandleAddUpload: (file: File | null) => void | Promise<void>
   onHandleUpload: (file: File | null) => void | Promise<void>
   onJoinSharedPlanner: () => void | Promise<void>
   onLeaveSharedPlannerSession: () => void | Promise<void>
   onOpenPopout: () => void
+  onOpenPlannedChanges: () => void
   onSetShareDisplayName: (value: string) => void
   onSetShareLocationName: (value: string) => void
   onSetSharePhoneNumber: (value: string) => void
@@ -40,11 +42,13 @@ function PlannerHeader({
   shareNotice,
   sharePhoneNumber,
   shareSession,
+  showPlannedChangesButton,
   onHandleAddUpload,
   onHandleUpload,
   onJoinSharedPlanner,
   onLeaveSharedPlannerSession,
   onOpenPopout,
+  onOpenPlannedChanges,
   onSetShareDisplayName,
   onSetShareLocationName,
   onSetSharePhoneNumber,
@@ -61,16 +65,27 @@ function PlannerHeader({
           </p>
           <h2 className="mt-3 text-2xl font-semibold">Session Planning / Reorganization</h2>
         </div>
-        {!isPopout ? (
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10"
-            onClick={onOpenPopout}
-          >
-            <ArrowsPointingOutIcon className="h-4 w-4" />
-            Pop Out Planner
-          </button>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          {showPlannedChangesButton ? (
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10"
+              onClick={onOpenPlannedChanges}
+            >
+              Planned Changes
+            </button>
+          ) : null}
+          {!isPopout ? (
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10"
+              onClick={onOpenPopout}
+            >
+              <ArrowsPointingOutIcon className="h-4 w-4" />
+              Pop Out Planner
+            </button>
+          ) : null}
+        </div>
       </div>
       <p className="mt-2 max-w-3xl text-secondary/80">
         Upload a participant CSV to review classes by day and location, flag cancellations,
