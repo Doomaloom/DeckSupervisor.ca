@@ -1,87 +1,40 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../app/AuthContext'
-import { getStoredItem, setStoredItem } from '../../lib/browserStorage'
 import { useCurrentSession } from '../../app/useCurrentSession'
+import { useCurrentTeam } from '../../app/useCurrentTeam'
+import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { getCurrentSessionId } from '../../lib/instructorPdfCache'
-import { getScopedKey } from '../../lib/storageScope'
 import {
   createSessionNote,
   deleteSessionNote,
   fetchSessionNotes,
   updateSessionNote,
 } from '../../lib/serverApi'
+import { supabase } from '../../lib/supabaseClient'
 import { useSessionInstructors } from '../print/hooks/useSessionInstructors'
-
-type NoteTabKey = 'general' | 'recognition' | 'feedback' | 'coaching'
-type TabKey = NoteTabKey | 'todo'
-
-type NoteItem = {
-  id: string
-  createdAt: string
-  text: string
-  employeeName?: string
-}
-
-type TodoItem = {
-  id: string
-  createdAt: string
-  text: string
-  done: boolean
-}
-
-type TabConfig = {
-  key: TabKey
-  label: string
-  type: 'note' | 'todo'
-  showEmployee?: boolean
-}
-
-const NOTES_STORAGE_PREFIX = () => getScopedKey('notes')
-
-const tabs: TabConfig[] = [
-  { key: 'general', label: 'General Session Notes', type: 'note' },
-  { key: 'recognition', label: 'Employee Recognition', type: 'note', showEmployee: true },
-  { key: 'feedback', label: 'Employee Feedback', type: 'note', showEmployee: true },
-  { key: 'coaching', label: 'Employee Coaching', type: 'note', showEmployee: true },
-  { key: 'todo', label: 'Todo', type: 'todo' },
-]
+import NoteTab from './components/NoteTab'
+import ReportTab from './components/report/ReportTab'
+import TabBar from './components/TabBar'
+import TodoTab from './components/TodoTab'
+import { formatSessionContext, getSessionYear, normalizeSeason, tabs } from './constants'
+import { useSessionReports } from './hooks/useSessionReports'
+import type { NoteItem, ReportItem, TabKey, TodoItem } from './types'
+import { normalizeReportData } from './utils/reportData'
+import { buildStorageKey, loadJson, saveJson } from './utils/storage'
 
 const createId = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`
 
-const buildStorageKey = (sessionId: string, tab: TabKey) =>
-  `${NOTES_STORAGE_PREFIX()}::${sessionId}::${tab}`
-
-const loadJson = <T,>(key: string, fallback: T): T => {
-  if (typeof window === 'undefined') {
-    return fallback
-  }
-  try {
-    const value = getStoredItem(key)
-    if (!value) {
-      return fallback
-    }
-    return JSON.parse(value) as T
-  } catch (error) {
-    console.error(`Failed to parse ${key} from session storage`, error)
-    return fallback
-  }
-}
-
-const saveJson = <T,>(key: string, value: T) => {
-  if (typeof window === 'undefined') {
-    return
-  }
-  setStoredItem(key, JSON.stringify(value))
-}
-
 function StaffNotesPage() {
-  const { isGuest, user } = useAuth()
-  const { sessionId: currentSessionId, access } = useCurrentSession()
+  const { accountType, isGuest, user } = useAuth()
+  const { sessionId: currentSessionId, session: currentSession, access } = useCurrentSession()
+  const { currentTeamId } = useCurrentTeam()
+  const { currentTerm } = useCurrentTerm()
+  const isFullTime = accountType === 'full_time'
   const sessionId = isGuest ? getCurrentSessionId() : currentSessionId
-  const isSessionReady = Boolean(sessionId)
+  const isSessionReady = isFullTime ? Boolean(currentTeamId && currentTerm) : Boolean(sessionId)
   const instructorNames = useSessionInstructors(true)
   const [activeTab, setActiveTab] = useState<TabKey>('general')
   const [notes, setNotes] = useState<NoteItem[]>([])
@@ -90,30 +43,396 @@ function StaffNotesPage() {
   const [employeeName, setEmployeeName] = useState('')
   const [todoText, setTodoText] = useState('')
 
+  const currentSessionContext = useMemo(
+    () =>
+      formatSessionContext(
+        currentSession?.session_day ?? null,
+        currentSession?.location ?? null,
+        currentSession?.session_season ?? null,
+        currentSession?.session_year ?? null,
+        currentSession?.start_date ?? null,
+      ),
+    [
+      currentSession?.location,
+      currentSession?.session_day,
+      currentSession?.session_season,
+      currentSession?.session_year,
+      currentSession?.start_date,
+    ],
+  )
+
+  const {
+    reports,
+    activeReportId,
+    reportTitle,
+    reportDraft,
+    reportStatus,
+    selectedReport,
+    canCreateReports,
+    canEditSelectedReport,
+    isReportInputDisabled,
+    reportInstructorOptions,
+    updateReportDraft,
+    handleReportTitleChange,
+    handleSelectReport,
+    handleCreateReport,
+    handleDeleteReport,
+    handleExportReport,
+    isExportingReport,
+    setLoadedReports,
+    clearReports,
+  } = useSessionReports({
+    activeTab,
+    sessionId,
+    currentSessionContext,
+    isSessionReady,
+    isGuest,
+    isFullTime,
+    userId: user?.id ?? null,
+    accessMode: access.mode,
+    instructorNames,
+  })
+
   const activeConfig = useMemo(
     () => tabs.find(tab => tab.key === activeTab) ?? tabs[0],
     [activeTab],
   )
 
+  const visibleTabs = useMemo(
+    () => (isFullTime ? tabs.filter(tab => tab.key !== 'todo') : tabs),
+    [isFullTime],
+  )
+
+  useEffect(() => {
+    if (visibleTabs.some(tab => tab.key === activeTab)) {
+      return
+    }
+    setActiveTab(visibleTabs[0]?.key ?? 'general')
+  }, [activeTab, visibleTabs])
+
   useEffect(() => {
     if (!sessionId) {
       setNotes([])
       setTodos([])
-      return
+      clearReports()
+      if (!isFullTime) {
+        return
+      }
     }
     if (isGuest) {
       const storageKey = buildStorageKey(sessionId, activeTab)
       if (activeTab === 'todo') {
         setTodos(loadJson<TodoItem[]>(storageKey, []))
+        setNotes([])
+        clearReports()
+      } else if (activeTab === 'report') {
+        const stored = loadJson<ReportItem[]>(storageKey, [])
+        const normalized = stored
+          .map(item => {
+            const createdAt = item.createdAt || new Date().toISOString()
+            const updatedAt = item.updatedAt || createdAt
+            return {
+              id: item.id,
+              createdAt,
+              updatedAt,
+              title: item.title || 'Untitled report',
+              reportData: normalizeReportData(item.reportData, instructorNames),
+              createdBy: item.createdBy,
+              authorName: item.authorName ?? 'Guest',
+              sessionContext: item.sessionContext || currentSessionContext || undefined,
+            }
+          })
+          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        setLoadedReports(normalized)
+        setNotes([])
+        setTodos([])
       } else {
         setNotes(loadJson<NoteItem[]>(storageKey, []))
+        setTodos([])
+        clearReports()
       }
       return
     }
 
+    if (isFullTime) {
+      if (!supabase) {
+        setNotes([])
+        setTodos([])
+        clearReports()
+        return
+      }
+      if (!currentTeamId || !currentTerm) {
+        setNotes([])
+        setTodos([])
+        clearReports()
+        return
+      }
+
+      let active = true
+      const loadTeamTermNotes = async () => {
+        const [{ data: teamData, error: teamError }, { data: memberData, error: memberError }, { data: sessionData, error: sessionError }] = await Promise.all([
+          supabase.from('teams').select('owner_id').eq('id', currentTeamId).maybeSingle(),
+          supabase.from('team_members').select('user_id').eq('team_id', currentTeamId),
+          supabase
+            .from('sessions')
+            .select('id,session_day,session_season,session_year,start_date,location')
+            .eq('team_id', currentTeamId),
+        ])
+
+        if (!active) {
+          return
+        }
+
+        if (teamError || memberError || sessionError) {
+          console.error('Failed to load full-time notes scope', teamError ?? memberError ?? sessionError)
+          setNotes([])
+          setTodos([])
+          clearReports()
+          return
+        }
+
+        const scopedSessions = (sessionData ?? []).filter(session => {
+          const season = normalizeSeason(session.session_season)
+          const year = getSessionYear(session.session_year ?? null, session.start_date ?? null)
+          return season === currentTerm.season && year === currentTerm.year
+        })
+
+        if (scopedSessions.length === 0) {
+          setNotes([])
+          setTodos([])
+          clearReports()
+          return
+        }
+
+        const sessionMap = new Map(
+          scopedSessions.map(session => [
+            session.id,
+            formatSessionContext(
+              session.session_day ?? null,
+              session.location ?? null,
+              session.session_season ?? null,
+              session.session_year ?? null,
+              session.start_date ?? null,
+            ),
+          ]),
+        )
+        const sessionIds = scopedSessions.map(session => session.id)
+
+        const allowedAuthorIds = new Set<string>()
+        const ownerId = teamData?.owner_id ?? ''
+        if (ownerId) {
+          allowedAuthorIds.add(ownerId)
+        }
+        ;(memberData ?? []).forEach(row => {
+          const userId = (row.user_id ?? '').trim()
+          if (userId) {
+            allowedAuthorIds.add(userId)
+          }
+        })
+
+        if (activeTab === 'report') {
+          const { data: reportData, error: reportError } = await supabase
+            .from('session_reports')
+            .select('id,session_id,created_by,title,report_data,created_at,updated_at')
+            .in('session_id', sessionIds)
+            .order('updated_at', { ascending: false })
+
+          if (!active) {
+            return
+          }
+
+          if (reportError) {
+            console.error('Failed to load full-time reports', reportError)
+            setNotes([])
+            setTodos([])
+            clearReports()
+            return
+          }
+
+          const teamReports = (reportData ?? []).filter(row => allowedAuthorIds.has(row.created_by))
+          if (teamReports.length === 0) {
+            setNotes([])
+            setTodos([])
+            clearReports()
+            return
+          }
+
+          const authorIds = Array.from(new Set(teamReports.map(row => row.created_by).filter(Boolean)))
+          const { data: authorProfiles, error: authorError } = authorIds.length
+            ? await supabase
+                .from('profiles')
+                .select('id,first_name,last_name,email')
+                .in('id', authorIds)
+            : { data: [], error: null }
+
+          if (!active) {
+            return
+          }
+
+          if (authorError) {
+            console.error('Failed to load report author profiles', authorError)
+          }
+
+          const authorNameById = new Map(
+            (authorProfiles ?? []).map(profile => {
+              const fullName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
+              return [profile.id, fullName || profile.email || 'Unknown author']
+            }),
+          )
+
+          const mappedReports: ReportItem[] = teamReports.map(row => ({
+            id: row.id,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at ?? row.created_at,
+            title: row.title ?? 'Untitled report',
+            reportData: normalizeReportData(row.report_data, []),
+            createdBy: row.created_by,
+            authorName: authorNameById.get(row.created_by) ?? 'Unknown author',
+            sessionContext: sessionMap.get(row.session_id) ?? undefined,
+          }))
+
+          setLoadedReports(mappedReports)
+          setNotes([])
+          setTodos([])
+          return
+        }
+
+        const { data: noteData, error: noteError } = await supabase
+          .from('session_notes')
+          .select('id,session_id,created_by,created_at,note_type,text,employee_name,done')
+          .in('session_id', sessionIds)
+          .order('created_at', { ascending: false })
+
+        if (!active) {
+          return
+        }
+
+        if (noteError) {
+          console.error('Failed to load full-time team notes', noteError)
+          setNotes([])
+          setTodos([])
+          clearReports()
+          return
+        }
+
+        const teamNotes = (noteData ?? []).filter(row => allowedAuthorIds.has(row.created_by))
+        const filteredRows = teamNotes.filter(row => row.note_type === activeTab)
+        if (filteredRows.length === 0) {
+          setNotes([])
+          setTodos([])
+          clearReports()
+          return
+        }
+
+        const authorIds = Array.from(new Set(filteredRows.map(row => row.created_by).filter(Boolean)))
+        const { data: authorProfiles, error: authorError } = authorIds.length
+          ? await supabase
+              .from('profiles')
+              .select('id,first_name,last_name,email')
+              .in('id', authorIds)
+          : { data: [], error: null }
+
+        if (!active) {
+          return
+        }
+
+        if (authorError) {
+          console.error('Failed to load note author profiles', authorError)
+        }
+
+        const authorNameById = new Map(
+          (authorProfiles ?? []).map(profile => {
+            const fullName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
+            return [profile.id, fullName || profile.email || 'Unknown author']
+          }),
+        )
+
+        setNotes(
+          filteredRows.map(row => ({
+            id: row.id,
+            createdAt: row.created_at,
+            text: row.text,
+            employeeName: row.employee_name ?? undefined,
+            authorName: authorNameById.get(row.created_by) ?? 'Unknown author',
+            sessionContext: sessionMap.get(row.session_id) ?? undefined,
+          })),
+        )
+        setTodos([])
+        clearReports()
+      }
+
+      void loadTeamTermNotes()
+      return () => {
+        active = false
+      }
+    }
+
     const loadFromDb = async () => {
+      if (!supabase && activeTab === 'report') {
+        setNotes([])
+        setTodos([])
+        clearReports()
+        return
+      }
       const data = await fetchSessionNotes(sessionId)
       const rows = data.notes ?? []
+      if (activeTab === 'report') {
+        if (!supabase) {
+          setLoadedReports([])
+          setNotes([])
+          setTodos([])
+          return
+        }
+        const { data, error } = await supabase
+          .from('session_reports')
+          .select('id,session_id,created_by,title,report_data,created_at,updated_at')
+          .eq('session_id', sessionId)
+          .order('updated_at', { ascending: false })
+
+        if (error) {
+          console.error('Failed to load reports', error)
+          setNotes([])
+          setTodos([])
+          clearReports()
+          return
+        }
+
+        const reportRows = data ?? []
+        const authorIds = Array.from(new Set(reportRows.map(row => row.created_by).filter(Boolean)))
+        const { data: authorProfiles, error: authorError } = authorIds.length
+          ? await supabase
+              .from('profiles')
+              .select('id,first_name,last_name,email')
+              .in('id', authorIds)
+          : { data: [], error: null }
+
+        if (authorError) {
+          console.error('Failed to load report author profiles', authorError)
+        }
+
+        const authorNameById = new Map(
+          (authorProfiles ?? []).map(profile => {
+            const fullName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
+            return [profile.id, fullName || profile.email || 'Unknown author']
+          }),
+        )
+
+        const mappedReports: ReportItem[] = reportRows.map(row => ({
+          id: row.id,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at ?? row.created_at,
+          title: row.title ?? 'Untitled report',
+          reportData: normalizeReportData(row.report_data, instructorNames),
+          createdBy: row.created_by,
+          authorName: authorNameById.get(row.created_by) ?? 'Unknown author',
+          sessionContext: currentSessionContext || undefined,
+        }))
+
+        setLoadedReports(mappedReports)
+        setNotes([])
+        setTodos([])
+        return
+      }
       if (activeTab === 'todo') {
         setTodos(
           rows
@@ -125,6 +444,7 @@ function StaffNotesPage() {
               done: row.done ?? false,
             })),
         )
+        setNotes([])
       } else {
         setNotes(
           rows
@@ -136,10 +456,23 @@ function StaffNotesPage() {
               employeeName: row.employee_name ?? undefined,
             })),
         )
+        setTodos([])
       }
+      clearReports()
     }
     void loadFromDb()
-  }, [activeTab, isGuest, sessionId])
+  }, [
+    activeTab,
+    clearReports,
+    currentTeamId,
+    currentTerm,
+    currentSessionContext,
+    instructorNames,
+    isFullTime,
+    isGuest,
+    sessionId,
+    setLoadedReports,
+  ])
 
   useEffect(() => {
     if (!employeeName) {
@@ -154,7 +487,7 @@ function StaffNotesPage() {
     if (!sessionId) {
       return
     }
-    if (activeTab === 'todo') {
+    if (activeConfig.type !== 'note') {
       return
     }
     const trimmed = noteText.trim()
@@ -294,17 +627,20 @@ function StaffNotesPage() {
     setTodos(current => current.filter(item => item.id !== id))
   }
 
-  const tabButtonClass = (tabKey: TabKey) =>
-    [
-      'rounded-2xl border px-4 py-2 text-sm font-semibold transition',
-      tabKey === activeTab
-        ? 'border-secondary bg-secondary text-accent'
-        : 'border-secondary/30 bg-bg text-secondary hover:bg-accent',
-    ].join(' ')
-
-  const listEmptyLabel = activeConfig.type === 'todo' ? 'No todo items yet.' : 'No notes yet.'
-  const canWriteDbNotes = Boolean(user?.id) && (access.mode === 'owner' || access.mode === 'shared')
+  const canWriteDbNotes =
+    !isFullTime && Boolean(user?.id) && (access.mode === 'owner' || access.mode === 'shared')
   const isEditable = isGuest || canWriteDbNotes
+
+  const listEmptyLabel =
+    activeConfig.type === 'todo'
+      ? 'No todo items yet.'
+      : activeConfig.type === 'report'
+      ? isFullTime
+        ? 'No team member reports found for the selected term.'
+        : 'No reports yet.'
+      : isFullTime
+      ? 'No team member notes found for this tab in the selected term.'
+      : 'No notes yet.'
   const isAddNoteDisabled = !isSessionReady || noteText.trim() === '' || !isEditable
   const isAddTodoDisabled = !isSessionReady || todoText.trim() === '' || !isEditable
 
@@ -312,167 +648,71 @@ function StaffNotesPage() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <div className="rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
         <h2 className="text-2xl font-semibold">Notes</h2>
-        <p className="mt-2 text-base">Capture session notes, employee updates, and todo items.</p>
+        <p className="mt-2 text-base">Capture session notes, employee updates, todos, and reports.</p>
       </div>
 
       {!isSessionReady ? (
         <div className="rounded-card border-2 border-secondary/30 bg-bg p-4 text-sm font-semibold text-secondary">
-          Select a session to add notes.
+          {isFullTime ? 'Select a team and session term on Home to view notes.' : 'Select a session to add notes.'}
         </div>
       ) : null}
 
       <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
-        <div className="flex flex-wrap gap-2">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              type="button"
-              className={tabButtonClass(tab.key)}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <TabBar visibleTabs={visibleTabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
         <div className="mt-6">
           {activeConfig.type === 'todo' ? (
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3 md:flex-row">
-                <input
-                  className="flex-1 rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                  type="text"
-                  value={todoText}
-                  onChange={event => setTodoText(event.target.value)}
-                  placeholder="Add a todo item"
-                  disabled={!isSessionReady}
-                />
-                <button
-                  type="button"
-                  className="rounded-2xl bg-secondary px-5 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={handleAddTodo}
-                  disabled={isAddTodoDisabled}
-                >
-                  Add Todo
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {todos.length === 0 ? (
-                  <p className="text-sm text-secondary/70">{listEmptyLabel}</p>
-                ) : (
-                  todos.map(item => (
-                    <div
-                      key={item.id}
-                      className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-secondary/20 bg-bg p-4"
-                    >
-                      <label className="flex flex-1 items-start gap-3">
-                        <input
-                          type="checkbox"
-                          checked={item.done}
-                          onChange={() => handleToggleTodo(item.id)}
-                          disabled={!isSessionReady}
-                        />
-                        <div>
-                          <p
-                            className={`text-sm font-semibold ${
-                              item.done ? 'text-secondary/50 line-through' : 'text-secondary'
-                            }`}
-                          >
-                            {item.text}
-                          </p>
-                          <p className="mt-1 text-xs text-secondary/60">
-                            {new Date(item.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                      </label>
-                      <button
-                        type="button"
-                        className="text-xs font-semibold text-secondary/70 transition hover:text-secondary"
-                        onClick={() => handleDeleteTodo(item.id)}
-                        disabled={!isSessionReady}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+            <TodoTab
+              isSessionReady={isSessionReady}
+              isEditable={isEditable}
+              todoText={todoText}
+              setTodoText={setTodoText}
+              onAddTodo={handleAddTodo}
+              isAddTodoDisabled={isAddTodoDisabled}
+              todos={todos}
+              listEmptyLabel={listEmptyLabel}
+              onToggleTodo={handleToggleTodo}
+              onDeleteTodo={handleDeleteTodo}
+            />
+          ) : activeConfig.type === 'report' ? (
+            <ReportTab
+              isSessionReady={isSessionReady}
+              reports={reports}
+              activeReportId={activeReportId}
+              onSelectReport={handleSelectReport}
+              canCreateReports={canCreateReports}
+              onCreateReport={handleCreateReport}
+              selectedReport={selectedReport}
+              canEditSelectedReport={canEditSelectedReport}
+              onDeleteReport={handleDeleteReport}
+              onExportReport={handleExportReport}
+              isExportingReport={isExportingReport}
+              reportStatus={reportStatus}
+              reportTitle={reportTitle}
+              onReportTitleChange={handleReportTitleChange}
+              isReportInputDisabled={isReportInputDisabled}
+              listEmptyLabel={listEmptyLabel}
+              reportDraft={reportDraft}
+              updateReportDraft={updateReportDraft}
+              reportInstructorOptions={reportInstructorOptions}
+            />
           ) : (
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3">
-                {activeConfig.showEmployee ? (
-                  <select
-                    className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                    value={employeeName}
-                    onChange={event => setEmployeeName(event.target.value)}
-                    disabled={!isSessionReady}
-                  >
-                    {instructorNames.length === 0 ? (
-                      <option value="">No instructors found</option>
-                    ) : (
-                      <option value="">Select employee (optional)</option>
-                    )}
-                    {instructorNames.map(name => (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
-                ) : null}
-                <textarea
-                  className="min-h-[120px] rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                  value={noteText}
-                  onChange={event => setNoteText(event.target.value)}
-                  placeholder="Write a note"
-                  disabled={!isSessionReady}
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    className="rounded-2xl bg-secondary px-5 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary disabled:cursor-not-allowed disabled:opacity-60"
-                    onClick={handleAddNote}
-                    disabled={isAddNoteDisabled}
-                  >
-                    Add Note
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {notes.length === 0 ? (
-                  <p className="text-sm text-secondary/70">{listEmptyLabel}</p>
-                ) : (
-                  notes.map(item => (
-                    <div
-                      key={item.id}
-                      className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-secondary/20 bg-bg p-4"
-                    >
-                      <div className="flex-1">
-                        <p className="text-xs font-semibold text-secondary/60">
-                          {new Date(item.createdAt).toLocaleString()}
-                        </p>
-                        {item.employeeName ? (
-                          <p className="mt-1 text-sm font-semibold text-secondary">
-                            {item.employeeName}
-                          </p>
-                        ) : null}
-                        <p className="mt-2 whitespace-pre-wrap text-sm text-secondary">{item.text}</p>
-                      </div>
-                      <button
-                        type="button"
-                        className="text-xs font-semibold text-secondary/70 transition hover:text-secondary"
-                        onClick={() => handleDeleteNote(item.id)}
-                        disabled={!isSessionReady}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+            <NoteTab
+              isSessionReady={isSessionReady}
+              isEditable={isEditable}
+              isFullTime={isFullTime}
+              showEmployee={Boolean(activeConfig.showEmployee)}
+              instructorNames={instructorNames}
+              employeeName={employeeName}
+              setEmployeeName={setEmployeeName}
+              noteText={noteText}
+              setNoteText={setNoteText}
+              onAddNote={handleAddNote}
+              isAddNoteDisabled={isAddNoteDisabled}
+              notes={notes}
+              listEmptyLabel={listEmptyLabel}
+              onDeleteNote={handleDeleteNote}
+            />
           )}
         </div>
       </div>

@@ -5,12 +5,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"cob-aquatics/internal/services/files"
+	"github.com/go-gota/gota/dataframe"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -37,8 +39,13 @@ type classInfo struct {
 	EndTime       string
 }
 
-func BuildFromCSV(records [][]string) (Output, error) {
-	classes, err := parseCSV(records)
+func BuildFromCSVReader(csvReader io.Reader) (Output, error) {
+	df := dataframe.ReadCSV(csvReader)
+	if df.Err != nil {
+		return Output{}, fmt.Errorf("unable to read csv: %w", df.Err)
+	}
+
+	classes, err := parseCSVRows(df.Maps())
 	if err != nil {
 		return Output{}, err
 	}
@@ -72,21 +79,17 @@ func BuildFromCSV(records [][]string) (Output, error) {
 	}, nil
 }
 
-func parseCSV(records [][]string) ([]classInfo, error) {
-	if len(records) < 2 {
+func parseCSVRows(rows []map[string]interface{}) ([]classInfo, error) {
+	if len(rows) == 0 {
 		return nil, errors.New("no rows to process")
 	}
 
-	header := records[0]
-	colIndex := make(map[string]int, len(header))
-	for i, name := range header {
-		colIndex[strings.TrimSpace(name)] = i
-	}
+	firstRow := normalizeSchematicRow(rows[0])
 
 	required := []string{"GroupName", "MainFacility", "Day", "Starts", "Ends"}
 	missing := make([]string, 0)
 	for _, col := range required {
-		if _, ok := colIndex[col]; !ok {
+		if _, ok := firstRow[normalizeSchematicHeader(col)]; !ok {
 			missing = append(missing, col)
 		}
 	}
@@ -94,34 +97,27 @@ func parseCSV(records [][]string) ([]classInfo, error) {
 		return nil, fmt.Errorf("missing required columns: %s", strings.Join(missing, ", "))
 	}
 
-	get := func(row []string, col string) string {
-		idx, ok := colIndex[col]
-		if !ok || idx >= len(row) {
-			return ""
-		}
-		return row[idx]
-	}
-
-	classInfos := make([]classInfo, 0, len(records)-1)
-	for _, row := range records[1:] {
+	classInfos := make([]classInfo, 0, len(rows))
+	for _, rawRow := range rows {
+		row := normalizeSchematicRow(rawRow)
 		info := classInfo{
-			Name:     get(row, "GroupName"),
-			Location: get(row, "MainFacility"),
-			Day:      get(row, "Day"),
-			Starts:   get(row, "Starts"),
-			Ends:     get(row, "Ends"),
-			Code:     strings.TrimSpace(get(row, "ID")),
+			Name:     schematicRowValue(row, "GroupName"),
+			Location: schematicRowValue(row, "MainFacility"),
+			Day:      schematicRowValue(row, "Day"),
+			Starts:   schematicRowValue(row, "Starts"),
+			Ends:     schematicRowValue(row, "Ends"),
+			Code:     strings.TrimSpace(schematicRowValue(row, "ID")),
 		}
 
-		info.id = parseInt(get(row, "ID"))
-		info.Duration = parseInt(get(row, "Duration"))
-		info.MaxSlots = parseInt(get(row, "Max"))
-		info.MinSlots = parseInt(get(row, "Min"))
-		info.Registered = parseInt(get(row, "RegTotal"))
-		info.PercentFilled = parseFloat(get(row, "PercentFilled"))
+		info.id = parseInt(schematicRowValue(row, "ID"))
+		info.Duration = parseInt(schematicRowValue(row, "Duration"))
+		info.MaxSlots = parseInt(schematicRowValue(row, "Max"))
+		info.MinSlots = parseInt(schematicRowValue(row, "Min"))
+		info.Registered = parseInt(schematicRowValue(row, "RegTotal"))
+		info.PercentFilled = parseFloat(schematicRowValue(row, "PercentFilled"))
 
-		startString := get(row, "Starts")
-		endString := get(row, "Ends")
+		startString := schematicRowValue(row, "Starts")
+		endString := schematicRowValue(row, "Ends")
 
 		info.StartTime = extract24hTime(startString)
 		info.EndTime = extract24hTime(endString)
@@ -133,6 +129,33 @@ func parseCSV(records [][]string) ([]classInfo, error) {
 	}
 
 	return classInfos, nil
+}
+
+func normalizeSchematicHeader(header string) string {
+	clean := strings.TrimSpace(header)
+	clean = strings.TrimPrefix(clean, "\uFEFF")
+	return strings.ToLower(clean)
+}
+
+func normalizeSchematicRow(row map[string]interface{}) map[string]string {
+	normalized := make(map[string]string, len(row))
+	for key, value := range row {
+		text := ""
+		if value != nil {
+			text = fmt.Sprint(value)
+		}
+		normalized[normalizeSchematicHeader(key)] = strings.TrimSpace(text)
+	}
+	return normalized
+}
+
+func schematicRowValue(row map[string]string, names ...string) string {
+	for _, name := range names {
+		if value, ok := row[normalizeSchematicHeader(name)]; ok {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
 }
 
 func parseInt(s string) int {

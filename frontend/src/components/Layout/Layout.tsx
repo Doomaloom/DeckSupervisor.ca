@@ -107,7 +107,7 @@ function Layout({ children }: LayoutProps) {
     }, [needsProfile, profile])
 
     useEffect(() => {
-        document.title = pageTitle === 'COB Aquatics' ? pageTitle : `${pageTitle} | COB Aquatics`
+        document.title = pageTitle === 'DeckSupervisor.ca' ? pageTitle : `${pageTitle} | DeckSupervisor.ca`
     }, [pageTitle])
 
     useEffect(() => {
@@ -499,7 +499,7 @@ function getPageTitle(pathname: string) {
         case '/report-cards': return 'Report Cards'
         case '/staff-notes': return 'Notes'
         case '/full-timer-tools': return 'Full Timer Tools'
-        default: return 'COB Aquatics'
+        default: return 'DeckSupervisor.ca'
     }
 }
 

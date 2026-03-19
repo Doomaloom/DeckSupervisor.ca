@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/csv"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -10,6 +9,11 @@ import (
 )
 
 func ProcessCSV(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		http.Error(w, "Unable to parse form", http.StatusBadRequest)
+		return
+	}
+
 	file, _, err := r.FormFile("csv_file")
 	if err != nil {
 		http.Error(w, "No file uploaded", http.StatusBadRequest)
@@ -19,15 +23,8 @@ func ProcessCSV(w http.ResponseWriter, r *http.Request) {
 
 	day := r.FormValue("day")
 
-	reader := csv.NewReader(file)
-	records, err := reader.ReadAll()
-	if err != nil {
-		http.Error(w, "Error reading CSV", http.StatusInternalServerError)
-		return
-	}
-
 	instructorMap := map[string]string{}
-	if err := r.ParseMultipartForm(32 << 20); err == nil && r.MultipartForm != nil {
+	if r.MultipartForm != nil {
 		names := r.MultipartForm.Value["instructor_names[]"]
 		codes := r.MultipartForm.Value["instructor_codes[]"]
 		for i, name := range names {
@@ -48,7 +45,7 @@ func ProcessCSV(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	classes, total, err := tasks.ProcessCSV(records, instructorMap, day)
+	classes, total, err := tasks.ProcessCSVFromCSV(file, instructorMap, day)
 	if err != nil {
 		http.Error(w, "Error processing CSV", http.StatusInternalServerError)
 		return

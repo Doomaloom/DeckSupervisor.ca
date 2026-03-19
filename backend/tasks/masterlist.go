@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -41,26 +42,20 @@ type MasterListResult struct {
 	Data     []byte
 }
 
-func ProcessMasterList(records [][]string, options FormatOptions, instructorMap map[string]string) (MasterListResult, error) {
-	if len(records) < 2 {
+func ProcessMasterListFromCSV(csvReader io.Reader, options FormatOptions, instructorMap map[string]string) (MasterListResult, error) {
+	rows, err := readCSVRows(csvReader)
+	if err != nil {
+		return MasterListResult{}, err
+	}
+	return ProcessMasterListRows(rows, options, instructorMap)
+}
+
+func ProcessMasterListRows(rows []csvRow, options FormatOptions, instructorMap map[string]string) (MasterListResult, error) {
+	if len(rows) == 0 {
 		return MasterListResult{}, fmt.Errorf("no rows to process")
 	}
 
-	headers := records[0]
-	columnIndex := map[string]int{}
-	for i, header := range headers {
-		columnIndex[header] = i
-	}
-
-	getColumn := func(row []string, name string) string {
-		idx, ok := columnIndex[name]
-		if !ok || idx >= len(row) {
-			return ""
-		}
-		return row[idx]
-	}
-
-	_, isSeries := columnIndex["ServiceName"]
+	_, isSeries := rows[0][normalizeHeader("ServiceName")]
 
 	outputHeaders := []string{"EventID", "EventTime", "Instructor"}
 	if isSeries {
@@ -70,13 +65,9 @@ func ProcessMasterList(records [][]string, options FormatOptions, instructorMap 
 	}
 
 	outputRows := [][]string{}
-	for i := 1; i < len(records); i++ {
-		row := records[i]
-		if len(row) == 0 {
-			continue
-		}
-		eventID := NormalizeEventID(getColumn(row, "EventID"))
-		eventTime := getColumn(row, "EventTime")
+	for _, row := range rows {
+		eventID := NormalizeEventID(rowValue(row, "EventID"))
+		eventTime := rowValue(row, "EventTime")
 		instructor := instructorMap[eventID]
 
 		if isSeries {
@@ -84,18 +75,18 @@ func ProcessMasterList(records [][]string, options FormatOptions, instructorMap 
 				eventID,
 				eventTime,
 				instructor,
-				getColumn(row, "ServiceName"),
-				getColumn(row, "AttendeeName"),
-				getColumn(row, "AttendeePhone"),
+				rowValue(row, "ServiceName"),
+				rowValue(row, "AttendeeName"),
+				rowValue(row, "AttendeePhone"),
 			})
 		} else {
 			outputRows = append(outputRows, []string{
 				eventID,
 				eventTime,
 				instructor,
-				getColumn(row, "Service"),
-				getColumn(row, "AttendeeName"),
-				getColumn(row, "Phone"),
+				rowValue(row, "Service"),
+				rowValue(row, "AttendeeName"),
+				rowValue(row, "Phone"),
 			})
 		}
 	}
@@ -125,8 +116,8 @@ func ProcessMasterList(records [][]string, options FormatOptions, instructorMap 
 		addInstructorHeaders(file, sheet, 2, len(outputRows)+1)
 	}
 
-	rows, _ := file.GetRows(sheet)
-	lastRow := len(rows)
+	sheetRows, _ := file.GetRows(sheet)
+	lastRow := len(sheetRows)
 	if options.BoldTime || options.BoldCourse || options.CenterTime || options.CenterCourse {
 		applyHeaderStyles(file, sheet, 2, lastRow, options)
 	}

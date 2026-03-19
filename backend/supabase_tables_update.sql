@@ -81,6 +81,20 @@ create table if not exists session_notes (
 
 create index if not exists session_notes_session_id_idx on session_notes(session_id);
 
+create table if not exists session_reports (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references sessions(id) on delete cascade,
+  created_by uuid not null references profiles(id) on delete cascade,
+  title text not null default '',
+  report_data jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists session_reports_session_id_idx on session_reports(session_id);
+create index if not exists session_reports_created_by_idx on session_reports(created_by);
+create index if not exists session_reports_session_updated_idx on session_reports(session_id, updated_at desc);
+
 create table if not exists roster_level_edits (
   id uuid primary key default gen_random_uuid(),
   session_id uuid not null references sessions(id) on delete cascade,

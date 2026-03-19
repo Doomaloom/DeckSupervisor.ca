@@ -4,7 +4,13 @@ import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentSession } from '../../app/useCurrentSession'
-import { clearCurrentSessionId, getCurrentSessionId, loadSessions, saveSessions } from '../../lib/sessionStorage'
+import {
+  clearCurrentSessionId,
+  getCurrentSessionId,
+  loadSessions,
+  saveSessions,
+  setCurrentSessionId,
+} from '../../lib/sessionStorage'
 import { deleteSession, fetchCurrentTeams, updateSession } from '../../lib/serverApi'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 
@@ -275,6 +281,9 @@ function ManageSessionsPage() {
       saveSessions(updatedSessions)
       setEditMessage('Session updated.')
       setSessionsVersion(version => version + 1)
+      setCurrentSessionId(currentSessionId)
+      setCurrentSessionIdState(currentSessionId)
+      setSelectedDay(editSessionDay || '')
       return
     }
 
@@ -334,6 +343,9 @@ function ManageSessionsPage() {
     }
 
     setEditMessage('Session updated.')
+    setCurrentSessionId(currentSessionId)
+    setCurrentSessionIdState(currentSessionId)
+    setSelectedDay(editSessionDay || '')
   }
 
   const handleDeleteSession = async () => {

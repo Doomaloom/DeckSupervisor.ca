@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/go-gota/gota/dataframe"
 )
 
 type ExtractedClass struct {
@@ -42,62 +40,38 @@ type ExtractedCSVResult struct {
 }
 
 func ExtractClassesFromCSV(csvReader io.Reader) (*ExtractedCSVResult, error) {
-	df := dataframe.ReadCSV(csvReader)
-	if df.Err != nil {
-		return nil, fmt.Errorf("failed to read csv: %w", df.Err)
+	rows, err := readCSVRows(csvReader)
+	if err != nil {
+		return nil, err
 	}
-	return ExtractClasses(df.Records())
+	return ExtractClassesRows(rows)
 }
 
-func ExtractClasses(records [][]string) (*ExtractedCSVResult, error) {
-	if len(records) < 2 {
+func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
+	if len(rows) == 0 {
 		return nil, fmt.Errorf("no rows to process")
-	}
-
-	headers := records[0]
-	headerIndex := map[string]int{}
-	for i, header := range headers {
-		normalized := normalizeHeader(header)
-		if normalized == "" {
-			continue
-		}
-		headerIndex[normalized] = i
-	}
-
-	getByName := func(row []string, names []string) string {
-		for _, name := range names {
-			if idx, ok := headerIndex[normalizeHeader(name)]; ok && idx < len(row) {
-				return strings.TrimSpace(row[idx])
-			}
-		}
-		return ""
 	}
 
 	classMap := map[string]*ExtractedClass{}
 
-	for i := 1; i < len(records); i++ {
-		row := records[i]
-		if len(row) == 0 {
-			continue
-		}
-
-		courseCode := NormalizeEventID(getByName(row, []string{"EventID", "Event Id", "ClassCode", "Code", "ID"}))
+	for _, row := range rows {
+		courseCode := NormalizeEventID(rowValue(row, "EventID", "Event Id", "ClassCode", "Code", "ID"))
 		if courseCode == "" {
 			continue
 		}
 
-		serviceName := getByName(row, []string{"ServiceName", "Service", "Service Name", "GroupName", "Level"})
-		location := getByName(row, []string{"Location", "Facility", "MainFacility"})
+		serviceName := rowValue(row, "ServiceName", "Service", "Service Name", "GroupName", "Level")
+		location := rowValue(row, "Location", "Facility", "MainFacility")
 
-		dayValue := normalizeDay(getByName(row, []string{"DayOfTheWeek", "Day Of The Week"}))
+		dayValue := normalizeDay(rowValue(row, "DayOfTheWeek", "Day Of The Week"))
 		if dayValue == "" {
 			continue
 		}
 
-		startRaw := getByName(row, []string{"Starts", "Start", "StartTime"})
-		endRaw := getByName(row, []string{"Ends", "End", "EndTime"})
-		eventSchedule := getByName(row, []string{"EventSchedule", "Schedule"})
-		timeRange := getByName(row, []string{"EventTime", "Time"})
+		startRaw := rowValue(row, "Starts", "Start", "StartTime")
+		endRaw := rowValue(row, "Ends", "End", "EndTime")
+		eventSchedule := rowValue(row, "EventSchedule", "Schedule")
+		timeRange := rowValue(row, "EventTime", "Time")
 		if startRaw == "" || endRaw == "" {
 			left, right := splitTimeRange(timeRange)
 			if startRaw == "" {
@@ -116,7 +90,7 @@ func ExtractClasses(records [][]string) (*ExtractedCSVResult, error) {
 
 		durationMinutes := getDurationMinutes(startTime24, endTime24)
 		if durationMinutes <= 0 {
-			durationMinutes = parsePositiveInt(getByName(row, []string{"Duration"}))
+			durationMinutes = parsePositiveInt(rowValue(row, "Duration"))
 		}
 		if durationMinutes <= 0 {
 			continue
@@ -125,8 +99,8 @@ func ExtractClasses(records [][]string) (*ExtractedCSVResult, error) {
 		sessionSeason, sessionYear := getSeasonAndYear(eventSchedule, startDate, endDate)
 		sessionKey := BuildExtractedSessionKey(dayValue, sessionSeason, sessionYear, location)
 
-		studentCountFromRoster := parsePositiveInt(getByName(row, []string{"RegTotal", "Registered", "Enrollment", "Students"}))
-		hasAttendee := strings.TrimSpace(getByName(row, []string{"AttendeeName", "Name", "FirstName"})) != ""
+		studentCountFromRoster := parsePositiveInt(rowValue(row, "RegTotal", "Registered", "Enrollment", "Students"))
+		hasAttendee := strings.TrimSpace(rowValue(row, "AttendeeName", "Name", "FirstName")) != ""
 
 		key := strings.Join([]string{
 			sessionKey,
