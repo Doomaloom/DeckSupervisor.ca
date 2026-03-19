@@ -11,6 +11,7 @@ import {
   buildPlannerSaveState,
   loadPlannerDataset,
   mergePlannerDatasets,
+  parseEmptyClassesPlannerCsv,
   parseSessionPlannerCsv,
   parsePlannerSaveState,
   plannerSaveStateToSharePayload,
@@ -98,6 +99,7 @@ function SessionPlanningPage() {
     selectedClass,
     timeLabels,
     visibleClasses,
+    waitingParticipants,
   } = usePlannerViewModel(dataset, activeCallParticipantId, {
     selectedDay,
     selectedLocation,
@@ -147,6 +149,27 @@ function SessionPlanningPage() {
       }
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : 'Failed to merge planner CSV.')
+    }
+  }
+
+  const handleAddEmptyClassesUpload = async (file: File | null) => {
+    if (!file) {
+      return
+    }
+    try {
+      const parsedDataset = parseEmptyClassesPlannerCsv(await file.text(), file.name)
+      const nextDataset = dataset ? mergePlannerDatasets(dataset, parsedDataset) : parsedDataset
+      persistLocalDataset(nextDataset)
+      setError('')
+      setStatusMessage('Empty classes added from the schematic CSV.')
+      setIsInfoPanelOpen(true)
+      if (shareCode) {
+        syncQueryParams('')
+      }
+    } catch (uploadError) {
+      setError(
+        uploadError instanceof Error ? uploadError.message : 'Failed to import empty classes CSV.',
+      )
     }
   }
 
@@ -366,7 +389,7 @@ function SessionPlanningPage() {
 
   return (
     <div id="session-planning-page" data-component="session-planning-page" className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-      <PlannerHeader
+        <PlannerHeader
         dataset={dataset}
         error={error}
         isPopout={isPopout}
@@ -381,8 +404,9 @@ function SessionPlanningPage() {
         shareSession={shareSession}
         statusMessage={statusMessage}
         showPlannedChangesButton={plannedChangeGroups.length > 0}
-        onHandleAddUpload={handleAddUpload}
-        onHandleUpload={handleUpload}
+          onHandleAddUpload={handleAddUpload}
+          onHandleAddEmptyClassesUpload={handleAddEmptyClassesUpload}
+          onHandleUpload={handleUpload}
         onJoinSharedPlanner={joinSharedPlanner}
         onLeaveSharedPlannerSession={leaveSharedPlannerSession}
         onLoadState={loadPlannerState}
@@ -442,6 +466,7 @@ function SessionPlanningPage() {
             setClassStatus={setClassStatus}
             setIsInfoPanelOpen={setIsInfoPanelOpen}
             startCall={startCall}
+            waitingParticipants={waitingParticipants}
           />
         </div>
       )}

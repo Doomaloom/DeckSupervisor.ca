@@ -17,6 +17,7 @@ type PlannerHeaderProps = {
   statusMessage: string
   showPlannedChangesButton: boolean
   onHandleAddUpload: (file: File | null) => void | Promise<void>
+  onHandleAddEmptyClassesUpload: (file: File | null) => void | Promise<void>
   onHandleUpload: (file: File | null) => void | Promise<void>
   onJoinSharedPlanner: () => void | Promise<void>
   onLeaveSharedPlannerSession: () => void | Promise<void>
@@ -48,6 +49,7 @@ function PlannerHeader({
   statusMessage,
   showPlannedChangesButton,
   onHandleAddUpload,
+  onHandleAddEmptyClassesUpload,
   onHandleUpload,
   onJoinSharedPlanner,
   onLeaveSharedPlannerSession,
@@ -121,7 +123,8 @@ function PlannerHeader({
       </div>
       <p className="mt-2 max-w-3xl text-secondary/80">
         Upload a participant CSV to review classes by day and location, flag cancellations,
-        track calls, and offer exact-level alternatives.
+        track calls, offer exact-level alternatives, and optionally add empty classes from a
+        schematic CSV.
       </p>
       {!shareCode ? (
         <>
@@ -152,6 +155,18 @@ function PlannerHeader({
                 />
               </label>
             ) : null}
+            <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-secondary/40 bg-secondary/5 px-5 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-secondary hover:bg-secondary/10">
+              <span>Add Empty Classes CSV</span>
+              <input
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                type="file"
+                accept=".csv"
+                onChange={event => {
+                  void onHandleAddEmptyClassesUpload(event.target.files?.[0] ?? null)
+                  event.target.value = ''
+                }}
+              />
+            </label>
             {dataset ? (
               <p className="text-sm text-secondary/70">
                 Loaded: <span className="font-semibold text-secondary">{dataset.sourceFileName}</span>

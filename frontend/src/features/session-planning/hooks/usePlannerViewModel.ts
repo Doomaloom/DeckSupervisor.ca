@@ -122,6 +122,16 @@ export function usePlannerViewModel(
       .filter((participant): participant is PlannerParticipant => Boolean(participant))
   }, [dataset, selectedClass])
 
+  const waitingParticipants = useMemo(() => {
+    if (!dataset || !selectedClass) {
+      return []
+    }
+    const byId = new Map(dataset.participants.map(participant => [participant.id, participant]))
+    return selectedClass.waitingParticipantIds
+      .map(participantId => byId.get(participantId))
+      .filter((participant): participant is PlannerParticipant => Boolean(participant))
+  }, [dataset, selectedClass])
+
   const alternatives = useMemo(() => {
     if (!dataset || !selectedClass) {
       return []
@@ -194,6 +204,7 @@ export function usePlannerViewModel(
     setSelectedLocation,
     timeLabels,
     visibleClasses,
+    waitingParticipants,
   }
 }
 

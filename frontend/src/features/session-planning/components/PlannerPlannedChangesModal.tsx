@@ -75,6 +75,7 @@ function PlannerPlannedChangesModal({
                 <div>
                   <h4 className="text-lg font-semibold">{group.plannerClass.serviceName}</h4>
                   <p className="mt-1 text-sm text-secondary/70">
+                    Code {group.plannerClass.eventId} •{' '}
                     {dayNames[group.plannerClass.dayOfWeek] ?? group.plannerClass.dayOfWeek} •{' '}
                     {group.plannerClass.eventTime} • {group.plannerClass.facility}
                   </p>
@@ -118,14 +119,10 @@ function PlannerPlannedChangesModal({
                     </div>
 
                     {(callRecord.offeredAlternativeClassKey || callRecord.acceptedAlternativeClassKey || callRecord.notes) ? (
-                      <div className="mt-3 grid gap-3 md:grid-cols-3">
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
                         <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
-                          <span className="font-semibold">Offered alternative:</span>{' '}
-                          {callRecord.offeredAlternativeClassKey || 'None'}
-                        </div>
-                        <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
-                          <span className="font-semibold">Accepted alternative:</span>{' '}
-                          {callRecord.acceptedAlternativeClassKey || 'None'}
+                          <span className="font-semibold">Alternative option:</span>{' '}
+                          {callRecord.acceptedAlternativeClassKey || callRecord.offeredAlternativeClassKey || 'None'}
                         </div>
                         <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
                           <span className="font-semibold">Notes:</span> {callRecord.notes || 'None'}

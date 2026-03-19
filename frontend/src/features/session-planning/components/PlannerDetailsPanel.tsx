@@ -20,6 +20,7 @@ type PlannerDetailsPanelProps = {
   setClassStatus: (classKey: string, status: PlannerClassStatus) => void | Promise<void>
   setIsInfoPanelOpen: (value: boolean) => void
   startCall: (participantId: string) => void
+  waitingParticipants: PlannerParticipant[]
 }
 
 function formatAlternativeLabel(option: PlannerClass) {
@@ -36,6 +37,7 @@ function PlannerDetailsPanel({
   setClassStatus,
   setIsInfoPanelOpen,
   startCall,
+  waitingParticipants,
 }: PlannerDetailsPanelProps) {
   const [openAlternativeParticipantId, setOpenAlternativeParticipantId] = useState('')
 
@@ -155,6 +157,52 @@ function PlannerDetailsPanel({
               )}
             </div>
           </div>
+
+          {waitingParticipants.length > 0 ? (
+            <div className="rounded-2xl border border-secondary/20 bg-bg p-4">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.14em] text-secondary/70">
+                Waitlist Contacts
+              </h4>
+              <div className="mt-3 flex max-h-56 flex-col gap-3 overflow-y-auto pr-1">
+                {waitingParticipants.map(participant => {
+                  const callRecord = dataset.callRecords[participant.id]
+                  return (
+                    <div
+                      key={participant.id}
+                      className="rounded-2xl border border-secondary/20 bg-accent p-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{participant.name}</p>
+                          <p className="mt-1 text-sm text-secondary/70">
+                            {participant.phone || 'No phone'} {participant.email ? `• ${participant.email}` : ''}
+                          </p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.12em] text-secondary/60">
+                            Waitlist
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                            callRecord?.status === 'called'
+                              ? 'bg-primary text-accent'
+                              : 'border border-secondary/20 bg-bg text-secondary hover:bg-secondary/5'
+                          }`}
+                          onClick={() =>
+                            void setCallRecord(participant.id, {
+                              status: callRecord?.status === 'called' ? 'not_started' : 'called',
+                            })
+                          }
+                        >
+                          {callRecord?.status === 'called' ? 'Called' : 'Mark Called'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
 
           {selectedClass.planningStatus === 'active' ? (
             <div className="rounded-2xl border border-secondary/20 bg-bg p-4 text-sm text-secondary/70">

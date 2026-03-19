@@ -60,6 +60,19 @@ type CsvParticipantRow = {
   email: string
 }
 
+type CsvEmptyClassRow = {
+  serviceName: string
+  minimumCapacity: number
+  maximumCapacity: number
+  bookedCount: number
+  dayOfWeek: string
+  eventTime: string
+  eventId: string
+  sessionSeason: string
+  sessionYear: number
+  facility: string
+}
+
 const dayMap: Record<string, string> = {
   monday: 'Mo',
   tuesday: 'Tu',
@@ -134,6 +147,31 @@ function normalizeHeader(value: string) {
   return value.trim().replace(/^\uFEFF/, '').toLowerCase()
 }
 
+function buildHeaderIndex(headerRow: string[]) {
+  const headerIndex = new Map<string, number>()
+  headerRow.forEach((header, index) => {
+    const normalized = normalizeHeader(header)
+    if (normalized) {
+      headerIndex.set(normalized, index)
+    }
+  })
+  return headerIndex
+}
+
+function hasAnyHeader(headerIndex: Map<string, number>, headers: string[]) {
+  return headers.some(header => headerIndex.has(normalizeHeader(header)))
+}
+
+function getHeaderValue(row: string[], headerIndex: Map<string, number>, headers: string[]) {
+  for (const header of headers) {
+    const index = headerIndex.get(normalizeHeader(header))
+    if (index !== undefined && index < row.length) {
+      return row[index]?.trim() ?? ''
+    }
+  }
+  return ''
+}
+
 function normalizeDay(value: string) {
   const trimmed = value.trim()
   if (!trimmed) {
@@ -205,6 +243,131 @@ function parseEventSchedule(value: string) {
   return { season: 'Fall', year: parsed.getUTCFullYear() }
 }
 
+function parseDateString(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+  if (isoMatch) {
+    const year = Number(isoMatch[1])
+    const month = Number(isoMatch[2])
+    const day = Number(isoMatch[3])
+    const date = new Date(year, month - 1, day)
+    if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+      return date
+    }
+  }
+
+  const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)
+  if (slashMatch) {
+    const month = Number(slashMatch[1])
+    const day = Number(slashMatch[2])
+    const year = Number(slashMatch[3])
+    const date = new Date(year, month - 1, day)
+    if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+      return date
+    }
+  }
+
+  const parsed = new Date(trimmed)
+  if (Number.isNaN(parsed.getTime())) {
+    return null
+  }
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+}
+
+function getSeasonAndYearFromDates(startDate: Date | null, endDate: Date | null, eventSchedule: string) {
+  const schedule = parseEventSchedule(eventSchedule)
+  if (schedule.season && schedule.year > 0) {
+    return schedule
+  }
+
+  const date = startDate ?? endDate
+  if (!date) {
+    return { season: '', year: 0 }
+  }
+
+  const month = date.getMonth() + 1
+  if (month <= 3) {
+    return { season: 'Winter', year: date.getFullYear() }
+  }
+  if (month <= 6) {
+    return { season: 'Spring', year: date.getFullYear() }
+  }
+  if (month <= 9) {
+    return { season: 'Summer', year: date.getFullYear() }
+  }
+  return { season: 'Fall', year: date.getFullYear() }
+}
+
+function extractTimeAndDate(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return { time24: '', date: null as Date | null }
+  }
+
+  const date = parseDateString(trimmed)
+  const normalized = trimmed
+    .replace(/^\d{4}-\d{1,2}-\d{1,2}[T\s]*/, '')
+    .replace(/^\d{1,2}\/\d{1,2}\/\d{4}\s+/, '')
+    .trim()
+
+  const timeSource = normalized || trimmed
+  const timeMatch = timeSource.match(/(\d{1,2})(?::(\d{2}))?\s*([AaPp][Mm])?/)
+  if (!timeMatch) {
+    return { time24: '', date }
+  }
+
+  let hours = Number(timeMatch[1])
+  const minutes = timeMatch[2] ?? '00'
+  const modifier = timeMatch[3]?.toUpperCase() ?? ''
+
+  if (modifier === 'PM' && hours < 12) {
+    hours += 12
+  } else if (modifier === 'AM' && hours === 12) {
+    hours = 0
+  }
+
+  if (!modifier && hours === 24) {
+    hours = 0
+  }
+
+  if (hours < 0 || hours > 23) {
+    return { time24: '', date }
+  }
+
+  return {
+    time24: `${String(hours).padStart(2, '0')}:${minutes.padStart(2, '0')}`,
+    date,
+  }
+}
+
+function formatTime12h(time24: string) {
+  const [hourText = '0', minuteText = '00'] = time24.split(':')
+  let hour = Number(hourText)
+  if (!Number.isFinite(hour)) {
+    return ''
+  }
+  const suffix = hour >= 12 ? 'PM' : 'AM'
+  if (hour === 0) {
+    hour = 12
+  } else if (hour > 12) {
+    hour -= 12
+  }
+  return `${hour}:${minuteText} ${suffix}`
+}
+
+function buildEventTimeRange(startTime24: string, endTime24: string) {
+  const start = formatTime12h(startTime24)
+  const end = formatTime12h(endTime24)
+  if (!start || !end) {
+    return ''
+  }
+  return `${start} - ${end}`
+}
+
 function buildSessionKey(dayOfWeek: string, sessionSeason: string, sessionYear: number, facility: string) {
   return [dayOfWeek.trim(), sessionSeason.trim().toLowerCase(), String(sessionYear), facility.trim().toLowerCase()].join('|')
 }
@@ -240,13 +403,7 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
   }
 
   const headerRow = rows[0]
-  const headerIndex = new Map<string, number>()
-  headerRow.forEach((header, index) => {
-    const normalized = normalizeHeader(header)
-    if (normalized) {
-      headerIndex.set(normalized, index)
-    }
-  })
+  const headerIndex = buildHeaderIndex(headerRow)
 
   const requiredHeaders = [
     'servicename',
@@ -270,14 +427,6 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
     throw new Error(`The CSV is missing required columns: ${missing.join(', ')}`)
   }
 
-  const getValue = (row: string[], header: string) => {
-    const index = headerIndex.get(header)
-    if (index === undefined || index >= row.length) {
-      return ''
-    }
-    return row[index]?.trim() ?? ''
-  }
-
   const sessionMap = new Map<string, PlannerSession>()
   const classMap = new Map<string, PlannerClass>()
   const participantMap = new Map<string, PlannerParticipant>()
@@ -288,29 +437,29 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
       continue
     }
 
-    const eventId = getValue(row, 'eventid')
-    const attendeeStatus = parseAttendeeStatus(getValue(row, 'attendeestatus'))
+    const eventId = getHeaderValue(row, headerIndex, ['eventid'])
+    const attendeeStatus = parseAttendeeStatus(getHeaderValue(row, headerIndex, ['attendeestatus']))
     if (!eventId || !attendeeStatus) {
       continue
     }
 
-    const { season, year } = parseEventSchedule(getValue(row, 'eventschedule'))
+    const { season, year } = parseEventSchedule(getHeaderValue(row, headerIndex, ['eventschedule']))
     const parsedRow: CsvParticipantRow = {
-      serviceName: getValue(row, 'servicename'),
-      minimumCapacity: parsePositiveNumber(getValue(row, 'minimumcapacity')),
-      maximumCapacity: parsePositiveNumber(getValue(row, 'maximumcapacity')),
-      bookedCount: parsePositiveNumber(getValue(row, 'booked')),
-      dayOfWeek: normalizeDay(getValue(row, 'dayoftheweek')),
-      eventTime: getValue(row, 'eventtime'),
+      serviceName: getHeaderValue(row, headerIndex, ['servicename']),
+      minimumCapacity: parsePositiveNumber(getHeaderValue(row, headerIndex, ['minimumcapacity'])),
+      maximumCapacity: parsePositiveNumber(getHeaderValue(row, headerIndex, ['maximumcapacity'])),
+      bookedCount: parsePositiveNumber(getHeaderValue(row, headerIndex, ['booked'])),
+      dayOfWeek: normalizeDay(getHeaderValue(row, headerIndex, ['dayoftheweek'])),
+      eventTime: getHeaderValue(row, headerIndex, ['eventtime']),
       eventId,
       sessionSeason: season,
       sessionYear: year,
-      facility: getValue(row, 'facility'),
-      attendeeName: parseAttendeeName(getValue(row, 'attendeename')),
+      facility: getHeaderValue(row, headerIndex, ['facility']),
+      attendeeName: parseAttendeeName(getHeaderValue(row, headerIndex, ['attendeename'])),
       attendeeStatus,
-      attendeePhone: getValue(row, 'attendeephone'),
-      age: getValue(row, 'age'),
-      email: getValue(row, 'e-mail'),
+      attendeePhone: getHeaderValue(row, headerIndex, ['attendeephone']),
+      age: getHeaderValue(row, headerIndex, ['age']),
+      email: getHeaderValue(row, headerIndex, ['e-mail']),
     }
 
     if (!parsedRow.serviceName || !parsedRow.dayOfWeek || !parsedRow.eventTime || !parsedRow.facility || !parsedRow.attendeeName) {
@@ -411,9 +560,6 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
   const participants = Array.from(participantMap.values()).sort((left, right) => left.name.localeCompare(right.name))
   const callRecords: Record<string, PlannerParticipantCallRecord> = {}
   participants.forEach(participant => {
-    if (participant.attendeeStatus !== 'booked') {
-      return
-    }
     callRecords[participant.id] = {
       participantId: participant.id,
       classKey: participant.classKey,
@@ -432,6 +578,171 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
     classes,
     participants,
     callRecords,
+  }
+}
+
+export function parseEmptyClassesPlannerCsv(text: string, sourceFileName: string): PlannerDataset {
+  const { rows } = parseCsvText(text)
+  if (rows.length < 2) {
+    throw new Error('The CSV does not contain any class rows.')
+  }
+
+  const headerIndex = buildHeaderIndex(rows[0])
+  const requiredHeaderGroups = [
+    { label: 'GroupName / ServiceName / Level', headers: ['GroupName', 'ServiceName', 'Service', 'Level'] },
+    { label: 'ID / EventID / Code', headers: ['ID', 'EventID', 'Event Id', 'Code', 'ClassCode'] },
+    { label: 'MainFacility / Facility / Location', headers: ['MainFacility', 'Main Facility', 'Facility', 'Location'] },
+    { label: 'Day / DayOfTheWeek', headers: ['Day', 'DayOfTheWeek', 'Day Of The Week'] },
+    { label: 'Starts / EventTime', headers: ['Starts', 'Start', 'StartTime', 'EventTime', 'Time'] },
+    { label: 'Ends / EventTime', headers: ['Ends', 'End', 'EndTime', 'EventTime', 'Time'] },
+    { label: 'RegTotal / Registered / Enrollment / Students', headers: ['RegTotal', 'Registered', 'Enrollment', 'Students'] },
+  ]
+
+  const missing = requiredHeaderGroups
+    .filter(group => !hasAnyHeader(headerIndex, group.headers))
+    .map(group => group.label)
+
+  if (missing.length > 0) {
+    throw new Error(`The empty-classes CSV is missing required columns: ${missing.join(', ')}`)
+  }
+
+  const sessionMap = new Map<string, PlannerSession>()
+  const classMap = new Map<string, PlannerClass>()
+
+  for (let rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
+    const row = rows[rowIndex]
+    if (!row.length) {
+      continue
+    }
+
+    const eventId = getHeaderValue(row, headerIndex, ['EventID', 'Event Id', 'ClassCode', 'Code', 'ID'])
+    const serviceName = getHeaderValue(row, headerIndex, ['ServiceName', 'Service', 'Service Name', 'GroupName', 'Level'])
+    const facility = getHeaderValue(row, headerIndex, ['Location', 'Facility', 'MainFacility', 'Main Facility'])
+    const dayOfWeek = normalizeDay(
+      getHeaderValue(row, headerIndex, ['DayOfTheWeek', 'Day Of The Week', 'Day']),
+    )
+    const bookedCount = parsePositiveNumber(
+      getHeaderValue(row, headerIndex, ['RegTotal', 'Registered', 'Enrollment', 'Students']),
+    )
+
+    if (!eventId || !serviceName || !facility || !dayOfWeek || bookedCount > 0) {
+      continue
+    }
+
+    const startsValue = getHeaderValue(row, headerIndex, ['Starts', 'Start', 'StartTime'])
+    const endsValue = getHeaderValue(row, headerIndex, ['Ends', 'End', 'EndTime'])
+    const timeRangeValue = getHeaderValue(row, headerIndex, ['EventTime', 'Time'])
+    let { time24: startTime24, date: startDate } = extractTimeAndDate(startsValue)
+    let { time24: endTime24, date: endDate } = extractTimeAndDate(endsValue)
+
+    if ((!startTime24 || !endTime24) && timeRangeValue) {
+      const [startPart = '', endPart = ''] = timeRangeValue.split('-')
+      if (!startTime24) {
+        const extracted = extractTimeAndDate(startPart)
+        startTime24 = extracted.time24
+        startDate = startDate ?? extracted.date
+      }
+      if (!endTime24) {
+        const extracted = extractTimeAndDate(endPart || startPart)
+        endTime24 = extracted.time24
+        endDate = endDate ?? extracted.date
+      }
+    }
+
+    const eventTime = buildEventTimeRange(startTime24, endTime24)
+    if (!eventTime) {
+      continue
+    }
+
+    const eventSchedule = getHeaderValue(row, headerIndex, ['EventSchedule', 'Schedule'])
+    const { season, year } = getSeasonAndYearFromDates(startDate, endDate, eventSchedule)
+    const parsedRow: CsvEmptyClassRow = {
+      serviceName,
+      minimumCapacity: parsePositiveNumber(getHeaderValue(row, headerIndex, ['Min', 'MinimumCapacity'])),
+      maximumCapacity: parsePositiveNumber(getHeaderValue(row, headerIndex, ['Max', 'MaximumCapacity'])),
+      bookedCount,
+      dayOfWeek,
+      eventTime,
+      eventId,
+      sessionSeason: season,
+      sessionYear: year,
+      facility,
+    }
+
+    const sessionKey = buildSessionKey(
+      parsedRow.dayOfWeek,
+      parsedRow.sessionSeason,
+      parsedRow.sessionYear,
+      parsedRow.facility,
+    )
+    const classKey = buildClassKey(parsedRow)
+
+    if (!sessionMap.has(sessionKey)) {
+      sessionMap.set(sessionKey, {
+        sessionKey,
+        dayOfWeek: parsedRow.dayOfWeek,
+        sessionSeason: parsedRow.sessionSeason,
+        sessionYear: parsedRow.sessionYear,
+        facility: parsedRow.facility,
+        classKeys: [],
+      })
+    }
+
+    const plannerSession = sessionMap.get(sessionKey)!
+    if (!plannerSession.classKeys.includes(classKey)) {
+      plannerSession.classKeys.push(classKey)
+    }
+
+    if (!classMap.has(classKey)) {
+      classMap.set(classKey, {
+        classKey,
+        eventId: parsedRow.eventId,
+        sessionKey,
+        serviceName: parsedRow.serviceName,
+        dayOfWeek: parsedRow.dayOfWeek,
+        eventTime: parsedRow.eventTime,
+        facility: parsedRow.facility,
+        sessionSeason: parsedRow.sessionSeason,
+        sessionYear: parsedRow.sessionYear,
+        minimumCapacity: parsedRow.minimumCapacity,
+        maximumCapacity: parsedRow.maximumCapacity,
+        bookedCount: 0,
+        waitlistCount: 0,
+        participantIds: [],
+        waitingParticipantIds: [],
+        planningStatus: 'active',
+      })
+    }
+  }
+
+  const sessions = Array.from(sessionMap.values()).sort((left, right) => {
+    if (left.dayOfWeek !== right.dayOfWeek) {
+      return left.dayOfWeek.localeCompare(right.dayOfWeek)
+    }
+    return left.facility.localeCompare(right.facility)
+  })
+
+  const classes = Array.from(classMap.values()).sort((left, right) => {
+    if (left.dayOfWeek !== right.dayOfWeek) {
+      return left.dayOfWeek.localeCompare(right.dayOfWeek)
+    }
+    if (left.facility !== right.facility) {
+      return left.facility.localeCompare(right.facility)
+    }
+    return left.eventTime.localeCompare(right.eventTime)
+  })
+
+  if (classes.length === 0) {
+    throw new Error('No empty classes were found in the schematic CSV.')
+  }
+
+  return {
+    sourceFileName,
+    importedAt: new Date().toISOString(),
+    sessions,
+    classes,
+    participants: [],
+    callRecords: {},
   }
 }
 
@@ -467,9 +778,6 @@ function normalizePlannerDataset(dataset: PlannerDataset): PlannerDataset {
   })
 
   dataset.participants.forEach(participant => {
-    if (participant.attendeeStatus !== 'booked') {
-      return
-    }
     normalizedCallRecords[participant.id] = normalizePlannerCallRecord(
       participant.id,
       normalizedCallRecords[participant.id],
@@ -518,6 +826,44 @@ function mergeSourceFileNames(current: string, next: string) {
   return Array.from(new Set(names)).join(', ')
 }
 
+function hasParticipantData(plannerClass: PlannerClass) {
+  return (
+    plannerClass.participantIds.length > 0 ||
+    plannerClass.waitingParticipantIds.length > 0 ||
+    plannerClass.bookedCount > 0 ||
+    plannerClass.waitlistCount > 0
+  )
+}
+
+function mergePlannerClass(existing: PlannerClass, incoming: PlannerClass): PlannerClass {
+  const existingHasParticipantData = hasParticipantData(existing)
+  const incomingHasParticipantData = hasParticipantData(incoming)
+
+  const authoritative = incomingHasParticipantData && !existingHasParticipantData ? incoming : existing
+  const fallback = authoritative === existing ? incoming : existing
+
+  return {
+    ...existing,
+    eventId: authoritative.eventId || fallback.eventId,
+    sessionKey: authoritative.sessionKey || fallback.sessionKey,
+    serviceName: authoritative.serviceName || fallback.serviceName,
+    dayOfWeek: authoritative.dayOfWeek || fallback.dayOfWeek,
+    eventTime: authoritative.eventTime || fallback.eventTime,
+    facility: authoritative.facility || fallback.facility,
+    sessionSeason: authoritative.sessionSeason || fallback.sessionSeason,
+    sessionYear: authoritative.sessionYear || fallback.sessionYear,
+    minimumCapacity:
+      authoritative.minimumCapacity > 0 ? authoritative.minimumCapacity : fallback.minimumCapacity,
+    maximumCapacity:
+      authoritative.maximumCapacity > 0 ? authoritative.maximumCapacity : fallback.maximumCapacity,
+    bookedCount: authoritative.bookedCount,
+    waitlistCount: authoritative.waitlistCount,
+    participantIds: mergeUnique(existing.participantIds, incoming.participantIds),
+    waitingParticipantIds: mergeUnique(existing.waitingParticipantIds, incoming.waitingParticipantIds),
+    planningStatus: existing.planningStatus,
+  }
+}
+
 export function mergePlannerDatasets(current: PlannerDataset, incoming: PlannerDataset): PlannerDataset {
   const sessionMap = new Map(current.sessions.map(session => [session.sessionKey, { ...session }]))
   incoming.sessions.forEach(session => {
@@ -552,8 +898,7 @@ export function mergePlannerDatasets(current: PlannerDataset, incoming: PlannerD
       })
       return
     }
-    existing.participantIds = mergeUnique(existing.participantIds, plannerClass.participantIds)
-    existing.waitingParticipantIds = mergeUnique(existing.waitingParticipantIds, plannerClass.waitingParticipantIds)
+    classMap.set(plannerClass.classKey, mergePlannerClass(existing, plannerClass))
   })
 
   const participantMap = new Map(current.participants.map(participant => [participant.id, participant]))
