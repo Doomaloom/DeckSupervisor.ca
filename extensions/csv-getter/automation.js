@@ -2,6 +2,7 @@ function runCsvGetterAutomation(config) {
   const normalize = value => (value || '').replace(/\s+/g, ' ').trim()
   const parameterContainers = Array.from(document.querySelectorAll('.trv-parameter-container'))
   const missing = []
+  const exportMode = config.exportMode || 'single_day'
 
   const findContainer = title =>
     parameterContainers.find(container => {
@@ -48,6 +49,22 @@ function runCsvGetterAutomation(config) {
       String(date.getMonth() + 1).padStart(2, '0'),
       String(date.getDate()).padStart(2, '0'),
     ].join('-')
+
+  const addDays = (date, dayCount) => {
+    const nextDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    nextDate.setDate(nextDate.getDate() + dayCount)
+    return nextDate
+  }
+
+  const getRangeEndDate = startDate => {
+    if (exportMode === 'planner_week') {
+      return addDays(startDate, 6)
+    }
+    if (exportMode === 'planner_two_weeks') {
+      return addDays(startDate, 13)
+    }
+    return startDate
+  }
 
   const dispatchInputEvents = input => {
     input.dispatchEvent(new Event('input', { bubbles: true }))
@@ -185,6 +202,11 @@ function runCsvGetterAutomation(config) {
     return
   }
 
+  if (!['single_day', 'planner_week', 'planner_two_weeks'].includes(exportMode)) {
+    window.alert('A valid CSV export mode is required.')
+    return
+  }
+
   if (missing.length > 0) {
     window.alert(
       `CSV getter automation could not start. Missing: ${Array.from(new Set(missing)).join(', ')}`,
@@ -193,10 +215,11 @@ function runCsvGetterAutomation(config) {
   }
 
   const formattedDate = formatDateValue(parsedDate)
+  const formattedEndDate = formatDateValue(getRangeEndDate(parsedDate))
   setCheckbox('Search via Event ID', false)
   setTextInput('ID', '')
   setTextInput('From', formattedDate)
-  setTextInput('To', formattedDate)
+  setTextInput('To', formattedEndDate)
   setTextInput('Activity Name', '')
   setSingleSelect('Supervisor', 'All')
   setSingleSelect('Calendar', 'All')

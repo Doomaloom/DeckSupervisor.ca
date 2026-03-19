@@ -40,6 +40,36 @@ h1 {
   margin-top: 16px;
 }
 
+.mode-field {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 0;
+  border: 1px solid #d9d7cf;
+  border-radius: 14px;
+  background: #fffdf8;
+  padding: 12px;
+}
+
+.mode-field legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5c6b70;
+}
+
+.mode-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.mode-option input {
+  margin: 0;
+}
+
 .field span {
   font-size: 12px;
   font-weight: 700;

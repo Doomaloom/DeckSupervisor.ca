@@ -49,6 +49,7 @@
   const prevMonthButton = document.getElementById('calendar-prev')
   const nextMonthButton = document.getElementById('calendar-next')
   const buttons = Array.from(document.querySelectorAll('button[data-preset]'))
+  const exportModeInputs = Array.from(document.querySelectorAll('input[name="export-mode"]'))
   const monthNames = [
     'January',
     'February',
@@ -66,6 +67,7 @@
   let selectedDate = ''
   let visibleMonth = 0
   let visibleYear = 0
+  let exportMode = 'single_day'
 
   function formatDateForStorage(date) {
     return [
@@ -160,6 +162,14 @@
     })
   }
 
+  exportModeInputs.forEach(input => {
+    input.addEventListener('change', function () {
+      if (input.checked) {
+        exportMode = input.value || 'single_day'
+      }
+    })
+  })
+
   function setStatus(message, tone) {
     statusElement.textContent = message
     statusElement.className = 'status' + (tone ? ' ' + tone : '')
@@ -169,6 +179,80 @@
     buttons.forEach(button => {
       button.disabled = isBusy
     })
+  }
+
+  function getStatusSelection() {
+    if (exportMode === 'planner_week' || exportMode === 'planner_two_weeks') {
+      return ['Booked', 'Waiting']
+    }
+    return ['Booked']
+  }
+
+  function getRuntimeError() {
+    return api.runtime && api.runtime.lastError ? api.runtime.lastError : null
+  }
+
+  function queryActiveTab(callback) {
+    api.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      const error = getRuntimeError()
+      callback(error, tabs || [])
+    })
+  }
+
+  function injectAutomationFile(tabId, callback) {
+    if (api.scripting && typeof api.scripting.executeScript === 'function') {
+      api.scripting.executeScript(
+        {
+          target: { tabId },
+          files: ['automation.js'],
+        },
+        function () {
+          callback(getRuntimeError())
+        },
+      )
+      return
+    }
+
+    api.tabs.executeScript(
+      tabId,
+      {
+        file: 'automation.js',
+      },
+      function () {
+        callback(getRuntimeError())
+      },
+    )
+  }
+
+  function runAutomation(tabId, payload, callback) {
+    if (api.scripting && typeof api.scripting.executeScript === 'function') {
+      api.scripting.executeScript(
+        {
+          target: { tabId },
+          func: function (config) {
+            if (typeof runCsvGetterAutomation !== 'function') {
+              throw new Error('CSV getter automation is not available in the active tab.')
+            }
+            runCsvGetterAutomation(config)
+          },
+          args: [payload],
+        },
+        function () {
+          callback(getRuntimeError())
+        },
+      )
+      return
+    }
+
+    api.tabs.executeScript(
+      tabId,
+      {
+        code: `runCsvGetterAutomation(${JSON.stringify(payload)});`,
+      },
+      function () {
+        callback(getRuntimeError())
+      },
+    )
   }
 
   function runPreset(presetKey) {
@@ -185,7 +269,13 @@
     setBusy(true)
     setStatus(`Running ${preset.label}...`)
 
-    api.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    queryActiveTab(function (queryError, tabs) {
+      if (queryError) {
+        setBusy(false)
+        setStatus(queryError.message || 'Failed to read the active tab.', 'error')
+        return
+      }
+
       const activeTab = tabs && tabs[0]
       if (!activeTab || typeof activeTab.id !== 'number') {
         setBusy(false)
@@ -193,42 +283,32 @@
         return
       }
 
-      api.tabs.executeScript(
-        activeTab.id,
-        {
-          file: 'automation.js',
-        },
-        function () {
-          const loadError = api.runtime.lastError
+      const payload = {
+        ...preset.config,
+        sessionDate: selectedDate,
+        exportMode,
+        status: getStatusSelection(),
+      }
+
+      injectAutomationFile(activeTab.id, function (loadError) {
           if (loadError) {
             setBusy(false)
             setStatus(loadError.message || 'Failed to load the automation script.', 'error')
             return
           }
 
-          api.tabs.executeScript(
-            activeTab.id,
-            {
-              code: `runCsvGetterAutomation(${JSON.stringify({
-                ...preset.config,
-                sessionDate: selectedDate,
-              })});`,
-            },
-            function () {
-              const runError = api.runtime.lastError
-              setBusy(false)
-              if (runError) {
-                setStatus(runError.message || 'Failed to run the CSV getter preset.', 'error')
-                return
-              }
-              setStatus(`Ran ${preset.label} in the active tab.`, 'success')
-              window.setTimeout(function () {
-                window.close()
-              }, 900)
-            },
-          )
-        },
-      )
+        runAutomation(activeTab.id, payload, function (runError) {
+          setBusy(false)
+          if (runError) {
+            setStatus(runError.message || 'Failed to run the CSV getter preset.', 'error')
+            return
+          }
+          setStatus(`Ran ${preset.label} in the active tab.`, 'success')
+          window.setTimeout(function () {
+            window.close()
+          }, 900)
+        })
+      })
     })
   }
 

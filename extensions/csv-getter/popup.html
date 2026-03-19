@@ -21,6 +21,21 @@
         </button>
         <input id="session-date" type="hidden" />
       </label>
+      <fieldset class="mode-field">
+        <legend>CSV Range</legend>
+        <label class="mode-option">
+          <input type="radio" name="export-mode" value="single_day" checked />
+          <span>Single day</span>
+        </label>
+        <label class="mode-option">
+          <input type="radio" name="export-mode" value="planner_week" />
+          <span>Planner week</span>
+        </label>
+        <label class="mode-option">
+          <input type="radio" name="export-mode" value="planner_two_weeks" />
+          <span>Planner 2 weeks</span>
+        </label>
+      </fieldset>
       <section id="date-picker" class="date-picker hidden" aria-label="Calendar date picker">
         <div class="date-picker-header">
           <button id="calendar-prev" class="calendar-nav" type="button" aria-label="Previous month">
