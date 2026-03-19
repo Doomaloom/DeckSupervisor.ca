@@ -192,11 +192,15 @@ function SessionPlanningPage() {
       return
     }
 
-    let nextStatus: PlannerCallStatus = 'reached'
-    if (activeCallRecord.acceptedAlternativeClassKey) {
+    let nextStatus: PlannerCallStatus = activeCallRecord.status
+    if (activeCallRecord.status === 'voicemail') {
+      nextStatus = 'voicemail'
+    } else if (activeCallRecord.acceptedAlternativeClassKey) {
       nextStatus = 'accepted_alternative'
     } else if (activeCallRecord.offeredAlternativeClassKey) {
       nextStatus = 'declined_alternatives'
+    } else if (nextStatus === 'called' || nextStatus === 'not_started') {
+      nextStatus = 'reached'
     }
 
     await setCallRecord(activeCallParticipant.id, { status: nextStatus })

@@ -174,6 +174,16 @@ Again, this is ${callerName} from ${callerLocationName}, and our number is ${cal
                             <div className="mt-3 flex gap-2">
                                 <button
                                     type="button"
+                                    className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${activeCallRecord.status === 'voicemail' ? 'bg-amber-100 text-amber-900' : 'border border-secondary/20 bg-accent text-secondary'}`}
+                                    onClick={() => void onSetCallRecord(activeCallParticipant.id, {
+                                        status: 'voicemail',
+                                        acceptedAlternativeClassKey: '',
+                                    })}
+                                >
+                                    Voicemail
+                                </button>
+                                <button
+                                    type="button"
                                     className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${activeCallRecord.acceptedAlternativeClassKey ? 'bg-emerald-100 text-emerald-900' : 'border border-secondary/20 bg-accent text-secondary'}`}
                                     onClick={() => {
                                         const acceptedKey = activeCallRecord.offeredAlternativeClassKey
