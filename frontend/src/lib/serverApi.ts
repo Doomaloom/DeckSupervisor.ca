@@ -1,4 +1,12 @@
-import type { CsvSessionCandidate, ExtractedClass } from '../types/app'
+import type {
+  CsvSessionCandidate,
+  ExtractedClass,
+  PlannerCallRecordUpdate,
+  PlannerClassStatus,
+  PlannerDataset,
+  PlannerShareJoinResponse,
+  PlannerShareSession,
+} from '../types/app'
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown
@@ -216,6 +224,66 @@ export function createSessionNote(body: Record<string, unknown>) {
 
 export function updateSessionNote(id: string, body: Record<string, unknown>) {
   return request<{ note: any }>(`/api/session-notes/${encodeURIComponent(id)}`, { method: 'PATCH', body })
+}
+
+export function createPlannerShare(body: { dataset: PlannerDataset; displayName: string }) {
+  return request<PlannerShareJoinResponse>('/api/planner-shares', {
+    method: 'POST',
+    body,
+  })
+}
+
+export function joinPlannerShare(code: string, body: { displayName: string }) {
+  return request<PlannerShareJoinResponse>(`/api/planner-shares/${encodeURIComponent(code)}/join`, {
+    method: 'POST',
+    body,
+  })
+}
+
+export function fetchPlannerShare(code: string, participantId: string) {
+  const params = new URLSearchParams({ participantId })
+  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}?${params.toString()}`)
+}
+
+export function heartbeatPlannerShare(code: string, body: { participantId: string }) {
+  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/heartbeat`, {
+    method: 'POST',
+    body,
+  })
+}
+
+export function leavePlannerShare(code: string, body: { participantId: string }) {
+  return request<void>(`/api/planner-shares/${encodeURIComponent(code)}/leave`, {
+    method: 'POST',
+    body,
+  })
+}
+
+export function closePlannerShare(code: string, body: { participantId: string }) {
+  return request<void>(`/api/planner-shares/${encodeURIComponent(code)}/close`, {
+    method: 'POST',
+    body,
+  })
+}
+
+export function updatePlannerShareClassStatus(
+  code: string,
+  body: { participantId: string; classKey: string; status: PlannerClassStatus }
+) {
+  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/class-status`, {
+    method: 'POST',
+    body,
+  })
+}
+
+export function updatePlannerShareCallRecord(
+  code: string,
+  body: { participantId: string; participantRecordId: string; update: PlannerCallRecordUpdate }
+) {
+  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/call-record`, {
+    method: 'POST',
+    body,
+  })
 }
 
 export function deleteSessionNote(id: string) {

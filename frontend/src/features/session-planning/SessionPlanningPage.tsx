@@ -1,7 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowsPointingOutIcon } from '@heroicons/react/24/outline'
-import { useLocation } from 'react-router-dom'
-import type { PlannerCallStatus, PlannerClass, PlannerClassStatus, PlannerDataset, PlannerParticipant } from '../../types/app'
+import { useLocation, useNavigate } from 'react-router-dom'
+import type {
+    PlannerCallRecordUpdate,
+    PlannerCallStatus,
+    PlannerClass,
+    PlannerClassStatus,
+    PlannerDataset,
+    PlannerParticipant,
+    PlannerShareSession,
+} from '../../types/app'
+import { getStoredItem, removeStoredItem, setStoredItem } from '../../lib/browserStorage'
+import {
+    closePlannerShare,
+    createPlannerShare,
+    fetchPlannerShare,
+    joinPlannerShare,
+    leavePlannerShare,
+    updatePlannerShareCallRecord,
+    updatePlannerShareClassStatus,
+} from '../../lib/serverApi'
 import {
     getPlannerAlternativeClasses,
     getPlannerClassCapacityBand,
@@ -20,6 +38,7 @@ import { COLUMN_MIN_WIDTH_PX, HEADER_HEIGHT_REM, SLOT_HEIGHT_REM, SLOT_MINUTES }
 import { buildTimeLabels, timeToMinutes } from '../schematic/utils/time'
 
 const PLANNER_SLOT_HEIGHT_REM = SLOT_HEIGHT_REM + 0.9
+const SHARE_NAME_STORAGE_KEY = 'plannerShareDisplayName'
 
 const dayNames: Record<string, string> = {
     Mo: 'Monday',
@@ -140,26 +159,115 @@ function getPlannerBoardStatusClasses(status: PlannerClassStatus, isSelected: bo
 
 function SessionPlanningPage() {
     const location = useLocation()
+    const navigate = useNavigate()
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search])
+    const shareCode = searchParams.get('share')?.trim().toUpperCase() ?? ''
     const [dataset, setDataset] = useState<PlannerDataset | null>(null)
     const [selectedDay, setSelectedDay] = useState('')
     const [selectedLocation, setSelectedLocation] = useState('')
     const [selectedClassKey, setSelectedClassKey] = useState('')
     const [isInfoPanelOpen, setIsInfoPanelOpen] = useState(true)
     const [error, setError] = useState('')
+    const [shareSession, setShareSession] = useState<PlannerShareSession | null>(null)
+    const [shareParticipantId, setShareParticipantId] = useState('')
+    const [shareDisplayName, setShareDisplayName] = useState('')
+    const [shareNotice, setShareNotice] = useState('')
+    const [isSharingBusy, setIsSharingBusy] = useState(false)
     const isPopout = new URLSearchParams(location.search).get('popout') === '1'
+    const isSharedMode = Boolean(shareCode && shareParticipantId && shareSession)
+    const isShareHost = Boolean(isSharedMode && shareSession?.hostParticipantId === shareParticipantId)
+    const shareStorageKey = shareCode ? `plannerShareParticipant:${shareCode}` : ''
+
+    const persistDataset = (next: PlannerDataset) => {
+        setDataset(next)
+        savePlannerDataset(next)
+    }
+
+    const applySharedSession = (session: PlannerShareSession) => {
+        setShareSession(session)
+        setDataset(session.dataset)
+    }
+
+    useEffect(() => {
+        const storedName = getStoredItem(SHARE_NAME_STORAGE_KEY)
+        if (storedName) {
+            setShareDisplayName(storedName)
+        }
+    }, [])
+
+    useEffect(() => {
+        if (!shareDisplayName.trim()) {
+            return
+        }
+        setStoredItem(SHARE_NAME_STORAGE_KEY, shareDisplayName.trim())
+    }, [shareDisplayName])
+
+    useEffect(() => {
+        if (!shareSession || !shareParticipantId) {
+            setShareNotice('')
+            return
+        }
+        setShareNotice(
+            shareSession.hostParticipantId === shareParticipantId
+                ? 'You are hosting this shared planner.'
+                : `${shareSession.participants.find(participant => participant.isHost)?.displayName ?? 'Someone'} is hosting this shared planner.`,
+        )
+    }, [shareParticipantId, shareSession])
 
     useEffect(() => {
         const stored = loadPlannerDataset()
         if (!stored) {
             return
         }
-        setDataset(stored)
-    }, [])
+        if (!shareCode) {
+            setDataset(stored)
+        }
+    }, [shareCode])
 
-    const persistDataset = (next: PlannerDataset) => {
-        setDataset(next)
-        savePlannerDataset(next)
-    }
+    useEffect(() => {
+        if (!shareStorageKey) {
+            setShareParticipantId('')
+            setShareSession(null)
+            return
+        }
+        const storedParticipantId = getStoredItem(shareStorageKey)
+        if (storedParticipantId) {
+            setShareParticipantId(storedParticipantId)
+        }
+    }, [shareStorageKey])
+
+    useEffect(() => {
+        if (!shareCode || !shareParticipantId) {
+            return
+        }
+        let active = true
+        const syncShare = async () => {
+            try {
+                const response = await fetchPlannerShare(shareCode, shareParticipantId)
+                if (!active) {
+                    return
+                }
+                applySharedSession(response.session)
+                setError('')
+            } catch (shareError) {
+                if (!active) {
+                    return
+                }
+                setShareSession(null)
+                removeStoredItem(shareStorageKey)
+                setShareParticipantId('')
+                setError(shareError instanceof Error ? shareError.message : 'Failed to load shared planner.')
+            }
+        }
+        void syncShare()
+        const intervalId = window.setInterval(() => {
+            void syncShare()
+        }, 4000)
+        return () => {
+            active = false
+            window.clearInterval(intervalId)
+        }
+    }, [shareCode, shareParticipantId, shareStorageKey])
 
     const handleUpload = async (file: File | null) => {
         if (!file) {
@@ -177,6 +285,105 @@ function SessionPlanningPage() {
             setSelectedClassKey(firstClass?.classKey ?? '')
         } catch (uploadError) {
             setError(uploadError instanceof Error ? uploadError.message : 'Failed to parse planner CSV.')
+        }
+    }
+
+    const syncQueryParams = (nextShareCode: string) => {
+        const nextParams = new URLSearchParams(location.search)
+        if (nextShareCode) {
+            nextParams.set('share', nextShareCode)
+        } else {
+            nextParams.delete('share')
+        }
+        const nextSearch = nextParams.toString()
+        navigate(
+            {
+                pathname: location.pathname,
+                search: nextSearch ? `?${nextSearch}` : '',
+            },
+            { replace: true },
+        )
+    }
+
+    const startSharing = async () => {
+        if (!dataset) {
+            return
+        }
+        setIsSharingBusy(true)
+        try {
+            const nextDisplayName = shareDisplayName.trim() || 'Host'
+            const response = await createPlannerShare({ dataset, displayName: nextDisplayName })
+            setStoredItem(SHARE_NAME_STORAGE_KEY, nextDisplayName)
+            setStoredItem(`plannerShareParticipant:${response.session.code}`, response.participantId)
+            setShareParticipantId(response.participantId)
+            applySharedSession(response.session)
+            syncQueryParams(response.session.code)
+            setError('')
+        } catch (shareError) {
+            setError(shareError instanceof Error ? shareError.message : 'Failed to start shared planner.')
+        } finally {
+            setIsSharingBusy(false)
+        }
+    }
+
+    const joinSharedPlanner = async () => {
+        if (!shareCode) {
+            return
+        }
+        setIsSharingBusy(true)
+        try {
+            const nextDisplayName = shareDisplayName.trim() || 'Guest'
+            const response = await joinPlannerShare(shareCode, { displayName: nextDisplayName })
+            setStoredItem(SHARE_NAME_STORAGE_KEY, nextDisplayName)
+            setStoredItem(`plannerShareParticipant:${shareCode}`, response.participantId)
+            setShareParticipantId(response.participantId)
+            applySharedSession(response.session)
+            setError('')
+        } catch (shareError) {
+            setError(shareError instanceof Error ? shareError.message : 'Failed to join shared planner.')
+        } finally {
+            setIsSharingBusy(false)
+        }
+    }
+
+    const leaveSharedPlannerSession = async () => {
+        if (!shareCode || !shareParticipantId) {
+            syncQueryParams('')
+            return
+        }
+        setIsSharingBusy(true)
+        try {
+            await leavePlannerShare(shareCode, { participantId: shareParticipantId })
+        } catch (shareError) {
+            console.error('Failed to leave shared planner', shareError)
+        } finally {
+            removeStoredItem(`plannerShareParticipant:${shareCode}`)
+            setShareParticipantId('')
+            setShareSession(null)
+            setShareNotice('')
+            syncQueryParams('')
+            setDataset(loadPlannerDataset())
+            setIsSharingBusy(false)
+        }
+    }
+
+    const stopSharing = async () => {
+        if (!shareCode || !shareParticipantId) {
+            return
+        }
+        setIsSharingBusy(true)
+        try {
+            await closePlannerShare(shareCode, { participantId: shareParticipantId })
+            removeStoredItem(`plannerShareParticipant:${shareCode}`)
+            setShareParticipantId('')
+            setShareSession(null)
+            setShareNotice('')
+            syncQueryParams('')
+            setDataset(loadPlannerDataset())
+        } catch (shareError) {
+            setError(shareError instanceof Error ? shareError.message : 'Failed to stop shared planner.')
+        } finally {
+            setIsSharingBusy(false)
         }
     }
 
@@ -305,31 +512,56 @@ function SessionPlanningPage() {
     }, [scheduleBounds])
 
     const scheduleHeightRem = useMemo(() => timeLabels.length * PLANNER_SLOT_HEIGHT_REM, [timeLabels])
-    const setClassStatus = (classKey: string, status: PlannerClassStatus) => {
+    const setClassStatus = async (classKey: string, status: PlannerClassStatus) => {
         if (!dataset) {
             return
+        }
+        if (isSharedMode && shareSession) {
+            try {
+                const response = await updatePlannerShareClassStatus(shareSession.code, {
+                    participantId: shareParticipantId,
+                    classKey,
+                    status,
+                })
+                applySharedSession(response.session)
+                return
+            } catch (shareError) {
+                setError(shareError instanceof Error ? shareError.message : 'Failed to update shared planner.')
+                return
+            }
         }
         persistDataset(updatePlannerClassStatus(dataset, classKey, status))
     }
 
-    const setCallRecord = (
+    const setCallRecord = async (
         participantId: string,
-        update: {
-            status?: PlannerCallStatus
-            notes?: string
-            offeredAlternativeClassKey?: string
-            acceptedAlternativeClassKey?: string
-        },
+        update: PlannerCallRecordUpdate,
     ) => {
         if (!dataset) {
             return
+        }
+        if (isSharedMode && shareSession) {
+            try {
+                const response = await updatePlannerShareCallRecord(shareSession.code, {
+                    participantId: shareParticipantId,
+                    participantRecordId: participantId,
+                    update,
+                })
+                applySharedSession(response.session)
+                return
+            } catch (shareError) {
+                setError(shareError instanceof Error ? shareError.message : 'Failed to update shared planner.')
+                return
+            }
         }
         persistDataset(updatePlannerCallRecord(dataset, participantId, update))
     }
 
     const summary = selectedClass && dataset ? summarizePlannerCalls(dataset, selectedClass.classKey) : null
     const openPopout = () => {
-        const popoutUrl = `${window.location.origin}/session-planning?popout=1`
+        const nextParams = new URLSearchParams(location.search)
+        nextParams.set('popout', '1')
+        const popoutUrl = `${window.location.origin}/session-planning?${nextParams.toString()}`
         const popup = window.open(
             popoutUrl,
             'session-planning-popout',
@@ -363,31 +595,138 @@ function SessionPlanningPage() {
                     Upload a participant CSV to review classes by day and location, flag cancellations,
                     track calls, and offer exact-level alternatives.
                 </p>
-                <div className="mt-5 flex flex-wrap items-center gap-4">
-                    <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-secondary bg-bg px-5 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-primary">
-                        <span>{dataset ? 'Replace Planner CSV' : 'Upload Planner CSV'}</span>
-                        <input
-                            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                            type="file"
-                            accept=".csv"
-                            onChange={event => {
-                                void handleUpload(event.target.files?.[0] ?? null)
-                                event.target.value = ''
-                            }}
-                        />
-                    </label>
-                    {dataset ? (
-                        <p className="text-sm text-secondary/70">
-                            Loaded: <span className="font-semibold text-secondary">{dataset.sourceFileName}</span>
+                {!shareCode ? (
+                    <>
+                        <div className="mt-5 flex flex-wrap items-center gap-4">
+                            <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-secondary bg-bg px-5 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-primary">
+                                <span>{dataset ? 'Replace Planner CSV' : 'Upload Planner CSV'}</span>
+                                <input
+                                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={event => {
+                                        void handleUpload(event.target.files?.[0] ?? null)
+                                        event.target.value = ''
+                                    }}
+                                />
+                            </label>
+                            {dataset ? (
+                                <p className="text-sm text-secondary/70">
+                                    Loaded: <span className="font-semibold text-secondary">{dataset.sourceFileName}</span>
+                                </p>
+                            ) : null}
+                        </div>
+                        {dataset ? (
+                            <div className="mt-4 flex flex-wrap items-end gap-3 rounded-2xl border border-secondary/20 bg-bg p-4">
+                                <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                                    Shared session name
+                                    <input
+                                        className="rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
+                                        value={shareDisplayName}
+                                        onChange={event => setShareDisplayName(event.target.value)}
+                                        placeholder="Your name"
+                                    />
+                                </label>
+                                <button
+                                    type="button"
+                                    className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                                    onClick={() => void startSharing()}
+                                    disabled={isSharingBusy}
+                                >
+                                    {isSharingBusy ? 'Starting...' : 'Start Sharing'}
+                                </button>
+                            </div>
+                        ) : null}
+                    </>
+                ) : !isSharedMode ? (
+                    <div className="mt-5 rounded-2xl border border-secondary/20 bg-bg p-5">
+                        <h3 className="text-lg font-semibold text-secondary">Join Shared Planner</h3>
+                        <p className="mt-2 text-sm text-secondary/70">
+                            Enter a display name to join share code <span className="font-semibold text-secondary">{shareCode}</span>.
                         </p>
-                    ) : null}
-                </div>
+                        <div className="mt-4 flex flex-wrap items-end gap-3">
+                            <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                                Display name
+                                <input
+                                    className="rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
+                                    value={shareDisplayName}
+                                    onChange={event => setShareDisplayName(event.target.value)}
+                                    placeholder="Your name"
+                                />
+                            </label>
+                            <button
+                                type="button"
+                                className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                                onClick={() => void joinSharedPlanner()}
+                                disabled={isSharingBusy}
+                            >
+                                {isSharingBusy ? 'Joining...' : 'Join Shared Planner'}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="mt-5 rounded-2xl border border-secondary/20 bg-bg p-5">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
+                                    Shared Session
+                                </p>
+                                <p className="mt-2 text-lg font-semibold text-secondary">
+                                    Code {shareSession.code} • v{shareSession.version}
+                                </p>
+                                <p className="mt-1 text-sm text-secondary/70">
+                                    Expires {new Date(shareSession.expiresAt).toLocaleString()}
+                                </p>
+                                {shareNotice ? <p className="mt-2 text-sm text-secondary/80">{shareNotice}</p> : null}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    className="rounded-2xl border border-secondary/30 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                                    onClick={() => void navigator.clipboard.writeText(shareSession.shareUrl)}
+                                >
+                                    Copy Share Link
+                                </button>
+                                {isShareHost ? (
+                                    <button
+                                        type="button"
+                                        className="rounded-2xl bg-rose-100 px-4 py-2 text-sm font-semibold text-rose-900 transition hover:-translate-y-0.5"
+                                        onClick={() => void stopSharing()}
+                                        disabled={isSharingBusy}
+                                    >
+                                        Stop Sharing
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="rounded-2xl border border-secondary/30 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                                        onClick={() => void leaveSharedPlannerSession()}
+                                        disabled={isSharingBusy}
+                                    >
+                                        Leave Shared Planner
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            {shareSession.participants.map(participant => (
+                                <span
+                                    key={participant.id}
+                                    className={`rounded-full border px-3 py-1 text-sm font-semibold ${participant.isHost ? 'border-primary bg-primary/10 text-primary' : 'border-secondary/20 bg-accent text-secondary'}`}
+                                >
+                                    {participant.displayName}
+                                    {participant.isHost ? ' • Host' : ''}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {error ? <p className="mt-4 text-sm font-semibold text-danger">{error}</p> : null}
             </div>
 
             {!dataset ? (
                 <div className="rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
-                    Upload a participant CSV to start planning.
+                    {shareCode ? 'Join the shared planner to start collaborating.' : 'Upload a participant CSV to start planning.'}
                 </div>
             ) : (
                 <div className={`grid gap-6 ${isInfoPanelOpen ? 'lg:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.7fr)]' : ''}`}>
@@ -557,21 +896,21 @@ function SessionPlanningPage() {
                                             <button
                                                 type="button"
                                                 className="rounded-full bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-900 transition hover:-translate-y-0.5"
-                                                onClick={() => setClassStatus(selectedClass.classKey, 'pending_cancellation')}
+                                                onClick={() => void setClassStatus(selectedClass.classKey, 'pending_cancellation')}
                                             >
                                                 Pending Cancellation
                                             </button>
                                             <button
                                                 type="button"
                                                 className="rounded-full bg-rose-100 px-3 py-2 text-sm font-semibold text-rose-900 transition hover:-translate-y-0.5"
-                                                onClick={() => setClassStatus(selectedClass.classKey, 'cancelled')}
+                                                onClick={() => void setClassStatus(selectedClass.classKey, 'cancelled')}
                                             >
                                                 Cancelled
                                             </button>
                                             <button
                                                 type="button"
                                                 className="rounded-full bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-900 transition hover:-translate-y-0.5"
-                                                onClick={() => setClassStatus(selectedClass.classKey, 'active')}
+                                                onClick={() => void setClassStatus(selectedClass.classKey, 'active')}
                                             >
                                                 Active
                                             </button>
@@ -640,7 +979,7 @@ function SessionPlanningPage() {
                                                                     className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
                                                                     value={callRecord?.status ?? 'not_started'}
                                                                     onChange={event =>
-                                                                        setCallRecord(participant.id, { status: event.target.value as PlannerCallStatus })
+                                                                        void setCallRecord(participant.id, { status: event.target.value as PlannerCallStatus })
                                                                     }
                                                                 >
                                                                     {plannerCallStatusOptions.map(option => (
@@ -658,7 +997,7 @@ function SessionPlanningPage() {
                                                                         className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
                                                                         value={callRecord?.offeredAlternativeClassKey ?? ''}
                                                                         onChange={event =>
-                                                                            setCallRecord(participant.id, {
+                                                                            void setCallRecord(participant.id, {
                                                                                 offeredAlternativeClassKey: event.target.value,
                                                                             })
                                                                         }
@@ -678,7 +1017,7 @@ function SessionPlanningPage() {
                                                                         className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
                                                                         value={callRecord?.acceptedAlternativeClassKey ?? ''}
                                                                         onChange={event =>
-                                                                            setCallRecord(participant.id, {
+                                                                            void setCallRecord(participant.id, {
                                                                                 acceptedAlternativeClassKey: event.target.value,
                                                                                 status: event.target.value ? 'accepted_alternative' : callRecord?.status ?? 'not_started',
                                                                             })
@@ -699,7 +1038,7 @@ function SessionPlanningPage() {
                                                                 <textarea
                                                                     className="min-h-20 rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
                                                                     value={callRecord?.notes ?? ''}
-                                                                    onChange={event => setCallRecord(participant.id, { notes: event.target.value })}
+                                                                    onChange={event => void setCallRecord(participant.id, { notes: event.target.value })}
                                                                 />
                                                             </label>
                                                         </div>

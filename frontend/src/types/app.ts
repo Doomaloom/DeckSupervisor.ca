@@ -198,3 +198,34 @@ export type PlannerDataset = {
   participants: PlannerParticipant[]
   callRecords: Record<string, PlannerParticipantCallRecord>
 }
+
+export type PlannerShareParticipant = {
+  id: string
+  displayName: string
+  isHost: boolean
+  isGuest: boolean
+  joinedAt: string
+  lastSeenAt: string
+}
+
+export type PlannerShareSession = {
+  code: string
+  shareUrl: string
+  hostParticipantId: string
+  expiresAt: string
+  participants: PlannerShareParticipant[]
+  dataset: PlannerDataset
+  version: number
+}
+
+export type PlannerShareJoinResponse = {
+  participantId: string
+  session: PlannerShareSession
+}
+
+export type PlannerCallRecordUpdate = {
+  status?: PlannerCallStatus
+  notes?: string
+  offeredAlternativeClassKey?: string
+  acceptedAlternativeClassKey?: string
+}
