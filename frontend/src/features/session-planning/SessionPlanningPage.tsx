@@ -8,6 +8,7 @@ import type {
 } from '../../types/app'
 import {
   loadPlannerDataset,
+  mergePlannerDatasets,
   parseSessionPlannerCsv,
   savePlannerDataset,
   updatePlannerCallRecord,
@@ -113,6 +114,24 @@ function SessionPlanningPage() {
     }
   }
 
+  const handleAddUpload = async (file: File | null) => {
+    if (!file) {
+      return
+    }
+    try {
+      const parsedDataset = parseSessionPlannerCsv(await file.text(), file.name)
+      const nextDataset = dataset ? mergePlannerDatasets(dataset, parsedDataset) : parsedDataset
+      persistLocalDataset(nextDataset)
+      setError('')
+      setIsInfoPanelOpen(true)
+      if (shareCode) {
+        syncQueryParams('')
+      }
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Failed to merge planner CSV.')
+    }
+  }
+
   const setClassStatus = async (classKey: string, status: PlannerClassStatus) => {
     if (!dataset) {
       return
@@ -208,6 +227,7 @@ function SessionPlanningPage() {
         shareNotice={shareNotice}
         sharePhoneNumber={sharePhoneNumber}
         shareSession={shareSession}
+        onHandleAddUpload={handleAddUpload}
         onHandleUpload={handleUpload}
         onJoinSharedPlanner={joinSharedPlanner}
         onLeaveSharedPlannerSession={leaveSharedPlannerSession}

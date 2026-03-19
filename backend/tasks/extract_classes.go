@@ -354,11 +354,11 @@ func getSeasonAndYear(eventSchedule string, startDate, endDate time.Time) (strin
 func seasonAndYearFromDate(source time.Time) (string, int) {
 	month := source.Month()
 	switch {
-	case month >= time.January && month <= time.March:
+	case month >= time.January && month < time.March:
 		return "Winter", source.Year()
-	case month >= time.April && month <= time.June:
+	case month >= time.March && month < time.June:
 		return "Spring", source.Year()
-	case month >= time.July && month <= time.September:
+	case month >= time.June && month < time.September:
 		return "Summer", source.Year()
 	default:
 		return "Fall", source.Year()

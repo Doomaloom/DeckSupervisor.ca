@@ -432,6 +432,93 @@ export function savePlannerDataset(dataset: PlannerDataset) {
   setStoredItem(plannerDatasetKey(), JSON.stringify(dataset))
 }
 
+function mergeUnique(values: string[], additions: string[]) {
+  return Array.from(new Set([...values, ...additions]))
+}
+
+function mergeSourceFileNames(current: string, next: string) {
+  const names = `${current},${next}`
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean)
+  return Array.from(new Set(names)).join(', ')
+}
+
+export function mergePlannerDatasets(current: PlannerDataset, incoming: PlannerDataset): PlannerDataset {
+  const sessionMap = new Map(current.sessions.map(session => [session.sessionKey, { ...session }]))
+  incoming.sessions.forEach(session => {
+    const existing = sessionMap.get(session.sessionKey)
+    if (!existing) {
+      sessionMap.set(session.sessionKey, {
+        ...session,
+        classKeys: [...session.classKeys],
+      })
+      return
+    }
+    existing.classKeys = mergeUnique(existing.classKeys, session.classKeys)
+  })
+
+  const classMap = new Map(
+    current.classes.map(plannerClass => [
+      plannerClass.classKey,
+      {
+        ...plannerClass,
+        participantIds: [...plannerClass.participantIds],
+        waitingParticipantIds: [...plannerClass.waitingParticipantIds],
+      },
+    ]),
+  )
+  incoming.classes.forEach(plannerClass => {
+    const existing = classMap.get(plannerClass.classKey)
+    if (!existing) {
+      classMap.set(plannerClass.classKey, {
+        ...plannerClass,
+        participantIds: [...plannerClass.participantIds],
+        waitingParticipantIds: [...plannerClass.waitingParticipantIds],
+      })
+      return
+    }
+    existing.participantIds = mergeUnique(existing.participantIds, plannerClass.participantIds)
+    existing.waitingParticipantIds = mergeUnique(existing.waitingParticipantIds, plannerClass.waitingParticipantIds)
+  })
+
+  const participantMap = new Map(current.participants.map(participant => [participant.id, participant]))
+  incoming.participants.forEach(participant => {
+    if (!participantMap.has(participant.id)) {
+      participantMap.set(participant.id, participant)
+    }
+  })
+
+  const callRecords: Record<string, PlannerParticipantCallRecord> = { ...current.callRecords }
+  Object.entries(incoming.callRecords).forEach(([participantId, record]) => {
+    if (!callRecords[participantId]) {
+      callRecords[participantId] = record
+    }
+  })
+
+  return {
+    sourceFileName: mergeSourceFileNames(current.sourceFileName, incoming.sourceFileName),
+    importedAt: new Date().toISOString(),
+    sessions: Array.from(sessionMap.values()).sort((left, right) => {
+      if (left.dayOfWeek !== right.dayOfWeek) {
+        return left.dayOfWeek.localeCompare(right.dayOfWeek)
+      }
+      return left.facility.localeCompare(right.facility)
+    }),
+    classes: Array.from(classMap.values()).sort((left, right) => {
+      if (left.dayOfWeek !== right.dayOfWeek) {
+        return left.dayOfWeek.localeCompare(right.dayOfWeek)
+      }
+      if (left.facility !== right.facility) {
+        return left.facility.localeCompare(right.facility)
+      }
+      return left.eventTime.localeCompare(right.eventTime)
+    }),
+    participants: Array.from(participantMap.values()).sort((left, right) => left.name.localeCompare(right.name)),
+    callRecords,
+  }
+}
+
 export function updatePlannerClassStatus(
   dataset: PlannerDataset,
   classKey: string,

@@ -14,6 +14,7 @@ type PlannerHeaderProps = {
   shareNotice: string
   sharePhoneNumber: string
   shareSession: PlannerShareSession | null
+  onHandleAddUpload: (file: File | null) => void | Promise<void>
   onHandleUpload: (file: File | null) => void | Promise<void>
   onJoinSharedPlanner: () => void | Promise<void>
   onLeaveSharedPlannerSession: () => void | Promise<void>
@@ -39,6 +40,7 @@ function PlannerHeader({
   shareNotice,
   sharePhoneNumber,
   shareSession,
+  onHandleAddUpload,
   onHandleUpload,
   onJoinSharedPlanner,
   onLeaveSharedPlannerSession,
@@ -89,6 +91,20 @@ function PlannerHeader({
                 }}
               />
             </label>
+            {dataset ? (
+              <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-5 text-sm font-semibold text-primary transition hover:-translate-y-0.5 hover:border-primary hover:bg-primary/10">
+                <span>Add CSV</span>
+                <input
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  type="file"
+                  accept=".csv"
+                  onChange={event => {
+                    void onHandleAddUpload(event.target.files?.[0] ?? null)
+                    event.target.value = ''
+                  }}
+                />
+              </label>
+            ) : null}
             {dataset ? (
               <p className="text-sm text-secondary/70">
                 Loaded: <span className="font-semibold text-secondary">{dataset.sourceFileName}</span>
