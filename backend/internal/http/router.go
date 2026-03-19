@@ -70,6 +70,7 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/planner-shares/{code}/close", handlers.ClosePlannerShare).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}/class-status", handlers.UpdatePlannerShareClassStatus).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}/call-record", handlers.UpdatePlannerShareCallRecord).Methods("POST")
+	r.HandleFunc("/api/planner-shares/{code}/details", handlers.UpdatePlannerShareDetails).Methods("POST")
 	r.HandleFunc("/api/health", handlers.Health).Methods("GET")
 	r.NotFoundHandler = http.NotFoundHandler()
 	return r

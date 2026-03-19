@@ -46,6 +46,7 @@ function SessionPlanningPage() {
     shareParticipantId,
     sharePhoneNumber,
     shareSession,
+    saveSharedDetails,
     startSharing,
     stopSharing,
     syncQueryParams,
@@ -214,6 +215,7 @@ function SessionPlanningPage() {
         onSetShareDisplayName={setShareDisplayName}
         onSetShareLocationName={setShareLocationName}
         onSetSharePhoneNumber={setSharePhoneNumber}
+        onSaveSharedDetails={saveSharedDetails}
         onStartSharing={startSharing}
         onStopSharing={stopSharing}
       />

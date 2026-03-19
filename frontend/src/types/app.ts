@@ -212,6 +212,8 @@ export type PlannerShareSession = {
   code: string
   shareUrl: string
   hostParticipantId: string
+  locationName: string
+  callbackPhoneNumber: string
   expiresAt: string
   participants: PlannerShareParticipant[]
   dataset: PlannerDataset

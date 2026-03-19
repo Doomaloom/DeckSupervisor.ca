@@ -21,6 +21,7 @@ type PlannerHeaderProps = {
   onSetShareDisplayName: (value: string) => void
   onSetShareLocationName: (value: string) => void
   onSetSharePhoneNumber: (value: string) => void
+  onSaveSharedDetails: () => void | Promise<void>
   onStartSharing: () => void | Promise<void>
   onStopSharing: () => void | Promise<void>
 }
@@ -45,6 +46,7 @@ function PlannerHeader({
   onSetShareDisplayName,
   onSetShareLocationName,
   onSetSharePhoneNumber,
+  onSaveSharedDetails,
   onStartSharing,
   onStopSharing,
 }: PlannerHeaderProps) {
@@ -213,6 +215,52 @@ function PlannerHeader({
                 {participant.isHost ? ' • Host' : ''}
               </span>
             ))}
+          </div>
+          <div className="mt-4 rounded-2xl border border-secondary/20 bg-accent p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary/70">
+              Shared Call Details
+            </p>
+            {isShareHost ? (
+              <div className="mt-3 flex flex-wrap items-end gap-3">
+                <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                  Location name
+                  <input
+                    className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
+                    value={shareLocationName}
+                    onChange={event => onSetShareLocationName(event.target.value)}
+                    placeholder="Recreation centre name"
+                  />
+                </label>
+                <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                  Callback phone
+                  <input
+                    className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
+                    value={sharePhoneNumber}
+                    onChange={event => onSetSharePhoneNumber(event.target.value)}
+                    placeholder="905-555-1234"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => void onSaveSharedDetails()}
+                  disabled={isSharingBusy}
+                >
+                  {isSharingBusy ? 'Saving...' : 'Update Shared Info'}
+                </button>
+              </div>
+            ) : (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
+                  <span className="font-semibold">Location name:</span>{' '}
+                  {shareSession.locationName || 'Not provided'}
+                </div>
+                <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
+                  <span className="font-semibold">Callback phone:</span>{' '}
+                  {shareSession.callbackPhoneNumber || 'Not provided'}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ) : null}

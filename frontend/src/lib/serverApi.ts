@@ -226,7 +226,12 @@ export function updateSessionNote(id: string, body: Record<string, unknown>) {
   return request<{ note: any }>(`/api/session-notes/${encodeURIComponent(id)}`, { method: 'PATCH', body })
 }
 
-export function createPlannerShare(body: { dataset: PlannerDataset; displayName: string }) {
+export function createPlannerShare(body: {
+  dataset: PlannerDataset
+  displayName: string
+  locationName: string
+  callbackPhoneNumber: string
+}) {
   return request<PlannerShareJoinResponse>('/api/planner-shares', {
     method: 'POST',
     body,
@@ -281,6 +286,16 @@ export function updatePlannerShareCallRecord(
   body: { participantId: string; participantRecordId: string; update: PlannerCallRecordUpdate }
 ) {
   return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/call-record`, {
+    method: 'POST',
+    body,
+  })
+}
+
+export function updatePlannerShareDetails(
+  code: string,
+  body: { participantId: string; locationName: string; callbackPhoneNumber: string }
+) {
+  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/details`, {
     method: 'POST',
     body,
   })

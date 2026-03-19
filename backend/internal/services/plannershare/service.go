@@ -101,6 +101,8 @@ type ShareSession struct {
 	Code              string             `json:"code"`
 	ShareURL          string             `json:"shareUrl"`
 	HostParticipantID string             `json:"hostParticipantId"`
+	LocationName      string             `json:"locationName"`
+	CallbackPhoneNumber string           `json:"callbackPhoneNumber"`
 	ExpiresAt         time.Time          `json:"expiresAt"`
 	Participants      []ShareParticipant `json:"participants"`
 	Dataset           PlannerDataset     `json:"dataset"`
@@ -110,6 +112,8 @@ type ShareSession struct {
 type shareRoom struct {
 	Code              string
 	HostParticipantID string
+	LocationName      string
+	CallbackPhoneNumber string
 	ExpiresAt         time.Time
 	Version           int
 	Dataset           PlannerDataset
@@ -127,7 +131,7 @@ func NewService() *Service {
 	}
 }
 
-func (s *Service) Create(baseURL string, dataset PlannerDataset, displayName string, isGuest bool) (string, ShareSession, error) {
+func (s *Service) Create(baseURL string, dataset PlannerDataset, displayName, locationName, callbackPhoneNumber string, isGuest bool) (string, ShareSession, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -149,6 +153,8 @@ func (s *Service) Create(baseURL string, dataset PlannerDataset, displayName str
 	room := &shareRoom{
 		Code:              code,
 		HostParticipantID: participantID,
+		LocationName:      strings.TrimSpace(locationName),
+		CallbackPhoneNumber: strings.TrimSpace(callbackPhoneNumber),
 		ExpiresAt:         now.Add(sessionLifetime),
 		Version:           1,
 		Dataset:           cloneDataset(dataset),
@@ -284,6 +290,23 @@ func (s *Service) UpdateCallRecord(baseURL, code, participantID, recordID string
 	return s.snapshotLocked(baseURL, room), nil
 }
 
+func (s *Service) UpdateSessionDetails(baseURL, code, participantID, locationName, callbackPhoneNumber string) (ShareSession, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	room, err := s.requireParticipantLocked(strings.ToUpper(strings.TrimSpace(code)), participantID)
+	if err != nil {
+		return ShareSession{}, err
+	}
+	if room.HostParticipantID != participantID {
+		return ShareSession{}, ErrForbidden
+	}
+	room.LocationName = strings.TrimSpace(locationName)
+	room.CallbackPhoneNumber = strings.TrimSpace(callbackPhoneNumber)
+	room.Version += 1
+	room.Participants[participantID].LastSeenAt = time.Now().UTC()
+	return s.snapshotLocked(baseURL, room), nil
+}
+
 func (s *Service) requireParticipantLocked(code, participantID string) (*shareRoom, error) {
 	now := time.Now().UTC()
 	s.cleanupLocked(now)
@@ -358,6 +381,8 @@ func (s *Service) snapshotLocked(baseURL string, room *shareRoom) ShareSession {
 		Code:              room.Code,
 		ShareURL:          strings.TrimRight(baseURL, "/") + "/session-planning?share=" + room.Code,
 		HostParticipantID: room.HostParticipantID,
+		LocationName:      room.LocationName,
+		CallbackPhoneNumber: room.CallbackPhoneNumber,
 		ExpiresAt:         room.ExpiresAt,
 		Participants:      participants,
 		Dataset:           cloneDataset(room.Dataset),

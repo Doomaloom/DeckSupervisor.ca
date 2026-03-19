@@ -8,6 +8,7 @@ import {
   fetchPlannerShare,
   joinPlannerShare,
   leavePlannerShare,
+  updatePlannerShareDetails,
 } from '../../../lib/serverApi'
 
 const SHARE_NAME_STORAGE_KEY = 'plannerShareDisplayName'
@@ -50,6 +51,10 @@ export function usePlannerShareSession({
   const applySharedSession = (session: PlannerShareSession) => {
     setShareSession(session)
     setDataset(session.dataset)
+    if (session.hostParticipantId !== shareParticipantId) {
+      setShareLocationName(session.locationName)
+      setSharePhoneNumber(session.callbackPhoneNumber)
+    }
   }
 
   useEffect(() => {
@@ -166,7 +171,12 @@ export function usePlannerShareSession({
     setIsSharingBusy(true)
     try {
       const nextDisplayName = shareDisplayName.trim() || 'Host'
-      const response = await createPlannerShare({ dataset, displayName: nextDisplayName })
+      const response = await createPlannerShare({
+        dataset,
+        displayName: nextDisplayName,
+        locationName: shareLocationName.trim(),
+        callbackPhoneNumber: sharePhoneNumber.trim(),
+      })
       setStoredItem(SHARE_NAME_STORAGE_KEY, nextDisplayName)
       setStoredItem(`plannerShareParticipant:${response.session.code}`, response.participantId)
       setShareParticipantId(response.participantId)
@@ -241,6 +251,26 @@ export function usePlannerShareSession({
     }
   }
 
+  const saveSharedDetails = async () => {
+    if (!shareCode || !shareParticipantId || !shareSession || shareSession.hostParticipantId !== shareParticipantId) {
+      return
+    }
+    setIsSharingBusy(true)
+    try {
+      const response = await updatePlannerShareDetails(shareCode, {
+        participantId: shareParticipantId,
+        locationName: shareLocationName.trim(),
+        callbackPhoneNumber: sharePhoneNumber.trim(),
+      })
+      applySharedSession(response.session)
+      setError('')
+    } catch (shareError) {
+      setError(shareError instanceof Error ? shareError.message : 'Failed to update shared planner details.')
+    } finally {
+      setIsSharingBusy(false)
+    }
+  }
+
   return {
     applySharedSession,
     isPopout,
@@ -256,6 +286,7 @@ export function usePlannerShareSession({
     shareParticipantId,
     sharePhoneNumber,
     shareSession,
+    saveSharedDetails,
     startSharing,
     stopSharing,
     syncQueryParams,

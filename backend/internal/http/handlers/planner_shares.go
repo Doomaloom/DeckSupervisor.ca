@@ -15,6 +15,8 @@ var plannerShareService = plannershare.NewService()
 
 type createPlannerShareRequest struct {
 	DisplayName string                     `json:"displayName"`
+	LocationName string                    `json:"locationName"`
+	CallbackPhoneNumber string             `json:"callbackPhoneNumber"`
 	Dataset     plannershare.PlannerDataset `json:"dataset"`
 }
 
@@ -38,6 +40,12 @@ type updatePlannerCallRecordRequest struct {
 	Update             plannershare.PlannerCallRecordUpdate `json:"update"`
 }
 
+type updatePlannerShareDetailsRequest struct {
+	ParticipantID string `json:"participantId"`
+	LocationName string `json:"locationName"`
+	CallbackPhoneNumber string `json:"callbackPhoneNumber"`
+}
+
 func CreatePlannerShare(w http.ResponseWriter, r *http.Request) {
 	var req createPlannerShareRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -45,7 +53,14 @@ func CreatePlannerShare(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	participantID, session, err := plannerShareService.Create(requestBaseURL(r), req.Dataset, req.DisplayName, isGuestRequest(r))
+	participantID, session, err := plannerShareService.Create(
+		requestBaseURL(r),
+		req.Dataset,
+		req.DisplayName,
+		req.LocationName,
+		req.CallbackPhoneNumber,
+		isGuestRequest(r),
+	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -151,6 +166,28 @@ func UpdatePlannerShareCallRecord(w http.ResponseWriter, r *http.Request) {
 	}
 	code := mux.Vars(r)["code"]
 	session, err := plannerShareService.UpdateCallRecord(requestBaseURL(r), code, req.ParticipantID, req.ParticipantRecordID, req.Update)
+	if err != nil {
+		writePlannerShareError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{"session": session})
+}
+
+func UpdatePlannerShareDetails(w http.ResponseWriter, r *http.Request) {
+	var req updatePlannerShareDetailsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	code := mux.Vars(r)["code"]
+	session, err := plannerShareService.UpdateSessionDetails(
+		requestBaseURL(r),
+		code,
+		req.ParticipantID,
+		req.LocationName,
+		req.CallbackPhoneNumber,
+	)
 	if err != nil {
 		writePlannerShareError(w, err)
 		return
