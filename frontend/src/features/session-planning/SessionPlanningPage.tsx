@@ -18,11 +18,13 @@ import {
   plannerSaveStateToText,
   savePlannerDataset,
   updatePlannerCallRecord,
+  updatePlannerClassLanes,
   updatePlannerClassStatus,
 } from '../../lib/sessionPlanner'
 import {
   applyPlannerShareSaveState,
   updatePlannerShareCallRecord,
+  updatePlannerShareClassLanes,
   updatePlannerShareClassStatus,
 } from '../../lib/serverApi'
 import PlannerBoard from './components/PlannerBoard'
@@ -192,6 +194,27 @@ function SessionPlanningPage() {
       setStatusMessage('')
     } catch (statusError) {
       setError(statusError instanceof Error ? statusError.message : 'Failed to update class status.')
+    }
+  }
+
+  const setClassLanes = async (laneIndexes: Record<string, number>) => {
+    if (!dataset) {
+      return
+    }
+    try {
+      if (shareCode && shareParticipantId) {
+        const response = await updatePlannerShareClassLanes(shareCode, {
+          participantId: shareParticipantId,
+          classLaneIndexes: laneIndexes,
+        })
+        applySharedSession(response.session)
+      } else {
+        persistLocalDataset(updatePlannerClassLanes(dataset, laneIndexes))
+      }
+      setError('')
+      setStatusMessage('')
+    } catch (laneError) {
+      setError(laneError instanceof Error ? laneError.message : 'Failed to update planner columns.')
     }
   }
 
@@ -447,6 +470,7 @@ function SessionPlanningPage() {
             selectedClassKey={selectedClassKey}
             selectedDay={selectedDay}
             selectedLocation={selectedLocation}
+            setClassLanes={setClassLanes}
             setIsInfoPanelOpen={setIsInfoPanelOpen}
             setSelectedClassKey={setSelectedClassKey}
             setSelectedDay={setSelectedDay}

@@ -50,6 +50,7 @@ export type PlannerBoardCourse = {
   bookedCount: number
   maximumCapacity: number
   waitlistCount: number
+  laneIndex: number
   planningStatus: PlannerClassStatus
   startTime: string
   endTime: string
@@ -75,6 +76,7 @@ export function buildPlannerBoardCourses(classes: PlannerClass[]): PlannerBoardC
         bookedCount: plannerClass.bookedCount,
         maximumCapacity: plannerClass.maximumCapacity,
         waitlistCount: plannerClass.waitlistCount,
+        laneIndex: plannerClass.laneIndex,
         planningStatus: plannerClass.planningStatus,
         startTime,
         endTime,
@@ -94,20 +96,28 @@ export function buildPlannerBoardCourses(classes: PlannerClass[]): PlannerBoardC
 export function buildPlannerBoardColumns(courses: PlannerBoardCourse[]) {
   const columns: PlannerBoardCourse[][] = []
   courses.forEach(course => {
-    let placed = false
+    while (columns.length <= course.laneIndex) {
+      columns.push([])
+    }
+
+    const preferredColumn = columns[course.laneIndex]
+    const preferredLast = preferredColumn[preferredColumn.length - 1]
+    if (!preferredLast || preferredLast.endMinutes <= course.startMinutes) {
+      preferredColumn.push(course)
+      return
+    }
+
     for (const column of columns) {
       const last = column[column.length - 1]
-      if (last.endMinutes <= course.startMinutes) {
+      if (!last || last.endMinutes <= course.startMinutes) {
         column.push(course)
-        placed = true
-        break
+        return
       }
     }
-    if (!placed) {
-      columns.push([course])
-    }
+
+    columns.push([course])
   })
-  return columns
+  return columns.filter(column => column.length > 0)
 }
 
 export function getPlannerBoardStatusClasses(status: PlannerClassStatus, isSelected: boolean) {

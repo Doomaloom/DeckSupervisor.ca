@@ -57,6 +57,7 @@ type PlannerClass struct {
 	WaitlistCount         int      `json:"waitlistCount"`
 	ParticipantIDs        []string `json:"participantIds"`
 	WaitingParticipantIDs []string `json:"waitingParticipantIds"`
+	LaneIndex             int      `json:"laneIndex"`
 	PlanningStatus        string   `json:"planningStatus"`
 }
 
@@ -92,6 +93,7 @@ type PlannerCallRecordUpdate struct {
 
 type SavedStateApplyInput struct {
 	ClassStatuses       map[string]string                  `json:"classStatuses"`
+	ClassLaneIndexes    map[string]int                     `json:"classLaneIndexes"`
 	CallRecords         map[string]PlannerCallRecordUpdate `json:"callRecords"`
 	LocationOverrides   map[string]string                  `json:"locationOverrides"`
 	CallbackPhoneNumber string                             `json:"callbackPhoneNumber"`
@@ -270,6 +272,33 @@ func (s *Service) UpdateClassStatus(baseURL, code, participantID, classKey, stat
 	return ShareSession{}, errors.New("class not found")
 }
 
+func (s *Service) UpdateClassLanes(baseURL, code, participantID string, laneIndexes map[string]int) (ShareSession, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	room, err := s.requireParticipantLocked(strings.ToUpper(strings.TrimSpace(code)), participantID)
+	if err != nil {
+		return ShareSession{}, err
+	}
+	if len(laneIndexes) == 0 {
+		return s.snapshotLocked(baseURL, room), nil
+	}
+	updated := false
+	for index := range room.Dataset.Classes {
+		if laneIndex, ok := laneIndexes[room.Dataset.Classes[index].ClassKey]; ok {
+			if laneIndex < 0 {
+				laneIndex = 0
+			}
+			room.Dataset.Classes[index].LaneIndex = laneIndex
+			updated = true
+		}
+	}
+	if updated {
+		room.Version += 1
+	}
+	room.Participants[participantID].LastSeenAt = time.Now().UTC()
+	return s.snapshotLocked(baseURL, room), nil
+}
+
 func (s *Service) UpdateCallRecord(baseURL, code, participantID, recordID string, update PlannerCallRecordUpdate) (ShareSession, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -330,6 +359,9 @@ func (s *Service) ApplySavedState(baseURL, code, participantID string, input Sav
 	for index := range room.Dataset.Classes {
 		if status, ok := input.ClassStatuses[room.Dataset.Classes[index].ClassKey]; ok && status != "" {
 			room.Dataset.Classes[index].PlanningStatus = status
+		}
+		if laneIndex, ok := input.ClassLaneIndexes[room.Dataset.Classes[index].ClassKey]; ok && laneIndex >= 0 {
+			room.Dataset.Classes[index].LaneIndex = laneIndex
 		}
 	}
 

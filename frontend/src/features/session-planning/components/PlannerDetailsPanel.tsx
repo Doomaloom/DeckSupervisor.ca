@@ -274,6 +274,7 @@ function PlannerDetailsPanel({
                                         waitlistCount: 0,
                                         participantIds: [],
                                         waitingParticipantIds: [],
+                                        laneIndex: 0,
                                         planningStatus: 'active',
                                       },
                                     )

@@ -281,6 +281,16 @@ export function updatePlannerShareClassStatus(
   })
 }
 
+export function updatePlannerShareClassLanes(
+  code: string,
+  body: { participantId: string; classLaneIndexes: Record<string, number> }
+) {
+  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/class-lanes`, {
+    method: 'POST',
+    body,
+  })
+}
+
 export function updatePlannerShareCallRecord(
   code: string,
   body: { participantId: string; participantRecordId: string; update: PlannerCallRecordUpdate }
@@ -306,6 +316,7 @@ export function applyPlannerShareSaveState(
   body: {
     participantId: string
     classStatuses: Record<string, PlannerClassStatus>
+    classLaneIndexes: Record<string, number>
     callRecords: Record<string, PlannerCallRecordUpdate>
     locationOverrides: Record<string, string>
     callbackPhoneNumber: string

@@ -11,6 +11,7 @@ import type {
 } from '../types/app'
 import { getStoredItem, setStoredItem } from './browserStorage'
 import { getScopedKey } from './storageScope'
+import { extractEndTime, extractStartTime } from './time'
 
 const plannerDatasetKey = () => getScopedKey('sessionPlannerDataset')
 export const PLANNER_SAVE_STATE_VERSION = 1
@@ -27,6 +28,7 @@ export type PlannerSaveState = {
     selectedClassKey: string
   }
   classStatuses: Record<string, PlannerClassStatus>
+  classLaneIndexes: Record<string, number>
   callRecords: Record<string, PlannerParticipantCallRecord>
 }
 
@@ -383,6 +385,103 @@ function buildClassKey(row: Pick<CsvParticipantRow, 'eventId' | 'dayOfWeek' | 'e
   ].join('|')
 }
 
+function getPlannerClassBounds(eventTime: string) {
+  const startTime = extractStartTime(eventTime)
+  const endTime = extractEndTime(eventTime)
+  const [startHour, startMinute] = startTime.split(':').map(Number)
+  const [endHour, endMinute] = endTime.split(':').map(Number)
+  const startMinutes = startHour * 60 + startMinute
+  let endMinutes = endHour * 60 + endMinute
+  if (endMinutes < startMinutes) {
+    endMinutes += 24 * 60
+  }
+  return { startMinutes, endMinutes }
+}
+
+function sortPlannerClasses(left: PlannerClass, right: PlannerClass) {
+  if (left.dayOfWeek !== right.dayOfWeek) {
+    return left.dayOfWeek.localeCompare(right.dayOfWeek)
+  }
+  if (left.facility !== right.facility) {
+    return left.facility.localeCompare(right.facility)
+  }
+  if (left.laneIndex !== right.laneIndex) {
+    return left.laneIndex - right.laneIndex
+  }
+  return left.eventTime.localeCompare(right.eventTime)
+}
+
+function normalizePlannerClassLanes(classes: PlannerClass[]) {
+  const grouped = new Map<string, PlannerClass[]>()
+  classes.forEach(plannerClass => {
+    const key = `${plannerClass.dayOfWeek}|${plannerClass.facility}`
+    if (!grouped.has(key)) {
+      grouped.set(key, [])
+    }
+    grouped.get(key)!.push(plannerClass)
+  })
+
+  const laneMap = new Map<string, number>()
+
+  grouped.forEach(group => {
+    const lanes: PlannerClass[][] = []
+    const ordered = [...group].sort((left, right) => {
+      const leftHasLane = Number.isInteger(left.laneIndex) && left.laneIndex >= 0
+      const rightHasLane = Number.isInteger(right.laneIndex) && right.laneIndex >= 0
+      if (leftHasLane && rightHasLane && left.laneIndex !== right.laneIndex) {
+        return left.laneIndex - right.laneIndex
+      }
+      if (leftHasLane !== rightHasLane) {
+        return leftHasLane ? -1 : 1
+      }
+      const leftBounds = getPlannerClassBounds(left.eventTime)
+      const rightBounds = getPlannerClassBounds(right.eventTime)
+      if (leftBounds.startMinutes !== rightBounds.startMinutes) {
+        return leftBounds.startMinutes - rightBounds.startMinutes
+      }
+      return leftBounds.endMinutes - rightBounds.endMinutes
+    })
+
+    ordered.forEach(plannerClass => {
+      const bounds = getPlannerClassBounds(plannerClass.eventTime)
+      const preferredLane = Number.isInteger(plannerClass.laneIndex) && plannerClass.laneIndex >= 0
+        ? plannerClass.laneIndex
+        : -1
+
+      if (preferredLane >= 0) {
+        while (lanes.length <= preferredLane) {
+          lanes.push([])
+        }
+        const preferredColumn = lanes[preferredLane]
+        const last = preferredColumn[preferredColumn.length - 1]
+        if (!last || getPlannerClassBounds(last.eventTime).endMinutes <= bounds.startMinutes) {
+          preferredColumn.push(plannerClass)
+          laneMap.set(plannerClass.classKey, preferredLane)
+          return
+        }
+      }
+
+      let nextLaneIndex = lanes.findIndex(column => {
+        const last = column[column.length - 1]
+        return !last || getPlannerClassBounds(last.eventTime).endMinutes <= bounds.startMinutes
+      })
+
+      if (nextLaneIndex === -1) {
+        nextLaneIndex = lanes.length
+        lanes.push([])
+      }
+
+      lanes[nextLaneIndex].push(plannerClass)
+      laneMap.set(plannerClass.classKey, nextLaneIndex)
+    })
+  })
+
+  return classes.map(plannerClass => ({
+    ...plannerClass,
+    laneIndex: laneMap.get(plannerClass.classKey) ?? 0,
+  }))
+}
+
 function getCapacityBand(plannerClass: PlannerClass) {
   if (plannerClass.maximumCapacity <= 0) {
     return 'neutral'
@@ -507,6 +606,7 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
         waitlistCount: 0,
         participantIds: [],
         waitingParticipantIds: [],
+        laneIndex: 0,
         planningStatus: 'active',
       })
     }
@@ -575,7 +675,7 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
     sourceFileName,
     importedAt: new Date().toISOString(),
     sessions,
-    classes,
+    classes: normalizePlannerClassLanes(classes).sort(sortPlannerClasses),
     participants,
     callRecords,
   }
@@ -710,6 +810,7 @@ export function parseEmptyClassesPlannerCsv(text: string, sourceFileName: string
         waitlistCount: 0,
         participantIds: [],
         waitingParticipantIds: [],
+        laneIndex: 0,
         planningStatus: 'active',
       })
     }
@@ -740,7 +841,7 @@ export function parseEmptyClassesPlannerCsv(text: string, sourceFileName: string
     sourceFileName,
     importedAt: new Date().toISOString(),
     sessions,
-    classes,
+    classes: normalizePlannerClassLanes(classes).sort(sortPlannerClasses),
     participants: [],
     callRecords: {},
   }
@@ -787,6 +888,12 @@ function normalizePlannerDataset(dataset: PlannerDataset): PlannerDataset {
 
   return {
     ...dataset,
+    classes: normalizePlannerClassLanes(
+      dataset.classes.map(plannerClass => ({
+        ...plannerClass,
+        laneIndex: Number.isInteger(plannerClass.laneIndex) && plannerClass.laneIndex >= 0 ? plannerClass.laneIndex : 0,
+      })),
+    ).sort(sortPlannerClasses),
     callRecords: normalizedCallRecords,
   }
 }
@@ -860,6 +967,7 @@ function mergePlannerClass(existing: PlannerClass, incoming: PlannerClass): Plan
     waitlistCount: authoritative.waitlistCount,
     participantIds: mergeUnique(existing.participantIds, incoming.participantIds),
     waitingParticipantIds: mergeUnique(existing.waitingParticipantIds, incoming.waitingParticipantIds),
+    laneIndex: existing.laneIndex,
     planningStatus: existing.planningStatus,
   }
 }
@@ -924,15 +1032,7 @@ export function mergePlannerDatasets(current: PlannerDataset, incoming: PlannerD
       }
       return left.facility.localeCompare(right.facility)
     }),
-    classes: Array.from(classMap.values()).sort((left, right) => {
-      if (left.dayOfWeek !== right.dayOfWeek) {
-        return left.dayOfWeek.localeCompare(right.dayOfWeek)
-      }
-      if (left.facility !== right.facility) {
-        return left.facility.localeCompare(right.facility)
-      }
-      return left.eventTime.localeCompare(right.eventTime)
-    }),
+    classes: normalizePlannerClassLanes(Array.from(classMap.values())).sort(sortPlannerClasses),
     participants: Array.from(participantMap.values()).sort((left, right) => left.name.localeCompare(right.name)),
     callRecords,
   }
@@ -948,6 +1048,24 @@ export function updatePlannerClassStatus(
     classes: dataset.classes.map(plannerClass =>
       plannerClass.classKey === classKey ? { ...plannerClass, planningStatus: status } : plannerClass,
     ),
+  }
+}
+
+export function updatePlannerClassLanes(
+  dataset: PlannerDataset,
+  laneIndexes: Record<string, number>,
+): PlannerDataset {
+  return {
+    ...dataset,
+    classes: normalizePlannerClassLanes(
+      dataset.classes.map(plannerClass => ({
+        ...plannerClass,
+        laneIndex:
+          laneIndexes[plannerClass.classKey] !== undefined
+            ? Math.max(0, Math.floor(laneIndexes[plannerClass.classKey] ?? 0))
+            : plannerClass.laneIndex,
+      })),
+    ).sort(sortPlannerClasses),
   }
 }
 
@@ -995,6 +1113,9 @@ export function buildPlannerSaveState(args: {
     classStatuses: Object.fromEntries(
       args.dataset.classes.map(plannerClass => [plannerClass.classKey, plannerClass.planningStatus]),
     ),
+    classLaneIndexes: Object.fromEntries(
+      args.dataset.classes.map(plannerClass => [plannerClass.classKey, plannerClass.laneIndex]),
+    ),
     callRecords: Object.fromEntries(
       Object.entries(args.dataset.callRecords).map(([participantId, record]) => [
         participantId,
@@ -1035,6 +1156,11 @@ export function parsePlannerSaveState(text: string): PlannerSaveState {
         typeof state.selection?.selectedClassKey === 'string' ? state.selection.selectedClassKey : '',
     },
     classStatuses: normalizeClassStatuses(state.classStatuses),
+    classLaneIndexes: Object.fromEntries(
+      Object.entries(state.classLaneIndexes ?? {})
+        .filter(([, laneIndex]) => Number.isInteger(laneIndex) && Number(laneIndex) >= 0)
+        .map(([classKey, laneIndex]) => [classKey, Number(laneIndex)]),
+    ),
     callRecords: normalizeCallRecords(state.callRecords),
   }
 }
@@ -1049,13 +1175,15 @@ export function applyPlannerSaveState(
   let matchedClasses = 0
   const nextClasses = dataset.classes.map(plannerClass => {
     const status = state.classStatuses[plannerClass.classKey]
-    if (!status) {
+    const laneIndex = state.classLaneIndexes[plannerClass.classKey]
+    if (!status && laneIndex === undefined) {
       return plannerClass
     }
     matchedClasses += 1
     return {
       ...plannerClass,
-      planningStatus: status,
+      planningStatus: status ?? plannerClass.planningStatus,
+      laneIndex: laneIndex ?? plannerClass.laneIndex,
     }
   })
 
@@ -1082,11 +1210,13 @@ export function applyPlannerSaveState(
   return {
     dataset: {
       ...dataset,
-      classes: nextClasses,
+      classes: normalizePlannerClassLanes(nextClasses).sort(sortPlannerClasses),
       callRecords: nextCallRecords,
     },
     matchedClasses,
-    skippedClasses: Object.keys(state.classStatuses).filter(classKey => !classKeySet.has(classKey)).length,
+    skippedClasses: Array.from(
+      new Set([...Object.keys(state.classStatuses), ...Object.keys(state.classLaneIndexes)]),
+    ).filter(classKey => !classKeySet.has(classKey)).length,
     matchedCallRecords,
     skippedCallRecords: Object.keys(state.callRecords).filter(participantId => !participantIdSet.has(participantId))
       .length,
@@ -1099,12 +1229,14 @@ export function plannerSaveStateToText(state: PlannerSaveState) {
 
 export function plannerSaveStateToSharePayload(state: PlannerSaveState): {
   classStatuses: Record<string, PlannerClassStatus>
+  classLaneIndexes: Record<string, number>
   callRecords: Record<string, PlannerCallRecordUpdate>
   locationOverrides: Record<string, string>
   callbackPhoneNumber: string
 } {
   return {
     classStatuses: state.classStatuses,
+    classLaneIndexes: state.classLaneIndexes,
     callRecords: Object.fromEntries(
       Object.entries(state.callRecords).map(([participantId, record]) => [
         participantId,

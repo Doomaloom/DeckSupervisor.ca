@@ -182,6 +182,7 @@ export type PlannerClass = {
   waitlistCount: number
   participantIds: string[]
   waitingParticipantIds: string[]
+  laneIndex: number
   planningStatus: PlannerClassStatus
 }
 
