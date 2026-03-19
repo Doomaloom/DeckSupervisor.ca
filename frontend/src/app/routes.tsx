@@ -11,6 +11,7 @@ import RequestsPage from '../features/requests/RequestsPage'
 import SignInPage from '../features/auth/SignInPage'
 import AccountPage from '../features/account/AccountPage'
 import TeamPage from '../features/teams/TeamPage'
+import SessionPlanningPage from '../features/session-planning/SessionPlanningPage'
 import { useAuth } from './AuthContext'
 
 function RequireFullTime({ children }: { children: JSX.Element }) {
@@ -47,6 +48,7 @@ function AppRoutes() {
       <Route path="/schematic" element={<SchematicPage />} />
       <Route path="/report-cards" element={<ReportCardsPage />} />
       <Route path="/staff-notes" element={<StaffNotesPage />} />
+      <Route path="/session-planning" element={<SessionPlanningPage />} />
       <Route
         path="/requests"
         element={

@@ -128,3 +128,73 @@ export type CsvSessionCandidate = {
   courseCodes: string[]
   matchedSession: CsvMatchedSession | null
 }
+
+export type PlannerParticipantStatus = 'booked' | 'waiting'
+
+export type PlannerClassStatus = 'active' | 'pending_cancellation' | 'cancelled'
+
+export type PlannerCallStatus =
+  | 'not_started'
+  | 'called'
+  | 'voicemail'
+  | 'reached'
+  | 'declined_alternatives'
+  | 'accepted_alternative'
+
+export type PlannerParticipant = {
+  id: string
+  classKey: string
+  eventId: string
+  serviceName: string
+  name: string
+  phone: string
+  email: string
+  age: string
+  attendeeStatus: PlannerParticipantStatus
+}
+
+export type PlannerSession = {
+  sessionKey: string
+  dayOfWeek: string
+  sessionSeason: string
+  sessionYear: number
+  facility: string
+  classKeys: string[]
+}
+
+export type PlannerClass = {
+  classKey: string
+  eventId: string
+  sessionKey: string
+  serviceName: string
+  dayOfWeek: string
+  eventTime: string
+  facility: string
+  sessionSeason: string
+  sessionYear: number
+  minimumCapacity: number
+  maximumCapacity: number
+  bookedCount: number
+  waitlistCount: number
+  participantIds: string[]
+  waitingParticipantIds: string[]
+  planningStatus: PlannerClassStatus
+}
+
+export type PlannerParticipantCallRecord = {
+  participantId: string
+  classKey: string
+  status: PlannerCallStatus
+  notes: string
+  offeredAlternativeClassKey: string
+  acceptedAlternativeClassKey: string
+}
+
+export type PlannerDataset = {
+  sourceFileName: string
+  importedAt: string
+  sessions: PlannerSession[]
+  classes: PlannerClass[]
+  participants: PlannerParticipant[]
+  callRecords: Record<string, PlannerParticipantCallRecord>
+}

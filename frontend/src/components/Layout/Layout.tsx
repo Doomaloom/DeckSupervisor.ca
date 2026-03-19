@@ -12,6 +12,7 @@ import {
     UserCircleIcon,
     UserGroupIcon,
     UserPlusIcon,
+    ArrowsRightLeftIcon,
 } from '@heroicons/react/24/outline'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
@@ -180,6 +181,11 @@ function Layout({ children }: LayoutProps) {
             icon: <PrinterIcon className="h-5 w-5" />,
         },
         {
+            to: '/session-planning',
+            label: 'Session Planning',
+            icon: <ArrowsRightLeftIcon className="h-5 w-5" />,
+        },
+        {
             to: '/report-cards',
             label: 'Report Cards',
             icon: <ClipboardDocumentListIcon className="h-5 w-5" />,
@@ -211,6 +217,11 @@ function Layout({ children }: LayoutProps) {
             to: '/schematic',
             label: 'Schematic',
             icon: <CalendarDaysIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/session-planning',
+            label: 'Session Planning',
+            icon: <ArrowsRightLeftIcon className="h-5 w-5" />,
         },
         {
             to: '/report-cards',
@@ -420,6 +431,7 @@ function getPageTitle(pathname: string) {
         case '/rosters': return 'Class Rosters'
         case '/schematic': return 'Class Schedule'
         case '/print': return 'Print'
+        case '/session-planning': return 'Session Planning'
         case '/report-cards': return 'Report Cards'
         case '/staff-notes': return 'Notes'
         case '/full-timer-tools': return 'Full Timer Tools'
