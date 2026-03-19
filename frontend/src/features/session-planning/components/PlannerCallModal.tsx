@@ -138,7 +138,7 @@ Again, this is ${callerName} from ${callerLocationName}, and our number is ${cal
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary/70">
                                 Alternative Options
                             </p>
-                            <div className="mt-3 flex flex-col gap-2">
+                            <div className="mt-3 flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
                                 {alternatives.length === 0 ? (
                                     <p className="text-sm text-secondary/70">No exact alternatives available.</p>
                                 ) : (
