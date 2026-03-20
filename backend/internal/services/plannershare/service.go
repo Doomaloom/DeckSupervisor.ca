@@ -59,6 +59,9 @@ type PlannerClass struct {
 	WaitingParticipantIDs []string `json:"waitingParticipantIds"`
 	LaneIndex             int      `json:"laneIndex"`
 	PlanningStatus        string   `json:"planningStatus"`
+	PlannedMoveType       string   `json:"plannedMoveType"`
+	PlannedMoveTime       string   `json:"plannedMoveTime"`
+	PlannedMoveTargetKey  string   `json:"plannedMoveTargetClassKey"`
 }
 
 type PlannerParticipant struct {
@@ -94,9 +97,16 @@ type PlannerCallRecordUpdate struct {
 type SavedStateApplyInput struct {
 	ClassStatuses       map[string]string                  `json:"classStatuses"`
 	ClassLaneIndexes    map[string]int                     `json:"classLaneIndexes"`
+	ClassMoves          map[string]PlannerClassMoveUpdate  `json:"classMoves"`
 	CallRecords         map[string]PlannerCallRecordUpdate `json:"callRecords"`
 	LocationOverrides   map[string]string                  `json:"locationOverrides"`
 	CallbackPhoneNumber string                             `json:"callbackPhoneNumber"`
+}
+
+type PlannerClassMoveUpdate struct {
+	PlannedMoveType      *string `json:"plannedMoveType,omitempty"`
+	PlannedMoveTime      *string `json:"plannedMoveTime,omitempty"`
+	PlannedMoveTargetKey *string `json:"plannedMoveTargetClassKey,omitempty"`
 }
 
 type ShareParticipant struct {
@@ -299,6 +309,59 @@ func (s *Service) UpdateClassLanes(baseURL, code, participantID string, laneInde
 	return s.snapshotLocked(baseURL, room), nil
 }
 
+func applyPlannerClassMove(current PlannerClass, update PlannerClassMoveUpdate) PlannerClass {
+	moveType := strings.TrimSpace(current.PlannedMoveType)
+	moveTime := strings.TrimSpace(current.PlannedMoveTime)
+	moveTargetKey := strings.TrimSpace(current.PlannedMoveTargetKey)
+
+	if update.PlannedMoveType != nil {
+		nextType := strings.TrimSpace(*update.PlannedMoveType)
+		if nextType == "new_time" || nextType == "target_class" {
+			moveType = nextType
+		} else {
+			moveType = ""
+		}
+	}
+	if update.PlannedMoveTime != nil {
+		moveTime = strings.TrimSpace(*update.PlannedMoveTime)
+	}
+	if update.PlannedMoveTargetKey != nil {
+		moveTargetKey = strings.TrimSpace(*update.PlannedMoveTargetKey)
+	}
+
+	if moveType == "new_time" {
+		moveTargetKey = ""
+	} else if moveType == "target_class" {
+		moveTime = ""
+	} else {
+		moveTime = ""
+		moveTargetKey = ""
+	}
+
+	current.PlannedMoveType = moveType
+	current.PlannedMoveTime = moveTime
+	current.PlannedMoveTargetKey = moveTargetKey
+	return current
+}
+
+func (s *Service) UpdateClassMove(baseURL, code, participantID, classKey string, update PlannerClassMoveUpdate) (ShareSession, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	room, err := s.requireParticipantLocked(strings.ToUpper(strings.TrimSpace(code)), participantID)
+	if err != nil {
+		return ShareSession{}, err
+	}
+	for index := range room.Dataset.Classes {
+		if room.Dataset.Classes[index].ClassKey == classKey {
+			room.Dataset.Classes[index] = applyPlannerClassMove(room.Dataset.Classes[index], update)
+			room.Version += 1
+			room.Participants[participantID].LastSeenAt = time.Now().UTC()
+			return s.snapshotLocked(baseURL, room), nil
+		}
+	}
+	return ShareSession{}, errors.New("class not found")
+}
+
 func (s *Service) UpdateCallRecord(baseURL, code, participantID, recordID string, update PlannerCallRecordUpdate) (ShareSession, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -362,6 +425,9 @@ func (s *Service) ApplySavedState(baseURL, code, participantID string, input Sav
 		}
 		if laneIndex, ok := input.ClassLaneIndexes[room.Dataset.Classes[index].ClassKey]; ok && laneIndex >= 0 {
 			room.Dataset.Classes[index].LaneIndex = laneIndex
+		}
+		if move, ok := input.ClassMoves[room.Dataset.Classes[index].ClassKey]; ok {
+			room.Dataset.Classes[index] = applyPlannerClassMove(room.Dataset.Classes[index], move)
 		}
 	}
 

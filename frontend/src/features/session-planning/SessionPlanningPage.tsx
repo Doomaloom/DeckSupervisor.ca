@@ -9,6 +9,7 @@ import type {
 import {
   applyPlannerSaveState,
   buildPlannerSaveState,
+  getPlannerMoveTargetLabel,
   loadPlannerDataset,
   mergePlannerDatasets,
   parseEmptyClassesPlannerCsv,
@@ -19,12 +20,14 @@ import {
   savePlannerDataset,
   updatePlannerCallRecord,
   updatePlannerClassLanes,
+  updatePlannerClassMove,
   updatePlannerClassStatus,
 } from '../../lib/sessionPlanner'
 import {
   applyPlannerShareSaveState,
   updatePlannerShareCallRecord,
   updatePlannerShareClassLanes,
+  updatePlannerShareClassMove,
   updatePlannerShareClassStatus,
 } from '../../lib/serverApi'
 import PlannerBoard from './components/PlannerBoard'
@@ -218,6 +221,37 @@ function SessionPlanningPage() {
     }
   }
 
+  const setClassMove = async (
+    classKey: string,
+    update: {
+      plannedMoveType?: 'new_time' | 'target_class' | ''
+      plannedMoveTime?: string
+      plannedMoveTargetClassKey?: string
+    },
+  ) => {
+    if (!dataset) {
+      return
+    }
+    try {
+      if (shareCode && shareParticipantId) {
+        const response = await updatePlannerShareClassMove(shareCode, {
+          participantId: shareParticipantId,
+          classKey,
+          plannedMoveType: update.plannedMoveType ?? '',
+          plannedMoveTime: update.plannedMoveTime ?? '',
+          plannedMoveTargetClassKey: update.plannedMoveTargetClassKey ?? '',
+        })
+        applySharedSession(response.session)
+      } else {
+        persistLocalDataset(updatePlannerClassMove(dataset, classKey, update))
+      }
+      setError('')
+      setStatusMessage('')
+    } catch (moveError) {
+      setError(moveError instanceof Error ? moveError.message : 'Failed to update planned move.')
+    }
+  }
+
   const setCallRecord = async (participantId: string, update: PlannerCallRecordUpdate) => {
     if (!dataset) {
       return
@@ -357,6 +391,8 @@ function SessionPlanningPage() {
     selectedClass?.facility ||
     'the recreation centre'
   const callerPhoneNumber = sharePhoneNumber.trim() || 'our main office number'
+  const plannedMoveLabel =
+    dataset && selectedClass ? getPlannerMoveTargetLabel(dataset, selectedClass) : ''
   const shouldShowPlanner = Boolean(dataset && (!shareCode || isSharedMode))
   const plannedChangeGroups = useMemo(() => {
     if (!dataset) {
@@ -487,6 +523,7 @@ function SessionPlanningPage() {
             isInfoPanelOpen={isInfoPanelOpen}
             selectedClass={selectedClass}
             setCallRecord={setCallRecord}
+            setClassMove={setClassMove}
             setClassStatus={setClassStatus}
             setIsInfoPanelOpen={setIsInfoPanelOpen}
             startCall={startCall}
@@ -503,6 +540,7 @@ function SessionPlanningPage() {
         callerLocationName={callerLocationName}
         callerName={callerName}
         callerPhoneNumber={callerPhoneNumber}
+        plannedMoveLabel={plannedMoveLabel}
         onClose={closeCallModal}
         onFinishCall={finishCall}
         onSetCallRecord={setCallRecord}
@@ -510,8 +548,9 @@ function SessionPlanningPage() {
         selectedClass={selectedClass}
       />
 
-      {isPlannedChangesOpen ? (
+      {isPlannedChangesOpen && dataset ? (
         <PlannerPlannedChangesModal
+          dataset={dataset}
           groups={plannedChangeGroups}
           onClose={() => setIsPlannedChangesOpen(false)}
           onMarkComplete={markPlannedChangeComplete}

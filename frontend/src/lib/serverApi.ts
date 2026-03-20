@@ -2,6 +2,7 @@ import type {
   CsvSessionCandidate,
   ExtractedClass,
   PlannerCallRecordUpdate,
+  PlannerClassMoveType,
   PlannerClassStatus,
   PlannerDataset,
   PlannerShareJoinResponse,
@@ -291,6 +292,22 @@ export function updatePlannerShareClassLanes(
   })
 }
 
+export function updatePlannerShareClassMove(
+  code: string,
+  body: {
+    participantId: string
+    classKey: string
+    plannedMoveType: PlannerClassMoveType
+    plannedMoveTime: string
+    plannedMoveTargetClassKey: string
+  },
+) {
+  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/class-move`, {
+    method: 'POST',
+    body,
+  })
+}
+
 export function updatePlannerShareCallRecord(
   code: string,
   body: { participantId: string; participantRecordId: string; update: PlannerCallRecordUpdate }
@@ -317,6 +334,14 @@ export function applyPlannerShareSaveState(
     participantId: string
     classStatuses: Record<string, PlannerClassStatus>
     classLaneIndexes: Record<string, number>
+    classMoves: Record<
+      string,
+      {
+        plannedMoveType: PlannerClassMoveType
+        plannedMoveTime: string
+        plannedMoveTargetClassKey: string
+      }
+    >
     callRecords: Record<string, PlannerCallRecordUpdate>
     locationOverrides: Record<string, string>
     callbackPhoneNumber: string

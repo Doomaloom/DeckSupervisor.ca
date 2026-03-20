@@ -225,6 +225,9 @@ function PlannerBoard({
                           const plannerClass = visibleClasses.find(item => item.classKey === course.classKey)
                           const isSelected = selectedClassKey === course.classKey
                           const statusLabel =
+                            course.planningStatus === 'planned_move'
+                              ? 'Planned Move'
+                              :
                             course.planningStatus === 'pending_cancellation'
                               ? 'Pending Cancellation'
                               : course.planningStatus === 'cancelled'

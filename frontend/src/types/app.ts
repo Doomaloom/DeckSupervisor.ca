@@ -135,7 +135,9 @@ export type CsvSessionCandidate = {
 
 export type PlannerParticipantStatus = 'booked' | 'waiting'
 
-export type PlannerClassStatus = 'active' | 'pending_cancellation' | 'cancelled'
+export type PlannerClassStatus = 'active' | 'pending_cancellation' | 'cancelled' | 'planned_move'
+
+export type PlannerClassMoveType = '' | 'new_time' | 'target_class'
 
 export type PlannerCallStatus =
   | 'not_started'
@@ -184,6 +186,9 @@ export type PlannerClass = {
   waitingParticipantIds: string[]
   laneIndex: number
   planningStatus: PlannerClassStatus
+  plannedMoveType: PlannerClassMoveType
+  plannedMoveTime: string
+  plannedMoveTargetClassKey: string
 }
 
 export type PlannerParticipantCallRecord = {

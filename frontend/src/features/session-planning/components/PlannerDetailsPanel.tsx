@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type {
   PlannerCallRecordUpdate,
   PlannerCallStatus,
   PlannerClass,
+  PlannerClassMoveType,
   PlannerClassStatus,
   PlannerDataset,
   PlannerParticipant,
 } from '../../../types/app'
-import { plannerCallStatusOptions } from '../../../lib/sessionPlanner'
+import { getPlannerMoveTargetLabel, plannerCallStatusOptions } from '../../../lib/sessionPlanner'
 import { dayNames, statusClasses } from '../utils/plannerPresentation'
 
 type PlannerDetailsPanelProps = {
@@ -17,6 +18,14 @@ type PlannerDetailsPanelProps = {
   isInfoPanelOpen: boolean
   selectedClass: PlannerClass | null
   setCallRecord: (participantId: string, update: PlannerCallRecordUpdate) => void | Promise<void>
+  setClassMove: (
+    classKey: string,
+    update: {
+      plannedMoveType?: PlannerClassMoveType
+      plannedMoveTime?: string
+      plannedMoveTargetClassKey?: string
+    },
+  ) => void | Promise<void>
   setClassStatus: (classKey: string, status: PlannerClassStatus) => void | Promise<void>
   setIsInfoPanelOpen: (value: boolean) => void
   startCall: (participantId: string) => void
@@ -34,16 +43,33 @@ function PlannerDetailsPanel({
   isInfoPanelOpen,
   selectedClass,
   setCallRecord,
+  setClassMove,
   setClassStatus,
   setIsInfoPanelOpen,
   startCall,
   waitingParticipants,
 }: PlannerDetailsPanelProps) {
   const [openAlternativeParticipantId, setOpenAlternativeParticipantId] = useState('')
+  const [draftMoveTime, setDraftMoveTime] = useState('')
+
+  useEffect(() => {
+    setDraftMoveTime(selectedClass?.plannedMoveTime ?? '')
+  }, [selectedClass?.classKey, selectedClass?.plannedMoveTime])
 
   if (!isInfoPanelOpen) {
     return null
   }
+
+  const plannedMoveLabel =
+    selectedClass && dataset ? getPlannerMoveTargetLabel(dataset, selectedClass) : ''
+  const statusLabel =
+    selectedClass?.planningStatus === 'planned_move'
+      ? 'Planned Move'
+      : selectedClass?.planningStatus === 'pending_cancellation'
+        ? 'Pending Cancellation'
+        : selectedClass?.planningStatus === 'cancelled'
+          ? 'Cancelled'
+          : ''
 
   return (
     <div id="planner-details-panel" data-component="planner-details-panel" className="flex min-h-[70vh] flex-col gap-4 rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
@@ -81,9 +107,7 @@ function PlannerDetailsPanel({
                   <span
                     className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${statusClasses(selectedClass.planningStatus)}`}
                   >
-                    {selectedClass.planningStatus === 'pending_cancellation'
-                      ? 'Pending Cancellation'
-                      : 'Cancelled'}
+                    {statusLabel}
                   </span>
                 ) : null}
               </div>
@@ -96,6 +120,13 @@ function PlannerDetailsPanel({
                 onClick={() => setIsInfoPanelOpen(false)}
               >
                 Close
+              </button>
+              <button
+                type="button"
+                className="rounded-full bg-sky-100 px-3 py-2 text-sm font-semibold text-sky-900 transition hover:-translate-y-0.5"
+                onClick={() => void setClassStatus(selectedClass.classKey, 'planned_move')}
+              >
+                Planned Move
               </button>
               <button
                 type="button"
@@ -135,6 +166,116 @@ function PlannerDetailsPanel({
               <p className="text-sm text-secondary/70">Booked count trusts the CSV Booked field.</p>
             </div>
           </div>
+
+          {selectedClass.planningStatus === 'planned_move' ? (
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.14em] text-sky-900">
+                Planned Move Destination
+              </h4>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                    selectedClass.plannedMoveType === 'new_time'
+                      ? 'bg-sky-600 text-white'
+                      : 'border border-sky-200 bg-white text-sky-900'
+                  }`}
+                  onClick={() =>
+                    void setClassMove(selectedClass.classKey, {
+                      plannedMoveType: 'new_time',
+                      plannedMoveTime: draftMoveTime || selectedClass.plannedMoveTime,
+                    })
+                  }
+                >
+                  New Time
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                    selectedClass.plannedMoveType === 'target_class'
+                      ? 'bg-sky-600 text-white'
+                      : 'border border-sky-200 bg-white text-sky-900'
+                  }`}
+                  onClick={() =>
+                    void setClassMove(selectedClass.classKey, {
+                      plannedMoveType: 'target_class',
+                      plannedMoveTargetClassKey: selectedClass.plannedMoveTargetClassKey,
+                    })
+                  }
+                >
+                  Target Class
+                </button>
+                <button
+                  type="button"
+                  className="rounded-2xl border border-sky-200 bg-white px-4 py-2 text-sm font-semibold text-sky-900 transition"
+                  onClick={() =>
+                    void setClassMove(selectedClass.classKey, {
+                      plannedMoveType: '',
+                      plannedMoveTime: '',
+                      plannedMoveTargetClassKey: '',
+                    })
+                  }
+                >
+                  Clear
+                </button>
+              </div>
+
+              {selectedClass.plannedMoveType === 'new_time' ? (
+                <div className="mt-4 flex flex-wrap items-end gap-3">
+                  <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-sky-900">
+                    New class time
+                    <input
+                      className="rounded-xl border border-sky-200 bg-white px-3 py-2 text-sm text-secondary"
+                      value={draftMoveTime || selectedClass.plannedMoveTime}
+                      onChange={event => setDraftMoveTime(event.target.value)}
+                      placeholder="Tuesday • 6:00 PM - 6:30 PM"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="rounded-2xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition"
+                    onClick={() =>
+                      void setClassMove(selectedClass.classKey, {
+                        plannedMoveType: 'new_time',
+                        plannedMoveTime: draftMoveTime || selectedClass.plannedMoveTime,
+                      })
+                    }
+                  >
+                    Save New Time
+                  </button>
+                </div>
+              ) : null}
+
+              {selectedClass.plannedMoveType === 'target_class' ? (
+                <label className="mt-4 flex flex-col gap-2 text-sm font-semibold text-sky-900">
+                  Move participants to
+                  <select
+                    className="rounded-xl border border-sky-200 bg-white px-3 py-2 text-sm text-secondary"
+                    value={selectedClass.plannedMoveTargetClassKey}
+                    onChange={event =>
+                      void setClassMove(selectedClass.classKey, {
+                        plannedMoveType: 'target_class',
+                        plannedMoveTargetClassKey: event.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select a target class</option>
+                    {alternatives.map(option => (
+                      <option key={option.classKey} value={option.classKey}>
+                        {formatAlternativeLabel(option)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <p className="mt-4 text-sm text-sky-900/80">
+                {plannedMoveLabel
+                  ? `Current planned move: ${plannedMoveLabel}`
+                  : 'Set a new time or choose a target class for this planned move.'}
+              </p>
+            </div>
+          ) : null}
 
           <div className="rounded-2xl border border-secondary/20 bg-bg p-4">
             <h4 className="text-sm font-semibold uppercase tracking-[0.14em] text-secondary/70">
@@ -206,12 +347,14 @@ function PlannerDetailsPanel({
 
           {selectedClass.planningStatus === 'active' ? (
             <div className="rounded-2xl border border-secondary/20 bg-bg p-4 text-sm text-secondary/70">
-              Mark this class as pending cancellation or cancelled to start the call workflow.
+              Mark this class as planned move, pending cancellation, or cancelled to start the call workflow.
             </div>
           ) : (
             <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-secondary/20 bg-bg p-4">
               <h4 className="text-sm font-semibold uppercase tracking-[0.14em] text-secondary/70">
-                Cancellation Call Workflow
+                {selectedClass.planningStatus === 'planned_move'
+                  ? 'Move Call Workflow'
+                  : 'Cancellation Call Workflow'}
               </h4>
               <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
                 {bookedParticipants.map(participant => {
@@ -276,6 +419,9 @@ function PlannerDetailsPanel({
                                         waitingParticipantIds: [],
                                         laneIndex: 0,
                                         planningStatus: 'active',
+                                        plannedMoveType: '',
+                                        plannedMoveTime: '',
+                                        plannedMoveTargetClassKey: '',
                                       },
                                     )
                                   : 'No alternative selected'}

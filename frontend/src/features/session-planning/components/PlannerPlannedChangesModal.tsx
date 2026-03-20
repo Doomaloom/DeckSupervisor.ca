@@ -1,5 +1,6 @@
 import type { PlannerCallStatus } from '../../../types/app'
-import type { PlannerClass, PlannerParticipant, PlannerParticipantCallRecord } from '../../../types/app'
+import type { PlannerClass, PlannerDataset, PlannerParticipant, PlannerParticipantCallRecord } from '../../../types/app'
+import { getPlannerMoveTargetLabel } from '../../../lib/sessionPlanner'
 import { dayNames } from '../utils/plannerPresentation'
 
 type PlannedChangeRow = {
@@ -13,6 +14,7 @@ type PlannedChangeGroup = {
 }
 
 type PlannerPlannedChangesModalProps = {
+  dataset: PlannerDataset
   groups: PlannedChangeGroup[]
   onClose: () => void
   onMarkComplete: (participantId: string) => void | Promise<void>
@@ -28,10 +30,19 @@ const statusLabels: Record<PlannerCallStatus, string> = {
 }
 
 function PlannerPlannedChangesModal({
+  dataset,
   groups,
   onClose,
   onMarkComplete,
 }: PlannerPlannedChangesModalProps) {
+  const getAlternativeLabel = (classKey: string) => {
+    const plannerClass = dataset.classes.find(item => item.classKey === classKey)
+    if (!plannerClass) {
+      return classKey
+    }
+    return `${plannerClass.serviceName} • ${dayNames[plannerClass.dayOfWeek] ?? plannerClass.dayOfWeek} • ${plannerClass.eventTime} • ${plannerClass.facility}`
+  }
+
   if (groups.length === 0) {
     return null
   }
@@ -79,6 +90,11 @@ function PlannerPlannedChangesModal({
                     {dayNames[group.plannerClass.dayOfWeek] ?? group.plannerClass.dayOfWeek} •{' '}
                     {group.plannerClass.eventTime} • {group.plannerClass.facility}
                   </p>
+                  {group.plannerClass.planningStatus === 'planned_move' ? (
+                    <p className="mt-1 text-sm text-sky-900">
+                      Planned move: {getPlannerMoveTargetLabel(dataset, group.plannerClass) || 'Not set'}
+                    </p>
+                  ) : null}
                 </div>
                 <span className="rounded-full border border-secondary/20 bg-accent px-3 py-1 text-sm font-semibold">
                   {group.rows.length} planned
@@ -122,7 +138,11 @@ function PlannerPlannedChangesModal({
                       <div className="mt-3 grid gap-3 md:grid-cols-2">
                         <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
                           <span className="font-semibold">Alternative option:</span>{' '}
-                          {callRecord.acceptedAlternativeClassKey || callRecord.offeredAlternativeClassKey || 'None'}
+                          {callRecord.acceptedAlternativeClassKey
+                            ? getAlternativeLabel(callRecord.acceptedAlternativeClassKey)
+                            : callRecord.offeredAlternativeClassKey
+                              ? getAlternativeLabel(callRecord.offeredAlternativeClassKey)
+                              : 'None'}
                         </div>
                         <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
                           <span className="font-semibold">Notes:</span> {callRecord.notes || 'None'}

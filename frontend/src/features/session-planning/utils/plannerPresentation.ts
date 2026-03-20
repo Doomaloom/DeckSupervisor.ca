@@ -19,6 +19,8 @@ export const dayOrder = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const
 
 export function statusClasses(status: PlannerClassStatus) {
   switch (status) {
+    case 'planned_move':
+      return 'border-sky-400 bg-sky-50 text-sky-900'
     case 'pending_cancellation':
       return 'border-amber-400 bg-amber-50 text-amber-900'
     case 'cancelled':
@@ -123,6 +125,8 @@ export function buildPlannerBoardColumns(courses: PlannerBoardCourse[]) {
 export function getPlannerBoardStatusClasses(status: PlannerClassStatus, isSelected: boolean) {
   const selectedRing = isSelected ? 'ring-2 ring-secondary ring-inset' : ''
   switch (status) {
+    case 'planned_move':
+      return `${selectedRing} border-sky-500 bg-sky-100 text-sky-950`
     case 'pending_cancellation':
       return `${selectedRing} border-amber-500 bg-amber-100 text-amber-950`
     case 'cancelled':

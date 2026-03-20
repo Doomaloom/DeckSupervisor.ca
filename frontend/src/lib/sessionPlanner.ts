@@ -1,6 +1,7 @@
 import type {
   PlannerCallStatus,
   PlannerClass,
+  PlannerClassMoveType,
   PlannerClassStatus,
   PlannerCallRecordUpdate,
   PlannerDataset,
@@ -29,6 +30,14 @@ export type PlannerSaveState = {
   }
   classStatuses: Record<string, PlannerClassStatus>
   classLaneIndexes: Record<string, number>
+  classMoves: Record<
+    string,
+    {
+      plannedMoveType: PlannerClassMoveType
+      plannedMoveTime: string
+      plannedMoveTargetClassKey: string
+    }
+  >
   callRecords: Record<string, PlannerParticipantCallRecord>
 }
 
@@ -495,6 +504,50 @@ function getCapacityBand(plannerClass: PlannerClass) {
   return 'green'
 }
 
+function normalizePlannerClassMove(input: {
+  plannedMoveType?: PlannerClassMoveType | string
+  plannedMoveTime?: string
+  plannedMoveTargetClassKey?: string
+}) {
+  const plannedMoveType =
+    input.plannedMoveType === 'new_time' || input.plannedMoveType === 'target_class'
+      ? input.plannedMoveType
+      : ''
+
+  if (plannedMoveType === 'new_time') {
+    return {
+      plannedMoveType,
+      plannedMoveTime: input.plannedMoveTime?.trim() ?? '',
+      plannedMoveTargetClassKey: '',
+    }
+  }
+
+  if (plannedMoveType === 'target_class') {
+    return {
+      plannedMoveType,
+      plannedMoveTime: '',
+      plannedMoveTargetClassKey: input.plannedMoveTargetClassKey?.trim() ?? '',
+    }
+  }
+
+  return {
+    plannedMoveType: '' as PlannerClassMoveType,
+    plannedMoveTime: '',
+    plannedMoveTargetClassKey: '',
+  }
+}
+
+function normalizePlannerClassEntry(plannerClass: PlannerClass): PlannerClass {
+  const move = normalizePlannerClassMove(plannerClass)
+  return {
+    ...plannerClass,
+    laneIndex: Number.isInteger(plannerClass.laneIndex) && plannerClass.laneIndex >= 0 ? plannerClass.laneIndex : 0,
+    plannedMoveType: move.plannedMoveType,
+    plannedMoveTime: move.plannedMoveTime,
+    plannedMoveTargetClassKey: move.plannedMoveTargetClassKey,
+  }
+}
+
 export function parseSessionPlannerCsv(text: string, sourceFileName: string): PlannerDataset {
   const { rows } = parseCsvText(text)
   if (rows.length < 2) {
@@ -608,6 +661,9 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
         waitingParticipantIds: [],
         laneIndex: 0,
         planningStatus: 'active',
+        plannedMoveType: '',
+        plannedMoveTime: '',
+        plannedMoveTargetClassKey: '',
       })
     }
 
@@ -812,6 +868,9 @@ export function parseEmptyClassesPlannerCsv(text: string, sourceFileName: string
         waitingParticipantIds: [],
         laneIndex: 0,
         planningStatus: 'active',
+        plannedMoveType: '',
+        plannedMoveTime: '',
+        plannedMoveTargetClassKey: '',
       })
     }
   }
@@ -865,6 +924,10 @@ function normalizePlannerCallRecord(
 
 function normalizePlannerDataset(dataset: PlannerDataset): PlannerDataset {
   const classKeyByParticipantId = new Map<string, string>()
+  const normalizedClasses = normalizePlannerClassLanes(
+    dataset.classes.map(plannerClass => normalizePlannerClassEntry(plannerClass)),
+  ).sort(sortPlannerClasses)
+
   dataset.participants.forEach(participant => {
     classKeyByParticipantId.set(participant.id, participant.classKey)
   })
@@ -888,12 +951,7 @@ function normalizePlannerDataset(dataset: PlannerDataset): PlannerDataset {
 
   return {
     ...dataset,
-    classes: normalizePlannerClassLanes(
-      dataset.classes.map(plannerClass => ({
-        ...plannerClass,
-        laneIndex: Number.isInteger(plannerClass.laneIndex) && plannerClass.laneIndex >= 0 ? plannerClass.laneIndex : 0,
-      })),
-    ).sort(sortPlannerClasses),
+    classes: normalizedClasses,
     callRecords: normalizedCallRecords,
   }
 }
@@ -969,6 +1027,9 @@ function mergePlannerClass(existing: PlannerClass, incoming: PlannerClass): Plan
     waitingParticipantIds: mergeUnique(existing.waitingParticipantIds, incoming.waitingParticipantIds),
     laneIndex: existing.laneIndex,
     planningStatus: existing.planningStatus,
+    plannedMoveType: existing.plannedMoveType,
+    plannedMoveTime: existing.plannedMoveTime,
+    plannedMoveTargetClassKey: existing.plannedMoveTargetClassKey,
   }
 }
 
@@ -1051,6 +1112,37 @@ export function updatePlannerClassStatus(
   }
 }
 
+export function updatePlannerClassMove(
+  dataset: PlannerDataset,
+  classKey: string,
+  update: {
+    plannedMoveType?: PlannerClassMoveType
+    plannedMoveTime?: string
+    plannedMoveTargetClassKey?: string
+  },
+): PlannerDataset {
+  return {
+    ...dataset,
+    classes: dataset.classes.map(plannerClass => {
+      if (plannerClass.classKey !== classKey) {
+        return plannerClass
+      }
+      const move = normalizePlannerClassMove({
+        plannedMoveType: update.plannedMoveType ?? plannerClass.plannedMoveType,
+        plannedMoveTime: update.plannedMoveTime ?? plannerClass.plannedMoveTime,
+        plannedMoveTargetClassKey:
+          update.plannedMoveTargetClassKey ?? plannerClass.plannedMoveTargetClassKey,
+      })
+      return {
+        ...plannerClass,
+        plannedMoveType: move.plannedMoveType,
+        plannedMoveTime: move.plannedMoveTime,
+        plannedMoveTargetClassKey: move.plannedMoveTargetClassKey,
+      }
+    }),
+  }
+}
+
 export function updatePlannerClassLanes(
   dataset: PlannerDataset,
   laneIndexes: Record<string, number>,
@@ -1116,6 +1208,12 @@ export function buildPlannerSaveState(args: {
     classLaneIndexes: Object.fromEntries(
       args.dataset.classes.map(plannerClass => [plannerClass.classKey, plannerClass.laneIndex]),
     ),
+    classMoves: Object.fromEntries(
+      args.dataset.classes.map(plannerClass => [
+        plannerClass.classKey,
+        normalizePlannerClassMove(plannerClass),
+      ]),
+    ),
     callRecords: Object.fromEntries(
       Object.entries(args.dataset.callRecords).map(([participantId, record]) => [
         participantId,
@@ -1161,6 +1259,7 @@ export function parsePlannerSaveState(text: string): PlannerSaveState {
         .filter(([, laneIndex]) => Number.isInteger(laneIndex) && Number(laneIndex) >= 0)
         .map(([classKey, laneIndex]) => [classKey, Number(laneIndex)]),
     ),
+    classMoves: normalizeClassMoves(state.classMoves),
     callRecords: normalizeCallRecords(state.callRecords),
   }
 }
@@ -1176,14 +1275,19 @@ export function applyPlannerSaveState(
   const nextClasses = dataset.classes.map(plannerClass => {
     const status = state.classStatuses[plannerClass.classKey]
     const laneIndex = state.classLaneIndexes[plannerClass.classKey]
-    if (!status && laneIndex === undefined) {
+    const move = state.classMoves[plannerClass.classKey]
+    if (!status && laneIndex === undefined && !move) {
       return plannerClass
     }
     matchedClasses += 1
+    const normalizedMove = normalizePlannerClassMove(move ?? plannerClass)
     return {
       ...plannerClass,
       planningStatus: status ?? plannerClass.planningStatus,
       laneIndex: laneIndex ?? plannerClass.laneIndex,
+      plannedMoveType: normalizedMove.plannedMoveType,
+      plannedMoveTime: normalizedMove.plannedMoveTime,
+      plannedMoveTargetClassKey: normalizedMove.plannedMoveTargetClassKey,
     }
   })
 
@@ -1215,7 +1319,11 @@ export function applyPlannerSaveState(
     },
     matchedClasses,
     skippedClasses: Array.from(
-      new Set([...Object.keys(state.classStatuses), ...Object.keys(state.classLaneIndexes)]),
+      new Set([
+        ...Object.keys(state.classStatuses),
+        ...Object.keys(state.classLaneIndexes),
+        ...Object.keys(state.classMoves),
+      ]),
     ).filter(classKey => !classKeySet.has(classKey)).length,
     matchedCallRecords,
     skippedCallRecords: Object.keys(state.callRecords).filter(participantId => !participantIdSet.has(participantId))
@@ -1230,6 +1338,14 @@ export function plannerSaveStateToText(state: PlannerSaveState) {
 export function plannerSaveStateToSharePayload(state: PlannerSaveState): {
   classStatuses: Record<string, PlannerClassStatus>
   classLaneIndexes: Record<string, number>
+  classMoves: Record<
+    string,
+    {
+      plannedMoveType: PlannerClassMoveType
+      plannedMoveTime: string
+      plannedMoveTargetClassKey: string
+    }
+  >
   callRecords: Record<string, PlannerCallRecordUpdate>
   locationOverrides: Record<string, string>
   callbackPhoneNumber: string
@@ -1237,6 +1353,7 @@ export function plannerSaveStateToSharePayload(state: PlannerSaveState): {
   return {
     classStatuses: state.classStatuses,
     classLaneIndexes: state.classLaneIndexes,
+    classMoves: state.classMoves,
     callRecords: Object.fromEntries(
       Object.entries(state.callRecords).map(([participantId, record]) => [
         participantId,
@@ -1293,6 +1410,21 @@ export function getPlannerAlternativeClasses(dataset: PlannerDataset, sourceClas
     })
 }
 
+export function getPlannerMoveTargetLabel(dataset: PlannerDataset, plannerClass: PlannerClass) {
+  const move = normalizePlannerClassMove(plannerClass)
+  if (move.plannedMoveType === 'new_time') {
+    return move.plannedMoveTime || 'New time not set'
+  }
+  if (move.plannedMoveType === 'target_class') {
+    const targetClass = dataset.classes.find(item => item.classKey === move.plannedMoveTargetClassKey)
+    if (!targetClass) {
+      return 'Target class not found'
+    }
+    return `${targetClass.dayOfWeek} • ${targetClass.eventTime} • ${targetClass.facility}`
+  }
+  return ''
+}
+
 export function summarizePlannerCalls(dataset: PlannerDataset, classKey: string) {
   const bookedParticipantIds = dataset.classes.find(plannerClass => plannerClass.classKey === classKey)?.participantIds ?? []
   let contacted = 0
@@ -1343,8 +1475,28 @@ function normalizeClassStatuses(input: unknown): Record<string, PlannerClassStat
   return Object.fromEntries(
     Object.entries(input as Record<string, unknown>).filter((entry): entry is [string, PlannerClassStatus] =>
       entry[0].trim().length > 0 &&
-      (entry[1] === 'active' || entry[1] === 'pending_cancellation' || entry[1] === 'cancelled'),
+      (entry[1] === 'active' || entry[1] === 'pending_cancellation' || entry[1] === 'cancelled' || entry[1] === 'planned_move'),
     ),
+  )
+}
+
+function normalizeClassMoves(
+  input: unknown,
+): Record<
+  string,
+  {
+    plannedMoveType: PlannerClassMoveType
+    plannedMoveTime: string
+    plannedMoveTargetClassKey: string
+  }
+> {
+  if (!input || typeof input !== 'object') {
+    return {}
+  }
+  return Object.fromEntries(
+    Object.entries(input as Record<string, { plannedMoveType?: PlannerClassMoveType; plannedMoveTime?: string; plannedMoveTargetClassKey?: string }>)
+      .filter(([classKey]) => classKey.trim().length > 0)
+      .map(([classKey, move]) => [classKey, normalizePlannerClassMove(move ?? {})]),
   )
 }
 
