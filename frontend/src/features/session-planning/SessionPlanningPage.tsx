@@ -3,8 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import type {
   PlannerCallRecordUpdate,
   PlannerCallStatus,
+  PlannerClass,
   PlannerClassStatus,
   PlannerDataset,
+  PlannerParticipant,
+  PlannerParticipantCallRecord,
 } from '../../types/app'
 import {
   applyPlannerSaveState,
@@ -37,6 +40,7 @@ import PlannerHeader from './components/PlannerHeader'
 import PlannerPlannedChangesModal from './components/PlannerPlannedChangesModal'
 import { usePlannerShareSession } from './hooks/usePlannerShareSession'
 import { plannerBoardLayout, usePlannerViewModel } from './hooks/usePlannerViewModel'
+import { openPlannerEmailDraft } from './utils/plannerEmailDraft'
 
 function SessionPlanningPage() {
   const navigate = useNavigate()
@@ -67,6 +71,7 @@ function SessionPlanningPage() {
     shareNotice,
     shareParticipantId,
     sharePhoneNumber,
+    shareCcEmail,
     shareSession,
     saveSharedDetails,
     startSharing,
@@ -75,6 +80,7 @@ function SessionPlanningPage() {
     setShareDisplayName,
     setShareLocationOverrides,
     setSharePhoneNumber,
+    setShareCcEmail,
   } = usePlannerShareSession({
     location,
     navigate,
@@ -450,6 +456,28 @@ function SessionPlanningPage() {
     await setCallRecord(participantId, { emailSentAt: isSent ? new Date().toISOString() : '' })
   }
 
+  const openPlannedChangeEmailDraft = (
+    participant: PlannerParticipant,
+    plannerClass: PlannerClass,
+    callRecord: PlannerParticipantCallRecord,
+  ) => {
+    if (!dataset) {
+      return
+    }
+    const locationName =
+      shareLocationOverrides[plannerClass.facility]?.trim() || plannerClass.facility || 'the recreation centre'
+    openPlannerEmailDraft({
+      participant,
+      plannerClass,
+      callRecord,
+      dataset,
+      senderName: callerName,
+      locationName,
+      callbackPhoneNumber: sharePhoneNumber.trim(),
+      ccEmail: shareCcEmail.trim(),
+    })
+  }
+
   return (
     <div id="session-planning-page" data-component="session-planning-page" className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <PlannerHeader
@@ -464,6 +492,7 @@ function SessionPlanningPage() {
         shareLocationOverrides={shareLocationOverrides}
         shareNotice={shareNotice}
         sharePhoneNumber={sharePhoneNumber}
+        shareCcEmail={shareCcEmail}
         shareSession={shareSession}
         statusMessage={statusMessage}
         showPlannedChangesButton={plannedChangeGroups.length > 0}
@@ -484,6 +513,7 @@ function SessionPlanningPage() {
           }))
         }
         onSetSharePhoneNumber={setSharePhoneNumber}
+        onSetShareCcEmail={setShareCcEmail}
         onSaveSharedDetails={saveSharedDetails}
         onStartSharing={startSharing}
         onStopSharing={stopSharing}
@@ -557,6 +587,7 @@ function SessionPlanningPage() {
           dataset={dataset}
           groups={plannedChangeGroups}
           onClose={() => setIsPlannedChangesOpen(false)}
+          onOpenEmailDraft={openPlannedChangeEmailDraft}
           onToggleComplete={togglePlannedChangeComplete}
           onToggleEmailSent={togglePlannedChangeEmailSent}
         />

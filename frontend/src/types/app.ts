@@ -226,6 +226,7 @@ export type PlannerShareSession = {
   hostParticipantId: string
   locationOverrides: Record<string, string>
   callbackPhoneNumber: string
+  ccEmail: string
   expiresAt: string
   participants: PlannerShareParticipant[]
   dataset: PlannerDataset

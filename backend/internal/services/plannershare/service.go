@@ -126,6 +126,7 @@ type ShareSession struct {
 	HostParticipantID   string             `json:"hostParticipantId"`
 	LocationOverrides   map[string]string  `json:"locationOverrides"`
 	CallbackPhoneNumber string             `json:"callbackPhoneNumber"`
+	CCEmail             string             `json:"ccEmail"`
 	ExpiresAt           time.Time          `json:"expiresAt"`
 	Participants        []ShareParticipant `json:"participants"`
 	Dataset             PlannerDataset     `json:"dataset"`
@@ -137,6 +138,7 @@ type shareRoom struct {
 	HostParticipantID   string
 	LocationOverrides   map[string]string
 	CallbackPhoneNumber string
+	CCEmail             string
 	ExpiresAt           time.Time
 	Version             int
 	Dataset             PlannerDataset
@@ -154,7 +156,7 @@ func NewService() *Service {
 	}
 }
 
-func (s *Service) Create(baseURL string, dataset PlannerDataset, displayName string, locationOverrides map[string]string, callbackPhoneNumber string, isGuest bool) (string, ShareSession, error) {
+func (s *Service) Create(baseURL string, dataset PlannerDataset, displayName string, locationOverrides map[string]string, callbackPhoneNumber string, ccEmail string, isGuest bool) (string, ShareSession, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -178,6 +180,7 @@ func (s *Service) Create(baseURL string, dataset PlannerDataset, displayName str
 		HostParticipantID:   participantID,
 		LocationOverrides:   normalizeLocationOverrides(locationOverrides),
 		CallbackPhoneNumber: strings.TrimSpace(callbackPhoneNumber),
+		CCEmail:             strings.TrimSpace(ccEmail),
 		ExpiresAt:           now.Add(sessionLifetime),
 		Version:             1,
 		Dataset:             cloneDataset(dataset),
@@ -399,7 +402,7 @@ func (s *Service) UpdateCallRecord(baseURL, code, participantID, recordID string
 	return s.snapshotLocked(baseURL, room), nil
 }
 
-func (s *Service) UpdateSessionDetails(baseURL, code, participantID string, locationOverrides map[string]string, callbackPhoneNumber string) (ShareSession, error) {
+func (s *Service) UpdateSessionDetails(baseURL, code, participantID string, locationOverrides map[string]string, callbackPhoneNumber string, ccEmail string) (ShareSession, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	room, err := s.requireParticipantLocked(strings.ToUpper(strings.TrimSpace(code)), participantID)
@@ -411,6 +414,7 @@ func (s *Service) UpdateSessionDetails(baseURL, code, participantID string, loca
 	}
 	room.LocationOverrides = normalizeLocationOverrides(locationOverrides)
 	room.CallbackPhoneNumber = strings.TrimSpace(callbackPhoneNumber)
+	room.CCEmail = strings.TrimSpace(ccEmail)
 	room.Version += 1
 	room.Participants[participantID].LastSeenAt = time.Now().UTC()
 	return s.snapshotLocked(baseURL, room), nil
@@ -548,6 +552,7 @@ func (s *Service) snapshotLocked(baseURL string, room *shareRoom) ShareSession {
 		HostParticipantID:   room.HostParticipantID,
 		LocationOverrides:   cloneLocationOverrides(room.LocationOverrides),
 		CallbackPhoneNumber: room.CallbackPhoneNumber,
+		CCEmail:             room.CCEmail,
 		ExpiresAt:           room.ExpiresAt,
 		Participants:        participants,
 		Dataset:             cloneDataset(room.Dataset),

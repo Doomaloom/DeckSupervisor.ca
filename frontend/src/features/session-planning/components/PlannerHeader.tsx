@@ -13,6 +13,7 @@ type PlannerHeaderProps = {
   shareLocationOverrides: Record<string, string>
   shareNotice: string
   sharePhoneNumber: string
+  shareCcEmail: string
   shareSession: PlannerShareSession | null
   statusMessage: string
   showPlannedChangesButton: boolean
@@ -28,6 +29,7 @@ type PlannerHeaderProps = {
   onSetShareDisplayName: (value: string) => void
   onSetShareLocationOverride: (facility: string, value: string) => void
   onSetSharePhoneNumber: (value: string) => void
+  onSetShareCcEmail: (value: string) => void
   onSaveSharedDetails: () => void | Promise<void>
   onStartSharing: () => void | Promise<void>
   onStopSharing: () => void | Promise<void>
@@ -45,6 +47,7 @@ function PlannerHeader({
   shareLocationOverrides,
   shareNotice,
   sharePhoneNumber,
+  shareCcEmail,
   shareSession,
   statusMessage,
   showPlannedChangesButton,
@@ -60,6 +63,7 @@ function PlannerHeader({
   onSetShareDisplayName,
   onSetShareLocationOverride,
   onSetSharePhoneNumber,
+  onSetShareCcEmail,
   onSaveSharedDetails,
   onStartSharing,
   onStopSharing,
@@ -214,6 +218,15 @@ function PlannerHeader({
                   placeholder="905-555-1234"
                 />
               </label>
+              <label className="flex min-w-[240px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                CC email (optional)
+                <input
+                  className="rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
+                  value={shareCcEmail}
+                  onChange={event => onSetShareCcEmail(event.target.value)}
+                  placeholder="staff@centre.ca"
+                />
+              </label>
               <button
                 type="button"
                 className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
@@ -340,6 +353,15 @@ function PlannerHeader({
                     placeholder="905-555-1234"
                   />
                 </label>
+                <label className="flex min-w-[240px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                  CC email
+                  <input
+                    className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
+                    value={shareCcEmail}
+                    onChange={event => onSetShareCcEmail(event.target.value)}
+                    placeholder="staff@centre.ca"
+                  />
+                </label>
                 <button
                   type="button"
                   className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
@@ -362,6 +384,10 @@ function PlannerHeader({
                 <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
                   <span className="font-semibold">Callback phone:</span>{' '}
                   {shareSession.callbackPhoneNumber || 'Not provided'}
+                </div>
+                <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
+                  <span className="font-semibold">CC email:</span>{' '}
+                  {shareSession.ccEmail || 'Not provided'}
                 </div>
               </div>
             )}

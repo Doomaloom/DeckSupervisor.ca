@@ -14,6 +14,7 @@ import {
 const SHARE_NAME_STORAGE_KEY = 'plannerShareDisplayName'
 const SHARE_LOCATION_OVERRIDES_STORAGE_KEY = 'plannerShareLocationOverrides'
 const SHARE_PHONE_STORAGE_KEY = 'plannerSharePhoneNumber'
+const SHARE_CC_EMAIL_STORAGE_KEY = 'plannerShareCcEmail'
 
 type UsePlannerShareSessionArgs = {
   location: Location
@@ -41,6 +42,7 @@ export function usePlannerShareSession({
   const [shareDisplayName, setShareDisplayName] = useState('')
   const [shareLocationOverrides, setShareLocationOverrides] = useState<Record<string, string>>({})
   const [sharePhoneNumber, setSharePhoneNumber] = useState('')
+  const [shareCcEmail, setShareCcEmail] = useState('')
   const [shareNotice, setShareNotice] = useState('')
   const [isSharingBusy, setIsSharingBusy] = useState(false)
 
@@ -54,6 +56,7 @@ export function usePlannerShareSession({
     if (session.hostParticipantId !== shareParticipantId) {
       setShareLocationOverrides(session.locationOverrides)
       setSharePhoneNumber(session.callbackPhoneNumber)
+      setShareCcEmail(session.ccEmail)
     }
   }
 
@@ -74,6 +77,10 @@ export function usePlannerShareSession({
     if (storedPhoneNumber) {
       setSharePhoneNumber(storedPhoneNumber)
     }
+    const storedCcEmail = getStoredItem(SHARE_CC_EMAIL_STORAGE_KEY)
+    if (storedCcEmail) {
+      setShareCcEmail(storedCcEmail)
+    }
   }, [])
 
   useEffect(() => {
@@ -91,6 +98,12 @@ export function usePlannerShareSession({
       setStoredItem(SHARE_PHONE_STORAGE_KEY, sharePhoneNumber.trim())
     }
   }, [sharePhoneNumber])
+
+  useEffect(() => {
+    if (shareCcEmail.trim()) {
+      setStoredItem(SHARE_CC_EMAIL_STORAGE_KEY, shareCcEmail.trim())
+    }
+  }, [shareCcEmail])
 
   useEffect(() => {
     if (!shareSession || !shareParticipantId) {
@@ -178,6 +191,7 @@ export function usePlannerShareSession({
         displayName: nextDisplayName,
         locationOverrides: shareLocationOverrides,
         callbackPhoneNumber: sharePhoneNumber.trim(),
+        ccEmail: shareCcEmail.trim(),
       })
       setStoredItem(SHARE_NAME_STORAGE_KEY, nextDisplayName)
       setStoredItem(`plannerShareParticipant:${response.session.code}`, response.participantId)
@@ -263,6 +277,7 @@ export function usePlannerShareSession({
           participantId: shareParticipantId,
           locationOverrides: shareLocationOverrides,
           callbackPhoneNumber: sharePhoneNumber.trim(),
+          ccEmail: shareCcEmail.trim(),
         })
       applySharedSession(response.session)
       setError('')
@@ -287,6 +302,7 @@ export function usePlannerShareSession({
     shareNotice,
     shareParticipantId,
     sharePhoneNumber,
+    shareCcEmail,
     shareSession,
     saveSharedDetails,
     startSharing,
@@ -295,5 +311,6 @@ export function usePlannerShareSession({
     setShareDisplayName,
     setShareLocationOverrides,
     setSharePhoneNumber,
+    setShareCcEmail,
   }
 }

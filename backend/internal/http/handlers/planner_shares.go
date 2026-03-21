@@ -17,6 +17,7 @@ type createPlannerShareRequest struct {
 	DisplayName         string                      `json:"displayName"`
 	LocationOverrides   map[string]string           `json:"locationOverrides"`
 	CallbackPhoneNumber string                      `json:"callbackPhoneNumber"`
+	CCEmail             string                      `json:"ccEmail"`
 	Dataset             plannershare.PlannerDataset `json:"dataset"`
 }
 
@@ -57,6 +58,7 @@ type updatePlannerShareDetailsRequest struct {
 	ParticipantID       string            `json:"participantId"`
 	LocationOverrides   map[string]string `json:"locationOverrides"`
 	CallbackPhoneNumber string            `json:"callbackPhoneNumber"`
+	CCEmail             string            `json:"ccEmail"`
 }
 
 type applyPlannerShareSaveStateRequest struct {
@@ -82,6 +84,7 @@ func CreatePlannerShare(w http.ResponseWriter, r *http.Request) {
 		req.DisplayName,
 		req.LocationOverrides,
 		req.CallbackPhoneNumber,
+		req.CCEmail,
 		isGuestRequest(r),
 	)
 	if err != nil {
@@ -252,6 +255,7 @@ func UpdatePlannerShareDetails(w http.ResponseWriter, r *http.Request) {
 		req.ParticipantID,
 		req.LocationOverrides,
 		req.CallbackPhoneNumber,
+		req.CCEmail,
 	)
 	if err != nil {
 		writePlannerShareError(w, err)

@@ -232,6 +232,7 @@ export function createPlannerShare(body: {
   displayName: string
   locationOverrides: Record<string, string>
   callbackPhoneNumber: string
+  ccEmail: string
 }) {
   return request<PlannerShareJoinResponse>('/api/planner-shares', {
     method: 'POST',
@@ -320,7 +321,12 @@ export function updatePlannerShareCallRecord(
 
 export function updatePlannerShareDetails(
   code: string,
-  body: { participantId: string; locationOverrides: Record<string, string>; callbackPhoneNumber: string }
+  body: {
+    participantId: string
+    locationOverrides: Record<string, string>
+    callbackPhoneNumber: string
+    ccEmail: string
+  }
 ) {
   return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/details`, {
     method: 'POST',

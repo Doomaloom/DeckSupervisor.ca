@@ -17,6 +17,11 @@ type PlannerPlannedChangesModalProps = {
     dataset: PlannerDataset
     groups: PlannedChangeGroup[]
     onClose: () => void
+    onOpenEmailDraft: (
+        participant: PlannerParticipant,
+        plannerClass: PlannerClass,
+        callRecord: PlannerParticipantCallRecord,
+    ) => void
     onToggleComplete: (participantId: string, isComplete: boolean) => void | Promise<void>
     onToggleEmailSent: (participantId: string, isSent: boolean) => void | Promise<void>
 }
@@ -34,6 +39,7 @@ function PlannerPlannedChangesModal({
     dataset,
     groups,
     onClose,
+    onOpenEmailDraft,
     onToggleComplete,
     onToggleEmailSent,
 }: PlannerPlannedChangesModalProps) {
@@ -120,6 +126,15 @@ function PlannerPlannedChangesModal({
                                                 <span className="rounded-full border border-secondary/20 bg-bg px-3 py-1 text-sm font-semibold">
                                                     {statusLabels[callRecord.status]}
                                                 </span>
+                                                <button
+                                                    type="button"
+                                                    className="rounded-2xl border border-secondary/20 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-secondary/5"
+                                                    onClick={() =>
+                                                        onOpenEmailDraft(participant, group.plannerClass, callRecord)
+                                                    }
+                                                >
+                                                    Email Draft
+                                                </button>
                                                 <button
                                                     type="button"
                                                     className={`rounded-2xl px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${
