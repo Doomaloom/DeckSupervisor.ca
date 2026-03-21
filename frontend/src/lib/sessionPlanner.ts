@@ -42,16 +42,16 @@ export type PlannerSaveState = {
 }
 
 export type PlannerSaveStateApplyResult = {
-  dataset: PlannerDataset
-  matchedClasses: number
-  skippedClasses: number
-  matchedCallRecords: number
-  skippedCallRecords: number
+    dataset: PlannerDataset
+    matchedClasses: number
+    skippedClasses: number
+    matchedCallRecords: number
+    skippedCallRecords: number
 }
 
 export type PlannerAlternativeGroups = {
-  availableAlternatives: PlannerClass[]
-  fullAlternatives: PlannerClass[]
+    availableAlternatives: PlannerClass[]
+    fullAlternatives: PlannerClass[]
 }
 
 type ParsedCsv = {
@@ -1454,7 +1454,7 @@ export function getPlannerMoveTargetLabel(dataset: PlannerDataset, plannerClass:
         if (!targetClass) {
             return 'Target class not found'
         }
-        return `${targetClass.dayOfWeek} • ${targetClass.eventTime} • ${targetClass.facility}`
+        return `${targetClass.dayOfWeek} • ${targetClass.eventTime} • ${targetClass.facility} • ${targetClass.eventId}`
     }
     return ''
 }
