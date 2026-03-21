@@ -17,7 +17,8 @@ type PlannerPlannedChangesModalProps = {
     dataset: PlannerDataset
     groups: PlannedChangeGroup[]
     onClose: () => void
-    onMarkComplete: (participantId: string) => void | Promise<void>
+    onToggleComplete: (participantId: string, isComplete: boolean) => void | Promise<void>
+    onToggleEmailSent: (participantId: string, isSent: boolean) => void | Promise<void>
 }
 
 const statusLabels: Record<PlannerCallStatus, string> = {
@@ -33,7 +34,8 @@ function PlannerPlannedChangesModal({
     dataset,
     groups,
     onClose,
-    onMarkComplete,
+    onToggleComplete,
+    onToggleEmailSent,
 }: PlannerPlannedChangesModalProps) {
     const getAlternativeLabel = (classKey: string) => {
         const plannerClass = dataset.classes.find(item => item.classKey === classKey)
@@ -118,20 +120,38 @@ function PlannerPlannedChangesModal({
                                                 <span className="rounded-full border border-secondary/20 bg-bg px-3 py-1 text-sm font-semibold">
                                                     {statusLabels[callRecord.status]}
                                                 </span>
-                                                {callRecord.completedAt ? (
-                                                    <span className="rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-900">
-                                                        Complete
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5"
-                                                        onClick={() => void onMarkComplete(participant.id)}
-                                                    >
-                                                        Mark Complete
-                                                    </button>
-
-                                                )}
+                                                <button
+                                                    type="button"
+                                                    className={`rounded-2xl px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${
+                                                        callRecord.emailSentAt
+                                                            ? 'bg-sky-100 text-sky-900'
+                                                            : 'border border-secondary/20 bg-bg text-secondary'
+                                                    }`}
+                                                    onClick={() =>
+                                                        void onToggleEmailSent(
+                                                            participant.id,
+                                                            !Boolean(callRecord.emailSentAt),
+                                                        )
+                                                    }
+                                                >
+                                                    {callRecord.emailSentAt ? 'Email Sent' : 'Mark Email Sent'}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`rounded-2xl px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${
+                                                        callRecord.completedAt
+                                                            ? 'bg-emerald-100 text-emerald-900'
+                                                            : 'bg-primary text-accent'
+                                                    }`}
+                                                    onClick={() =>
+                                                        void onToggleComplete(
+                                                            participant.id,
+                                                            !Boolean(callRecord.completedAt),
+                                                        )
+                                                    }
+                                                >
+                                                    {callRecord.completedAt ? 'Complete' : 'Mark Complete'}
+                                                </button>
                                             </div>
                                         </div>
 

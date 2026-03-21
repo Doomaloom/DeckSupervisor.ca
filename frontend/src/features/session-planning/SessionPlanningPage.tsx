@@ -442,8 +442,12 @@ function SessionPlanningPage() {
       })
   }, [dataset])
 
-  const markPlannedChangeComplete = async (participantId: string) => {
-    await setCallRecord(participantId, { completedAt: new Date().toISOString() })
+  const togglePlannedChangeComplete = async (participantId: string, isComplete: boolean) => {
+    await setCallRecord(participantId, { completedAt: isComplete ? new Date().toISOString() : '' })
+  }
+
+  const togglePlannedChangeEmailSent = async (participantId: string, isSent: boolean) => {
+    await setCallRecord(participantId, { emailSentAt: isSent ? new Date().toISOString() : '' })
   }
 
   return (
@@ -553,7 +557,8 @@ function SessionPlanningPage() {
           dataset={dataset}
           groups={plannedChangeGroups}
           onClose={() => setIsPlannedChangesOpen(false)}
-          onMarkComplete={markPlannedChangeComplete}
+          onToggleComplete={togglePlannedChangeComplete}
+          onToggleEmailSent={togglePlannedChangeEmailSent}
         />
       ) : null}
     </div>

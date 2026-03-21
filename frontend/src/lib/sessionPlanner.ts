@@ -724,6 +724,7 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
             offeredAlternativeClassKey: '',
             acceptedAlternativeClassKey: '',
             completedAt: '',
+            emailSentAt: '',
         }
     })
 
@@ -919,6 +920,7 @@ function normalizePlannerCallRecord(
         offeredAlternativeClassKey: record?.offeredAlternativeClassKey ?? '',
         acceptedAlternativeClassKey: record?.acceptedAlternativeClassKey ?? '',
         completedAt: record?.completedAt ?? '',
+        emailSentAt: record?.emailSentAt ?? '',
     }
 }
 
@@ -1363,6 +1365,7 @@ export function plannerSaveStateToSharePayload(state: PlannerSaveState): {
                     offeredAlternativeClassKey: record.offeredAlternativeClassKey,
                     acceptedAlternativeClassKey: record.acceptedAlternativeClassKey,
                     completedAt: record.completedAt,
+                    emailSentAt: record.emailSentAt,
                 },
             ]),
         ),

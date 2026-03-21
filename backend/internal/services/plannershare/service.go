@@ -84,6 +84,7 @@ type PlannerParticipantCallRecord struct {
 	OfferedAlternativeClassKey  string `json:"offeredAlternativeClassKey"`
 	AcceptedAlternativeClassKey string `json:"acceptedAlternativeClassKey"`
 	CompletedAt                 string `json:"completedAt"`
+	EmailSentAt                 string `json:"emailSentAt"`
 }
 
 type PlannerCallRecordUpdate struct {
@@ -92,6 +93,7 @@ type PlannerCallRecordUpdate struct {
 	OfferedAlternativeClassKey  *string `json:"offeredAlternativeClassKey,omitempty"`
 	AcceptedAlternativeClassKey *string `json:"acceptedAlternativeClassKey,omitempty"`
 	CompletedAt                 *string `json:"completedAt,omitempty"`
+	EmailSentAt                 *string `json:"emailSentAt,omitempty"`
 }
 
 type SavedStateApplyInput struct {
@@ -388,6 +390,9 @@ func (s *Service) UpdateCallRecord(baseURL, code, participantID, recordID string
 	if update.CompletedAt != nil {
 		record.CompletedAt = *update.CompletedAt
 	}
+	if update.EmailSentAt != nil {
+		record.EmailSentAt = *update.EmailSentAt
+	}
 	room.Dataset.CallRecords[recordID] = record
 	room.Version += 1
 	room.Participants[participantID].LastSeenAt = time.Now().UTC()
@@ -450,6 +455,9 @@ func (s *Service) ApplySavedState(baseURL, code, participantID string, input Sav
 		}
 		if update.CompletedAt != nil {
 			record.CompletedAt = *update.CompletedAt
+		}
+		if update.EmailSentAt != nil {
+			record.EmailSentAt = *update.EmailSentAt
 		}
 		room.Dataset.CallRecords[recordID] = record
 	}
