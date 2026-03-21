@@ -1,10 +1,11 @@
 import type { PlannerCallRecordUpdate, PlannerCallStatus, PlannerClass, PlannerParticipant, PlannerParticipantCallRecord } from '../../../types/app'
+import type { PlannerAlternativeGroups } from '../../../lib/sessionPlanner'
 import { dayNames } from '../utils/plannerPresentation'
 
 type PlannerCallModalProps = {
     activeCallParticipant: PlannerParticipant | null
     activeCallRecord: PlannerParticipantCallRecord | null
-    alternatives: PlannerClass[]
+    alternatives: PlannerAlternativeGroups
     callScriptMode: 'live' | 'voicemail'
     callerLocationName: string
     callerName: string
@@ -38,6 +39,7 @@ function PlannerCallModal({
 
     const isPlannedMove = selectedClass.planningStatus === 'planned_move'
     const moveDestination = plannedMoveLabel || 'a new class time'
+    const allAlternatives = [...alternatives.availableAlternatives, ...alternatives.fullAlternatives]
 
   return (
     <div id="planner-call-modal" data-component="planner-call-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -189,38 +191,79 @@ Again, this is ${callerName} from ${callerLocationName}, and our number is ${cal
                                 </div>
                             ) : (
                                 <div className="mt-3 flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
-                                    {alternatives.length === 0 ? (
+                                    {allAlternatives.length === 0 ? (
                                         <p className="text-sm text-secondary/70">No exact alternatives available.</p>
                                     ) : (
-                                        alternatives.map(option => {
-                                            const isSelected = activeCallRecord.offeredAlternativeClassKey === option.classKey
-                                            const isAccepted = activeCallRecord.acceptedAlternativeClassKey === option.classKey
-                                            return (
-                                                <button
-                                                    key={option.classKey}
-                                                    type="button"
-                                                    className={`min-w-0 rounded-2xl border px-4 py-3 text-left text-sm transition ${isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-secondary/20 bg-accent text-secondary hover:bg-secondary/5'}`}
-                                                    onClick={() => void onSetCallRecord(activeCallParticipant.id, {
-                                                        offeredAlternativeClassKey: isSelected ? '' : option.classKey,
-                                                        acceptedAlternativeClassKey: isSelected ? '' : isAccepted ? option.classKey : '',
+                                        <>
+                                            {alternatives.availableAlternatives.length > 0 ? (
+                                                <div className="flex flex-col gap-2">
+                                                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary/60">Available Alternatives</p>
+                                                    {alternatives.availableAlternatives.map(option => {
+                                                        const isSelected = activeCallRecord.offeredAlternativeClassKey === option.classKey
+                                                        const isAccepted = activeCallRecord.acceptedAlternativeClassKey === option.classKey
+                                                        return (
+                                                            <button
+                                                                key={option.classKey}
+                                                                type="button"
+                                                                className={`min-w-0 rounded-2xl border px-4 py-3 text-left text-sm transition ${isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-secondary/20 bg-accent text-secondary hover:bg-secondary/5'}`}
+                                                                onClick={() => void onSetCallRecord(activeCallParticipant.id, {
+                                                                    offeredAlternativeClassKey: isSelected ? '' : option.classKey,
+                                                                    acceptedAlternativeClassKey: isSelected ? '' : isAccepted ? option.classKey : '',
+                                                                })}
+                                                            >
+                                                                <div className="flex min-w-0 items-start justify-between gap-2">
+                                                                    <p className="min-w-0 break-words font-semibold">
+                                                                        {dayNames[option.dayOfWeek] ?? option.dayOfWeek} • {option.eventTime}
+                                                                    </p>
+                                                                    {isAccepted ? (
+                                                                        <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-emerald-900">
+                                                                            Accepted
+                                                                        </span>
+                                                                    ) : null}
+                                                                </div>
+                                                                <p className="mt-1 break-words text-xs text-current/80">
+                                                                    {option.facility} • {option.bookedCount}/{option.maximumCapacity} booked
+                                                                </p>
+                                                            </button>
+                                                        )
                                                     })}
-                                                >
-                                                    <div className="flex min-w-0 items-start justify-between gap-2">
-                                                        <p className="min-w-0 break-words font-semibold">
-                                                            {dayNames[option.dayOfWeek] ?? option.dayOfWeek} • {option.eventTime}
-                                                        </p>
-                                                        {isAccepted ? (
-                                                            <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-emerald-900">
-                                                                Accepted
-                                                            </span>
-                                                        ) : null}
-                                                    </div>
-                                                    <p className="mt-1 break-words text-xs text-current/80">
-                                                        {option.facility} • {option.bookedCount}/{option.maximumCapacity} booked
-                                                    </p>
-                                                </button>
-                                            )
-                                        })
+                                                </div>
+                                            ) : null}
+                                            {alternatives.fullAlternatives.length > 0 ? (
+                                                <div className="flex flex-col gap-2">
+                                                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary/60">Full Alternatives</p>
+                                                    {alternatives.fullAlternatives.map(option => {
+                                                        const isSelected = activeCallRecord.offeredAlternativeClassKey === option.classKey
+                                                        const isAccepted = activeCallRecord.acceptedAlternativeClassKey === option.classKey
+                                                        return (
+                                                            <button
+                                                                key={option.classKey}
+                                                                type="button"
+                                                                className={`min-w-0 rounded-2xl border px-4 py-3 text-left text-sm transition ${isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-secondary/20 bg-accent text-secondary hover:bg-secondary/5'}`}
+                                                                onClick={() => void onSetCallRecord(activeCallParticipant.id, {
+                                                                    offeredAlternativeClassKey: isSelected ? '' : option.classKey,
+                                                                    acceptedAlternativeClassKey: isSelected ? '' : isAccepted ? option.classKey : '',
+                                                                })}
+                                                            >
+                                                                <div className="flex min-w-0 items-start justify-between gap-2">
+                                                                    <p className="min-w-0 break-words font-semibold">
+                                                                        {dayNames[option.dayOfWeek] ?? option.dayOfWeek} • {option.eventTime}
+                                                                    </p>
+                                                                    {isAccepted ? (
+                                                                        <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-emerald-900">
+                                                                            Accepted
+                                                                        </span>
+                                                                    ) : null}
+                                                                </div>
+                                                                <p className="mt-1 break-words text-xs text-current/80">
+                                                                    {option.facility} • {option.bookedCount}/{option.maximumCapacity} booked
+                                                                </p>
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            ) : null}
+                                        </>
                                     )}
                                 </div>
                             )}
@@ -264,17 +307,13 @@ Again, this is ${callerName} from ${callerLocationName}, and our number is ${cal
                                 </button>
                                 <button
                                     type="button"
-                                    className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${!activeCallRecord.acceptedAlternativeClassKey && activeCallRecord.offeredAlternativeClassKey ? 'bg-rose-100 text-rose-900' : 'border border-secondary/20 bg-accent text-secondary'}`}
+                                    className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${activeCallRecord.status === 'declined_alternatives' ? 'bg-rose-100 text-rose-900' : 'border border-secondary/20 bg-accent text-secondary'}`}
                                     onClick={() => void onSetCallRecord(activeCallParticipant.id, {
                                         offeredAlternativeClassKey: isPlannedMove
                                             ? selectedClass.plannedMoveTargetClassKey
                                             : activeCallRecord.offeredAlternativeClassKey,
                                         acceptedAlternativeClassKey: '',
-                                        status: (isPlannedMove
-                                          ? selectedClass.plannedMoveTargetClassKey
-                                          : activeCallRecord.offeredAlternativeClassKey)
-                                          ? 'declined_alternatives'
-                                          : 'reached',
+                                        status: 'declined_alternatives',
                                     })}
                                 >
                                     {isPlannedMove ? 'Move Not Accepted' : 'Not Accepted'}

@@ -42,11 +42,16 @@ export type PlannerSaveState = {
 }
 
 export type PlannerSaveStateApplyResult = {
-    dataset: PlannerDataset
-    matchedClasses: number
-    skippedClasses: number
-    matchedCallRecords: number
-    skippedCallRecords: number
+  dataset: PlannerDataset
+  matchedClasses: number
+  skippedClasses: number
+  matchedCallRecords: number
+  skippedCallRecords: number
+}
+
+export type PlannerAlternativeGroups = {
+  availableAlternatives: PlannerClass[]
+  fullAlternatives: PlannerClass[]
 }
 
 type ParsedCsv = {
@@ -1387,7 +1392,7 @@ export function getPlannerFillPercent(plannerClass: PlannerClass) {
 
 export function getPlannerAlternativeClasses(dataset: PlannerDataset, sourceClass: PlannerClass) {
     const normalizedServiceName = sourceClass.serviceName.trim().toLowerCase()
-    return dataset.classes
+    const alternatives = dataset.classes
         .filter(plannerClass => {
             if (plannerClass.classKey === sourceClass.classKey) {
                 return false
@@ -1397,20 +1402,46 @@ export function getPlannerAlternativeClasses(dataset: PlannerDataset, sourceClas
             }
             return plannerClass.serviceName.trim().toLowerCase() === normalizedServiceName
         })
+
+    const dayIndex = (day: string) => {
+        const index = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].indexOf(day)
+        return index === -1 ? Number.MAX_SAFE_INTEGER : index
+    }
+
+    const compareWeekday = (left: PlannerClass, right: PlannerClass) => {
+        const leftIndex = dayIndex(left.dayOfWeek)
+        const rightIndex = dayIndex(right.dayOfWeek)
+        if (leftIndex !== rightIndex) {
+            return leftIndex - rightIndex
+        }
+        if (left.dayOfWeek !== right.dayOfWeek) {
+            return left.dayOfWeek.localeCompare(right.dayOfWeek)
+        }
+        if (left.facility !== right.facility) {
+            return left.facility.localeCompare(right.facility)
+        }
+        return left.eventTime.localeCompare(right.eventTime)
+    }
+
+    const availableAlternatives = alternatives
+        .filter(plannerClass => !(plannerClass.maximumCapacity > 0 && plannerClass.bookedCount >= plannerClass.maximumCapacity))
         .sort((left, right) => {
             const leftSameDay = left.dayOfWeek === sourceClass.dayOfWeek ? 0 : 1
             const rightSameDay = right.dayOfWeek === sourceClass.dayOfWeek ? 0 : 1
             if (leftSameDay !== rightSameDay) {
                 return leftSameDay - rightSameDay
             }
-            if (left.dayOfWeek !== right.dayOfWeek) {
-                return left.dayOfWeek.localeCompare(right.dayOfWeek)
-            }
-            if (left.facility !== right.facility) {
-                return left.facility.localeCompare(right.facility)
-            }
-            return left.eventTime.localeCompare(right.eventTime)
+            return compareWeekday(left, right)
         })
+
+    const fullAlternatives = alternatives
+        .filter(plannerClass => plannerClass.maximumCapacity > 0 && plannerClass.bookedCount >= plannerClass.maximumCapacity)
+        .sort(compareWeekday)
+
+    return {
+        availableAlternatives,
+        fullAlternatives,
+    }
 }
 
 export function getPlannerMoveTargetLabel(dataset: PlannerDataset, plannerClass: PlannerClass) {

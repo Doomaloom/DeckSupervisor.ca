@@ -8,11 +8,11 @@ import type {
     PlannerDataset,
     PlannerParticipant,
 } from '../../../types/app'
-import { getPlannerMoveTargetLabel, plannerCallStatusOptions } from '../../../lib/sessionPlanner'
+import { getPlannerMoveTargetLabel, plannerCallStatusOptions, type PlannerAlternativeGroups } from '../../../lib/sessionPlanner'
 import { dayNames, statusClasses } from '../utils/plannerPresentation'
 
 type PlannerDetailsPanelProps = {
-    alternatives: PlannerClass[]
+    alternatives: PlannerAlternativeGroups
     bookedParticipants: PlannerParticipant[]
     dataset: PlannerDataset | null
     isInfoPanelOpen: boolean
@@ -34,6 +34,23 @@ type PlannerDetailsPanelProps = {
 
 function formatAlternativeLabel(option: PlannerClass) {
     return `${dayNames[option.dayOfWeek] ?? option.dayOfWeek} • ${option.eventTime} • ${option.facility}`
+}
+
+function renderAlternativeSection(
+    title: string,
+    options: PlannerClass[],
+    renderOption: (option: PlannerClass) => JSX.Element,
+) {
+    if (options.length === 0) {
+        return null
+    }
+
+    return (
+        <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary/60">{title}</p>
+            {options.map(renderOption)}
+        </div>
+    )
 }
 
 function PlannerDetailsPanel({
@@ -62,6 +79,7 @@ function PlannerDetailsPanel({
 
     const plannedMoveLabel =
         selectedClass && dataset ? getPlannerMoveTargetLabel(dataset, selectedClass) : ''
+    const allAlternatives = [...alternatives.availableAlternatives, ...alternatives.fullAlternatives]
     const statusLabel =
         selectedClass?.planningStatus === 'planned_move'
             ? 'Planned Move'
@@ -258,7 +276,7 @@ function PlannerDetailsPanel({
                                         }
                                     >
                                         <option value="">Select a target class</option>
-                                        {alternatives.map(option => (
+                                        {allAlternatives.map(option => (
                                             <option key={option.classKey} value={option.classKey}>
                                                 {formatAlternativeLabel(option)}
                                             </option>
@@ -280,19 +298,31 @@ function PlannerDetailsPanel({
                             Alternative Classes
                         </h4>
                         <div className="mt-3 flex max-h-48 flex-col gap-2 overflow-y-auto pr-1">
-                            {alternatives.length === 0 ? (
+                            {allAlternatives.length === 0 ? (
                                 <p className="text-sm text-secondary/70">No exact ServiceName alternatives found.</p>
                             ) : (
-                                alternatives.map(option => (
-                                    <div key={option.classKey} className="rounded-2xl border border-secondary/20 bg-accent p-3">
-                                        <p className="font-semibold">
-                                            {dayNames[option.dayOfWeek] ?? option.dayOfWeek} • {option.eventTime}
-                                        </p>
-                                        <p className="text-sm text-secondary/70">
-                                            {option.facility} • {option.bookedCount}/{option.maximumCapacity} booked • waitlist {option.waitlistCount}
-                                        </p>
-                                    </div>
-                                ))
+                                <>
+                                    {renderAlternativeSection('Available Alternatives', alternatives.availableAlternatives, option => (
+                                        <div key={option.classKey} className="rounded-2xl border border-secondary/20 bg-accent p-3">
+                                            <p className="font-semibold">
+                                                {dayNames[option.dayOfWeek] ?? option.dayOfWeek} • {option.eventTime}
+                                            </p>
+                                            <p className="text-sm text-secondary/70">
+                                                {option.facility} • {option.bookedCount}/{option.maximumCapacity} booked • waitlist {option.waitlistCount}
+                                            </p>
+                                        </div>
+                                    ))}
+                                    {renderAlternativeSection('Full Alternatives', alternatives.fullAlternatives, option => (
+                                        <div key={option.classKey} className="rounded-2xl border border-secondary/20 bg-accent p-3 opacity-80">
+                                            <p className="font-semibold">
+                                                {dayNames[option.dayOfWeek] ?? option.dayOfWeek} • {option.eventTime}
+                                            </p>
+                                            <p className="text-sm text-secondary/70">
+                                                {option.facility} • {option.bookedCount}/{option.maximumCapacity} booked • waitlist {option.waitlistCount}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </>
                             )}
                         </div>
                     </div>
@@ -396,7 +426,7 @@ function PlannerDetailsPanel({
                                                             <span className="min-w-0 break-words">
                                                                 {callRecord?.offeredAlternativeClassKey
                                                                     ? formatAlternativeLabel(
-                                                                        alternatives.find(
+                                                                        allAlternatives.find(
                                                                             option => option.classKey === callRecord.offeredAlternativeClassKey,
                                                                         ) ?? {
                                                                             classKey: '',
@@ -443,7 +473,26 @@ function PlannerDetailsPanel({
                                                                     >
                                                                         No alternative selected
                                                                     </button>
-                                                                    {alternatives.map(option => (
+                                                                    {renderAlternativeSection('Available Alternatives', alternatives.availableAlternatives, option => (
+                                                                        <button
+                                                                            key={option.classKey}
+                                                                            type="button"
+                                                                            className="rounded-xl border border-secondary/20 bg-bg px-3 py-2 text-left text-sm text-secondary transition hover:bg-secondary/5"
+                                                                            onClick={() => {
+                                                                                void setCallRecord(participant.id, {
+                                                                                    offeredAlternativeClassKey: option.classKey,
+                                                                                    acceptedAlternativeClassKey:
+                                                                                        option.classKey === callRecord?.acceptedAlternativeClassKey
+                                                                                            ? option.classKey
+                                                                                            : '',
+                                                                                })
+                                                                                setOpenAlternativeParticipantId('')
+                                                                            }}
+                                                                        >
+                                                                            <span className="break-words">{formatAlternativeLabel(option)}</span>
+                                                                        </button>
+                                                                    ))}
+                                                                    {renderAlternativeSection('Full Alternatives', alternatives.fullAlternatives, option => (
                                                                         <button
                                                                             key={option.classKey}
                                                                             type="button"

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { PlannerDataset, PlannerParticipant } from '../../../types/app'
-import { getPlannerAlternativeClasses } from '../../../lib/sessionPlanner'
+import { getPlannerAlternativeClasses, type PlannerAlternativeGroups } from '../../../lib/sessionPlanner'
 import { COLUMN_MIN_WIDTH_PX, HEADER_HEIGHT_REM, SLOT_MINUTES } from '../../schematic/constants'
 import { buildTimeLabels, timeToMinutes } from '../../schematic/utils/time'
 import {
@@ -134,7 +134,10 @@ export function usePlannerViewModel(
 
   const alternatives = useMemo(() => {
     if (!dataset || !selectedClass) {
-      return []
+      return {
+        availableAlternatives: [],
+        fullAlternatives: [],
+      } satisfies PlannerAlternativeGroups
     }
     return getPlannerAlternativeClasses(dataset, selectedClass)
   }, [dataset, selectedClass])
