@@ -1447,7 +1447,7 @@ export function getPlannerAlternativeClasses(dataset: PlannerDataset, sourceClas
             if (plannerClass.classKey === sourceClass.classKey) {
                 return false
             }
-            if (plannerClass.planningStatus === 'cancelled') {
+            if (plannerClass.planningStatus === 'cancelled' || plannerClass.planningStatus === 'pending_cancellation') {
                 return false
             }
             return plannerClass.serviceName.trim().toLowerCase() === normalizedServiceName
