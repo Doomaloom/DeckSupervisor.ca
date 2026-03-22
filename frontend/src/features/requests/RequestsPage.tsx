@@ -50,6 +50,14 @@ function buildRosterClassKey(day: string, eventId: string, location: string) {
   return [day.trim(), eventId.trim(), location.trim().toLowerCase()].join('::')
 }
 
+function buildAssignmentKey(eventId: string, term: string, location: string) {
+  return [
+    eventId.trim(),
+    term.trim().replace(/\s+/g, ' '),
+    location.trim().toLowerCase(),
+  ].join('::')
+}
+
 function sortAssignments(assignments: RequestAssignment[]) {
   return [...assignments].sort((left, right) => {
     if (left.term !== right.term) {
@@ -114,6 +122,40 @@ function RequestsPage() {
   }, [])
 
   const availableDays = useMemo(() => analysis?.days.map(entry => entry.day) ?? [], [analysis])
+  const autoAssignmentCandidates = useMemo(() => {
+    if (!analysis || !rosterFile) {
+      return []
+    }
+
+    const existingKeys = new Set(
+      assignments.map(assignment => buildAssignmentKey(assignment.eventId, assignment.term, assignment.location)),
+    )
+
+    return analysis.days.flatMap(dayGroup =>
+      dayGroup.classes.flatMap(classSummary => {
+        const instructor = classSummary.instructorCounts[0]?.instructor?.trim() ?? ''
+        const location = classSummary.location.trim()
+        const term =
+          rosterFile.classTerms[buildRosterClassKey(dayGroup.day, classSummary.eventId, classSummary.location)] ??
+          rosterFile.defaultTerm ??
+          ''
+        if (!classSummary.eventId.trim() || !instructor || !location || !term.trim()) {
+          return []
+        }
+        const key = buildAssignmentKey(classSummary.eventId, term, location)
+        if (existingKeys.has(key)) {
+          return []
+        }
+        existingKeys.add(key)
+        return [{
+          eventId: classSummary.eventId.trim(),
+          term: term.trim(),
+          location,
+          instructor,
+        }]
+      }),
+    )
+  }, [analysis, assignments, rosterFile])
 
   const handleRequestsUpload = async (file: File | null) => {
     if (!file) {
@@ -322,6 +364,45 @@ function RequestsPage() {
     }
   }
 
+  const handleAutoAssignMissing = async () => {
+    if (autoAssignmentCandidates.length === 0) {
+      setStatus('No missing assignments were found in the current summary.')
+      setError('')
+      return
+    }
+
+    setError('')
+    setAssignmentSaving(true)
+
+    const created: RequestAssignment[] = []
+    const failures: string[] = []
+
+    for (const candidate of autoAssignmentCandidates) {
+      try {
+        const response = await createRequestAssignment(candidate)
+        created.push(response.assignment)
+      } catch (saveError) {
+        console.error(saveError)
+        failures.push(`${candidate.eventId} (${candidate.term} • ${candidate.location})`)
+      }
+    }
+
+    if (created.length > 0) {
+      setAssignments(current => sortAssignments([...current, ...created]))
+    }
+
+    if (failures.length > 0) {
+      setError(`Failed to save ${failures.length} assignment${failures.length === 1 ? '' : 's'}: ${failures.join(', ')}`)
+    }
+
+    setStatus(
+      failures.length > 0
+        ? `Saved ${created.length} missing assignment${created.length === 1 ? '' : 's'}.`
+        : `Saved ${created.length} missing assignment${created.length === 1 ? '' : 's'} automatically.`,
+    )
+    setAssignmentSaving(false)
+  }
+
   return (
     <div id="requests-page" data-component="requests-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div className="relative overflow-hidden rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
@@ -431,6 +512,33 @@ function RequestsPage() {
       {activeTab === 'summary' ? (
         analysis ? (
           <>
+            <section className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
+                    Assignment Automation
+                  </p>
+                  <h3 className="mt-2 text-lg font-semibold">Auto-save missing assignments</h3>
+                  <p className="mt-2 text-sm text-secondary/70">
+                    Save every matched class to the assignments table using its top requested instructor, while skipping rows that already exist.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <p className="text-sm font-semibold text-secondary/70">
+                    {autoAssignmentCandidates.length} missing assignment{autoAssignmentCandidates.length === 1 ? '' : 's'}
+                  </p>
+                  <button
+                    type="button"
+                    className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => void handleAutoAssignMissing()}
+                    disabled={assignmentSaving || autoAssignmentCandidates.length === 0}
+                  >
+                    {assignmentSaving ? 'Saving...' : 'Auto Assign Missing'}
+                  </button>
+                </div>
+              </div>
+            </section>
+
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <div className="rounded-card border-2 border-secondary/20 bg-accent p-5 text-secondary shadow-md">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">Rows</p>
