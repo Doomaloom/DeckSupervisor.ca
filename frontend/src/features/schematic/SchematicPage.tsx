@@ -31,6 +31,7 @@ function SchematicPage() {
     const {
         columns,
         instructors,
+        lockedInstructors,
         timeLabels,
         scheduleHeightRem,
         scheduleStartMinutes,
@@ -39,6 +40,8 @@ function SchematicPage() {
         handleDrop,
         handleDropOnCourse,
         handleSaveSchedule,
+        addTemporaryColumn,
+        removeEmptyColumns,
         setInstructorAt,
     } = useSchematicSchedule(selectedDay)
 
@@ -195,9 +198,29 @@ function SchematicPage() {
 
     return (
         <div id="schematic-page" data-component="schematic-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+            {!isReadOnly ? (
+                <div className="flex flex-wrap justify-center gap-3">
+                    <button
+                        type="button"
+                        className="rounded-2xl border border-secondary/30 bg-bg px-5 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                        onClick={addTemporaryColumn}
+                    >
+                        Add Temporary Column
+                    </button>
+                    <button
+                        type="button"
+                        className="rounded-2xl border border-secondary/30 bg-bg px-5 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                        onClick={removeEmptyColumns}
+                    >
+                        Remove Empty Columns
+                    </button>
+                </div>
+            ) : null}
+
             <SchematicBoard
                 columns={columns}
                 instructors={instructors}
+                lockedInstructors={lockedInstructors}
                 timeLabels={timeLabels}
                 scheduleHeightRem={scheduleHeightRem}
                 scheduleStartMinutes={scheduleStartMinutes}

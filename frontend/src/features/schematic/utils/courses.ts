@@ -3,7 +3,7 @@ import type { Student } from '../../../types/app'
 import type { Course } from '../types'
 import { timeToMinutes } from './time'
 
-export function buildCourses(students: Student[]): Course[] {
+export function buildCourses(students: Student[], requestInstructorByCode?: Map<string, string>): Course[] {
     const map = new Map<string, Course>()
     students.forEach(student => {
         const existing = map.get(student.code)
@@ -11,6 +11,7 @@ export function buildCourses(students: Student[]): Course[] {
             existing.studentCount += 1
             return
         }
+        const assignedInstructor = requestInstructorByCode?.get(student.code) ?? ''
         const startTime = extractStartTime(student.time)
         const endTime = extractEndTime(student.time)
         const startMinutes = timeToMinutes(startTime)
@@ -25,6 +26,9 @@ export function buildCourses(students: Student[]): Course[] {
             endMinutes,
             studentCount: 1,
             studentName: student.name,
+            assignedInstructor: assignedInstructor || undefined,
+            isRequested: Boolean(assignedInstructor),
+            isLockedToInstructor: Boolean(assignedInstructor),
         })
     })
 

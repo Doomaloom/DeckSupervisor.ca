@@ -8,6 +8,7 @@ type InstructorColumnProps = {
     column: Course[]
     columnIndex: number
     instructor: string
+    lockedInstructor?: string
     instructorOptions: string[]
     scheduleHeightRem: number
     scheduleStartMinutes: number
@@ -22,6 +23,7 @@ function InstructorColumn({
     column,
     columnIndex,
     instructor,
+    lockedInstructor,
     instructorOptions,
     scheduleHeightRem,
     scheduleStartMinutes,
@@ -40,9 +42,9 @@ function InstructorColumn({
             onDrop={() => onColumnDrop(columnIndex)}
         >
             <div className={`border border-black bg-accent p-2 ${columnBorderClass}`}>
-                {readOnly ? (
+                {readOnly || lockedInstructor ? (
                     <div className="w-full rounded-none border border-black bg-white px-2 py-1 text-sm text-black">
-                        {instructor || `Instructor ${columnIndex + 1}`}
+                        {lockedInstructor || instructor || `Instructor ${columnIndex + 1}`}
                     </div>
                 ) : (
                     <select

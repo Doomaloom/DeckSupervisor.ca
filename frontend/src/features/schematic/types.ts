@@ -8,6 +8,9 @@ export type Course = {
     endMinutes: number
     studentCount: number
     studentName?: string
+    assignedInstructor?: string
+    isRequested?: boolean
+    isLockedToInstructor?: boolean
 }
 
 export type DragState = {
