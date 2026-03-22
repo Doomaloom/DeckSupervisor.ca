@@ -8,7 +8,12 @@ import { getStoredItem, setStoredItem } from '../../lib/browserStorage'
 import { extractStartTime } from '../../lib/time'
 import { prefetchInstructorPacket } from '../../lib/instructorPdfCache'
 import type { ClassRoster, Student } from '../../types/app'
+import { SLOT_HEIGHT_REM, SLOT_MINUTES, dayNames } from '../schematic/constants'
 import FullTimeRostersPanel from '../schematic/components/FullTimeRostersPanel'
+import SchematicBoard from '../schematic/components/SchematicBoard'
+import type { Course } from '../schematic/types'
+import { buildCourses, coursesOverlap } from '../schematic/utils/courses'
+import { buildTimeLabels } from '../schematic/utils/time'
 import CustomRostersPanel from './components/CustomRostersPanel'
 import RosterFiltersBar from './components/RosterFiltersBar'
 import RosterList from './components/RosterList'
@@ -86,6 +91,67 @@ function convertClassRosterToItem(roster: ClassRoster): FullTimeRosterItem {
     }
 }
 
+function sortCoursesByStart(courses: Course[]) {
+    return [...courses].sort((left, right) => {
+        if (left.startMinutes !== right.startMinutes) {
+            return left.startMinutes - right.startMinutes
+        }
+        if (left.endMinutes !== right.endMinutes) {
+            return left.endMinutes - right.endMinutes
+        }
+        return left.code.localeCompare(right.code)
+    })
+}
+
+function canFitCourse(column: Course[], course: Course) {
+    return !column.some(entry => coursesOverlap(entry, course))
+}
+
+function buildPreviewColumns(courses: Course[]) {
+    const columns: Course[][] = []
+    const instructors: string[] = []
+
+    sortCoursesByStart(courses).forEach(course => {
+        const assignedInstructor = course.assignedInstructor?.trim() ?? ''
+
+        if (assignedInstructor) {
+            for (let index = 0; index < columns.length; index += 1) {
+                if (instructors[index] !== assignedInstructor) {
+                    continue
+                }
+                if (canFitCourse(columns[index], course)) {
+                    columns[index].push(course)
+                    columns[index] = sortCoursesByStart(columns[index])
+                    return
+                }
+            }
+        }
+
+        for (let index = 0; index < columns.length; index += 1) {
+            if (assignedInstructor && instructors[index] && instructors[index] !== assignedInstructor) {
+                continue
+            }
+            if (!canFitCourse(columns[index], course)) {
+                continue
+            }
+            columns[index].push(course)
+            columns[index] = sortCoursesByStart(columns[index])
+            if (assignedInstructor && !instructors[index]) {
+                instructors[index] = assignedInstructor
+            }
+            return
+        }
+
+        columns.push([course])
+        instructors.push(assignedInstructor)
+    })
+
+    return {
+        columns,
+        instructors: instructors.map((value, index) => value || `Instructor ${index + 1}`),
+    }
+}
+
 function RostersPage() {
     const { requestCsvFile } = useCsvImportFlow()
     const { selectedDay } = useDay()
@@ -98,6 +164,7 @@ function RostersPage() {
     const [fullTimeDayFilter, setFullTimeDayFilter] = useState('')
     const [fullTimeLevelFilter, setFullTimeLevelFilter] = useState('')
     const [fullTimeSearchQuery, setFullTimeSearchQuery] = useState('')
+    const [fullTimeViewTab, setFullTimeViewTab] = useState<'rosters' | 'schematic'>('rosters')
     const [fullTimeRosterFileName, setFullTimeRosterFileName] = useState('')
     const [fullTimeRosterClasses, setFullTimeRosterClasses] = useState<ClassRoster[]>([])
     const [fullTimeUploadError, setFullTimeUploadError] = useState('')
@@ -257,6 +324,66 @@ function RostersPage() {
         })
     }, [fullTimeDayFilter, fullTimeLevelFilter, fullTimeRosterItems, fullTimeSearchQuery])
 
+    const fullTimeSchematicDay = fullTimeDayFilter || fullTimeRosterDayOptions[0] || ''
+    const fullTimeSchematicStudents = useMemo(() => {
+        return fullTimeRosterClasses
+            .filter(roster => roster.day === fullTimeSchematicDay)
+            .flatMap(roster =>
+                roster.students.map((student, index) => ({
+                    id: `${roster.code}-${roster.day}-${index}-${student.name}`.replace(/\s+/g, '-'),
+                    service_name: roster.serviceName,
+                    code: roster.code,
+                    day: roster.day,
+                    time: roster.time,
+                    location: roster.location,
+                    schedule: roster.schedule,
+                    name: student.name,
+                    phone: student.phone,
+                    instructor: student.instructor || roster.instructor,
+                    level: student.level || roster.serviceName,
+                })),
+            )
+    }, [fullTimeRosterClasses, fullTimeSchematicDay])
+
+    const fullTimeSchematicCourses = useMemo(() => {
+        const instructorByCode = new Map<string, string>()
+        fullTimeRosterClasses
+            .filter(roster => roster.day === fullTimeSchematicDay)
+            .forEach(roster => {
+                const instructor = roster.instructor.trim()
+                if (instructor) {
+                    instructorByCode.set(roster.code, instructor)
+                }
+            })
+        return buildCourses(fullTimeSchematicStudents, instructorByCode)
+    }, [fullTimeRosterClasses, fullTimeSchematicDay, fullTimeSchematicStudents])
+
+    const fullTimeSchematicLayout = useMemo(
+        () => buildPreviewColumns(fullTimeSchematicCourses),
+        [fullTimeSchematicCourses],
+    )
+
+    const fullTimeSchematicStartMinutes = useMemo(() => {
+        if (fullTimeSchematicCourses.length === 0) {
+            return 0
+        }
+        const earliest = Math.min(...fullTimeSchematicCourses.map(course => course.startMinutes))
+        return earliest - (earliest % SLOT_MINUTES)
+    }, [fullTimeSchematicCourses])
+
+    const fullTimeSchematicTimeLabels = useMemo(() => {
+        if (fullTimeSchematicCourses.length === 0) {
+            return []
+        }
+        const earliest = fullTimeSchematicCourses[0]?.startTime ?? ''
+        const latest = fullTimeSchematicCourses.reduce((current, course) => {
+            return course.endTime > current ? course.endTime : current
+        }, '00:00')
+        return buildTimeLabels(earliest, latest)
+    }, [fullTimeSchematicCourses])
+
+    const fullTimeSchematicHeight = Math.max(fullTimeSchematicTimeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
+
     const handleFullTimeRosterUpload = async (file: File | null) => {
         if (!file || !currentTeamId) {
             return
@@ -333,6 +460,30 @@ function RostersPage() {
                             Session Term: <span className="font-semibold">{currentTerm?.label ?? 'No term selected'}</span>
                         </p>
                     </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
+                                fullTimeViewTab === 'rosters'
+                                    ? 'border-secondary bg-secondary text-accent'
+                                    : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
+                            }`}
+                            onClick={() => setFullTimeViewTab('rosters')}
+                        >
+                            Roster View
+                        </button>
+                        <button
+                            type="button"
+                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
+                                fullTimeViewTab === 'schematic'
+                                    ? 'border-secondary bg-secondary text-accent'
+                                    : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
+                            }`}
+                            onClick={() => setFullTimeViewTab('schematic')}
+                        >
+                            Schematic View
+                        </button>
+                    </div>
                 </div>
 
                 {!currentTeamId ? (
@@ -352,19 +503,86 @@ function RostersPage() {
                             {fullTimeUploadError}
                         </div>
                     ) : null}
-                    <FullTimeRostersPanel
-                        dayOptions={fullTimeRosterDayOptions}
-                        levelOptions={fullTimeRosterLevelOptions}
-                        dayFilter={fullTimeDayFilter}
-                        levelFilter={fullTimeLevelFilter}
-                        searchQuery={fullTimeSearchQuery}
-                        onUploadRoster={() => fullTimeUploadInputRef.current?.click()}
-                        onInstructorChange={handleFullTimeInstructorChange}
-                        onDayFilterChange={setFullTimeDayFilter}
-                        onLevelFilterChange={setFullTimeLevelFilter}
-                        onSearchChange={setFullTimeSearchQuery}
-                        rosters={filteredFullTimeRosters}
-                    />
+                    {fullTimeViewTab === 'rosters' ? (
+                        <FullTimeRostersPanel
+                            dayOptions={fullTimeRosterDayOptions}
+                            levelOptions={fullTimeRosterLevelOptions}
+                            dayFilter={fullTimeDayFilter}
+                            levelFilter={fullTimeLevelFilter}
+                            searchQuery={fullTimeSearchQuery}
+                            onUploadRoster={() => fullTimeUploadInputRef.current?.click()}
+                            onInstructorChange={handleFullTimeInstructorChange}
+                            onDayFilterChange={setFullTimeDayFilter}
+                            onLevelFilterChange={setFullTimeLevelFilter}
+                            onSearchChange={setFullTimeSearchQuery}
+                            rosters={filteredFullTimeRosters}
+                        />
+                    ) : (
+                        <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
+                                        Schematic Preview
+                                    </p>
+                                    <h3 className="mt-2 text-xl font-semibold">
+                                        {fullTimeSchematicDay ? dayNames[fullTimeSchematicDay] ?? fullTimeSchematicDay : 'No day selected'}
+                                    </h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5"
+                                    onClick={() => fullTimeUploadInputRef.current?.click()}
+                                >
+                                    Upload Roster
+                                </button>
+                            </div>
+                            {fullTimeRosterDayOptions.length > 1 ? (
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    {fullTimeRosterDayOptions.map(day => (
+                                        <button
+                                            key={day}
+                                            type="button"
+                                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
+                                                fullTimeSchematicDay === day
+                                                    ? 'border-secondary bg-secondary text-accent'
+                                                    : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
+                                            }`}
+                                            onClick={() => setFullTimeDayFilter(day)}
+                                        >
+                                            {dayNames[day] ?? day}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : null}
+
+                            {fullTimeSchematicCourses.length === 0 ? (
+                                <p className="mt-4 text-sm text-secondary/70">
+                                    No uploaded classes are available for this day.
+                                </p>
+                            ) : (
+                                <div className="mt-5">
+                                    <SchematicBoard
+                                        columns={fullTimeSchematicLayout.columns}
+                                        instructors={fullTimeSchematicLayout.instructors}
+                                        timeLabels={fullTimeSchematicTimeLabels}
+                                        scheduleHeightRem={fullTimeSchematicHeight}
+                                        scheduleStartMinutes={fullTimeSchematicStartMinutes}
+                                        instructorOptions={[]}
+                                        sessionLabel={[
+                                            currentTeam?.name ?? '',
+                                            fullTimeSchematicDay ? dayNames[fullTimeSchematicDay] ?? fullTimeSchematicDay : '',
+                                        ].filter(Boolean).join(' | ')}
+                                        readOnly
+                                        onInstructorChange={() => {}}
+                                        onCourseSelect={() => {}}
+                                        onColumnDrop={() => {}}
+                                        onCourseDrop={() => {}}
+                                        onCourseDragStart={() => {}}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {fullTimeUploading ? (
                         <p className="text-sm font-semibold text-secondary/80">Processing roster upload...</p>
                     ) : null}
