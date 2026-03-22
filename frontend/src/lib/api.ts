@@ -16,6 +16,27 @@ type ExtractClassesResponse = {
   classesBySession: Record<string, ExtractedClass[]>
 }
 
+async function processCsv(file: File, day: string, instructors: InstructorEntry[] = []): Promise<ProcessCsvResponse> {
+  const formData = new FormData()
+  formData.append('csv_file', file)
+  formData.append('day', day)
+  instructors.forEach(instructor => {
+    formData.append('instructor_names[]', instructor.name)
+    formData.append('instructor_codes[]', instructor.codes)
+  })
+
+  const response = await fetch('/api/process-csv', {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to process CSV')
+  }
+
+  return (await response.json()) as ProcessCsvResponse
+}
+
 function rosterToStudents(rosters: ClassRoster[]): Student[] {
   const students: Student[] = []
   rosters.forEach(roster => {
@@ -45,24 +66,7 @@ export async function processCsvAndStore(
   instructors: InstructorEntry[] = [],
   options?: { courseCodes?: string[] }
 ): Promise<ProcessCsvResponse> {
-  const formData = new FormData()
-  formData.append('csv_file', file)
-  formData.append('day', day)
-  instructors.forEach(instructor => {
-    formData.append('instructor_names[]', instructor.name)
-    formData.append('instructor_codes[]', instructor.codes)
-  })
-
-  const response = await fetch('/api/process-csv', {
-    method: 'POST',
-    body: formData,
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to process CSV')
-  }
-
-  const data = (await response.json()) as ProcessCsvResponse
+  const data = await processCsv(file, day, instructors)
   const allowedCodes = new Set((options?.courseCodes ?? []).map(code => code.trim()).filter(Boolean))
   const classes =
     allowedCodes.size > 0
@@ -85,6 +89,14 @@ export async function processCsvAndStore(
     classes,
     total: classes.reduce((sum, roster) => sum + roster.students.length, 0),
   }
+}
+
+export async function processCsvWithoutStore(
+  file: File,
+  day = '',
+  instructors: InstructorEntry[] = [],
+): Promise<ProcessCsvResponse> {
+  return processCsv(file, day, instructors)
 }
 
 export async function extractClassesFromCsv(file: File): Promise<ExtractClassesResponse> {

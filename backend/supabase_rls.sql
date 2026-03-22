@@ -104,6 +104,7 @@ alter table team_members enable row level security;
 alter table team_invites enable row level security;
 alter table custom_rosters enable row level security;
 alter table report_cards enable row level security;
+alter table request_assignments enable row level security;
 
 drop policy if exists "Profiles insert by owner" on profiles;
 drop policy if exists "Profiles read by owner" on profiles;
@@ -201,6 +202,27 @@ drop policy if exists "Report cards read" on report_cards;
 drop policy if exists "Report cards create" on report_cards;
 drop policy if exists "Report cards update" on report_cards;
 drop policy if exists "Report cards delete" on report_cards;
+drop policy if exists "Request assignments read" on request_assignments;
+drop policy if exists "Request assignments create" on request_assignments;
+drop policy if exists "Request assignments update" on request_assignments;
+drop policy if exists "Request assignments delete" on request_assignments;
+
+create policy "Request assignments read"
+  on request_assignments for select
+  using (auth.role() = 'authenticated');
+
+create policy "Request assignments create"
+  on request_assignments for insert
+  with check (is_full_time(auth.uid()));
+
+create policy "Request assignments update"
+  on request_assignments for update
+  using (is_full_time(auth.uid()))
+  with check (is_full_time(auth.uid()));
+
+create policy "Request assignments delete"
+  on request_assignments for delete
+  using (is_full_time(auth.uid()));
 
 create policy "Report cards read"
   on report_cards for select

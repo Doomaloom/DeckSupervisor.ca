@@ -5,6 +5,7 @@ import type {
   PlannerClassMoveType,
   PlannerClassStatus,
   PlannerDataset,
+  RequestAssignment,
   PlannerShareJoinResponse,
   PlannerShareSession,
 } from '../types/app'
@@ -71,6 +72,51 @@ export function updateProfile(body: { first_name: string; last_name: string; loc
 
 export function fetchCurrentTeams() {
   return request<{ teams: Array<{ id: string; name: string; available_locations: string[] }> }>('/api/teams/current')
+}
+
+export function fetchRequestAssignments(filters?: { term?: string; location?: string }) {
+  const params = new URLSearchParams()
+  if (filters?.term) {
+    params.set('term', filters.term)
+  }
+  if (filters?.location) {
+    params.set('location', filters.location)
+  }
+  const query = params.toString()
+  return request<{ assignments: RequestAssignment[] }>(
+    `/api/request-assignments${query ? `?${query}` : ''}`,
+  )
+}
+
+export function createRequestAssignment(body: {
+  eventId: string
+  term: string
+  location: string
+  instructor: string
+}) {
+  return request<{ assignment: RequestAssignment }>('/api/request-assignments', {
+    method: 'POST',
+    body,
+  })
+}
+
+export function updateRequestAssignment(
+  id: string,
+  body: {
+    eventId?: string
+    term?: string
+    location?: string
+    instructor?: string
+  },
+) {
+  return request<{ assignment: RequestAssignment }>(`/api/request-assignments/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body,
+  })
+}
+
+export function deleteRequestAssignment(id: string) {
+  return request<void>(`/api/request-assignments/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 
 export function fetchCurrentSession(sessionId: string) {

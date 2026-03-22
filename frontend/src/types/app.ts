@@ -133,6 +133,16 @@ export type CsvSessionCandidate = {
   matchedSession: CsvMatchedSession | null
 }
 
+export type RequestAssignment = {
+  id: string
+  eventId: string
+  term: string
+  location: string
+  instructor: string
+  createdAt: string
+  updatedAt: string
+}
+
 export type PlannerParticipantStatus = 'booked' | 'waiting'
 
 export type PlannerClassStatus = 'active' | 'pending_cancellation' | 'cancelled' | 'planned_move'

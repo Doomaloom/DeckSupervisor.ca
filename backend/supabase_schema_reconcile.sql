@@ -233,6 +233,17 @@ create table if not exists report_cards (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists request_assignments (
+  id uuid primary key default gen_random_uuid(),
+  event_id text not null,
+  term text not null,
+  location text not null,
+  instructor text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (event_id, term, location)
+);
+
 alter table report_cards
   add column if not exists updated_at timestamptz default now();
 
@@ -262,6 +273,7 @@ alter table report_cards
 create index if not exists report_cards_session_team_idx on report_cards(session, team_id);
 create index if not exists report_cards_team_day_idx on report_cards(team_id, day);
 create index if not exists report_cards_created_by_idx on report_cards(created_by);
+create index if not exists request_assignments_term_location_idx on request_assignments(term, location);
 create unique index if not exists report_cards_unique_with_team_idx
   on report_cards(session, day, instructor, team_id, created_by)
   where team_id is not null;

@@ -174,6 +174,7 @@ alter table roster_level_edits enable row level security;
 alter table roster_student_level_edits enable row level security;
 alter table custom_rosters enable row level security;
 alter table report_cards enable row level security;
+alter table request_assignments enable row level security;
 alter table team_invites enable row level security;
 
 drop policy if exists "Profiles insert by owner" on profiles;
@@ -420,6 +421,10 @@ drop policy if exists "Report cards read" on report_cards;
 drop policy if exists "Report cards create" on report_cards;
 drop policy if exists "Report cards update" on report_cards;
 drop policy if exists "Report cards delete" on report_cards;
+drop policy if exists "Request assignments read" on request_assignments;
+drop policy if exists "Request assignments create" on request_assignments;
+drop policy if exists "Request assignments update" on request_assignments;
+drop policy if exists "Request assignments delete" on request_assignments;
 
 create policy "Roster student edits read"
   on roster_student_level_edits for select
@@ -460,6 +465,47 @@ create policy "Custom rosters update"
 create policy "Custom rosters delete"
   on custom_rosters for delete
   using (can_edit_session(session_id, auth.uid()));
+
+create policy "Request assignments read"
+  on request_assignments for select
+  using (auth.role() = 'authenticated');
+
+create policy "Request assignments create"
+  on request_assignments for insert
+  with check (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+        and account_type = 'full_time'
+    )
+  );
+
+create policy "Request assignments update"
+  on request_assignments for update
+  using (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+        and account_type = 'full_time'
+    )
+  )
+  with check (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+        and account_type = 'full_time'
+    )
+  );
+
+create policy "Request assignments delete"
+  on request_assignments for delete
+  using (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+        and account_type = 'full_time'
+    )
+  );
 
 create policy "Report cards read"
   on report_cards for select
