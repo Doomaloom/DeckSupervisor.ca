@@ -9,11 +9,13 @@ type InstructorColumnProps = {
     columnIndex: number
     instructor: string
     lockedInstructor?: string
+    selectedCourseCodes?: string[]
     instructorOptions: string[]
     scheduleHeightRem: number
     scheduleStartMinutes: number
     readOnly?: boolean
     onInstructorChange: (columnIndex: number, value: string) => void
+    onCourseSelect: (course: Course, columnIndex: number) => void
     onColumnDrop: (columnIndex: number) => void
     onCourseDrop: (course: Course, columnIndex: number) => void
     onCourseDragStart: (event: React.DragEvent<HTMLDivElement>, course: Course, columnIndex: number) => void
@@ -24,11 +26,13 @@ function InstructorColumn({
     columnIndex,
     instructor,
     lockedInstructor,
+    selectedCourseCodes = [],
     instructorOptions,
     scheduleHeightRem,
     scheduleStartMinutes,
     readOnly = false,
     onInstructorChange,
+    onCourseSelect,
     onColumnDrop,
     onCourseDrop,
     onCourseDragStart,
@@ -76,7 +80,9 @@ function InstructorColumn({
                             course={course}
                             capacity={capacity}
                             capacityClass={capacityClass}
+                            selected={selectedCourseCodes.includes(course.code)}
                             draggable={!readOnly}
+                            onClick={() => onCourseSelect(course, columnIndex)}
                             onDragStart={event => onCourseDragStart(event, course, columnIndex)}
                             onDrop={() => onCourseDrop(course, columnIndex)}
                             style={{

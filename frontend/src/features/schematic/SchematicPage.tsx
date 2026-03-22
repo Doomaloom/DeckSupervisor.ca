@@ -32,10 +32,12 @@ function SchematicPage() {
         columns,
         instructors,
         lockedInstructors,
+        selectedCourseCodes,
         timeLabels,
         scheduleHeightRem,
         scheduleStartMinutes,
         instructorOptions,
+        toggleCourseSelection,
         handleDragStart,
         handleDrop,
         handleDropOnCourse,
@@ -187,6 +189,7 @@ function SchematicPage() {
                         sessionLabel={fullTimeView.schematicSessionLabel}
                         readOnly
                         onInstructorChange={(_columnIndex, _value) => {}}
+                        onCourseSelect={(_course, _columnIndex) => {}}
                         onColumnDrop={_columnIndex => {}}
                         onCourseDrop={(_course, _columnIndex) => {}}
                         onCourseDragStart={(_event, _course, _columnIndex) => {}}
@@ -221,6 +224,7 @@ function SchematicPage() {
                 columns={columns}
                 instructors={instructors}
                 lockedInstructors={lockedInstructors}
+                selectedCourseCodes={selectedCourseCodes}
                 timeLabels={timeLabels}
                 scheduleHeightRem={scheduleHeightRem}
                 scheduleStartMinutes={scheduleStartMinutes}
@@ -228,6 +232,7 @@ function SchematicPage() {
                 sessionLabel={sessionLabel}
                 readOnly={isReadOnly}
                 onInstructorChange={isReadOnly ? () => {} : setInstructorAt}
+                onCourseSelect={isReadOnly ? () => {} : toggleCourseSelection}
                 onColumnDrop={isReadOnly ? () => {} : handleDrop}
                 onCourseDrop={isReadOnly ? () => {} : handleDropOnCourse}
                 onCourseDragStart={isReadOnly ? () => {} : handleDragStart}

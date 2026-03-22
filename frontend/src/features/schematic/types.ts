@@ -14,6 +14,6 @@ export type Course = {
 }
 
 export type DragState = {
-    code: string
+    codes: string[]
     columnIndex: number
 }

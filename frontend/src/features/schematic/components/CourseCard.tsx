@@ -6,7 +6,9 @@ type CourseCardProps = {
     capacity: number
     capacityClass: string
     style: React.CSSProperties
+    selected?: boolean
     draggable?: boolean
+    onClick: () => void
     onDragStart: (event: React.DragEvent<HTMLDivElement>) => void
     onDrop: () => void
 }
@@ -16,18 +18,22 @@ function CourseCard({
     capacity,
     capacityClass,
     style,
+    selected = false,
     draggable = true,
+    onClick,
     onDragStart,
     onDrop,
 }: CourseCardProps) {
     const requestClass = course.isRequested
         ? 'bg-yellow-200 ring-2 ring-yellow-500'
         : 'bg-white'
+    const selectedClass = selected ? 'ring-4 ring-secondary ring-offset-1' : ''
 
     return (
         <div
-            className={`absolute left-0 right-0 flex flex-col overflow-hidden border border-black text-xs text-black ${requestClass}`}
+            className={`absolute left-0 right-0 flex cursor-pointer flex-col overflow-hidden border border-black text-xs text-black ${requestClass} ${selectedClass}`}
             draggable={draggable}
+            onClick={onClick}
             onDragStart={onDragStart}
             onDragOver={event => event.preventDefault()}
             onDrop={onDrop}

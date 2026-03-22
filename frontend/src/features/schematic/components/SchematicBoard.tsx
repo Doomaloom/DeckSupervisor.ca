@@ -8,6 +8,7 @@ type SchematicBoardProps = {
     columns: Course[][]
     instructors: string[]
     lockedInstructors?: string[]
+    selectedCourseCodes?: string[]
     timeLabels: string[]
     scheduleHeightRem: number
     scheduleStartMinutes: number
@@ -15,6 +16,7 @@ type SchematicBoardProps = {
     sessionLabel: string
     readOnly?: boolean
     onInstructorChange: (columnIndex: number, value: string) => void
+    onCourseSelect: (course: Course, columnIndex: number) => void
     onColumnDrop: (columnIndex: number) => void
     onCourseDrop: (course: Course, columnIndex: number) => void
     onCourseDragStart: (event: React.DragEvent<HTMLDivElement>, course: Course, columnIndex: number) => void
@@ -24,6 +26,7 @@ function SchematicBoard({
     columns,
     instructors,
     lockedInstructors = [],
+    selectedCourseCodes = [],
     timeLabels,
     scheduleHeightRem,
     scheduleStartMinutes,
@@ -31,6 +34,7 @@ function SchematicBoard({
     sessionLabel,
     readOnly = false,
     onInstructorChange,
+    onCourseSelect,
     onColumnDrop,
     onCourseDrop,
     onCourseDragStart,
@@ -73,11 +77,13 @@ function SchematicBoard({
                                     columnIndex={columnIndex}
                                     instructor={instructors[columnIndex] ?? ''}
                                     lockedInstructor={lockedInstructors[columnIndex] ?? ''}
+                                    selectedCourseCodes={selectedCourseCodes}
                                     instructorOptions={instructorOptions}
                                     scheduleHeightRem={scheduleHeightRem}
                                     scheduleStartMinutes={scheduleStartMinutes}
                                     readOnly={readOnly}
                                     onInstructorChange={onInstructorChange}
+                                    onCourseSelect={onCourseSelect}
                                     onColumnDrop={onColumnDrop}
                                     onCourseDrop={onCourseDrop}
                                     onCourseDragStart={onCourseDragStart}

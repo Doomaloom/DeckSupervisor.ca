@@ -247,12 +247,54 @@ function getLockedInstructorForColumn(column: Course[]) {
     return locked[0] ?? ''
 }
 
+function sortCoursesByStart(courses: Course[]) {
+    return [...courses].sort((left, right) => left.startTime.localeCompare(right.startTime))
+}
+
+function clearSelectionAndDrag(course: Course, columnIndex: number) {
+    return {
+        codes: [course.code],
+        columnIndex,
+    }
+}
+
+function findSwapCandidatesForBlock(sourceColumn: Course[], targetColumn: Course[], movingCourses: Course[]) {
+    if (movingCourses.length === 0) {
+        return []
+    }
+
+    const overlapping = sortCoursesByStart(
+        targetColumn.filter(entry => movingCourses.some(course => coursesOverlap(entry, course))),
+    )
+    if (overlapping.length === 0) {
+        return []
+    }
+
+    if (overlapping.some(course => course.isLockedToInstructor)) {
+        return []
+    }
+
+    const remainingTargetCourses = targetColumn.filter(
+        course => !overlapping.some(entry => entry.code === course.code),
+    )
+    if (!canPlaceCourses(remainingTargetCourses, movingCourses)) {
+        return []
+    }
+
+    if (!canPlaceCourses(sourceColumn, overlapping)) {
+        return []
+    }
+
+    return overlapping
+}
+
 export function useSchematicSchedule(selectedDay: string | null) {
     const { access, session: currentSession, sessionId } = useCurrentSession()
     const [columns, setColumns] = useState<Course[][]>([])
     const [instructors, setInstructors] = useState<string[]>([])
     const [lockedInstructors, setLockedInstructors] = useState<string[]>([])
     const [dragged, setDragged] = useState<DragState | null>(null)
+    const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>([])
     const [students, setStudents] = useState<Student[]>([])
     const [remoteSchedule, setRemoteSchedule] = useState<{ codes: string[]; instructors: string[] } | null>(null)
     const [requestAssignments, setRequestAssignments] = useState<RequestAssignment[]>([])
@@ -394,12 +436,55 @@ export function useSchematicSchedule(selectedDay: string | null) {
         setLockedInstructors(layout.lockedInstructors)
     }, [access.mode, courses, extraEmptyColumns, remoteSchedule, selectedDay])
 
+    useEffect(() => {
+        setSelectedCourseCodes(current => current.filter(code => courses.some(course => course.code === code)))
+        setDragged(current => {
+            if (!current) {
+                return null
+            }
+            const nextCodes = current.codes.filter(code => courses.some(course => course.code === code))
+            if (nextCodes.length === 0) {
+                return null
+            }
+            return { ...current, codes: nextCodes }
+        })
+    }, [courses])
+
+    const toggleCourseSelection = (course: Course, columnIndex: number) => {
+        if (course.isLockedToInstructor) {
+            return
+        }
+        setSelectedCourseCodes(current => {
+            if (current.includes(course.code)) {
+                return current.filter(code => code !== course.code)
+            }
+            const selectionIsFromSameColumn =
+                current.length > 0 &&
+                current.every(code => (columns[columnIndex] ?? []).some(entry => entry.code === code))
+            if (!selectionIsFromSameColumn) {
+                return [course.code]
+            }
+            return [...current, course.code]
+        })
+    }
+
     const handleDragStart = (event: React.DragEvent<HTMLDivElement>, course: Course, columnIndex: number) => {
         if (course.isLockedToInstructor) {
             event.preventDefault()
             return
         }
-        setDragged({ code: course.code, columnIndex })
+        const selectedInSameColumn =
+            selectedCourseCodes.length > 0 &&
+            selectedCourseCodes.includes(course.code) &&
+            selectedCourseCodes.every(code => (columns[columnIndex] ?? []).some(entry => entry.code === code))
+                ? selectedCourseCodes
+                : null
+        const nextDragged = selectedInSameColumn
+            ? { codes: selectedInSameColumn, columnIndex }
+            : clearSelectionAndDrag(course, columnIndex)
+
+        setSelectedCourseCodes(selectedInSameColumn ?? [])
+        setDragged(nextDragged)
         const target = event.currentTarget
         const rect = target.getBoundingClientRect()
         const offsetX = event.clientX - rect.left
@@ -414,85 +499,63 @@ export function useSchematicSchedule(selectedDay: string | null) {
         setColumns(current => {
             const next = current.map(column => [...column])
             const sourceColumn = next[dragged.columnIndex]
-            const courseIndex = sourceColumn.findIndex(course => course.code === dragged.code)
-            if (courseIndex === -1) {
+            const movingCourses = sortCoursesByStart(sourceColumn.filter(course => dragged.codes.includes(course.code)))
+            if (movingCourses.length !== dragged.codes.length || movingCourses.some(course => course.isLockedToInstructor)) {
                 return current
             }
-            const [course] = sourceColumn.splice(courseIndex, 1)
-            if (course.isLockedToInstructor) {
-                sourceColumn.splice(courseIndex, 0, course)
-                return current
-            }
+            next[dragged.columnIndex] = sourceColumn.filter(course => !dragged.codes.includes(course.code))
             const targetColumn = next[columnIndex]
             if (dragged.columnIndex === columnIndex) {
-                sourceColumn.push(course)
-                sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                next[columnIndex] = sortCoursesByStart([...targetColumn, ...movingCourses])
                 return next
             }
-            const swapIndices = findContiguousSwapIndices(targetColumn, course)
-            if (swapIndices.length > 0) {
-                const swapCourses = swapIndices.map(index => targetColumn[index])
-                if (!canPlaceCourses(sourceColumn, swapCourses)) {
-                    sourceColumn.splice(courseIndex, 0, course)
+            if (!canPlaceCourses(targetColumn, movingCourses)) {
+                const swapCourses = findSwapCandidatesForBlock(next[dragged.columnIndex], targetColumn, movingCourses)
+                if (swapCourses.length === 0) {
                     return current
                 }
-                const removed = swapIndices
-                    .slice()
-                    .sort((a, b) => b - a)
-                    .map(index => targetColumn.splice(index, 1)[0])
-                sourceColumn.push(...removed)
-                sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-                targetColumn.push(course)
-                targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+                next[columnIndex] = sortCoursesByStart(
+                    targetColumn.filter(course => !swapCourses.some(entry => entry.code === course.code)).concat(movingCourses),
+                )
+                next[dragged.columnIndex] = sortCoursesByStart([...next[dragged.columnIndex], ...swapCourses])
                 return next
             }
-            const replaceIndex = targetColumn.findIndex(target => target.startMinutes === course.startMinutes)
-            if (replaceIndex !== -1 && canReplaceByStart(targetColumn, course, replaceIndex)) {
-                const replaceCourse = targetColumn[replaceIndex]
-                if (!replaceCourse || !canPlaceCourses(sourceColumn, [replaceCourse])) {
-                    sourceColumn.splice(courseIndex, 0, course)
-                    return current
-                }
-                targetColumn.splice(replaceIndex, 1)
-                sourceColumn.push(replaceCourse)
-                sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-                targetColumn.push(course)
-                targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-                return next
-            }
-            if (targetColumn.some(target => coursesOverlap(target, course))) {
-                sourceColumn.splice(courseIndex, 0, course)
-                return current
-            }
-            targetColumn.push(course)
-            targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
+            next[columnIndex] = sortCoursesByStart([...targetColumn, ...movingCourses])
             return next
         })
         setDragged(null)
+        setSelectedCourseCodes([])
     }
 
     const handleDropOnCourse = (targetCourse: Course, targetColumnIndex: number) => {
         if (!dragged) {
             return
         }
-        if (dragged.columnIndex === targetColumnIndex && dragged.code === targetCourse.code) {
+        if (dragged.columnIndex === targetColumnIndex && dragged.codes.includes(targetCourse.code)) {
             setDragged(null)
             return
         }
+        if (dragged.codes.length > 1) {
+            handleDrop(targetColumnIndex)
+            return
+        }
+
         setColumns(current => {
             const next = current.map(column => [...column])
             const sourceColumn = next[dragged.columnIndex]
-            const sourceIndex = sourceColumn.findIndex(course => course.code === dragged.code)
+            const sourceIndex = sourceColumn.findIndex(course => course.code === dragged.codes[0])
             const targetColumn = next[targetColumnIndex]
             const targetIndex = targetColumn.findIndex(course => course.code === targetCourse.code)
             if (sourceIndex === -1 || targetIndex === -1) {
                 return current
             }
+
             const [sourceCourse] = sourceColumn.splice(sourceIndex, 1)
             if (sourceCourse.isLockedToInstructor || targetCourse.isLockedToInstructor) {
                 sourceColumn.splice(sourceIndex, 0, sourceCourse)
                 return current
             }
+
             const swapIndices = findContiguousSwapIndices(targetColumn, sourceCourse)
             if (swapIndices.length > 0) {
                 const swapCourses = swapIndices.map(index => targetColumn[index])
@@ -502,40 +565,43 @@ export function useSchematicSchedule(selectedDay: string | null) {
                 }
                 const removed = swapIndices
                     .slice()
-                    .sort((a, b) => b - a)
+                    .sort((left, right) => right - left)
                     .map(index => targetColumn.splice(index, 1)[0])
                 sourceColumn.push(...removed)
                 targetColumn.push(sourceCourse)
-                sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-                targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-            } else {
-                if (canReplaceByStart(targetColumn, sourceCourse, targetIndex)) {
-                    const destinationCourse = targetColumn[targetIndex]
-                    if (!destinationCourse || !canPlaceCourses(sourceColumn, [destinationCourse])) {
-                        sourceColumn.splice(sourceIndex, 0, sourceCourse)
-                        return current
-                    }
-                    targetColumn.splice(targetIndex, 1)
-                    sourceColumn.push(destinationCourse)
-                    targetColumn.push(sourceCourse)
-                    sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-                    targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-                } else {
-                    const destinationCourse = targetColumn[targetIndex]
-                    if (!destinationCourse || !canSwapSingleCourses(sourceColumn, targetColumn, sourceCourse, destinationCourse)) {
-                        sourceColumn.splice(sourceIndex, 0, sourceCourse)
-                        return current
-                    }
-                    targetColumn.splice(targetIndex, 1)
-                    sourceColumn.push(destinationCourse)
-                    targetColumn.push(sourceCourse)
-                    sourceColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-                    targetColumn.sort((a, b) => a.startTime.localeCompare(b.startTime))
-                }
+                next[dragged.columnIndex] = sortCoursesByStart(sourceColumn)
+                next[targetColumnIndex] = sortCoursesByStart(targetColumn)
+                return next
             }
+
+            if (canReplaceByStart(targetColumn, sourceCourse, targetIndex)) {
+                const destinationCourse = targetColumn[targetIndex]
+                if (!destinationCourse || !canPlaceCourses(sourceColumn, [destinationCourse])) {
+                    sourceColumn.splice(sourceIndex, 0, sourceCourse)
+                    return current
+                }
+                targetColumn.splice(targetIndex, 1)
+                sourceColumn.push(destinationCourse)
+                targetColumn.push(sourceCourse)
+                next[dragged.columnIndex] = sortCoursesByStart(sourceColumn)
+                next[targetColumnIndex] = sortCoursesByStart(targetColumn)
+                return next
+            }
+
+            const destinationCourse = targetColumn[targetIndex]
+            if (!destinationCourse || !canSwapSingleCourses(sourceColumn, targetColumn, sourceCourse, destinationCourse)) {
+                sourceColumn.splice(sourceIndex, 0, sourceCourse)
+                return current
+            }
+            targetColumn.splice(targetIndex, 1)
+            sourceColumn.push(destinationCourse)
+            targetColumn.push(sourceCourse)
+            next[dragged.columnIndex] = sortCoursesByStart(sourceColumn)
+            next[targetColumnIndex] = sortCoursesByStart(targetColumn)
             return next
         })
         setDragged(null)
+        setSelectedCourseCodes([])
     }
 
     const handleSaveSchedule = async () => {
@@ -636,10 +702,12 @@ export function useSchematicSchedule(selectedDay: string | null) {
         columns,
         instructors,
         lockedInstructors,
+        selectedCourseCodes,
         timeLabels,
         scheduleHeightRem,
         scheduleStartMinutes,
         instructorOptions,
+        toggleCourseSelection,
         handleDragStart,
         handleDrop,
         handleDropOnCourse,
