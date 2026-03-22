@@ -22,6 +22,7 @@ import {
   plannerSaveStateToText,
   savePlannerDataset,
   updatePlannerCallRecord,
+  updatePlannerClassMetadata,
   updatePlannerClassLanes,
   updatePlannerClassMove,
   updatePlannerClassStatus,
@@ -29,6 +30,7 @@ import {
 import {
   applyPlannerShareSaveState,
   updatePlannerShareCallRecord,
+  updatePlannerShareClassMetadata,
   updatePlannerShareClassLanes,
   updatePlannerShareClassMove,
   updatePlannerShareClassStatus,
@@ -258,6 +260,28 @@ function SessionPlanningPage() {
     }
   }
 
+  const setClassMetadata = async (classKey: string, update: { barcodeCancelledAt?: string }) => {
+    if (!dataset) {
+      return
+    }
+    try {
+      if (shareCode && shareParticipantId) {
+        const response = await updatePlannerShareClassMetadata(shareCode, {
+          participantId: shareParticipantId,
+          classKey,
+          barcodeCancelledAt: update.barcodeCancelledAt ?? '',
+        })
+        applySharedSession(response.session)
+      } else {
+        persistLocalDataset(updatePlannerClassMetadata(dataset, classKey, update))
+      }
+      setError('')
+      setStatusMessage('')
+    } catch (metadataError) {
+      setError(metadataError instanceof Error ? metadataError.message : 'Failed to update class metadata.')
+    }
+  }
+
   const setCallRecord = async (participantId: string, update: PlannerCallRecordUpdate) => {
     if (!dataset) {
       return
@@ -456,6 +480,18 @@ function SessionPlanningPage() {
     await setCallRecord(participantId, { emailSentAt: isSent ? new Date().toISOString() : '' })
   }
 
+  const toggleAcceptedChecklistItem = async (
+    participantId: string,
+    field: 'withdrawRefundAt' | 'refundReceiptSentAt' | 'reRegisteredAt' | 'registrationConfirmationSentAt',
+    isDone: boolean,
+  ) => {
+    await setCallRecord(participantId, { [field]: isDone ? new Date().toISOString() : '' })
+  }
+
+  const toggleBarcodeCancelled = async (classKey: string, isDone: boolean) => {
+    await setClassMetadata(classKey, { barcodeCancelledAt: isDone ? new Date().toISOString() : '' })
+  }
+
   const openPlannedChangeEmailDraft = (
     participant: PlannerParticipant,
     plannerClass: PlannerClass,
@@ -588,6 +624,8 @@ function SessionPlanningPage() {
           groups={plannedChangeGroups}
           onClose={() => setIsPlannedChangesOpen(false)}
           onOpenEmailDraft={openPlannedChangeEmailDraft}
+          onToggleAcceptedChecklistItem={toggleAcceptedChecklistItem}
+          onToggleBarcodeCancelled={toggleBarcodeCancelled}
           onToggleComplete={togglePlannedChangeComplete}
           onToggleEmailSent={togglePlannedChangeEmailSent}
         />

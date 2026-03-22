@@ -22,6 +22,12 @@ type PlannerPlannedChangesModalProps = {
         plannerClass: PlannerClass,
         callRecord: PlannerParticipantCallRecord,
     ) => void
+    onToggleAcceptedChecklistItem: (
+        participantId: string,
+        field: 'withdrawRefundAt' | 'refundReceiptSentAt' | 'reRegisteredAt' | 'registrationConfirmationSentAt',
+        isDone: boolean,
+    ) => void | Promise<void>
+    onToggleBarcodeCancelled: (classKey: string, isDone: boolean) => void | Promise<void>
     onToggleComplete: (participantId: string, isComplete: boolean) => void | Promise<void>
     onToggleEmailSent: (participantId: string, isSent: boolean) => void | Promise<void>
 }
@@ -40,6 +46,8 @@ function PlannerPlannedChangesModal({
     groups,
     onClose,
     onOpenEmailDraft,
+    onToggleAcceptedChecklistItem,
+    onToggleBarcodeCancelled,
     onToggleComplete,
     onToggleEmailSent,
 }: PlannerPlannedChangesModalProps) {
@@ -104,9 +112,30 @@ function PlannerPlannedChangesModal({
                                         </p>
                                     ) : null}
                                 </div>
-                                <span className="rounded-full border border-secondary/20 bg-accent px-3 py-1 text-sm font-semibold">
-                                    {group.rows.length} planned
-                                </span>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {group.plannerClass.planningStatus === 'pending_cancellation' ||
+                                    group.plannerClass.planningStatus === 'cancelled' ? (
+                                        <button
+                                            type="button"
+                                            className={`rounded-2xl px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${
+                                                group.plannerClass.barcodeCancelledAt
+                                                    ? 'bg-amber-100 text-amber-900'
+                                                    : 'border border-secondary/20 bg-accent text-secondary'
+                                            }`}
+                                            onClick={() =>
+                                                void onToggleBarcodeCancelled(
+                                                    group.plannerClass.classKey,
+                                                    !Boolean(group.plannerClass.barcodeCancelledAt),
+                                                )
+                                            }
+                                        >
+                                            {group.plannerClass.barcodeCancelledAt ? 'Barcode Cancelled' : 'Mark Barcode Cancelled'}
+                                        </button>
+                                    ) : null}
+                                    <span className="rounded-full border border-secondary/20 bg-accent px-3 py-1 text-sm font-semibold">
+                                        {group.rows.length} planned
+                                    </span>
+                                </div>
                             </div>
 
                             <div className="mt-4 flex flex-col gap-3">
@@ -182,6 +211,45 @@ function PlannerPlannedChangesModal({
                                                 </div>
                                                 <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
                                                     <span className="font-semibold">Notes:</span> {callRecord.notes || 'None'}
+                                                </div>
+                                            </div>
+                                        ) : null}
+
+                                        {callRecord.status === 'accepted_alternative' ? (
+                                            <div className="mt-3 rounded-2xl border border-secondary/20 bg-bg p-4">
+                                                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary/60">
+                                                    Accepted Alternative Todo
+                                                </p>
+                                                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                                                    {[
+                                                        ['withdrawRefundAt', 'Withdraw + refund'],
+                                                        ['refundReceiptSentAt', 'Send refund receipt'],
+                                                        ['reRegisteredAt', 'Re-register in alternative'],
+                                                        ['registrationConfirmationSentAt', 'Send registration confirmation'],
+                                                    ].map(([field, label]) => {
+                                                        const fieldKey = field as 'withdrawRefundAt' | 'refundReceiptSentAt' | 'reRegisteredAt' | 'registrationConfirmationSentAt'
+                                                        const isDone = Boolean(callRecord[fieldKey])
+                                                        return (
+                                                            <button
+                                                                key={field}
+                                                                type="button"
+                                                                className={`rounded-2xl px-4 py-3 text-left text-sm font-semibold transition hover:-translate-y-0.5 ${
+                                                                    isDone
+                                                                        ? 'bg-emerald-100 text-emerald-900'
+                                                                        : 'border border-secondary/20 bg-accent text-secondary'
+                                                                }`}
+                                                                onClick={() =>
+                                                                    void onToggleAcceptedChecklistItem(
+                                                                        participant.id,
+                                                                        fieldKey,
+                                                                        !isDone,
+                                                                    )
+                                                                }
+                                                            >
+                                                                {label}
+                                                            </button>
+                                                        )
+                                                    })}
                                                 </div>
                                             </div>
                                         ) : null}

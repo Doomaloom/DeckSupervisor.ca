@@ -38,6 +38,7 @@ export type PlannerSaveState = {
             plannedMoveTargetClassKey: string
         }
     >
+    classBarcodeCancelledAt: Record<string, string>
     callRecords: Record<string, PlannerParticipantCallRecord>
 }
 
@@ -550,6 +551,7 @@ function normalizePlannerClassEntry(plannerClass: PlannerClass): PlannerClass {
         plannedMoveType: move.plannedMoveType,
         plannedMoveTime: move.plannedMoveTime,
         plannedMoveTargetClassKey: move.plannedMoveTargetClassKey,
+        barcodeCancelledAt: plannerClass.barcodeCancelledAt?.trim() ?? '',
     }
 }
 
@@ -669,6 +671,7 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
                 plannedMoveType: '',
                 plannedMoveTime: '',
                 plannedMoveTargetClassKey: '',
+                barcodeCancelledAt: '',
             })
         }
 
@@ -730,6 +733,10 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
             acceptedAlternativeClassKey: '',
             completedAt: '',
             emailSentAt: '',
+            withdrawRefundAt: '',
+            refundReceiptSentAt: '',
+            reRegisteredAt: '',
+            registrationConfirmationSentAt: '',
         }
     })
 
@@ -877,6 +884,7 @@ export function parseEmptyClassesPlannerCsv(text: string, sourceFileName: string
                 plannedMoveType: '',
                 plannedMoveTime: '',
                 plannedMoveTargetClassKey: '',
+                barcodeCancelledAt: '',
             })
         }
     }
@@ -926,6 +934,10 @@ function normalizePlannerCallRecord(
         acceptedAlternativeClassKey: record?.acceptedAlternativeClassKey ?? '',
         completedAt: record?.completedAt ?? '',
         emailSentAt: record?.emailSentAt ?? '',
+        withdrawRefundAt: record?.withdrawRefundAt ?? '',
+        refundReceiptSentAt: record?.refundReceiptSentAt ?? '',
+        reRegisteredAt: record?.reRegisteredAt ?? '',
+        registrationConfirmationSentAt: record?.registrationConfirmationSentAt ?? '',
     }
 }
 
@@ -1037,6 +1049,7 @@ function mergePlannerClass(existing: PlannerClass, incoming: PlannerClass): Plan
         plannedMoveType: existing.plannedMoveType,
         plannedMoveTime: existing.plannedMoveTime,
         plannedMoveTargetClassKey: existing.plannedMoveTargetClassKey,
+        barcodeCancelledAt: existing.barcodeCancelledAt,
     }
 }
 
@@ -1150,6 +1163,26 @@ export function updatePlannerClassMove(
     }
 }
 
+export function updatePlannerClassMetadata(
+    dataset: PlannerDataset,
+    classKey: string,
+    update: {
+        barcodeCancelledAt?: string
+    },
+): PlannerDataset {
+    return {
+        ...dataset,
+        classes: dataset.classes.map(plannerClass =>
+            plannerClass.classKey === classKey
+                ? {
+                      ...plannerClass,
+                      barcodeCancelledAt: update.barcodeCancelledAt ?? plannerClass.barcodeCancelledAt,
+                  }
+                : plannerClass,
+        ),
+    }
+}
+
 export function updatePlannerClassLanes(
     dataset: PlannerDataset,
     laneIndexes: Record<string, number>,
@@ -1221,6 +1254,9 @@ export function buildPlannerSaveState(args: {
                 normalizePlannerClassMove(plannerClass),
             ]),
         ),
+        classBarcodeCancelledAt: Object.fromEntries(
+            args.dataset.classes.map(plannerClass => [plannerClass.classKey, plannerClass.barcodeCancelledAt ?? '']),
+        ),
         callRecords: Object.fromEntries(
             Object.entries(args.dataset.callRecords).map(([participantId, record]) => [
                 participantId,
@@ -1267,6 +1303,11 @@ export function parsePlannerSaveState(text: string): PlannerSaveState {
                 .map(([classKey, laneIndex]) => [classKey, Number(laneIndex)]),
         ),
         classMoves: normalizeClassMoves(state.classMoves),
+        classBarcodeCancelledAt: Object.fromEntries(
+            Object.entries(state.classBarcodeCancelledAt ?? {})
+                .filter(([classKey]) => classKey.trim().length > 0)
+                .map(([classKey, value]) => [classKey, typeof value === 'string' ? value : '']),
+        ),
         callRecords: normalizeCallRecords(state.callRecords),
     }
 }
@@ -1283,7 +1324,8 @@ export function applyPlannerSaveState(
         const status = state.classStatuses[plannerClass.classKey]
         const laneIndex = state.classLaneIndexes[plannerClass.classKey]
         const move = state.classMoves[plannerClass.classKey]
-        if (!status && laneIndex === undefined && !move) {
+        const barcodeCancelledAt = state.classBarcodeCancelledAt[plannerClass.classKey]
+        if (!status && laneIndex === undefined && !move && barcodeCancelledAt === undefined) {
             return plannerClass
         }
         matchedClasses += 1
@@ -1295,6 +1337,7 @@ export function applyPlannerSaveState(
             plannedMoveType: normalizedMove.plannedMoveType,
             plannedMoveTime: normalizedMove.plannedMoveTime,
             plannedMoveTargetClassKey: normalizedMove.plannedMoveTargetClassKey,
+            barcodeCancelledAt: barcodeCancelledAt ?? plannerClass.barcodeCancelledAt,
         }
     })
 
@@ -1330,6 +1373,7 @@ export function applyPlannerSaveState(
                 ...Object.keys(state.classStatuses),
                 ...Object.keys(state.classLaneIndexes),
                 ...Object.keys(state.classMoves),
+                ...Object.keys(state.classBarcodeCancelledAt),
             ]),
         ).filter(classKey => !classKeySet.has(classKey)).length,
         matchedCallRecords,
@@ -1353,6 +1397,7 @@ export function plannerSaveStateToSharePayload(state: PlannerSaveState): {
             plannedMoveTargetClassKey: string
         }
     >
+    classBarcodeCancelledAt: Record<string, string>
     callRecords: Record<string, PlannerCallRecordUpdate>
     locationOverrides: Record<string, string>
     callbackPhoneNumber: string
@@ -1361,6 +1406,7 @@ export function plannerSaveStateToSharePayload(state: PlannerSaveState): {
         classStatuses: state.classStatuses,
         classLaneIndexes: state.classLaneIndexes,
         classMoves: state.classMoves,
+        classBarcodeCancelledAt: state.classBarcodeCancelledAt,
         callRecords: Object.fromEntries(
             Object.entries(state.callRecords).map(([participantId, record]) => [
                 participantId,
@@ -1371,6 +1417,10 @@ export function plannerSaveStateToSharePayload(state: PlannerSaveState): {
                     acceptedAlternativeClassKey: record.acceptedAlternativeClassKey,
                     completedAt: record.completedAt,
                     emailSentAt: record.emailSentAt,
+                    withdrawRefundAt: record.withdrawRefundAt,
+                    refundReceiptSentAt: record.refundReceiptSentAt,
+                    reRegisteredAt: record.reRegisteredAt,
+                    registrationConfirmationSentAt: record.registrationConfirmationSentAt,
                 },
             ]),
         ),

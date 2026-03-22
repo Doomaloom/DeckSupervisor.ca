@@ -62,6 +62,7 @@ type PlannerClass struct {
 	PlannedMoveType       string   `json:"plannedMoveType"`
 	PlannedMoveTime       string   `json:"plannedMoveTime"`
 	PlannedMoveTargetKey  string   `json:"plannedMoveTargetClassKey"`
+	BarcodeCancelledAt    string   `json:"barcodeCancelledAt"`
 }
 
 type PlannerParticipant struct {
@@ -85,6 +86,10 @@ type PlannerParticipantCallRecord struct {
 	AcceptedAlternativeClassKey string `json:"acceptedAlternativeClassKey"`
 	CompletedAt                 string `json:"completedAt"`
 	EmailSentAt                 string `json:"emailSentAt"`
+	WithdrawRefundAt            string `json:"withdrawRefundAt"`
+	RefundReceiptSentAt         string `json:"refundReceiptSentAt"`
+	ReRegisteredAt              string `json:"reRegisteredAt"`
+	RegistrationConfirmationSentAt string `json:"registrationConfirmationSentAt"`
 }
 
 type PlannerCallRecordUpdate struct {
@@ -94,12 +99,21 @@ type PlannerCallRecordUpdate struct {
 	AcceptedAlternativeClassKey *string `json:"acceptedAlternativeClassKey,omitempty"`
 	CompletedAt                 *string `json:"completedAt,omitempty"`
 	EmailSentAt                 *string `json:"emailSentAt,omitempty"`
+	WithdrawRefundAt            *string `json:"withdrawRefundAt,omitempty"`
+	RefundReceiptSentAt         *string `json:"refundReceiptSentAt,omitempty"`
+	ReRegisteredAt              *string `json:"reRegisteredAt,omitempty"`
+	RegistrationConfirmationSentAt *string `json:"registrationConfirmationSentAt,omitempty"`
+}
+
+type PlannerClassMetadataUpdate struct {
+	BarcodeCancelledAt *string `json:"barcodeCancelledAt,omitempty"`
 }
 
 type SavedStateApplyInput struct {
 	ClassStatuses       map[string]string                  `json:"classStatuses"`
 	ClassLaneIndexes    map[string]int                     `json:"classLaneIndexes"`
 	ClassMoves          map[string]PlannerClassMoveUpdate  `json:"classMoves"`
+	ClassBarcodeCancelledAt map[string]string              `json:"classBarcodeCancelledAt"`
 	CallRecords         map[string]PlannerCallRecordUpdate `json:"callRecords"`
 	LocationOverrides   map[string]string                  `json:"locationOverrides"`
 	CallbackPhoneNumber string                             `json:"callbackPhoneNumber"`
@@ -367,6 +381,26 @@ func (s *Service) UpdateClassMove(baseURL, code, participantID, classKey string,
 	return ShareSession{}, errors.New("class not found")
 }
 
+func (s *Service) UpdateClassMetadata(baseURL, code, participantID, classKey string, update PlannerClassMetadataUpdate) (ShareSession, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	room, err := s.requireParticipantLocked(strings.ToUpper(strings.TrimSpace(code)), participantID)
+	if err != nil {
+		return ShareSession{}, err
+	}
+	for index := range room.Dataset.Classes {
+		if room.Dataset.Classes[index].ClassKey == classKey {
+			if update.BarcodeCancelledAt != nil {
+				room.Dataset.Classes[index].BarcodeCancelledAt = strings.TrimSpace(*update.BarcodeCancelledAt)
+			}
+			room.Version += 1
+			room.Participants[participantID].LastSeenAt = time.Now().UTC()
+			return s.snapshotLocked(baseURL, room), nil
+		}
+	}
+	return ShareSession{}, errors.New("class not found")
+}
+
 func (s *Service) UpdateCallRecord(baseURL, code, participantID, recordID string, update PlannerCallRecordUpdate) (ShareSession, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -395,6 +429,18 @@ func (s *Service) UpdateCallRecord(baseURL, code, participantID, recordID string
 	}
 	if update.EmailSentAt != nil {
 		record.EmailSentAt = *update.EmailSentAt
+	}
+	if update.WithdrawRefundAt != nil {
+		record.WithdrawRefundAt = *update.WithdrawRefundAt
+	}
+	if update.RefundReceiptSentAt != nil {
+		record.RefundReceiptSentAt = *update.RefundReceiptSentAt
+	}
+	if update.ReRegisteredAt != nil {
+		record.ReRegisteredAt = *update.ReRegisteredAt
+	}
+	if update.RegistrationConfirmationSentAt != nil {
+		record.RegistrationConfirmationSentAt = *update.RegistrationConfirmationSentAt
 	}
 	room.Dataset.CallRecords[recordID] = record
 	room.Version += 1
@@ -438,6 +484,9 @@ func (s *Service) ApplySavedState(baseURL, code, participantID string, input Sav
 		if move, ok := input.ClassMoves[room.Dataset.Classes[index].ClassKey]; ok {
 			room.Dataset.Classes[index] = applyPlannerClassMove(room.Dataset.Classes[index], move)
 		}
+		if barcodeCancelledAt, ok := input.ClassBarcodeCancelledAt[room.Dataset.Classes[index].ClassKey]; ok {
+			room.Dataset.Classes[index].BarcodeCancelledAt = strings.TrimSpace(barcodeCancelledAt)
+		}
 	}
 
 	for recordID, update := range input.CallRecords {
@@ -462,6 +511,18 @@ func (s *Service) ApplySavedState(baseURL, code, participantID string, input Sav
 		}
 		if update.EmailSentAt != nil {
 			record.EmailSentAt = *update.EmailSentAt
+		}
+		if update.WithdrawRefundAt != nil {
+			record.WithdrawRefundAt = *update.WithdrawRefundAt
+		}
+		if update.RefundReceiptSentAt != nil {
+			record.RefundReceiptSentAt = *update.RefundReceiptSentAt
+		}
+		if update.ReRegisteredAt != nil {
+			record.ReRegisteredAt = *update.ReRegisteredAt
+		}
+		if update.RegistrationConfirmationSentAt != nil {
+			record.RegistrationConfirmationSentAt = *update.RegistrationConfirmationSentAt
 		}
 		room.Dataset.CallRecords[recordID] = record
 	}

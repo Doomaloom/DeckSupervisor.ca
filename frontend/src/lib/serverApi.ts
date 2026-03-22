@@ -309,6 +309,16 @@ export function updatePlannerShareClassMove(
   })
 }
 
+export function updatePlannerShareClassMetadata(
+  code: string,
+  body: { participantId: string; classKey: string; barcodeCancelledAt: string }
+) {
+  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/class-metadata`, {
+    method: 'POST',
+    body,
+  })
+}
+
 export function updatePlannerShareCallRecord(
   code: string,
   body: { participantId: string; participantRecordId: string; update: PlannerCallRecordUpdate }
@@ -348,6 +358,7 @@ export function applyPlannerShareSaveState(
         plannedMoveTargetClassKey: string
       }
     >
+    classBarcodeCancelledAt: Record<string, string>
     callRecords: Record<string, PlannerCallRecordUpdate>
     locationOverrides: Record<string, string>
     callbackPhoneNumber: string

@@ -189,6 +189,7 @@ export type PlannerClass = {
   plannedMoveType: PlannerClassMoveType
   plannedMoveTime: string
   plannedMoveTargetClassKey: string
+  barcodeCancelledAt: string
 }
 
 export type PlannerParticipantCallRecord = {
@@ -200,6 +201,10 @@ export type PlannerParticipantCallRecord = {
   acceptedAlternativeClassKey: string
   completedAt: string
   emailSentAt: string
+  withdrawRefundAt: string
+  refundReceiptSentAt: string
+  reRegisteredAt: string
+  registrationConfirmationSentAt: string
 }
 
 export type PlannerDataset = {
@@ -245,4 +250,8 @@ export type PlannerCallRecordUpdate = {
   acceptedAlternativeClassKey?: string
   completedAt?: string
   emailSentAt?: string
+  withdrawRefundAt?: string
+  refundReceiptSentAt?: string
+  reRegisteredAt?: string
+  registrationConfirmationSentAt?: string
 }

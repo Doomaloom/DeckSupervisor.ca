@@ -449,6 +449,7 @@ function PlannerDetailsPanel({
                                                                             plannedMoveType: '',
                                                                             plannedMoveTime: '',
                                                                             plannedMoveTargetClassKey: '',
+                                                                            barcodeCancelledAt: '',
                                                                         },
                                                                     )
                                                                     : 'No alternative selected'}
