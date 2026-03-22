@@ -79,11 +79,9 @@ func CSVSessionCandidates(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Missing team id", http.StatusBadRequest)
 			return
 		}
-		if termSeason == "" || termYear <= 0 {
-			http.Error(w, "Missing term scope", http.StatusBadRequest)
-			return
+		if termSeason != "" && termYear > 0 {
+			extracted = filterExtractedClassesByTerm(extracted, termSeason, termYear)
 		}
-		extracted = filterExtractedClassesByTerm(extracted, termSeason, termYear)
 	}
 
 	scopeSessions, err := loadCSVMatchScopeSessions(r, client, profile)
@@ -115,10 +113,12 @@ func loadCSVMatchScopeSessions(r *http.Request, client *supabasesvc.Client, prof
 
 		filtered := make([]sessionRow, 0, len(rows))
 		for _, row := range rows {
-			season := strings.ToLower(strings.TrimSpace(csvStringValue(row.SessionSeason)))
-			year := sessionYearValue(row)
-			if season != termSeason || year != termYear {
-				continue
+			if termSeason != "" && termYear > 0 {
+				season := strings.ToLower(strings.TrimSpace(csvStringValue(row.SessionSeason)))
+				year := sessionYearValue(row)
+				if season != termSeason || year != termYear {
+					continue
+				}
 			}
 			filtered = append(filtered, row)
 		}

@@ -171,8 +171,8 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
   const closeModal = () => setState(emptyState)
 
   const requestCsvFile = () => {
-    if (accountType === 'full_time' && (!currentTeamId || !currentTerm)) {
-      alert('Select a team and session term before uploading a roster CSV.')
+    if (accountType === 'full_time' && !currentTeamId) {
+      alert('Select a team before uploading a roster CSV.')
       return
     }
     inputRef.current?.click()
@@ -212,11 +212,9 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
 
       const response = await fetchCsvSessionCandidates(
         file,
-        accountType === 'full_time' && currentTeamId && currentTerm
+        accountType === 'full_time' && currentTeamId
           ? {
               teamId: currentTeamId,
-              termSeason: currentTerm.season,
-              termYear: currentTerm.year,
             }
           : undefined,
       )
@@ -241,7 +239,7 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
         classesBySession: response.classesBySession ?? {},
         error:
           (response.sessions ?? []).length === 0
-            ? 'No session candidates were found in this CSV for the current scope.'
+            ? 'No session candidates were found in this CSV.'
             : '',
       }))
     } catch (error) {
@@ -390,7 +388,9 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       const successLabel = matchedSession ? matchedSession.label : getCandidateLabel(candidate)
       closeModal()
       alert(`Roster uploaded for ${successLabel}.`)
-      navigate('/manage-sessions')
+      if (accountType !== 'full_time') {
+        navigate('/manage-sessions')
+      }
     } catch (error) {
       setState(current => ({
         ...current,

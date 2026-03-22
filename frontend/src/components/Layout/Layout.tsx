@@ -220,6 +220,11 @@ function Layout({ children }: LayoutProps) {
             icon: <CalendarDaysIcon className="h-5 w-5" />,
         },
         {
+            to: '/rosters',
+            label: 'Rosters',
+            icon: <UsersIcon className="h-5 w-5" />,
+        },
+        {
             to: '/session-planning',
             label: 'Session Planning',
             icon: <ArrowsRightLeftIcon className="h-5 w-5" />,

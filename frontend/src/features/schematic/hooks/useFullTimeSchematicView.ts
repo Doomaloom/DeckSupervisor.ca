@@ -5,8 +5,12 @@ import {
     getExtractedClassesForScope,
     onExtractedClassesUpdated,
 } from '../../../lib/extractedClassesStorage'
+import { getStudentsByDay, onStudentsUpdated } from '../../../lib/storage'
 import { fetchSchematics, fetchTeamSessions } from '../../../lib/serverApi'
-import type { ExtractedClass } from '../../../types/app'
+import type { ExtractedClass, Student } from '../../../types/app'
+import type { RosterListItem } from '../../rosters/types'
+import { buildRosterGroups, filterRosterItems } from '../../rosters/utils'
+import { extractStartTime } from '../../../lib/time'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES, dayNames } from '../constants'
 import type { Course } from '../types'
 import { normalizeCourseCodeForCompare } from '../utils/courseCode'
@@ -40,6 +44,10 @@ type LocationOption = {
     key: string
     value: string
     label: string
+}
+
+type FullTimeRosterItem = RosterListItem & {
+    day: string
 }
 
 function getYearFromDate(value: string | null) {
@@ -77,6 +85,7 @@ export function useFullTimeSchematicView(enabled: boolean) {
     const [selectedDay, setSelectedDay] = useState('')
     const [selectedLocationKey, setSelectedLocationKey] = useState('')
     const [extractedClasses, setExtractedClasses] = useState<ExtractedClass[]>([])
+    const [studentsByDay, setStudentsByDay] = useState<Record<string, Student[]>>({})
 
     useEffect(() => {
         if (!enabled) {
@@ -296,6 +305,20 @@ export function useFullTimeSchematicView(enabled: boolean) {
         })
     }, [currentTeamId, currentTerm?.key, enabled])
 
+    useEffect(() => {
+        if (!enabled) {
+            setStudentsByDay({})
+            return () => {}
+        }
+
+        const load = () => setStudentsByDay(getStudentsByDay())
+        load()
+
+        return onStudentsUpdated(() => {
+            load()
+        })
+    }, [enabled])
+
     const selectedSessionSchematic = useMemo(() => {
         if (!selectedSession) {
             return null
@@ -443,6 +466,61 @@ export function useFullTimeSchematicView(enabled: boolean) {
         return [dayLabel, currentTerm?.label ?? '', locationLabel].filter(Boolean).join(' | ')
     }, [currentTerm?.label, locationOptions, selectedDay, selectedLocationKey])
 
+    const fullTimeRosterItems = useMemo<FullTimeRosterItem[]>(() => {
+        const allowedDays = new Set(termSessions.map(session => session.session_day).filter(Boolean))
+        const next: FullTimeRosterItem[] = []
+
+        Object.entries(studentsByDay).forEach(([day, students]) => {
+            if (!allowedDays.has(day) || students.length === 0) {
+                return
+            }
+            const groups = buildRosterGroups(students)
+            groups.forEach(roster => {
+                next.push({
+                    day,
+                    roster,
+                    isCustom: false,
+                })
+            })
+        })
+
+        return next.sort((left, right) => {
+            if (left.day !== right.day) {
+                return dayOrder.indexOf(left.day as (typeof dayOrder)[number]) - dayOrder.indexOf(right.day as (typeof dayOrder)[number])
+            }
+            const leftTime = extractStartTime(left.roster.time)
+            const rightTime = extractStartTime(right.roster.time)
+            if (leftTime !== rightTime) {
+                return leftTime.localeCompare(rightTime)
+            }
+            return left.roster.serviceName.localeCompare(right.roster.serviceName, 'en', { sensitivity: 'base' })
+        })
+    }, [studentsByDay, termSessions])
+
+    const fullTimeRosterDayOptions = useMemo(() => {
+        return Array.from(new Set(fullTimeRosterItems.map(item => item.day))).sort(
+            (left, right) =>
+                dayOrder.indexOf(left as (typeof dayOrder)[number]) - dayOrder.indexOf(right as (typeof dayOrder)[number]),
+        )
+    }, [fullTimeRosterItems])
+
+    const fullTimeRosterLevelOptions = useMemo(() => {
+        const levels = new Set<string>()
+        fullTimeRosterItems.forEach(item => {
+            if (item.roster.level) {
+                levels.add(item.roster.level)
+            }
+        })
+        return Array.from(levels).sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' }))
+    }, [fullTimeRosterItems])
+
+    const filterFullTimeRosters = (dayFilter: string, levelFilter: string, searchQuery: string) => {
+        const dayFiltered = dayFilter
+            ? fullTimeRosterItems.filter(item => item.day === dayFilter)
+            : fullTimeRosterItems
+        return filterRosterItems(dayFiltered, '', levelFilter, searchQuery) as FullTimeRosterItem[]
+    }
+
     return {
         loadingSessions,
         loadingSchematics,
@@ -465,5 +543,9 @@ export function useFullTimeSchematicView(enabled: boolean) {
         scheduleHeightRem,
         scheduleStartMinutes,
         schematicSessionLabel,
+        fullTimeRosterItems,
+        fullTimeRosterDayOptions,
+        fullTimeRosterLevelOptions,
+        filterFullTimeRosters,
     }
 }
