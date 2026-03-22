@@ -385,8 +385,21 @@ function buildEventTimeRange(startTime24: string, endTime24: string) {
     return `${start} - ${end}`
 }
 
+function normalizeFacilityKey(value: string) {
+    const baseValue = value.split(/\s+-\s+/)[0] ?? value
+    return baseValue
+        .trim()
+        .toLowerCase()
+        .replace(/&/g, ' and ')
+        .replace(/\(.*?\)/g, ' ')
+        .replace(/\b(recreation|centre|center)\b/g, ' ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+}
+
 function buildSessionKey(dayOfWeek: string, sessionSeason: string, sessionYear: number, facility: string) {
-    return [dayOfWeek.trim(), sessionSeason.trim().toLowerCase(), String(sessionYear), facility.trim().toLowerCase()].join('|')
+    return [dayOfWeek.trim(), sessionSeason.trim().toLowerCase(), String(sessionYear), normalizeFacilityKey(facility)].join('|')
 }
 
 function buildClassKey(row: Pick<CsvParticipantRow, 'eventId' | 'dayOfWeek' | 'eventTime' | 'facility' | 'sessionSeason' | 'sessionYear'>) {
@@ -394,7 +407,7 @@ function buildClassKey(row: Pick<CsvParticipantRow, 'eventId' | 'dayOfWeek' | 'e
         row.eventId.trim(),
         row.dayOfWeek.trim(),
         row.eventTime.trim().toLowerCase(),
-        row.facility.trim().toLowerCase(),
+        normalizeFacilityKey(row.facility),
         row.sessionSeason.trim().toLowerCase(),
         String(row.sessionYear),
     ].join('|')
