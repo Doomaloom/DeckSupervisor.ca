@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useCsvImportFlow } from '../../app/CsvImportFlowContext'
 import { useDay } from '../../app/DayContext'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
@@ -46,6 +47,17 @@ function getFullTimeRostersStorageKey(teamId: string) {
     return `cob:full-time-rosters:${teamId}`
 }
 
+function saveStoredFullTimeRosters(teamId: string, fileName: string, classes: ClassRoster[]) {
+    setStoredItem(
+        getFullTimeRostersStorageKey(teamId),
+        JSON.stringify({
+            fileName,
+            importedAt: new Date().toISOString(),
+            classes,
+        } satisfies StoredFullTimeRosters),
+    )
+}
+
 function convertClassRosterToItem(roster: ClassRoster): FullTimeRosterItem {
     return {
         day: roster.day,
@@ -75,6 +87,7 @@ function convertClassRosterToItem(roster: ClassRoster): FullTimeRosterItem {
 }
 
 function RostersPage() {
+    const { requestCsvFile } = useCsvImportFlow()
     const { selectedDay } = useDay()
     const { accountType, isGuest, user } = useAuth()
     const { access, sessionId } = useCurrentSession()
@@ -86,7 +99,7 @@ function RostersPage() {
     const [fullTimeLevelFilter, setFullTimeLevelFilter] = useState('')
     const [fullTimeSearchQuery, setFullTimeSearchQuery] = useState('')
     const [fullTimeRosterFileName, setFullTimeRosterFileName] = useState('')
-    const [fullTimeRosterItems, setFullTimeRosterItems] = useState<FullTimeRosterItem[]>([])
+    const [fullTimeRosterClasses, setFullTimeRosterClasses] = useState<ClassRoster[]>([])
     const [fullTimeUploadError, setFullTimeUploadError] = useState('')
     const [fullTimeUploading, setFullTimeUploading] = useState(false)
     const fullTimeUploadInputRef = useRef<HTMLInputElement | null>(null)
@@ -173,7 +186,7 @@ function RostersPage() {
 
     useEffect(() => {
         if (accountType !== 'full_time' || !currentTeamId) {
-            setFullTimeRosterItems([])
+            setFullTimeRosterClasses([])
             setFullTimeRosterFileName('')
             return
         }
@@ -181,20 +194,25 @@ function RostersPage() {
         try {
             const stored = getStoredItem(getFullTimeRostersStorageKey(currentTeamId))
             if (!stored) {
-                setFullTimeRosterItems([])
+                setFullTimeRosterClasses([])
                 setFullTimeRosterFileName('')
                 return
             }
             const parsed = JSON.parse(stored) as StoredFullTimeRosters
             const classes = parsed.classes ?? []
-            setFullTimeRosterItems(classes.map(convertClassRosterToItem))
+            setFullTimeRosterClasses(classes)
             setFullTimeRosterFileName(parsed.fileName ?? '')
         } catch (error) {
             console.error('Failed to load stored full-time rosters', error)
-            setFullTimeRosterItems([])
+            setFullTimeRosterClasses([])
             setFullTimeRosterFileName('')
         }
     }, [accountType, currentTeamId])
+
+    const fullTimeRosterItems = useMemo(
+        () => fullTimeRosterClasses.map(convertClassRosterToItem),
+        [fullTimeRosterClasses],
+    )
 
     const fullTimeRosterDayOptions = useMemo(() => {
         return Array.from(new Set(fullTimeRosterItems.map(item => item.day))).sort((left, right) => {
@@ -248,17 +266,9 @@ function RostersPage() {
         try {
             const response = await processCsvWithoutStore(file, '')
             const classes = response.classes ?? []
-            const nextItems = classes.map(convertClassRosterToItem)
-            setFullTimeRosterItems(nextItems)
+            setFullTimeRosterClasses(classes)
             setFullTimeRosterFileName(file.name)
-            setStoredItem(
-                getFullTimeRostersStorageKey(currentTeamId),
-                JSON.stringify({
-                    fileName: file.name,
-                    importedAt: new Date().toISOString(),
-                    classes,
-                } satisfies StoredFullTimeRosters),
-            )
+            saveStoredFullTimeRosters(currentTeamId, file.name, classes)
             setFullTimeDayFilter('')
             setFullTimeLevelFilter('')
             setFullTimeSearchQuery('')
@@ -268,6 +278,30 @@ function RostersPage() {
         } finally {
             setFullTimeUploading(false)
         }
+    }
+
+    const handleFullTimeInstructorChange = (day: string, code: string, value: string) => {
+        if (!currentTeamId) {
+            return
+        }
+        const normalizedValue = value
+        setFullTimeRosterClasses(current => {
+            const next = current.map(roster => {
+                if (roster.day !== day || roster.code !== code) {
+                    return roster
+                }
+                return {
+                    ...roster,
+                    instructor: normalizedValue,
+                    students: roster.students.map(student => ({
+                        ...student,
+                        instructor: normalizedValue,
+                    })),
+                }
+            })
+            saveStoredFullTimeRosters(currentTeamId, fullTimeRosterFileName, next)
+            return next
+        })
     }
 
     if (accountType === 'full_time') {
@@ -325,6 +359,7 @@ function RostersPage() {
                         levelFilter={fullTimeLevelFilter}
                         searchQuery={fullTimeSearchQuery}
                         onUploadRoster={() => fullTimeUploadInputRef.current?.click()}
+                        onInstructorChange={handleFullTimeInstructorChange}
                         onDayFilterChange={setFullTimeDayFilter}
                         onLevelFilterChange={setFullTimeLevelFilter}
                         onSearchChange={setFullTimeSearchQuery}

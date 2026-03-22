@@ -15,6 +15,7 @@ type FullTimeRostersPanelProps = {
     levelFilter: string
     searchQuery: string
     onUploadRoster: () => void
+    onInstructorChange: (day: string, code: string, value: string) => void
     onDayFilterChange: (value: string) => void
     onLevelFilterChange: (value: string) => void
     onSearchChange: (value: string) => void
@@ -28,6 +29,7 @@ function FullTimeRostersPanel({
     levelFilter,
     searchQuery,
     onUploadRoster,
+    onInstructorChange,
     onDayFilterChange,
     onLevelFilterChange,
     onSearchChange,
@@ -106,9 +108,18 @@ function FullTimeRostersPanel({
                                         <p className="mt-1 text-sm text-secondary/80">
                                             {item.roster.time || 'No time'} • {item.roster.location || 'No location'}
                                         </p>
-                                        <p className="mt-1 text-sm text-secondary/70">
-                                            Instructor: {item.roster.instructor || 'Unassigned'}
-                                        </p>
+                                        <label className="mt-3 flex max-w-sm flex-col gap-2 text-sm font-semibold text-secondary">
+                                            Instructor
+                                            <input
+                                                className={inputClass}
+                                                type="text"
+                                                value={item.roster.instructor}
+                                                placeholder="Set instructor"
+                                                onChange={event =>
+                                                    onInstructorChange(item.day, item.roster.code, event.target.value)
+                                                }
+                                            />
+                                        </label>
                                     </div>
                                     <div className="text-right text-sm font-semibold text-secondary/70">
                                         <p>{item.roster.students.length} student{item.roster.students.length === 1 ? '' : 's'}</p>
