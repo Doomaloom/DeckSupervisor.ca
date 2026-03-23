@@ -12,7 +12,8 @@ import { SLOT_HEIGHT_REM, SLOT_MINUTES, dayNames } from '../schematic/constants'
 import FullTimeRostersPanel from '../schematic/components/FullTimeRostersPanel'
 import SchematicBoard from '../schematic/components/SchematicBoard'
 import type { Course } from '../schematic/types'
-import { buildCourses, coursesOverlap } from '../schematic/utils/courses'
+import { buildCourses } from '../schematic/utils/courses'
+import { createRequestAwareLayout } from '../schematic/utils/layout'
 import { buildTimeLabels } from '../schematic/utils/time'
 import CustomRostersPanel from './components/CustomRostersPanel'
 import RosterFiltersBar from './components/RosterFiltersBar'
@@ -88,67 +89,6 @@ function convertClassRosterToItem(roster: ClassRoster): FullTimeRosterItem {
                 level: student.level || roster.serviceName,
             })),
         },
-    }
-}
-
-function sortCoursesByStart(courses: Course[]) {
-    return [...courses].sort((left, right) => {
-        if (left.startMinutes !== right.startMinutes) {
-            return left.startMinutes - right.startMinutes
-        }
-        if (left.endMinutes !== right.endMinutes) {
-            return left.endMinutes - right.endMinutes
-        }
-        return left.code.localeCompare(right.code)
-    })
-}
-
-function canFitCourse(column: Course[], course: Course) {
-    return !column.some(entry => coursesOverlap(entry, course))
-}
-
-function buildPreviewColumns(courses: Course[]) {
-    const columns: Course[][] = []
-    const instructors: string[] = []
-
-    sortCoursesByStart(courses).forEach(course => {
-        const assignedInstructor = course.assignedInstructor?.trim() ?? ''
-
-        if (assignedInstructor) {
-            for (let index = 0; index < columns.length; index += 1) {
-                if (instructors[index] !== assignedInstructor) {
-                    continue
-                }
-                if (canFitCourse(columns[index], course)) {
-                    columns[index].push(course)
-                    columns[index] = sortCoursesByStart(columns[index])
-                    return
-                }
-            }
-        }
-
-        for (let index = 0; index < columns.length; index += 1) {
-            if (assignedInstructor && instructors[index] && instructors[index] !== assignedInstructor) {
-                continue
-            }
-            if (!canFitCourse(columns[index], course)) {
-                continue
-            }
-            columns[index].push(course)
-            columns[index] = sortCoursesByStart(columns[index])
-            if (assignedInstructor && !instructors[index]) {
-                instructors[index] = assignedInstructor
-            }
-            return
-        }
-
-        columns.push([course])
-        instructors.push(assignedInstructor)
-    })
-
-    return {
-        columns,
-        instructors: instructors.map((value, index) => value || `Instructor ${index + 1}`),
     }
 }
 
@@ -359,7 +299,7 @@ function RostersPage() {
     }, [fullTimeRosterClasses, fullTimeSchematicDay, fullTimeSchematicStudents])
 
     const fullTimeSchematicLayout = useMemo(
-        () => buildPreviewColumns(fullTimeSchematicCourses),
+        () => createRequestAwareLayout(fullTimeSchematicCourses),
         [fullTimeSchematicCourses],
     )
 
