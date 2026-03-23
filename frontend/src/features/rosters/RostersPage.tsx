@@ -582,6 +582,7 @@ function RostersPage() {
             instructor: fullTimeRequestDraft.instructor.trim(),
             accommodated: false,
             reason: '',
+            reasonNote: '',
             matchedDay: '',
             matchedCode: '',
             matchedServiceName: '',
@@ -624,10 +625,19 @@ function RostersPage() {
                         ...entry,
                         accommodated,
                         reason: accommodated ? '' : entry.reason,
+                        reasonNote: accommodated ? '' : entry.reasonNote,
                     }
                 }
                 if (field === 'reason' && entry.accommodated) {
-                    return { ...entry, reason: '' }
+                    return { ...entry, reason: '', reasonNote: '' }
+                }
+                if (field === 'reason') {
+                    const reason = value as FullTimeRequestEntry['reason']
+                    return {
+                        ...entry,
+                        reason,
+                        reasonNote: reason === 'other' ? entry.reasonNote : '',
+                    }
                 }
                 return {
                     ...entry,
@@ -664,6 +674,7 @@ function RostersPage() {
                 instructor: entry.instructor,
                 accommodated: false,
                 reason: '',
+                reasonNote: '',
                 matchedDay: '',
                 matchedCode: '',
                 matchedServiceName: '',
@@ -740,6 +751,7 @@ function RostersPage() {
                     ...entry,
                     accommodated: false,
                     reason: 'conflicting_request',
+                    reasonNote: '',
                 }
             })
             saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next)
@@ -1001,6 +1013,11 @@ function RostersPage() {
                                                                                     ? `Not accommodated: ${entry.reason.replaceAll('_', ' ')}`
                                                                                     : 'Not accommodated'}
                                                                     </p>
+                                                                    {!entry.accommodated && entry.reason === 'other' && entry.reasonNote ? (
+                                                                        <p className="mt-1 text-sm text-secondary/75">
+                                                                            Note: {entry.reasonNote}
+                                                                        </p>
+                                                                    ) : null}
                                                                 </div>
                                                                 {entry.accommodated ? (
                                                                     <button

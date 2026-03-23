@@ -30,6 +30,7 @@ export type FullTimeInstructorAssignments = Record<string, FullTimeInstructorDay
 export type FullTimeRequestReason =
     | ''
     | 'conflicting_request'
+    | 'other'
     | 'staff_schedule'
     | 'student_not_registered'
 
@@ -43,6 +44,7 @@ export type FullTimeRequestEntry = {
     instructor: string
     accommodated: boolean
     reason: FullTimeRequestReason
+    reasonNote: string
     matchedDay: string
     matchedCode: string
     matchedServiceName: string

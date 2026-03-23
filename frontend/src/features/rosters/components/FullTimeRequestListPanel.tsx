@@ -220,6 +220,15 @@ function FullTimeRequestListPanel({
                                     </button>
                                 </div>
 
+                                {!entry.accommodated && entry.reason === 'other' ? (
+                                    <textarea
+                                        className={`${inputClass} mt-4 min-h-24`}
+                                        placeholder="Add a note"
+                                        value={entry.reasonNote}
+                                        onChange={event => onEntryChange(entry.id, 'reasonNote', event.target.value)}
+                                    />
+                                ) : null}
+
                                 {entry.matchedCode ? (
                                     <div className="mt-4 rounded-2xl border border-secondary/15 bg-accent/60 px-4 py-3 text-sm text-secondary/80">
                                         <p>

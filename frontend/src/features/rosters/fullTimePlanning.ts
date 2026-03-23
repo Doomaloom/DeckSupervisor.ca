@@ -23,6 +23,7 @@ export const fullTimeRequestReasonOptions: Array<{
     label: string
 }> = [
     { value: 'conflicting_request', label: 'Conflicting request' },
+    { value: 'other', label: 'Other' },
     { value: 'staff_schedule', label: 'Staff schedule' },
     { value: 'student_not_registered', label: 'Student not registered' },
 ]
@@ -79,6 +80,7 @@ export function normalizeRequestEntries(input: unknown): FullTimeRequestEntry[] 
             instructor: typeof value.instructor === 'string' ? value.instructor : '',
             accommodated: Boolean(value.accommodated),
             reason: isValidRequestReason(value.reason) ? value.reason : '',
+            reasonNote: typeof value.reasonNote === 'string' ? value.reasonNote : '',
             matchedDay: typeof value.matchedDay === 'string' ? value.matchedDay : '',
             matchedCode: typeof value.matchedCode === 'string' ? value.matchedCode : '',
             matchedServiceName: typeof value.matchedServiceName === 'string' ? value.matchedServiceName : '',
@@ -246,6 +248,7 @@ function findRequestMatch(
 ): RequestRosterMatch | null {
     const normalizedFirstName = normalizeNamePart(entry.firstName)
     const normalizedPhone = normalizePhone(entry.phone)
+    const attemptedPhoneMatch = Boolean(normalizedPhone)
     if (normalizedPhone) {
         const phoneMatches = rosterMatches.filter(match => match.phone === normalizedPhone)
         if (phoneMatches.length === 1) {
@@ -339,8 +342,10 @@ function findRequestMatch(
         serviceName: nameMatch.serviceName,
         time: nameMatch.time,
         matchSource: 'name',
-        requiresManualReview: false,
-        manualReviewNote: '',
+        requiresManualReview: attemptedPhoneMatch,
+        manualReviewNote: attemptedPhoneMatch
+            ? 'Phone number did not match; student was assigned from a name match and should be reviewed manually.'
+            : '',
     }
 }
 
@@ -374,6 +379,7 @@ export function buildAutoAssignedFullTimeRequestEntries(
                 ...entry,
                 accommodated: false,
                 reason: 'student_not_registered' as const,
+                reasonNote: '',
                 matchedDay: '',
                 matchedCode: '',
                 matchedServiceName: '',
@@ -389,6 +395,7 @@ export function buildAutoAssignedFullTimeRequestEntries(
             ...entry,
             accommodated: true,
             reason: '',
+            reasonNote: '',
             matchedDay: match.day,
             matchedCode: match.code,
             matchedServiceName: match.serviceName,
