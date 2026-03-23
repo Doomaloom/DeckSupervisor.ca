@@ -11,10 +11,9 @@ import type { ClassRoster, Student } from '../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES, dayNames } from '../schematic/constants'
 import FullTimeRostersPanel from '../schematic/components/FullTimeRostersPanel'
 import SchematicBoard from '../schematic/components/SchematicBoard'
-import type { Course } from '../schematic/types'
 import { buildCourses } from '../schematic/utils/courses'
-import { createRequestAwareLayout } from '../schematic/utils/layout'
 import { buildTimeLabels } from '../schematic/utils/time'
+import { useSchematicBoard } from '../schematic/hooks/useSchematicBoard'
 import CustomRostersPanel from './components/CustomRostersPanel'
 import RosterFiltersBar from './components/RosterFiltersBar'
 import RosterList from './components/RosterList'
@@ -297,11 +296,35 @@ function RostersPage() {
             })
         return buildCourses(fullTimeSchematicStudents, instructorByCode)
     }, [fullTimeRosterClasses, fullTimeSchematicDay, fullTimeSchematicStudents])
-
-    const fullTimeSchematicLayout = useMemo(
-        () => createRequestAwareLayout(fullTimeSchematicCourses),
-        [fullTimeSchematicCourses],
-    )
+    const fullTimeInstructorOptions = useMemo(() => {
+        const names = new Set<string>()
+        fullTimeRosterClasses
+            .filter(roster => roster.day === fullTimeSchematicDay)
+            .forEach(roster => {
+                const instructor = roster.instructor.trim()
+                if (instructor) {
+                    names.add(instructor)
+                }
+            })
+        return Array.from(names).sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' }))
+    }, [fullTimeRosterClasses, fullTimeSchematicDay])
+    const {
+        columns: fullTimeColumns,
+        instructors: fullTimeInstructors,
+        lockedInstructors: fullTimeLockedInstructors,
+        selectedCourseCodes: fullTimeSelectedCourseCodes,
+        toggleCourseSelection: toggleFullTimeCourseSelection,
+        handleDragStart: handleFullTimeDragStart,
+        handleDrop: handleFullTimeDrop,
+        handleDropOnCourse: handleFullTimeDropOnCourse,
+        addTemporaryColumn: addFullTimeTemporaryColumn,
+        removeEmptyColumns: removeFullTimeEmptyColumns,
+        setInstructorAt: setFullTimeInstructorAt,
+    } = useSchematicBoard({
+        courses: fullTimeSchematicCourses,
+        storedLayout: null,
+        allowStoredEmptyColumns: false,
+    })
 
     const fullTimeSchematicStartMinutes = useMemo(() => {
         if (fullTimeSchematicCourses.length === 0) {
@@ -505,23 +528,40 @@ function RostersPage() {
                                     </p>
                                 ) : (
                                     <div className="mt-5">
+                                        <div className="mb-4 flex flex-wrap justify-center gap-3">
+                                            <button
+                                                type="button"
+                                                className="rounded-2xl border border-secondary/30 bg-bg px-5 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                                                onClick={addFullTimeTemporaryColumn}
+                                            >
+                                                Add Temporary Column
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="rounded-2xl border border-secondary/30 bg-bg px-5 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                                                onClick={removeFullTimeEmptyColumns}
+                                            >
+                                                Remove Empty Columns
+                                            </button>
+                                        </div>
                                         <SchematicBoard
-                                            columns={fullTimeSchematicLayout.columns}
-                                            instructors={fullTimeSchematicLayout.instructors}
+                                            columns={fullTimeColumns}
+                                            instructors={fullTimeInstructors}
+                                            lockedInstructors={fullTimeLockedInstructors}
+                                            selectedCourseCodes={fullTimeSelectedCourseCodes}
                                             timeLabels={fullTimeSchematicTimeLabels}
                                             scheduleHeightRem={fullTimeSchematicHeight}
                                             scheduleStartMinutes={fullTimeSchematicStartMinutes}
-                                            instructorOptions={[]}
+                                            instructorOptions={fullTimeInstructorOptions}
                                             sessionLabel={[
                                                 currentTeam?.name ?? '',
                                                 fullTimeSchematicDay ? dayNames[fullTimeSchematicDay] ?? fullTimeSchematicDay : '',
                                             ].filter(Boolean).join(' | ')}
-                                            readOnly
-                                            onInstructorChange={() => { }}
-                                            onCourseSelect={() => { }}
-                                            onColumnDrop={() => { }}
-                                            onCourseDrop={() => { }}
-                                            onCourseDragStart={() => { }}
+                                            onInstructorChange={setFullTimeInstructorAt}
+                                            onCourseSelect={toggleFullTimeCourseSelection}
+                                            onColumnDrop={handleFullTimeDrop}
+                                            onCourseDrop={handleFullTimeDropOnCourse}
+                                            onCourseDragStart={handleFullTimeDragStart}
                                         />
                                     </div>
                                 )}
