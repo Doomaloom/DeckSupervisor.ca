@@ -79,6 +79,55 @@ The app supports:
 - Frontend rewrites `/api/*` to backend service
 - Backend containerized and configured for Chromium-based PDF rendering
 
+## Fly Deploy Notes
+
+The Fly app builds from [fly.toml](/Users/frankkocun/Documents/DeckSupervisor.ca/fly.toml) using [backend/Dockerfile](/Users/frankkocun/Documents/DeckSupervisor.ca/backend/Dockerfile).
+To keep deploys fast:
+
+- `.dockerignore` excludes the frontend tree, local binaries, temp output, and sample files from the Docker build context
+- the backend Dockerfile uses BuildKit cache mounts for Go module and build caches
+- the runtime stage can use a prebuilt Chromium image via `RUNTIME_BASE_IMAGE`
+
+### Build The Chromium Runtime Base
+
+Use the dedicated runtime-base Dockerfile:
+
+```bash
+./scripts/build-runtime-base.sh
+```
+
+By default it builds and pushes:
+
+```bash
+registry.fly.io/decksupervisor:runtime-base-latest
+```
+
+The helper uses `docker buildx` and publishes a Linux `amd64` image by default so Fly can pull it during remote builds.
+
+Optional environment variables:
+
+```bash
+IMAGE_NAME=registry.fly.io/decksupervisor \
+IMAGE_TAG=2026-03-23 \
+IMAGE_PLATFORM=linux/amd64 \
+PUSH_IMAGE=1 \
+./scripts/build-runtime-base.sh
+```
+
+If Docker is not already authenticated to Fly's registry, run:
+
+```bash
+fly auth docker
+```
+
+### Deploy Using The Prebuilt Runtime Base
+
+```bash
+fly deploy --build-arg RUNTIME_BASE_IMAGE=registry.fly.io/decksupervisor:runtime-base-latest
+```
+
+If you use a versioned tag, pass that exact tag to `fly deploy`.
+
 ## Key Design Choices
 
 ### 1) Role-Aware Product Design
