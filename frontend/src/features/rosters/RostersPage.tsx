@@ -392,7 +392,14 @@ function RostersPage() {
         setFullTimeUploading(true)
         try {
             const response = await processCsvWithoutStore(file, '')
-            const classes = response.classes ?? []
+            const classes = (response.classes ?? []).map(roster => ({
+                ...roster,
+                instructor: '',
+                students: roster.students.map(student => ({
+                    ...student,
+                    instructor: '',
+                })),
+            }))
             setFullTimeRosterClasses(classes)
             setFullTimeRosterFileName(file.name)
             saveStoredFullTimeRosters(currentTeamId, file.name, classes)
