@@ -32,6 +32,11 @@ function FullTimeRequestListPanel({
     onDeleteRequest,
 }: FullTimeRequestListPanelProps) {
     const uploadInputRef = React.useRef<HTMLInputElement | null>(null)
+    const [showOnlyNonAccommodated, setShowOnlyNonAccommodated] = React.useState(false)
+    const visibleEntries = showOnlyNonAccommodated
+        ? entries.filter(entry => !entry.accommodated)
+        : entries
+    const nonAccommodatedCount = entries.filter(entry => !entry.accommodated).length
 
     return (
         <div className="flex flex-col gap-6">
@@ -113,14 +118,30 @@ function FullTimeRequestListPanel({
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">Tracked Requests</p>
                         <h3 className="mt-2 text-xl font-semibold">{entries.length} Request{entries.length === 1 ? '' : 's'}</h3>
+                        <p className="mt-1 text-sm text-secondary/70">
+                            {nonAccommodatedCount} not accommodated
+                        </p>
                     </div>
+                    <button
+                        type="button"
+                        className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
+                            showOnlyNonAccommodated
+                                ? 'border-secondary bg-secondary text-accent'
+                                : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
+                        }`}
+                        onClick={() => setShowOnlyNonAccommodated(current => !current)}
+                    >
+                        {showOnlyNonAccommodated ? 'Show All Requests' : 'Show Not Accommodated'}
+                    </button>
                 </div>
 
                 {entries.length === 0 ? (
                     <p className="mt-4 text-sm text-secondary/70">No requests added yet.</p>
+                ) : visibleEntries.length === 0 ? (
+                    <p className="mt-4 text-sm text-secondary/70">No non-accommodated requests match the current view.</p>
                 ) : (
                     <div className="mt-5 flex flex-col gap-4">
-                        {entries.map(entry => (
+                        {visibleEntries.map(entry => (
                             <article key={entry.id} className="rounded-2xl border border-secondary/20 bg-bg p-4">
                                 <div className="grid gap-3 md:grid-cols-4">
                                     <input
