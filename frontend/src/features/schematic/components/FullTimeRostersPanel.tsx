@@ -68,7 +68,7 @@ function FullTimeRostersPanel({
                     <input
                         className={inputClass}
                         type="text"
-                        placeholder="Search student or event ID"
+                        placeholder="Search student name, phone or event ID"
                         value={searchQuery}
                         onChange={event => onSearchChange(event.target.value)}
                     />

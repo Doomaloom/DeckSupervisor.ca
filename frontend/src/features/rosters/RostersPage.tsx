@@ -320,7 +320,7 @@ function RostersPage() {
             if (item.roster.code.toLowerCase().includes(normalizedQuery)) {
                 return true
             }
-            return item.roster.students.some(student => student.name.toLowerCase().includes(normalizedQuery))
+            return item.roster.students.some(student => student.name.toLowerCase().includes(normalizedQuery) || student.phone.toLowerCase().includes(normalizedQuery))
         })
     }, [fullTimeDayFilter, fullTimeLevelFilter, fullTimeRosterItems, fullTimeSearchQuery])
 
@@ -470,22 +470,20 @@ function RostersPage() {
                     <div className="mt-4 flex flex-wrap gap-2">
                         <button
                             type="button"
-                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
-                                fullTimeViewTab === 'rosters'
+                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${fullTimeViewTab === 'rosters'
                                     ? 'border-secondary bg-secondary text-accent'
                                     : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
-                            }`}
+                                }`}
                             onClick={() => setFullTimeViewTab('rosters')}
                         >
                             Roster View
                         </button>
                         <button
                             type="button"
-                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
-                                fullTimeViewTab === 'schematic'
+                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${fullTimeViewTab === 'schematic'
                                     ? 'border-secondary bg-secondary text-accent'
                                     : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
-                            }`}
+                                }`}
                             onClick={() => setFullTimeViewTab('schematic')}
                         >
                             Schematic View
@@ -499,100 +497,99 @@ function RostersPage() {
                     </div>
                 ) : (
                     <>
-                    {fullTimeRosterFileName ? (
-                        <div className="rounded-card border-2 border-secondary/20 bg-accent p-4 text-sm font-semibold text-secondary shadow-md">
-                            Loaded roster file: {fullTimeRosterFileName}
-                            {currentTerm?.label ? ` • Current term: ${currentTerm.label}` : ''}
-                        </div>
-                    ) : null}
-                    {fullTimeUploadError ? (
-                        <div className="rounded-card border-2 border-danger/30 bg-danger/10 p-4 text-sm font-semibold text-danger">
-                            {fullTimeUploadError}
-                        </div>
-                    ) : null}
-                    {fullTimeViewTab === 'rosters' ? (
-                        <FullTimeRostersPanel
-                            dayOptions={fullTimeRosterDayOptions}
-                            levelOptions={fullTimeRosterLevelOptions}
-                            dayFilter={fullTimeDayFilter}
-                            levelFilter={fullTimeLevelFilter}
-                            searchQuery={fullTimeSearchQuery}
-                            onUploadRoster={() => fullTimeUploadInputRef.current?.click()}
-                            onInstructorChange={handleFullTimeInstructorChange}
-                            onDayFilterChange={setFullTimeDayFilter}
-                            onLevelFilterChange={setFullTimeLevelFilter}
-                            onSearchChange={setFullTimeSearchQuery}
-                            rosters={filteredFullTimeRosters}
-                        />
-                    ) : (
-                        <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
-                                        Schematic Preview
-                                    </p>
-                                    <h3 className="mt-2 text-xl font-semibold">
-                                        {fullTimeSchematicDay ? dayNames[fullTimeSchematicDay] ?? fullTimeSchematicDay : 'No day selected'}
-                                    </h3>
-                                </div>
-                                <button
-                                    type="button"
-                                    className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5"
-                                    onClick={() => fullTimeUploadInputRef.current?.click()}
-                                >
-                                    Upload Roster
-                                </button>
+                        {fullTimeRosterFileName ? (
+                            <div className="rounded-card border-2 border-secondary/20 bg-accent p-4 text-sm font-semibold text-secondary shadow-md">
+                                Loaded roster file: {fullTimeRosterFileName}
+                                {currentTerm?.label ? ` • Current term: ${currentTerm.label}` : ''}
                             </div>
-                            {fullTimeRosterDayOptions.length > 1 ? (
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                    {fullTimeRosterDayOptions.map(day => (
-                                        <button
-                                            key={day}
-                                            type="button"
-                                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
-                                                fullTimeSchematicDay === day
-                                                    ? 'border-secondary bg-secondary text-accent'
-                                                    : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
-                                            }`}
-                                            onClick={() => setFullTimeDayFilter(day)}
-                                        >
-                                            {dayNames[day] ?? day}
-                                        </button>
-                                    ))}
+                        ) : null}
+                        {fullTimeUploadError ? (
+                            <div className="rounded-card border-2 border-danger/30 bg-danger/10 p-4 text-sm font-semibold text-danger">
+                                {fullTimeUploadError}
+                            </div>
+                        ) : null}
+                        {fullTimeViewTab === 'rosters' ? (
+                            <FullTimeRostersPanel
+                                dayOptions={fullTimeRosterDayOptions}
+                                levelOptions={fullTimeRosterLevelOptions}
+                                dayFilter={fullTimeDayFilter}
+                                levelFilter={fullTimeLevelFilter}
+                                searchQuery={fullTimeSearchQuery}
+                                onUploadRoster={() => fullTimeUploadInputRef.current?.click()}
+                                onInstructorChange={handleFullTimeInstructorChange}
+                                onDayFilterChange={setFullTimeDayFilter}
+                                onLevelFilterChange={setFullTimeLevelFilter}
+                                onSearchChange={setFullTimeSearchQuery}
+                                rosters={filteredFullTimeRosters}
+                            />
+                        ) : (
+                            <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
+                                            Schematic Preview
+                                        </p>
+                                        <h3 className="mt-2 text-xl font-semibold">
+                                            {fullTimeSchematicDay ? dayNames[fullTimeSchematicDay] ?? fullTimeSchematicDay : 'No day selected'}
+                                        </h3>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5"
+                                        onClick={() => fullTimeUploadInputRef.current?.click()}
+                                    >
+                                        Upload Roster
+                                    </button>
                                 </div>
-                            ) : null}
+                                {fullTimeRosterDayOptions.length > 1 ? (
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {fullTimeRosterDayOptions.map(day => (
+                                            <button
+                                                key={day}
+                                                type="button"
+                                                className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${fullTimeSchematicDay === day
+                                                        ? 'border-secondary bg-secondary text-accent'
+                                                        : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
+                                                    }`}
+                                                onClick={() => setFullTimeDayFilter(day)}
+                                            >
+                                                {dayNames[day] ?? day}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : null}
 
-                            {fullTimeSchematicCourses.length === 0 ? (
-                                <p className="mt-4 text-sm text-secondary/70">
-                                    No uploaded classes are available for this day.
-                                </p>
-                            ) : (
-                                <div className="mt-5">
-                                    <SchematicBoard
-                                        columns={fullTimeSchematicLayout.columns}
-                                        instructors={fullTimeSchematicLayout.instructors}
-                                        timeLabels={fullTimeSchematicTimeLabels}
-                                        scheduleHeightRem={fullTimeSchematicHeight}
-                                        scheduleStartMinutes={fullTimeSchematicStartMinutes}
-                                        instructorOptions={[]}
-                                        sessionLabel={[
-                                            currentTeam?.name ?? '',
-                                            fullTimeSchematicDay ? dayNames[fullTimeSchematicDay] ?? fullTimeSchematicDay : '',
-                                        ].filter(Boolean).join(' | ')}
-                                        readOnly
-                                        onInstructorChange={() => {}}
-                                        onCourseSelect={() => {}}
-                                        onColumnDrop={() => {}}
-                                        onCourseDrop={() => {}}
-                                        onCourseDragStart={() => {}}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    {fullTimeUploading ? (
-                        <p className="text-sm font-semibold text-secondary/80">Processing roster upload...</p>
-                    ) : null}
+                                {fullTimeSchematicCourses.length === 0 ? (
+                                    <p className="mt-4 text-sm text-secondary/70">
+                                        No uploaded classes are available for this day.
+                                    </p>
+                                ) : (
+                                    <div className="mt-5">
+                                        <SchematicBoard
+                                            columns={fullTimeSchematicLayout.columns}
+                                            instructors={fullTimeSchematicLayout.instructors}
+                                            timeLabels={fullTimeSchematicTimeLabels}
+                                            scheduleHeightRem={fullTimeSchematicHeight}
+                                            scheduleStartMinutes={fullTimeSchematicStartMinutes}
+                                            instructorOptions={[]}
+                                            sessionLabel={[
+                                                currentTeam?.name ?? '',
+                                                fullTimeSchematicDay ? dayNames[fullTimeSchematicDay] ?? fullTimeSchematicDay : '',
+                                            ].filter(Boolean).join(' | ')}
+                                            readOnly
+                                            onInstructorChange={() => { }}
+                                            onCourseSelect={() => { }}
+                                            onColumnDrop={() => { }}
+                                            onCourseDrop={() => { }}
+                                            onCourseDragStart={() => { }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {fullTimeUploading ? (
+                            <p className="text-sm font-semibold text-secondary/80">Processing roster upload...</p>
+                        ) : null}
                     </>
                 )}
             </div>
