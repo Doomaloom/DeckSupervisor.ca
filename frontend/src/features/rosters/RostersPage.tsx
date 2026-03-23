@@ -15,16 +15,36 @@ import { buildCourses } from '../schematic/utils/courses'
 import { buildTimeLabels } from '../schematic/utils/time'
 import { useSchematicBoard } from '../schematic/hooks/useSchematicBoard'
 import CustomRostersPanel from './components/CustomRostersPanel'
+import FullTimeInstructorAssignmentsPanel from './components/FullTimeInstructorAssignmentsPanel'
+import FullTimeRequestListPanel from './components/FullTimeRequestListPanel'
 import RosterFiltersBar from './components/RosterFiltersBar'
 import RosterList from './components/RosterList'
 import RostersTabs from './components/RostersTabs'
+import {
+    buildColumnsForDay,
+    createEmptyInstructorDayAssignments,
+    createRequestId,
+    getInstructorPeriodsForDay,
+    sortDayKeys,
+} from './fullTimePlanning'
+import {
+    loadFullTimeInstructorAssignments,
+    loadFullTimeRequestEntries,
+    saveFullTimeInstructorAssignments,
+    saveFullTimeRequestEntries,
+} from './fullTimeStorage'
 import { useCustomRosters } from './hooks/useCustomRosters'
 import { useRosterData } from './hooks/useRosterData'
 import { useRosterEdits } from './hooks/useRosterEdits'
 import { useRosterFilters } from './hooks/useRosterFilters'
 import { useRosterPrint } from './hooks/useRosterPrint'
 import { buildCustomRosterGroups, getEmptyMessage } from './utils'
-import type { RosterListItem } from './types'
+import type {
+    FullTimeInstructorAssignments,
+    FullTimeInstructorPeriod,
+    FullTimeRequestEntry,
+    RosterListItem,
+} from './types'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 
@@ -46,6 +66,15 @@ type StoredFullTimeRosters = {
     fileName: string
     importedAt: string
     classes: ClassRoster[]
+}
+
+type FullTimeRequestDraft = Pick<FullTimeRequestEntry, 'firstName' | 'lastName' | 'phone' | 'instructor'>
+
+const emptyFullTimeRequestDraft: FullTimeRequestDraft = {
+    firstName: '',
+    lastName: '',
+    phone: '',
+    instructor: '',
 }
 
 function getFullTimeRostersStorageKey(teamId: string) {
@@ -103,12 +132,16 @@ function RostersPage() {
     const [fullTimeDayFilter, setFullTimeDayFilter] = useState('')
     const [fullTimeLevelFilter, setFullTimeLevelFilter] = useState('')
     const [fullTimeSearchQuery, setFullTimeSearchQuery] = useState('')
-    const [fullTimeViewTab, setFullTimeViewTab] = useState<'rosters' | 'schematic'>('rosters')
+    const [fullTimeViewTab, setFullTimeViewTab] = useState<'rosters' | 'schematic' | 'instructors' | 'requests'>('rosters')
     const [fullTimeRosterFileName, setFullTimeRosterFileName] = useState('')
     const [fullTimeRosterClasses, setFullTimeRosterClasses] = useState<ClassRoster[]>([])
+    const [fullTimeInstructorAssignments, setFullTimeInstructorAssignments] = useState<FullTimeInstructorAssignments>({})
+    const [fullTimeRequestEntries, setFullTimeRequestEntries] = useState<FullTimeRequestEntry[]>([])
+    const [fullTimeRequestDraft, setFullTimeRequestDraft] = useState<FullTimeRequestDraft>(emptyFullTimeRequestDraft)
     const [fullTimeUploadError, setFullTimeUploadError] = useState('')
     const [fullTimeUploading, setFullTimeUploading] = useState(false)
     const fullTimeUploadInputRef = useRef<HTMLInputElement | null>(null)
+    const fullTimeTermKey = currentTerm?.key ?? 'no-term'
     const { students, setStudents, rosters, instructorOptions } = useRosterData(
         selectedDay ?? '',
         sessionId ?? undefined,
@@ -215,6 +248,17 @@ function RostersPage() {
         }
     }, [accountType, currentTeamId])
 
+    useEffect(() => {
+        if (accountType !== 'full_time' || !currentTeamId) {
+            setFullTimeInstructorAssignments({})
+            setFullTimeRequestEntries([])
+            return
+        }
+
+        setFullTimeInstructorAssignments(loadFullTimeInstructorAssignments(currentTeamId, fullTimeTermKey))
+        setFullTimeRequestEntries(loadFullTimeRequestEntries(currentTeamId, fullTimeTermKey))
+    }, [accountType, currentTeamId, fullTimeTermKey])
+
     const fullTimeRosterItems = useMemo(
         () => fullTimeRosterClasses.map(convertClassRosterToItem),
         [fullTimeRosterClasses],
@@ -262,6 +306,22 @@ function RostersPage() {
             return item.roster.students.some(student => student.name.toLowerCase().includes(normalizedQuery) || student.phone.toLowerCase().includes(normalizedQuery))
         })
     }, [fullTimeDayFilter, fullTimeLevelFilter, fullTimeRosterItems, fullTimeSearchQuery])
+
+    const fullTimeInstructorDayKeys = useMemo(
+        () => sortDayKeys(fullTimeRosterDayOptions),
+        [fullTimeRosterDayOptions],
+    )
+
+    const fullTimeInstructorPeriodsByDay = useMemo(
+        () =>
+            Object.fromEntries(
+                fullTimeInstructorDayKeys.map(day => [
+                    day,
+                    getInstructorPeriodsForDay(buildColumnsForDay(fullTimeRosterClasses, day)),
+                ]),
+            ) as Record<string, ReturnType<typeof getInstructorPeriodsForDay>>,
+        [fullTimeInstructorDayKeys, fullTimeRosterClasses],
+    )
 
     const fullTimeSchematicDay = fullTimeDayFilter || fullTimeRosterDayOptions[0] || ''
     const fullTimeSchematicStudents = useMemo(() => {
@@ -401,6 +461,142 @@ function RostersPage() {
         })
     }
 
+    const updateFullTimeInstructorAssignments = (
+        day: string,
+        period: FullTimeInstructorPeriod,
+        updater: (current: string[]) => string[],
+    ) => {
+        if (!currentTeamId) {
+            return
+        }
+        setFullTimeInstructorAssignments(current => {
+            const currentDayAssignments = current[day] ?? createEmptyInstructorDayAssignments()
+            const nextDayAssignments = {
+                ...currentDayAssignments,
+                [period]: updater(currentDayAssignments[period]),
+            }
+            const next = {
+                ...current,
+                [day]: nextDayAssignments,
+            }
+            saveFullTimeInstructorAssignments(currentTeamId, fullTimeTermKey, next)
+            return next
+        })
+    }
+
+    const handleFullTimeInstructorAssignmentChange = (
+        day: string,
+        period: FullTimeInstructorPeriod,
+        index: number,
+        value: string,
+    ) => {
+        updateFullTimeInstructorAssignments(day, period, current => {
+            const next = [...current]
+            next[index] = value
+            return next
+        })
+    }
+
+    const handleAddFullTimeInstructorAssignment = (
+        day: string,
+        period: FullTimeInstructorPeriod,
+    ) => {
+        updateFullTimeInstructorAssignments(day, period, current => [...current, ''])
+    }
+
+    const handleRemoveFullTimeInstructorAssignment = (
+        day: string,
+        period: FullTimeInstructorPeriod,
+        index: number,
+    ) => {
+        updateFullTimeInstructorAssignments(day, period, current => {
+            const next = current.filter((_, currentIndex) => currentIndex !== index)
+            return next.length > 0 ? next : ['']
+        })
+    }
+
+    const handleFullTimeRequestDraftChange = (
+        field: keyof FullTimeRequestDraft,
+        value: string,
+    ) => {
+        setFullTimeRequestDraft(current => ({
+            ...current,
+            [field]: value,
+        }))
+    }
+
+    const handleAddFullTimeRequest = () => {
+        if (!currentTeamId) {
+            return
+        }
+        const nextEntry = {
+            id: createRequestId(),
+            firstName: fullTimeRequestDraft.firstName.trim(),
+            lastName: fullTimeRequestDraft.lastName.trim(),
+            phone: fullTimeRequestDraft.phone.trim(),
+            instructor: fullTimeRequestDraft.instructor.trim(),
+            accommodated: false,
+            reason: '',
+        } satisfies FullTimeRequestEntry
+
+        if (!nextEntry.firstName || !nextEntry.lastName || !nextEntry.phone || !nextEntry.instructor) {
+            alert('Enter first name, last name, phone number, and instructor before adding a request.')
+            return
+        }
+
+        setFullTimeRequestEntries(current => {
+            const next = [...current, nextEntry]
+            saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next)
+            return next
+        })
+        setFullTimeRequestDraft(emptyFullTimeRequestDraft)
+    }
+
+    const handleFullTimeRequestEntryChange = <K extends keyof FullTimeRequestEntry>(
+        id: string,
+        field: K,
+        value: FullTimeRequestEntry[K],
+    ) => {
+        if (!currentTeamId) {
+            return
+        }
+        setFullTimeRequestEntries(current => {
+            const next = current.map(entry => {
+                if (entry.id !== id) {
+                    return entry
+                }
+                if (field === 'accommodated') {
+                    const accommodated = Boolean(value)
+                    return {
+                        ...entry,
+                        accommodated,
+                        reason: accommodated ? '' : entry.reason,
+                    }
+                }
+                if (field === 'reason' && entry.accommodated) {
+                    return { ...entry, reason: '' }
+                }
+                return {
+                    ...entry,
+                    [field]: value,
+                }
+            })
+            saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next)
+            return next
+        })
+    }
+
+    const handleDeleteFullTimeRequest = (id: string) => {
+        if (!currentTeamId) {
+            return
+        }
+        setFullTimeRequestEntries(current => {
+            const next = current.filter(entry => entry.id !== id)
+            saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next)
+            return next
+        })
+    }
+
     if (accountType === 'full_time') {
         return (
             <div id="rosters-page" data-component="rosters-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -451,6 +647,26 @@ function RostersPage() {
                         >
                             Schematic View
                         </button>
+                        <button
+                            type="button"
+                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${fullTimeViewTab === 'instructors'
+                                    ? 'border-secondary bg-secondary text-accent'
+                                    : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
+                                }`}
+                            onClick={() => setFullTimeViewTab('instructors')}
+                        >
+                            Instructors
+                        </button>
+                        <button
+                            type="button"
+                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${fullTimeViewTab === 'requests'
+                                    ? 'border-secondary bg-secondary text-accent'
+                                    : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
+                                }`}
+                            onClick={() => setFullTimeViewTab('requests')}
+                        >
+                            Request List
+                        </button>
                     </div>
                 </div>
 
@@ -484,6 +700,24 @@ function RostersPage() {
                                 onLevelFilterChange={setFullTimeLevelFilter}
                                 onSearchChange={setFullTimeSearchQuery}
                                 rosters={filteredFullTimeRosters}
+                            />
+                        ) : fullTimeViewTab === 'instructors' ? (
+                            <FullTimeInstructorAssignmentsPanel
+                                dayKeys={fullTimeInstructorDayKeys}
+                                periodMap={fullTimeInstructorPeriodsByDay}
+                                assignments={fullTimeInstructorAssignments}
+                                onInstructorChange={handleFullTimeInstructorAssignmentChange}
+                                onAddInstructor={handleAddFullTimeInstructorAssignment}
+                                onRemoveInstructor={handleRemoveFullTimeInstructorAssignment}
+                            />
+                        ) : fullTimeViewTab === 'requests' ? (
+                            <FullTimeRequestListPanel
+                                draft={fullTimeRequestDraft}
+                                entries={fullTimeRequestEntries}
+                                onDraftChange={handleFullTimeRequestDraftChange}
+                                onAddRequest={handleAddFullTimeRequest}
+                                onEntryChange={handleFullTimeRequestEntryChange}
+                                onDeleteRequest={handleDeleteFullTimeRequest}
                             />
                         ) : (
                             <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">

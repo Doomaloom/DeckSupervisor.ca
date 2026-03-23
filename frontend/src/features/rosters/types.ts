@@ -16,3 +16,29 @@ export type RosterListItem = {
     roster: RosterGroup
     isCustom?: boolean
 }
+
+export type FullTimeInstructorPeriod = 'allDay' | 'am' | 'pm'
+
+export type FullTimeInstructorDayAssignments = {
+    allDay: string[]
+    am: string[]
+    pm: string[]
+}
+
+export type FullTimeInstructorAssignments = Record<string, FullTimeInstructorDayAssignments>
+
+export type FullTimeRequestReason =
+    | ''
+    | 'conflicting_request'
+    | 'staff_schedule'
+    | 'student_not_registered'
+
+export type FullTimeRequestEntry = {
+    id: string
+    firstName: string
+    lastName: string
+    phone: string
+    instructor: string
+    accommodated: boolean
+    reason: FullTimeRequestReason
+}
