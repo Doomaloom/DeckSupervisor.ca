@@ -21,12 +21,15 @@ import RosterFiltersBar from './components/RosterFiltersBar'
 import RosterList from './components/RosterList'
 import RostersTabs from './components/RostersTabs'
 import {
+    applyMatchedRequestCounts,
     attemptAutoAssignFullTimeRequests,
     buildColumnsForDay,
+    buildAutoAssignedFullTimeRequestEntries,
     createEmptyInstructorDayAssignments,
     parseFullTimeRequestCsv,
     createRequestId,
     getInstructorPeriodsForDay,
+    syncFullTimeRostersWithRequests,
     sortDayKeys,
 } from './fullTimePlanning'
 import {
@@ -482,6 +485,27 @@ function RostersPage() {
         })
     }
 
+    const handleClearFullTimeRosterAssignments = () => {
+        if (!currentTeamId || fullTimeRosterClasses.length === 0) {
+            return
+        }
+        if (!window.confirm('Clear all instructor assignments from the uploaded full-time rosters?')) {
+            return
+        }
+        setFullTimeRosterClasses(current => {
+            const next = current.map(roster => ({
+                ...roster,
+                instructor: '',
+                students: roster.students.map(student => ({
+                    ...student,
+                    instructor: '',
+                })),
+            }))
+            saveStoredFullTimeRosters(currentTeamId, fullTimeRosterFileName, next)
+            return next
+        })
+    }
+
     const updateFullTimeInstructorAssignments = (
         day: string,
         period: FullTimeInstructorPeriod,
@@ -564,6 +588,8 @@ function RostersPage() {
             matchedTime: '',
             matchedBy: '',
             matchedRequestCount: 0,
+            requiresManualReview: false,
+            manualReviewNote: '',
         } satisfies FullTimeRequestEntry
 
         if (!nextEntry.firstName || !nextEntry.lastName || !nextEntry.phone || !nextEntry.instructor) {
@@ -644,6 +670,8 @@ function RostersPage() {
                 matchedTime: '',
                 matchedBy: '',
                 matchedRequestCount: 0,
+                requiresManualReview: false,
+                manualReviewNote: '',
             } satisfies FullTimeRequestEntry))
 
             if (imported.length === 0) {
@@ -666,8 +694,36 @@ function RostersPage() {
             return
         }
         const next = attemptAutoAssignFullTimeRequests(fullTimeRequestEntries, fullTimeRosterClasses)
-        setFullTimeRequestEntries(next)
-        saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next)
+        setFullTimeRequestEntries(next.entries)
+        setFullTimeRosterClasses(next.rosters)
+        saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next.entries)
+        saveStoredFullTimeRosters(currentTeamId, fullTimeRosterFileName, next.rosters)
+    }
+
+    const handleReattemptFullTimeRequestAssignment = (id: string) => {
+        if (!currentTeamId) {
+            return
+        }
+
+        const targetEntry = fullTimeRequestEntries.find(entry => entry.id === id)
+        if (!targetEntry) {
+            return
+        }
+
+        const [updatedEntry] = buildAutoAssignedFullTimeRequestEntries([targetEntry], fullTimeRosterClasses)
+        if (!updatedEntry) {
+            return
+        }
+
+        const nextEntries = applyMatchedRequestCounts(
+            fullTimeRequestEntries.map(entry => (entry.id === id ? updatedEntry : entry)),
+        )
+        const nextRosters = syncFullTimeRostersWithRequests(nextEntries, fullTimeRosterClasses)
+
+        setFullTimeRequestEntries(nextEntries)
+        setFullTimeRosterClasses(nextRosters)
+        saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, nextEntries)
+        saveStoredFullTimeRosters(currentTeamId, fullTimeRosterFileName, nextRosters)
     }
 
     const handleMarkFullTimeRequestsConflicting = (requestIds: string[]) => {
@@ -789,6 +845,7 @@ function RostersPage() {
                                 levelFilter={fullTimeLevelFilter}
                                 searchQuery={fullTimeSearchQuery}
                                 onUploadRoster={() => fullTimeUploadInputRef.current?.click()}
+                                onClearAssignments={handleClearFullTimeRosterAssignments}
                                 onInstructorChange={handleFullTimeInstructorChange}
                                 onDayFilterChange={setFullTimeDayFilter}
                                 onLevelFilterChange={setFullTimeLevelFilter}
@@ -814,6 +871,7 @@ function RostersPage() {
                                     void handleImportFullTimeRequests(file)
                                 }}
                                 onAutoAssign={handleAutoAssignFullTimeRequests}
+                                onReattemptEntry={handleReattemptFullTimeRequestAssignment}
                                 onEntryChange={handleFullTimeRequestEntryChange}
                                 onDeleteRequest={handleDeleteFullTimeRequest}
                             />
@@ -929,6 +987,11 @@ function RostersPage() {
                                                                         {entry.instructor ? ` • Requested: ${entry.instructor}` : ''}
                                                                         {entry.matchedBy ? ` • Matched by ${entry.matchedBy}` : ''}
                                                                     </p>
+                                                                    {entry.requiresManualReview ? (
+                                                                        <p className="mt-1 text-sm font-semibold text-danger">
+                                                                            Manual review: {entry.manualReviewNote || 'This match should be reviewed manually.'}
+                                                                        </p>
+                                                                    ) : null}
                                                                     <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-secondary/60">
                                                                         {entry.accommodated
                                                                             ? 'Accommodated'

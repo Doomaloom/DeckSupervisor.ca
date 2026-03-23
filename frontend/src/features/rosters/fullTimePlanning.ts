@@ -85,6 +85,8 @@ export function normalizeRequestEntries(input: unknown): FullTimeRequestEntry[] 
             matchedTime: typeof value.matchedTime === 'string' ? value.matchedTime : '',
             matchedBy: isValidMatchSource(value.matchedBy) ? value.matchedBy : '',
             matchedRequestCount: Number.isFinite(value.matchedRequestCount) ? Math.max(Number(value.matchedRequestCount), 0) : 0,
+            requiresManualReview: Boolean(value.requiresManualReview),
+            manualReviewNote: typeof value.manualReviewNote === 'string' ? value.manualReviewNote : '',
         }
     })
 }
@@ -142,20 +144,71 @@ function normalizePhone(value: string) {
     return value.replace(/\D+/g, '')
 }
 
-function normalizeFullName(firstName: string, lastName: string) {
-    return [firstName, lastName]
-        .filter(Boolean)
-        .join(' ')
+function normalizeNamePart(value: string) {
+    return value
         .trim()
         .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
         .replace(/\s+/g, ' ')
 }
 
-function normalizeStudentFullName(name: string) {
-    return name
+function normalizeFullName(firstName: string, lastName: string) {
+    return [normalizeNamePart(firstName), normalizeNamePart(lastName)]
+        .filter(Boolean)
+        .join(' ')
         .trim()
-        .toLowerCase()
-        .replace(/\s+/g, ' ')
+}
+
+function normalizeStudentFullName(name: string) {
+    return normalizeNamePart(name)
+}
+
+function normalizeStudentFirstName(name: string) {
+    return normalizeNamePart(name).split(' ')[0] ?? ''
+}
+
+function levenshteinDistance(left: string, right: string) {
+    if (left === right) {
+        return 0
+    }
+    if (!left.length) {
+        return right.length
+    }
+    if (!right.length) {
+        return left.length
+    }
+
+    const previous = Array.from({ length: right.length + 1 }, (_, index) => index)
+
+    for (let row = 1; row <= left.length; row += 1) {
+        let diagonal = previous[0]
+        previous[0] = row
+        for (let column = 1; column <= right.length; column += 1) {
+            const current = previous[column]
+            const cost = left[row - 1] === right[column - 1] ? 0 : 1
+            previous[column] = Math.min(
+                previous[column] + 1,
+                previous[column - 1] + 1,
+                diagonal + cost,
+            )
+            diagonal = current
+        }
+    }
+
+    return previous[right.length]
+}
+
+function similarityScore(left: string, right: string) {
+    const normalizedLeft = normalizeNamePart(left)
+    const normalizedRight = normalizeNamePart(right)
+    if (!normalizedLeft || !normalizedRight) {
+        return 0
+    }
+    const maxLength = Math.max(normalizedLeft.length, normalizedRight.length)
+    if (maxLength === 0) {
+        return 1
+    }
+    return 1 - levenshteinDistance(normalizedLeft, normalizedRight) / maxLength
 }
 
 type RequestRosterMatch = {
@@ -164,6 +217,13 @@ type RequestRosterMatch = {
     serviceName: string
     time: string
     matchSource: FullTimeRequestMatchSource
+    requiresManualReview: boolean
+    manualReviewNote: string
+}
+
+type AutoAssignFullTimeRequestsResult = {
+    entries: FullTimeRequestEntry[]
+    rosters: ClassRoster[]
 }
 
 function buildRequestRosterMatches(rosters: ClassRoster[]) {
@@ -174,6 +234,7 @@ function buildRequestRosterMatches(rosters: ClassRoster[]) {
             serviceName: roster.serviceName,
             time: roster.time,
             phone: normalizePhone(student.phone),
+            firstName: normalizeStudentFirstName(student.name),
             fullName: normalizeStudentFullName(student.name),
         })),
     )
@@ -183,17 +244,61 @@ function findRequestMatch(
     entry: FullTimeRequestEntry,
     rosterMatches: ReturnType<typeof buildRequestRosterMatches>,
 ): RequestRosterMatch | null {
+    const normalizedFirstName = normalizeNamePart(entry.firstName)
     const normalizedPhone = normalizePhone(entry.phone)
     if (normalizedPhone) {
-        const phoneMatch = rosterMatches.find(match => match.phone === normalizedPhone)
-        if (phoneMatch) {
+        const phoneMatches = rosterMatches.filter(match => match.phone === normalizedPhone)
+        if (phoneMatches.length === 1) {
+            const [phoneMatch] = phoneMatches
             return {
                 day: phoneMatch.day,
                 code: phoneMatch.code,
                 serviceName: phoneMatch.serviceName,
                 time: phoneMatch.time,
                 matchSource: 'phone',
+                requiresManualReview: false,
+                manualReviewNote: '',
             }
+        }
+        if (phoneMatches.length > 1 && normalizedFirstName) {
+            const exactFirstNameMatches = phoneMatches.filter(match => match.firstName === normalizedFirstName)
+            if (exactFirstNameMatches.length === 1) {
+                const [phoneMatch] = exactFirstNameMatches
+                return {
+                    day: phoneMatch.day,
+                    code: phoneMatch.code,
+                    serviceName: phoneMatch.serviceName,
+                    time: phoneMatch.time,
+                    matchSource: 'phone',
+                    requiresManualReview: false,
+                    manualReviewNote: '',
+                }
+            }
+
+            const fuzzyPhoneMatches = phoneMatches
+                .map(match => ({
+                    match,
+                    score: similarityScore(normalizedFirstName, match.firstName),
+                }))
+                .sort((left, right) => right.score - left.score)
+            const bestPhoneMatch = fuzzyPhoneMatches[0]
+            const secondPhoneMatch = fuzzyPhoneMatches[1]
+            if (
+                bestPhoneMatch &&
+                bestPhoneMatch.score >= 0.75 &&
+                (!secondPhoneMatch || bestPhoneMatch.score - secondPhoneMatch.score >= 0.1)
+            ) {
+                return {
+                    day: bestPhoneMatch.match.day,
+                    code: bestPhoneMatch.match.code,
+                    serviceName: bestPhoneMatch.match.serviceName,
+                    time: bestPhoneMatch.match.time,
+                    matchSource: 'phone',
+                    requiresManualReview: true,
+                    manualReviewNote: 'Phone number matched multiple students; first name was fuzzy-matched.',
+                }
+            }
+            return null
         }
     }
 
@@ -203,7 +308,30 @@ function findRequestMatch(
     }
     const nameMatch = rosterMatches.find(match => match.fullName === normalizedFullName)
     if (!nameMatch) {
-        return null
+        const fuzzyNameMatches = rosterMatches
+            .map(match => ({
+                match,
+                score: similarityScore(normalizedFullName, match.fullName),
+            }))
+            .sort((left, right) => right.score - left.score)
+        const bestNameMatch = fuzzyNameMatches[0]
+        const secondNameMatch = fuzzyNameMatches[1]
+        if (
+            !bestNameMatch ||
+            bestNameMatch.score < 0.82 ||
+            (secondNameMatch && bestNameMatch.score - secondNameMatch.score < 0.08)
+        ) {
+            return null
+        }
+        return {
+            day: bestNameMatch.match.day,
+            code: bestNameMatch.match.code,
+            serviceName: bestNameMatch.match.serviceName,
+            time: bestNameMatch.match.time,
+            matchSource: 'name',
+            requiresManualReview: true,
+            manualReviewNote: 'Student name was fuzzy-matched and should be reviewed manually.',
+        }
     }
     return {
         day: nameMatch.day,
@@ -211,14 +339,33 @@ function findRequestMatch(
         serviceName: nameMatch.serviceName,
         time: nameMatch.time,
         matchSource: 'name',
+        requiresManualReview: false,
+        manualReviewNote: '',
     }
 }
 
 export function attemptAutoAssignFullTimeRequests(
     entries: FullTimeRequestEntry[],
     rosters: ClassRoster[],
-) {
+): AutoAssignFullTimeRequestsResult {
     const rosterMatches = buildRequestRosterMatches(rosters)
+
+    const nextEntries = buildAutoAssignedFullTimeRequestEntries(entries, rosterMatches)
+    const nextRosters = syncFullTimeRostersWithRequests(nextEntries, rosters)
+
+    return {
+        entries: nextEntries,
+        rosters: nextRosters,
+    }
+}
+
+export function buildAutoAssignedFullTimeRequestEntries(
+    entries: FullTimeRequestEntry[],
+    rostersOrMatches: ClassRoster[] | ReturnType<typeof buildRequestRosterMatches>,
+) {
+    const rosterMatches = Array.isArray(rostersOrMatches) && rostersOrMatches.length > 0 && 'students' in rostersOrMatches[0]
+        ? buildRequestRosterMatches(rostersOrMatches as ClassRoster[])
+        : rostersOrMatches as ReturnType<typeof buildRequestRosterMatches>
 
     const matched = entries.map(entry => {
         const match = findRequestMatch(entry, rosterMatches)
@@ -233,6 +380,8 @@ export function attemptAutoAssignFullTimeRequests(
                 matchedTime: '',
                 matchedBy: '',
                 matchedRequestCount: 0,
+                requiresManualReview: false,
+                manualReviewNote: '',
             }
         }
 
@@ -246,11 +395,17 @@ export function attemptAutoAssignFullTimeRequests(
             matchedTime: match.time,
             matchedBy: match.matchSource,
             matchedRequestCount: 0,
+            requiresManualReview: match.requiresManualReview,
+            manualReviewNote: match.manualReviewNote,
         }
     })
 
+    return applyMatchedRequestCounts(matched)
+}
+
+export function applyMatchedRequestCounts(entries: FullTimeRequestEntry[]) {
     const requestCounts = new Map<string, number>()
-    matched.forEach(entry => {
+    entries.forEach(entry => {
         if (!entry.matchedCode) {
             return
         }
@@ -258,7 +413,7 @@ export function attemptAutoAssignFullTimeRequests(
         requestCounts.set(key, (requestCounts.get(key) ?? 0) + 1)
     })
 
-    return matched.map(entry => {
+    return entries.map(entry => {
         if (!entry.matchedCode) {
             return entry
         }
@@ -268,6 +423,65 @@ export function attemptAutoAssignFullTimeRequests(
             matchedRequestCount: requestCounts.get(key) ?? 0,
         }
     })
+}
+
+export function syncFullTimeRostersWithRequests(
+    entries: FullTimeRequestEntry[],
+    rosters: ClassRoster[],
+) {
+    const instructorVotesByRoster = new Map<string, Map<string, number>>()
+    entries.forEach(entry => {
+        if (!entry.accommodated || !entry.matchedCode) {
+            return
+        }
+        const requestedInstructor = entry.instructor.trim()
+        if (!requestedInstructor) {
+            return
+        }
+        const rosterKey = `${entry.matchedDay}::${entry.matchedCode}`
+        const rosterVotes = instructorVotesByRoster.get(rosterKey) ?? new Map<string, number>()
+        rosterVotes.set(requestedInstructor, (rosterVotes.get(requestedInstructor) ?? 0) + 1)
+        instructorVotesByRoster.set(rosterKey, rosterVotes)
+    })
+
+    const nextRosters = rosters.map(roster => {
+        const rosterKey = `${roster.day}::${roster.code}`
+        const rosterVotes = instructorVotesByRoster.get(rosterKey)
+        if (!rosterVotes || rosterVotes.size === 0) {
+            return roster
+        }
+
+        const existingInstructor = roster.instructor.trim()
+        let assignedInstructor = ''
+        let highestVoteCount = -1
+
+        Array.from(rosterVotes.entries())
+            .sort(([leftName], [rightName]) => leftName.localeCompare(rightName, 'en', { sensitivity: 'base' }))
+            .forEach(([name, count]) => {
+                if (count > highestVoteCount) {
+                    assignedInstructor = name
+                    highestVoteCount = count
+                    return
+                }
+                if (count === highestVoteCount && existingInstructor && name === existingInstructor) {
+                    assignedInstructor = name
+                }
+            })
+
+        if (!assignedInstructor) {
+            return roster
+        }
+
+        return {
+            ...roster,
+            instructor: assignedInstructor,
+            students: roster.students.map(student => ({
+                ...student,
+                instructor: assignedInstructor,
+            })),
+        }
+    })
+    return nextRosters
 }
 
 export function sortDayKeys(days: string[]) {

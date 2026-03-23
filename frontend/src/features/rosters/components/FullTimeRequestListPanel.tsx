@@ -17,6 +17,7 @@ type FullTimeRequestListPanelProps = {
     onAddRequest: () => void
     onImportCsv: (file: File | null) => void
     onAutoAssign: () => void
+    onReattemptEntry: (id: string) => void
     onEntryChange: <K extends keyof FullTimeRequestEntry>(id: string, field: K, value: FullTimeRequestEntry[K]) => void
     onDeleteRequest: (id: string) => void
 }
@@ -28,6 +29,7 @@ function FullTimeRequestListPanel({
     onAddRequest,
     onImportCsv,
     onAutoAssign,
+    onReattemptEntry,
     onEntryChange,
     onDeleteRequest,
 }: FullTimeRequestListPanelProps) {
@@ -203,6 +205,14 @@ function FullTimeRequestListPanel({
 
                                     <button
                                         type="button"
+                                        className="rounded-2xl border border-secondary/30 bg-accent/60 px-3 py-2 text-xs font-semibold text-secondary transition hover:bg-accent"
+                                        onClick={() => onReattemptEntry(entry.id)}
+                                    >
+                                        Reattempt Assignment
+                                    </button>
+
+                                    <button
+                                        type="button"
                                         className="rounded-2xl border border-danger/30 bg-danger/10 px-3 py-2 text-xs font-semibold text-danger transition hover:bg-danger/20"
                                         onClick={() => onDeleteRequest(entry.id)}
                                     >
@@ -224,6 +234,11 @@ function FullTimeRequestListPanel({
                                             Requests for this class/instructor:{' '}
                                             <span className="font-semibold">{entry.matchedRequestCount}</span>
                                         </p>
+                                        {entry.requiresManualReview ? (
+                                            <p className="mt-1 font-semibold text-danger">
+                                                Manual review: {entry.manualReviewNote || 'This match should be reviewed manually.'}
+                                            </p>
+                                        ) : null}
                                     </div>
                                 ) : null}
                             </article>

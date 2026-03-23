@@ -49,4 +49,6 @@ export type FullTimeRequestEntry = {
     matchedTime: string
     matchedBy: FullTimeRequestMatchSource
     matchedRequestCount: number
+    requiresManualReview: boolean
+    manualReviewNote: string
 }
