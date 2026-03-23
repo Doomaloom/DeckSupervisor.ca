@@ -1,0 +1,11 @@
+.git
+.gitignore
+frontend
+node_modules
+**/node_modules
+backend/server
+backend/tmp
+backend/.DS_Store
+**/.DS_Store
+*.csv
+htmlsample.html
