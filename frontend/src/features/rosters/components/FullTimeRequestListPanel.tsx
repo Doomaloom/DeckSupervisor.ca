@@ -15,6 +15,7 @@ type FullTimeRequestListPanelProps = {
     entries: FullTimeRequestEntry[]
     onDraftChange: (field: keyof FullTimeRequestDraft, value: string) => void
     onAddRequest: () => void
+    onImportCsv: (file: File | null) => void
     onEntryChange: <K extends keyof FullTimeRequestEntry>(id: string, field: K, value: FullTimeRequestEntry[K]) => void
     onDeleteRequest: (id: string) => void
 }
@@ -24,14 +25,39 @@ function FullTimeRequestListPanel({
     entries,
     onDraftChange,
     onAddRequest,
+    onImportCsv,
     onEntryChange,
     onDeleteRequest,
 }: FullTimeRequestListPanelProps) {
+    const uploadInputRef = React.useRef<HTMLInputElement | null>(null)
+
     return (
         <div className="flex flex-col gap-6">
             <section className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+                <input
+                    ref={uploadInputRef}
+                    className="hidden"
+                    type="file"
+                    accept=".csv"
+                    onChange={event => {
+                        onImportCsv(event.target.files?.[0] ?? null)
+                        event.target.value = ''
+                    }}
+                />
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">Request List</p>
-                <h3 className="mt-2 text-xl font-semibold">Add Student Request</h3>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="text-xl font-semibold">Add Student Request</h3>
+                    <button
+                        type="button"
+                        className="rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                        onClick={() => uploadInputRef.current?.click()}
+                    >
+                        Import CSV
+                    </button>
+                </div>
+                <p className="mt-3 text-sm text-secondary/70">
+                    CSV columns: First Name, Last Name, Phone Number, Instructor Name
+                </p>
                 <div className="mt-5 grid gap-3 md:grid-cols-4">
                     <input
                         className={inputClass}

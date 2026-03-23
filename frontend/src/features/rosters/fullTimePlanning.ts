@@ -1,4 +1,10 @@
 import type { ClassRoster, Student } from '../../types/app'
+import {
+    buildCsvHeaderIndex,
+    getCsvHeaderValue,
+    hasAnyCsvHeader,
+    parseCsvText,
+} from '../../shared/csv/csvUtils'
 import { buildCourses } from '../schematic/utils/courses'
 import { createRequestAwareLayout } from '../schematic/utils/layout'
 import type {
@@ -74,6 +80,41 @@ export function normalizeRequestEntries(input: unknown): FullTimeRequestEntry[] 
             reason: isValidRequestReason(value.reason) ? value.reason : '',
         }
     })
+}
+
+const fullTimeRequestCsvHeaderOptions = { stripNonAlphanumeric: true } as const
+
+export function parseFullTimeRequestCsv(text: string) {
+    const rows = parseCsvText(text)
+    if (rows.length < 2) {
+        throw new Error('The requests CSV does not contain any request rows.')
+    }
+
+    const requiredHeaderGroups = [
+        { label: 'First Name', headers: ['First Name'] },
+        { label: 'Last Name', headers: ['Last Name'] },
+        { label: 'Phone Number', headers: ['Phone Number'] },
+        { label: 'Instructor Name', headers: ['Instructor Name'] },
+    ]
+
+    const headerIndex = buildCsvHeaderIndex(rows[0], fullTimeRequestCsvHeaderOptions)
+    const missing = requiredHeaderGroups
+        .filter(group => !hasAnyCsvHeader(headerIndex, group.headers, fullTimeRequestCsvHeaderOptions))
+        .map(group => group.label)
+
+    if (missing.length > 0) {
+        throw new Error(`The requests CSV is missing required columns: ${missing.join(', ')}`)
+    }
+
+    return rows
+        .slice(1)
+        .map(row => ({
+            firstName: getCsvHeaderValue(row, headerIndex, ['First Name'], fullTimeRequestCsvHeaderOptions),
+            lastName: getCsvHeaderValue(row, headerIndex, ['Last Name'], fullTimeRequestCsvHeaderOptions),
+            phone: getCsvHeaderValue(row, headerIndex, ['Phone Number'], fullTimeRequestCsvHeaderOptions),
+            instructor: getCsvHeaderValue(row, headerIndex, ['Instructor Name'], fullTimeRequestCsvHeaderOptions),
+        }))
+        .filter(entry => entry.firstName || entry.lastName || entry.phone || entry.instructor)
 }
 
 function isValidRequestReason(value: unknown): value is FullTimeRequestReason {

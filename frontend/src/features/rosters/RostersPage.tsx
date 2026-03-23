@@ -23,6 +23,7 @@ import RostersTabs from './components/RostersTabs'
 import {
     buildColumnsForDay,
     createEmptyInstructorDayAssignments,
+    parseFullTimeRequestCsv,
     createRequestId,
     getInstructorPeriodsForDay,
     sortDayKeys,
@@ -597,6 +598,37 @@ function RostersPage() {
         })
     }
 
+    const handleImportFullTimeRequests = async (file: File | null) => {
+        if (!currentTeamId || !file) {
+            return
+        }
+
+        try {
+            const imported = parseFullTimeRequestCsv(await file.text()).map(entry => ({
+                id: createRequestId(),
+                firstName: entry.firstName,
+                lastName: entry.lastName,
+                phone: entry.phone,
+                instructor: entry.instructor,
+                accommodated: false,
+                reason: '',
+            } satisfies FullTimeRequestEntry))
+
+            if (imported.length === 0) {
+                alert('The CSV did not contain any request rows to import.')
+                return
+            }
+
+            setFullTimeRequestEntries(current => {
+                const next = [...current, ...imported]
+                saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next)
+                return next
+            })
+        } catch (error) {
+            alert(error instanceof Error ? error.message : 'Failed to import the requests CSV.')
+        }
+    }
+
     if (accountType === 'full_time') {
         return (
             <div id="rosters-page" data-component="rosters-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -716,6 +748,9 @@ function RostersPage() {
                                 entries={fullTimeRequestEntries}
                                 onDraftChange={handleFullTimeRequestDraftChange}
                                 onAddRequest={handleAddFullTimeRequest}
+                                onImportCsv={file => {
+                                    void handleImportFullTimeRequests(file)
+                                }}
                                 onEntryChange={handleFullTimeRequestEntryChange}
                                 onDeleteRequest={handleDeleteFullTimeRequest}
                             />
