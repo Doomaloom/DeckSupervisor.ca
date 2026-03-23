@@ -33,6 +33,8 @@ export type FullTimeRequestReason =
     | 'staff_schedule'
     | 'student_not_registered'
 
+export type FullTimeRequestMatchSource = '' | 'phone' | 'name'
+
 export type FullTimeRequestEntry = {
     id: string
     firstName: string
@@ -41,4 +43,10 @@ export type FullTimeRequestEntry = {
     instructor: string
     accommodated: boolean
     reason: FullTimeRequestReason
+    matchedDay: string
+    matchedCode: string
+    matchedServiceName: string
+    matchedTime: string
+    matchedBy: FullTimeRequestMatchSource
+    matchedRequestCount: number
 }

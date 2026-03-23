@@ -21,6 +21,7 @@ import RosterFiltersBar from './components/RosterFiltersBar'
 import RosterList from './components/RosterList'
 import RostersTabs from './components/RostersTabs'
 import {
+    attemptAutoAssignFullTimeRequests,
     buildColumnsForDay,
     createEmptyInstructorDayAssignments,
     parseFullTimeRequestCsv,
@@ -538,6 +539,12 @@ function RostersPage() {
             instructor: fullTimeRequestDraft.instructor.trim(),
             accommodated: false,
             reason: '',
+            matchedDay: '',
+            matchedCode: '',
+            matchedServiceName: '',
+            matchedTime: '',
+            matchedBy: '',
+            matchedRequestCount: 0,
         } satisfies FullTimeRequestEntry
 
         if (!nextEntry.firstName || !nextEntry.lastName || !nextEntry.phone || !nextEntry.instructor) {
@@ -612,6 +619,12 @@ function RostersPage() {
                 instructor: entry.instructor,
                 accommodated: false,
                 reason: '',
+                matchedDay: '',
+                matchedCode: '',
+                matchedServiceName: '',
+                matchedTime: '',
+                matchedBy: '',
+                matchedRequestCount: 0,
             } satisfies FullTimeRequestEntry))
 
             if (imported.length === 0) {
@@ -627,6 +640,15 @@ function RostersPage() {
         } catch (error) {
             alert(error instanceof Error ? error.message : 'Failed to import the requests CSV.')
         }
+    }
+
+    const handleAutoAssignFullTimeRequests = () => {
+        if (!currentTeamId) {
+            return
+        }
+        const next = attemptAutoAssignFullTimeRequests(fullTimeRequestEntries, fullTimeRosterClasses)
+        setFullTimeRequestEntries(next)
+        saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next)
     }
 
     if (accountType === 'full_time') {
@@ -751,6 +773,7 @@ function RostersPage() {
                                 onImportCsv={file => {
                                     void handleImportFullTimeRequests(file)
                                 }}
+                                onAutoAssign={handleAutoAssignFullTimeRequests}
                                 onEntryChange={handleFullTimeRequestEntryChange}
                                 onDeleteRequest={handleDeleteFullTimeRequest}
                             />

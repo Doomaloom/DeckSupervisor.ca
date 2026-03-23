@@ -16,6 +16,7 @@ type FullTimeRequestListPanelProps = {
     onDraftChange: (field: keyof FullTimeRequestDraft, value: string) => void
     onAddRequest: () => void
     onImportCsv: (file: File | null) => void
+    onAutoAssign: () => void
     onEntryChange: <K extends keyof FullTimeRequestEntry>(id: string, field: K, value: FullTimeRequestEntry[K]) => void
     onDeleteRequest: (id: string) => void
 }
@@ -26,6 +27,7 @@ function FullTimeRequestListPanel({
     onDraftChange,
     onAddRequest,
     onImportCsv,
+    onAutoAssign,
     onEntryChange,
     onDeleteRequest,
 }: FullTimeRequestListPanelProps) {
@@ -47,13 +49,22 @@ function FullTimeRequestListPanel({
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">Request List</p>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
                     <h3 className="text-xl font-semibold">Add Student Request</h3>
-                    <button
-                        type="button"
-                        className="rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
-                        onClick={() => uploadInputRef.current?.click()}
-                    >
-                        Import CSV
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            className="rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                            onClick={() => uploadInputRef.current?.click()}
+                        >
+                            Import CSV
+                        </button>
+                        <button
+                            type="button"
+                            className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5"
+                            onClick={onAutoAssign}
+                        >
+                            Auto Assign Requests
+                        </button>
+                    </div>
                 </div>
                 <p className="mt-3 text-sm text-secondary/70">
                     CSV columns: First Name, Last Name, Phone Number, Instructor Name
@@ -177,6 +188,23 @@ function FullTimeRequestListPanel({
                                         Delete
                                     </button>
                                 </div>
+
+                                {entry.matchedCode ? (
+                                    <div className="mt-4 rounded-2xl border border-secondary/15 bg-accent/60 px-4 py-3 text-sm text-secondary/80">
+                                        <p>
+                                            Matched by <span className="font-semibold">{entry.matchedBy || 'auto-assign'}</span> to{' '}
+                                            <span className="font-semibold">
+                                                {entry.matchedServiceName || entry.matchedCode}
+                                            </span>
+                                            {entry.matchedDay ? ` • ${entry.matchedDay}` : ''}
+                                            {entry.matchedTime ? ` • ${entry.matchedTime}` : ''}
+                                        </p>
+                                        <p className="mt-1">
+                                            Requests for this class/instructor:{' '}
+                                            <span className="font-semibold">{entry.matchedRequestCount}</span>
+                                        </p>
+                                    </div>
+                                ) : null}
                             </article>
                         ))}
                     </div>

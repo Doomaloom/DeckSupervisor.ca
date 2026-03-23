@@ -12,6 +12,7 @@ import type {
     FullTimeInstructorDayAssignments,
     FullTimeInstructorPeriod,
     FullTimeRequestEntry,
+    FullTimeRequestMatchSource,
     FullTimeRequestReason,
 } from './types'
 
@@ -78,6 +79,12 @@ export function normalizeRequestEntries(input: unknown): FullTimeRequestEntry[] 
             instructor: typeof value.instructor === 'string' ? value.instructor : '',
             accommodated: Boolean(value.accommodated),
             reason: isValidRequestReason(value.reason) ? value.reason : '',
+            matchedDay: typeof value.matchedDay === 'string' ? value.matchedDay : '',
+            matchedCode: typeof value.matchedCode === 'string' ? value.matchedCode : '',
+            matchedServiceName: typeof value.matchedServiceName === 'string' ? value.matchedServiceName : '',
+            matchedTime: typeof value.matchedTime === 'string' ? value.matchedTime : '',
+            matchedBy: isValidMatchSource(value.matchedBy) ? value.matchedBy : '',
+            matchedRequestCount: Number.isFinite(value.matchedRequestCount) ? Math.max(Number(value.matchedRequestCount), 0) : 0,
         }
     })
 }
@@ -121,10 +128,146 @@ function isValidRequestReason(value: unknown): value is FullTimeRequestReason {
     return value === '' || fullTimeRequestReasonOptions.some(option => option.value === value)
 }
 
+function isValidMatchSource(value: unknown): value is FullTimeRequestMatchSource {
+    return value === '' || value === 'phone' || value === 'name'
+}
+
 export function createRequestId() {
     return typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+function normalizePhone(value: string) {
+    return value.replace(/\D+/g, '')
+}
+
+function normalizeFullName(firstName: string, lastName: string) {
+    return [firstName, lastName]
+        .filter(Boolean)
+        .join(' ')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+}
+
+function normalizeStudentFullName(name: string) {
+    return name
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+}
+
+type RequestRosterMatch = {
+    day: string
+    code: string
+    serviceName: string
+    time: string
+    matchSource: FullTimeRequestMatchSource
+}
+
+function buildRequestRosterMatches(rosters: ClassRoster[]) {
+    return rosters.flatMap(roster =>
+        roster.students.map(student => ({
+            day: roster.day,
+            code: roster.code,
+            serviceName: roster.serviceName,
+            time: roster.time,
+            phone: normalizePhone(student.phone),
+            fullName: normalizeStudentFullName(student.name),
+        })),
+    )
+}
+
+function findRequestMatch(
+    entry: FullTimeRequestEntry,
+    rosterMatches: ReturnType<typeof buildRequestRosterMatches>,
+): RequestRosterMatch | null {
+    const normalizedPhone = normalizePhone(entry.phone)
+    if (normalizedPhone) {
+        const phoneMatch = rosterMatches.find(match => match.phone === normalizedPhone)
+        if (phoneMatch) {
+            return {
+                day: phoneMatch.day,
+                code: phoneMatch.code,
+                serviceName: phoneMatch.serviceName,
+                time: phoneMatch.time,
+                matchSource: 'phone',
+            }
+        }
+    }
+
+    const normalizedFullName = normalizeFullName(entry.firstName, entry.lastName)
+    if (!normalizedFullName) {
+        return null
+    }
+    const nameMatch = rosterMatches.find(match => match.fullName === normalizedFullName)
+    if (!nameMatch) {
+        return null
+    }
+    return {
+        day: nameMatch.day,
+        code: nameMatch.code,
+        serviceName: nameMatch.serviceName,
+        time: nameMatch.time,
+        matchSource: 'name',
+    }
+}
+
+export function attemptAutoAssignFullTimeRequests(
+    entries: FullTimeRequestEntry[],
+    rosters: ClassRoster[],
+) {
+    const rosterMatches = buildRequestRosterMatches(rosters)
+
+    const matched = entries.map(entry => {
+        const match = findRequestMatch(entry, rosterMatches)
+        if (!match) {
+            return {
+                ...entry,
+                accommodated: false,
+                reason: 'student_not_registered' as const,
+                matchedDay: '',
+                matchedCode: '',
+                matchedServiceName: '',
+                matchedTime: '',
+                matchedBy: '',
+                matchedRequestCount: 0,
+            }
+        }
+
+        return {
+            ...entry,
+            accommodated: true,
+            reason: '',
+            matchedDay: match.day,
+            matchedCode: match.code,
+            matchedServiceName: match.serviceName,
+            matchedTime: match.time,
+            matchedBy: match.matchSource,
+            matchedRequestCount: 0,
+        }
+    })
+
+    const requestCounts = new Map<string, number>()
+    matched.forEach(entry => {
+        if (!entry.matchedCode) {
+            return
+        }
+        const key = `${entry.matchedDay}::${entry.matchedCode}::${entry.instructor.trim().toLowerCase()}`
+        requestCounts.set(key, (requestCounts.get(key) ?? 0) + 1)
+    })
+
+    return matched.map(entry => {
+        if (!entry.matchedCode) {
+            return entry
+        }
+        const key = `${entry.matchedDay}::${entry.matchedCode}::${entry.instructor.trim().toLowerCase()}`
+        return {
+            ...entry,
+            matchedRequestCount: requestCounts.get(key) ?? 0,
+        }
+    })
 }
 
 export function sortDayKeys(days: string[]) {
