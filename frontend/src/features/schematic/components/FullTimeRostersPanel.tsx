@@ -15,6 +15,7 @@ type FullTimeRostersPanelProps = {
     levelFilter: string
     searchQuery: string
     onUploadRoster: () => void
+    onClearAssignments: () => void
     onInstructorChange: (day: string, code: string, value: string) => void
     onDayFilterChange: (value: string) => void
     onLevelFilterChange: (value: string) => void
@@ -29,6 +30,7 @@ function FullTimeRostersPanel({
     levelFilter,
     searchQuery,
     onUploadRoster,
+    onClearAssignments,
     onInstructorChange,
     onDayFilterChange,
     onLevelFilterChange,
@@ -40,13 +42,22 @@ function FullTimeRostersPanel({
             <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">Roster Filters</p>
-                    <button
-                        type="button"
-                        className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5"
-                        onClick={onUploadRoster}
-                    >
-                        Upload Roster
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            className="rounded-2xl border border-danger/30 bg-danger/10 px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/20"
+                            onClick={onClearAssignments}
+                        >
+                            Clear All Assignments
+                        </button>
+                        <button
+                            type="button"
+                            className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5"
+                            onClick={onUploadRoster}
+                        >
+                            Upload Roster
+                        </button>
+                    </div>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
                     <select className={selectClass} value={dayFilter} onChange={event => onDayFilterChange(event.target.value)}>
