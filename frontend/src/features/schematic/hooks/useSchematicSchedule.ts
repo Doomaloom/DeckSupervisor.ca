@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { formatTermLabel } from '../../../app/useCurrentTerm'
+import { formatSessionTermLabel as getSessionTermLabel } from '../../../shared/session/sessionLabels'
 import {
     getScheduleForDay,
     getStudentsForDay,
@@ -37,14 +37,6 @@ type ColumnFitScore = {
     exactTouchCount: number
     largestGap: number
     blockSize: number
-}
-
-function getSessionTermLabel(sessionSeason: string | null | undefined, sessionYear: number | null, startDate: string | null | undefined) {
-    const year = sessionYear ?? (startDate ? new Date(startDate).getFullYear() : NaN)
-    if (!sessionSeason || !Number.isFinite(year) || year <= 0) {
-        return ''
-    }
-    return formatTermLabel(sessionSeason, year)
 }
 
 function getStoredCourseOrder(courses: Course[], stored: StoredSchedule | null) {

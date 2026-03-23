@@ -7,12 +7,17 @@ import {
   updateRequestAssignment,
 } from '../../lib/serverApi'
 import type { ClassRoster, RequestAssignment } from '../../types/app'
-import { dayNames } from '../schematic/constants'
 import {
   analyzeInstructorRequests,
   parseRequestsCsv,
   type RequestsAnalysisResult,
 } from './requestsAnalysis'
+import {
+  buildAssignmentKey,
+  buildRosterClassKey,
+  formatDayLabel,
+  sortAssignments,
+} from './utils/assignmentKeys'
 
 type LoadedRequestsFile = {
   file: File
@@ -40,34 +45,6 @@ const emptyAssignmentDraft: AssignmentDraft = {
   term: '',
   location: '',
   instructor: '',
-}
-
-function formatDayLabel(day: string) {
-  return dayNames[day] ?? day
-}
-
-function buildRosterClassKey(day: string, eventId: string, location: string) {
-  return [day.trim(), eventId.trim(), location.trim().toLowerCase()].join('::')
-}
-
-function buildAssignmentKey(eventId: string, term: string, location: string) {
-  return [
-    eventId.trim(),
-    term.trim().replace(/\s+/g, ' '),
-    location.trim().toLowerCase(),
-  ].join('::')
-}
-
-function sortAssignments(assignments: RequestAssignment[]) {
-  return [...assignments].sort((left, right) => {
-    if (left.term !== right.term) {
-      return right.term.localeCompare(left.term)
-    }
-    if (left.location !== right.location) {
-      return left.location.localeCompare(right.location)
-    }
-    return left.eventId.localeCompare(right.eventId)
-  })
 }
 
 function tabButtonClass(active: boolean) {

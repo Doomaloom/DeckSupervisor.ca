@@ -5,6 +5,11 @@ import { useAuth } from '../../app/AuthContext'
 import { useCsvImportFlow } from '../../app/CsvImportFlowContext'
 import { createTermKey, formatTermLabel, useCurrentTerm } from '../../app/useCurrentTerm'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
+import {
+  formatSessionDisplayName,
+  getYearFromDate,
+  resolveSessionYear,
+} from '../../shared/session/sessionLabels'
 import { getTorontoDate } from '../../lib/torontoDate'
 import { createSession, fetchMySessions, fetchSharedSessionsToday, fetchTeamSessions } from '../../lib/serverApi'
 import {
@@ -63,18 +68,6 @@ type SharedSessionEntry = {
   allow_roster_edits: boolean
   sessions?: DbSessionEntry | null
 }
-
-
-const dayNames: Record<string, string> = {
-  Mo: 'Monday',
-  Tu: 'Tuesday',
-  We: 'Wednesday',
-  Th: 'Thursday',
-  Fr: 'Friday',
-  Sa: 'Saturday',
-  Su: 'Sunday',
-}
-
 const NO_TEAM_VALUE = '__no_team__'
 
 const seasonRank: Record<string, number> = {
@@ -84,42 +77,22 @@ const seasonRank: Record<string, number> = {
   fall: 3,
 }
 
-function getYearFromDate(value: string | null) {
-  if (!value) {
-    return null
-  }
-  const parsed = new Date(value).getFullYear()
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
-}
-
-function resolveSessionYear(yearInput: string, startDate: string, endDate: string) {
-  const trimmed = yearInput.trim()
-  if (trimmed) {
-    const parsed = Number.parseInt(trimmed, 10)
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return parsed
-    }
-  }
-  return getYearFromDate(startDate) ?? getYearFromDate(endDate)
-}
-
 function getSessionName(session: SessionEntry) {
-  const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
-  const season = session.sessionSeason?.trim()
-  const yearFromDate = session.startDate ? new Date(session.startDate).getFullYear() : NaN
-  const year = session.sessionYear ?? (Number.isFinite(yearFromDate) && yearFromDate > 0 ? yearFromDate : null)
-  const yearLabel = year ? String(year) : ''
-  const parts = [dayLabel, season, yearLabel].filter(Boolean)
-  return parts.length ? parts.join(' ') : 'Session'
+  return formatSessionDisplayName({
+    sessionDay: session.sessionDay,
+    sessionSeason: session.sessionSeason,
+    sessionYear: session.sessionYear ?? null,
+    startDate: session.startDate,
+  })
 }
 
 function getDbSessionName(session: DbSessionEntry) {
-  const dayLabel = session.session_day ? dayNames[session.session_day] ?? session.session_day : ''
-  const season = session.session_season?.trim()
-  const year = session.session_year ?? getYearFromDate(session.start_date)
-  const yearLabel = year ? String(year) : ''
-  const parts = [dayLabel, season, yearLabel].filter(Boolean)
-  return parts.length ? parts.join(' ') : 'Session'
+  return formatSessionDisplayName({
+    sessionDay: session.session_day,
+    sessionSeason: session.session_season,
+    sessionYear: session.session_year,
+    startDate: session.start_date,
+  })
 }
 
 function Dashboard() {

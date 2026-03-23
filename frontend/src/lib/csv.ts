@@ -1,63 +1,5 @@
 import type { InstructorEntry, Student } from '../types/app'
-
-type CsvParseResult = {
-  rows: string[][]
-  rawHeader: string
-}
-
-function parseCsvText(text: string): CsvParseResult {
-  const rows: string[][] = []
-  let row: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i]
-    const nextChar = text[i + 1]
-
-    if (char === '"' && nextChar === '"') {
-      current += '"'
-      i += 1
-      continue
-    }
-
-    if (char === '"') {
-      inQuotes = !inQuotes
-      continue
-    }
-
-    if (char === ',' && !inQuotes) {
-      row.push(current)
-      current = ''
-      continue
-    }
-
-    if ((char === '\n' || char === '\r') && !inQuotes) {
-      if (char === '\r' && nextChar === '\n') {
-        i += 1
-      }
-      row.push(current)
-      current = ''
-      if (row.length > 1 || row[0]?.trim()) {
-        rows.push(row)
-      }
-      row = []
-      continue
-    }
-
-    current += char
-  }
-
-  if (current.length > 0 || row.length > 0) {
-    row.push(current)
-    if (row.length > 1 || row[0]?.trim()) {
-      rows.push(row)
-    }
-  }
-
-  const rawHeader = rows[0]?.join(',') ?? ''
-  return { rows, rawHeader }
-}
+import { parseCsvText } from '../shared/csv/csvUtils'
 
 function buildInstructorMap(instructors: InstructorEntry[]): Record<string, string> {
   const map: Record<string, string> = {}
@@ -82,7 +24,8 @@ export function parseStudentsFromCsv(
   instructors: InstructorEntry[],
   fallbackDay: string
 ): Student[] {
-  const { rows, rawHeader } = parseCsvText(text)
+  const rows = parseCsvText(text)
+  const rawHeader = rows[0]?.join(',') ?? ''
   if (rows.length < 2) {
     return []
   }

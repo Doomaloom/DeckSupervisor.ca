@@ -20,6 +20,7 @@ import { useCsvImportFlow } from '../../app/CsvImportFlowContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
+import { formatSessionDisplayName } from '../../shared/session/sessionLabels'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 import {
@@ -31,34 +32,6 @@ import {
 
 type LayoutProps = {
     children: React.ReactNode
-}
-
-type SessionEntry = {
-    id: string
-    sessionDay: string
-    sessionSeason: string
-    sessionYear?: number | null
-    startDate: string
-}
-
-const dayNames: Record<string, string> = {
-    Mo: 'Monday',
-    Tu: 'Tuesday',
-    We: 'Wednesday',
-    Th: 'Thursday',
-    Fr: 'Friday',
-    Sa: 'Saturday',
-    Su: 'Sunday',
-}
-
-function getSessionName(session: SessionEntry) {
-    const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
-    const season = session.sessionSeason?.trim()
-    const startYear = session.startDate ? new Date(session.startDate).getFullYear() : NaN
-    const year = session.sessionYear ?? (Number.isFinite(startYear) && startYear > 0 ? startYear : null)
-    const yearLabel = year ? String(year) : ''
-    const parts = [dayLabel, season, yearLabel].filter(Boolean)
-    return parts.length ? parts.join(' ') : 'Session'
 }
 
 function Layout({ children }: LayoutProps) {
@@ -89,8 +62,7 @@ function Layout({ children }: LayoutProps) {
         const sessionSeason = currentSession.session_season ?? ''
         const startDate = currentSession.start_date ?? ''
         const sessionYear = currentSession.session_year ?? null
-        return getSessionName({
-            id: currentSession.id,
+        return formatSessionDisplayName({
             sessionDay,
             sessionSeason,
             sessionYear,

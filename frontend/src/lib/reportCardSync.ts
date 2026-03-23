@@ -1,4 +1,5 @@
 import type { Student } from '../types/app'
+import { formatSessionTermLabel } from '../shared/session/sessionLabels'
 import { syncReportCards } from './serverApi'
 
 const UNASSIGNED_LABEL = 'Unassigned'
@@ -19,17 +20,7 @@ function normalizeInstructor(value: string | null | undefined) {
   return (value ?? '').trim()
 }
 
-export function getSessionTermLabel(
-  sessionSeason: string | null | undefined,
-  sessionYear: number | null | undefined,
-  startDate: string | null | undefined,
-) {
-  const season = sessionSeason?.trim() ?? ''
-  const startYear = startDate ? new Date(startDate).getFullYear() : NaN
-  const year = sessionYear ?? (Number.isFinite(startYear) ? startYear : null)
-  const yearLabel = year ? String(year) : ''
-  return [season, yearLabel].filter(Boolean).join(' ')
-}
+export const getSessionTermLabel = formatSessionTermLabel
 
 export async function syncReportCardsForDay({
   day,

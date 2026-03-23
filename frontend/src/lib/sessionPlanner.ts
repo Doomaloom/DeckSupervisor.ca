@@ -10,6 +10,12 @@ import type {
     PlannerParticipantStatus,
     PlannerSession,
 } from '../types/app'
+import {
+    buildCsvHeaderIndex,
+    getCsvHeaderValue,
+    hasAnyCsvHeader,
+    parseCsvText,
+} from '../shared/csv/csvUtils'
 import { getStoredItem, setStoredItem } from './browserStorage'
 import { getScopedKey } from './storageScope'
 import { extractEndTime, extractStartTime } from './time'
@@ -53,10 +59,6 @@ export type PlannerSaveStateApplyResult = {
 export type PlannerAlternativeGroups = {
     availableAlternatives: PlannerClass[]
     fullAlternatives: PlannerClass[]
-}
-
-type ParsedCsv = {
-    rows: string[][]
 }
 
 type CsvParticipantRow = {
@@ -105,88 +107,6 @@ const dayMap: Record<string, string> = {
     fr: 'Fr',
     sa: 'Sa',
     su: 'Su',
-}
-
-function parseCsvText(text: string): ParsedCsv {
-    const rows: string[][] = []
-    let row: string[] = []
-    let current = ''
-    let inQuotes = false
-
-    for (let index = 0; index < text.length; index += 1) {
-        const char = text[index]
-        const next = text[index + 1]
-
-        if (char === '"' && next === '"') {
-            current += '"'
-            index += 1
-            continue
-        }
-
-        if (char === '"') {
-            inQuotes = !inQuotes
-            continue
-        }
-
-        if (char === ',' && !inQuotes) {
-            row.push(current)
-            current = ''
-            continue
-        }
-
-        if ((char === '\n' || char === '\r') && !inQuotes) {
-            if (char === '\r' && next === '\n') {
-                index += 1
-            }
-            row.push(current)
-            current = ''
-            if (row.length > 1 || row[0]?.trim()) {
-                rows.push(row)
-            }
-            row = []
-            continue
-        }
-
-        current += char
-    }
-
-    if (current.length > 0 || row.length > 0) {
-        row.push(current)
-        if (row.length > 1 || row[0]?.trim()) {
-            rows.push(row)
-        }
-    }
-
-    return { rows }
-}
-
-function normalizeHeader(value: string) {
-    return value.trim().replace(/^\uFEFF/, '').toLowerCase()
-}
-
-function buildHeaderIndex(headerRow: string[]) {
-    const headerIndex = new Map<string, number>()
-    headerRow.forEach((header, index) => {
-        const normalized = normalizeHeader(header)
-        if (normalized) {
-            headerIndex.set(normalized, index)
-        }
-    })
-    return headerIndex
-}
-
-function hasAnyHeader(headerIndex: Map<string, number>, headers: string[]) {
-    return headers.some(header => headerIndex.has(normalizeHeader(header)))
-}
-
-function getHeaderValue(row: string[], headerIndex: Map<string, number>, headers: string[]) {
-    for (const header of headers) {
-        const index = headerIndex.get(normalizeHeader(header))
-        if (index !== undefined && index < row.length) {
-            return row[index]?.trim() ?? ''
-        }
-    }
-    return ''
 }
 
 function normalizeDay(value: string) {
@@ -569,13 +489,13 @@ function normalizePlannerClassEntry(plannerClass: PlannerClass): PlannerClass {
 }
 
 export function parseSessionPlannerCsv(text: string, sourceFileName: string): PlannerDataset {
-    const { rows } = parseCsvText(text)
+    const rows = parseCsvText(text)
     if (rows.length < 2) {
         throw new Error('The CSV does not contain any participant rows.')
     }
 
     const headerRow = rows[0]
-    const headerIndex = buildHeaderIndex(headerRow)
+    const headerIndex = buildCsvHeaderIndex(headerRow)
 
     const requiredHeaders = [
         'servicename',
@@ -609,29 +529,29 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
             continue
         }
 
-        const eventId = getHeaderValue(row, headerIndex, ['eventid'])
-        const attendeeStatus = parseAttendeeStatus(getHeaderValue(row, headerIndex, ['attendeestatus']))
+        const eventId = getCsvHeaderValue(row, headerIndex, ['eventid'])
+        const attendeeStatus = parseAttendeeStatus(getCsvHeaderValue(row, headerIndex, ['attendeestatus']))
         if (!eventId || !attendeeStatus) {
             continue
         }
 
-        const { season, year } = parseEventSchedule(getHeaderValue(row, headerIndex, ['eventschedule']))
+        const { season, year } = parseEventSchedule(getCsvHeaderValue(row, headerIndex, ['eventschedule']))
         const parsedRow: CsvParticipantRow = {
-            serviceName: getHeaderValue(row, headerIndex, ['servicename']),
-            minimumCapacity: parsePositiveNumber(getHeaderValue(row, headerIndex, ['minimumcapacity'])),
-            maximumCapacity: parsePositiveNumber(getHeaderValue(row, headerIndex, ['maximumcapacity'])),
-            bookedCount: parsePositiveNumber(getHeaderValue(row, headerIndex, ['booked'])),
-            dayOfWeek: normalizeDay(getHeaderValue(row, headerIndex, ['dayoftheweek'])),
-            eventTime: getHeaderValue(row, headerIndex, ['eventtime']),
+            serviceName: getCsvHeaderValue(row, headerIndex, ['servicename']),
+            minimumCapacity: parsePositiveNumber(getCsvHeaderValue(row, headerIndex, ['minimumcapacity'])),
+            maximumCapacity: parsePositiveNumber(getCsvHeaderValue(row, headerIndex, ['maximumcapacity'])),
+            bookedCount: parsePositiveNumber(getCsvHeaderValue(row, headerIndex, ['booked'])),
+            dayOfWeek: normalizeDay(getCsvHeaderValue(row, headerIndex, ['dayoftheweek'])),
+            eventTime: getCsvHeaderValue(row, headerIndex, ['eventtime']),
             eventId,
             sessionSeason: season,
             sessionYear: year,
-            facility: getHeaderValue(row, headerIndex, ['facility']),
-            attendeeName: parseAttendeeName(getHeaderValue(row, headerIndex, ['attendeename'])),
+            facility: getCsvHeaderValue(row, headerIndex, ['facility']),
+            attendeeName: parseAttendeeName(getCsvHeaderValue(row, headerIndex, ['attendeename'])),
             attendeeStatus,
-            attendeePhone: getHeaderValue(row, headerIndex, ['attendeephone']),
-            age: getHeaderValue(row, headerIndex, ['age']),
-            email: getHeaderValue(row, headerIndex, ['e-mail']),
+            attendeePhone: getCsvHeaderValue(row, headerIndex, ['attendeephone']),
+            age: getCsvHeaderValue(row, headerIndex, ['age']),
+            email: getCsvHeaderValue(row, headerIndex, ['e-mail']),
         }
 
         if (!parsedRow.serviceName || !parsedRow.dayOfWeek || !parsedRow.eventTime || !parsedRow.facility || !parsedRow.attendeeName) {
@@ -764,12 +684,12 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
 }
 
 export function parseEmptyClassesPlannerCsv(text: string, sourceFileName: string): PlannerDataset {
-    const { rows } = parseCsvText(text)
+    const rows = parseCsvText(text)
     if (rows.length < 2) {
         throw new Error('The CSV does not contain any class rows.')
     }
 
-    const headerIndex = buildHeaderIndex(rows[0])
+    const headerIndex = buildCsvHeaderIndex(rows[0])
     const requiredHeaderGroups = [
         { label: 'GroupName / ServiceName / Level', headers: ['GroupName', 'ServiceName', 'Service', 'Level'] },
         { label: 'ID / EventID / Code', headers: ['ID', 'EventID', 'Event Id', 'Code', 'ClassCode'] },
@@ -781,7 +701,7 @@ export function parseEmptyClassesPlannerCsv(text: string, sourceFileName: string
     ]
 
     const missing = requiredHeaderGroups
-        .filter(group => !hasAnyHeader(headerIndex, group.headers))
+        .filter(group => !hasAnyCsvHeader(headerIndex, group.headers))
         .map(group => group.label)
 
     if (missing.length > 0) {
@@ -797,23 +717,23 @@ export function parseEmptyClassesPlannerCsv(text: string, sourceFileName: string
             continue
         }
 
-        const eventId = getHeaderValue(row, headerIndex, ['EventID', 'Event Id', 'ClassCode', 'Code', 'ID'])
-        const serviceName = getHeaderValue(row, headerIndex, ['ServiceName', 'Service', 'Service Name', 'GroupName', 'Level'])
-        const facility = getHeaderValue(row, headerIndex, ['Location', 'Facility', 'MainFacility', 'Main Facility'])
+        const eventId = getCsvHeaderValue(row, headerIndex, ['EventID', 'Event Id', 'ClassCode', 'Code', 'ID'])
+        const serviceName = getCsvHeaderValue(row, headerIndex, ['ServiceName', 'Service', 'Service Name', 'GroupName', 'Level'])
+        const facility = getCsvHeaderValue(row, headerIndex, ['Location', 'Facility', 'MainFacility', 'Main Facility'])
         const dayOfWeek = normalizeDay(
-            getHeaderValue(row, headerIndex, ['DayOfTheWeek', 'Day Of The Week', 'Day']),
+            getCsvHeaderValue(row, headerIndex, ['DayOfTheWeek', 'Day Of The Week', 'Day']),
         )
         const bookedCount = parsePositiveNumber(
-            getHeaderValue(row, headerIndex, ['RegTotal', 'Registered', 'Enrollment', 'Students']),
+            getCsvHeaderValue(row, headerIndex, ['RegTotal', 'Registered', 'Enrollment', 'Students']),
         )
 
         if (!eventId || !serviceName || !facility || !dayOfWeek || bookedCount > 0) {
             continue
         }
 
-        const startsValue = getHeaderValue(row, headerIndex, ['Starts', 'Start', 'StartTime'])
-        const endsValue = getHeaderValue(row, headerIndex, ['Ends', 'End', 'EndTime'])
-        const timeRangeValue = getHeaderValue(row, headerIndex, ['EventTime', 'Time'])
+        const startsValue = getCsvHeaderValue(row, headerIndex, ['Starts', 'Start', 'StartTime'])
+        const endsValue = getCsvHeaderValue(row, headerIndex, ['Ends', 'End', 'EndTime'])
+        const timeRangeValue = getCsvHeaderValue(row, headerIndex, ['EventTime', 'Time'])
         let { time24: startTime24, date: startDate } = extractTimeAndDate(startsValue)
         let { time24: endTime24, date: endDate } = extractTimeAndDate(endsValue)
 
@@ -836,12 +756,12 @@ export function parseEmptyClassesPlannerCsv(text: string, sourceFileName: string
             continue
         }
 
-        const eventSchedule = getHeaderValue(row, headerIndex, ['EventSchedule', 'Schedule'])
+        const eventSchedule = getCsvHeaderValue(row, headerIndex, ['EventSchedule', 'Schedule'])
         const { season, year } = getSeasonAndYearFromDates(startDate, endDate, eventSchedule)
         const parsedRow: CsvEmptyClassRow = {
             serviceName,
-            minimumCapacity: parsePositiveNumber(getHeaderValue(row, headerIndex, ['Min', 'MinimumCapacity'])),
-            maximumCapacity: parsePositiveNumber(getHeaderValue(row, headerIndex, ['Max', 'MaximumCapacity'])),
+            minimumCapacity: parsePositiveNumber(getCsvHeaderValue(row, headerIndex, ['Min', 'MinimumCapacity'])),
+            maximumCapacity: parsePositiveNumber(getCsvHeaderValue(row, headerIndex, ['Max', 'MaximumCapacity'])),
             bookedCount,
             dayOfWeek,
             eventTime,

@@ -1,24 +1,15 @@
 import type { RosterGroup } from '../types'
 import { sanitizeLevel } from '../utils'
 import { useCurrentSession } from '../../../app/useCurrentSession'
-
-const dayNames: Record<string, string> = {
-    Mo: 'Monday',
-    Tu: 'Tuesday',
-    We: 'Wednesday',
-    Th: 'Thursday',
-    Fr: 'Friday',
-    Sa: 'Saturday',
-    Su: 'Sunday',
-}
+import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
 
 function getSessionName(sessionDay: string, sessionSeason: string | null, startDate: string | null) {
-    const dayLabel = sessionDay ? dayNames[sessionDay] ?? sessionDay : ''
-    const season = sessionSeason?.trim()
-    const year = startDate ? new Date(startDate).getFullYear() : NaN
-    const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
-    const parts = [dayLabel, season, yearLabel].filter(Boolean)
-    return parts.length ? parts.join(' ') : ''
+    return formatSessionDisplayName({
+        sessionDay,
+        sessionSeason,
+        startDate,
+        fallback: '',
+    })
 }
 
 function openPdfPrintDialog(pdfBlob: Blob, existingWindow?: Window | null) {

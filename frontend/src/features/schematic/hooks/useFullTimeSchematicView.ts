@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useCurrentTeam } from '../../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../../app/useCurrentTerm'
+import { getYearFromDate } from '../../../shared/session/sessionLabels'
 import {
     getExtractedClassesForScope,
     onExtractedClassesUpdated,
@@ -48,14 +49,6 @@ type LocationOption = {
 
 type FullTimeRosterItem = RosterListItem & {
     day: string
-}
-
-function getYearFromDate(value: string | null) {
-    if (!value) {
-        return null
-    }
-    const year = new Date(value).getFullYear()
-    return Number.isFinite(year) && year > 0 ? year : null
 }
 
 function normalizeLocation(value: string | null | undefined) {

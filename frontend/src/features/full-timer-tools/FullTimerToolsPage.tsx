@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { createTermKey, formatTermLabel, useCurrentTerm } from '../../app/useCurrentTerm'
+import { getYearFromDate } from '../../shared/session/sessionLabels'
 import { fetchTeamSessions } from '../../lib/serverApi'
 
 type TeamSessionRow = {
@@ -26,14 +27,6 @@ const seasonRank: Record<string, number> = {
 }
 
 const seasonOptions = ['Winter', 'Spring', 'Summer', 'Fall']
-
-function getYearFromDate(value: string | null) {
-  if (!value) {
-    return null
-  }
-  const year = new Date(value).getFullYear()
-  return Number.isFinite(year) && year > 0 ? year : null
-}
 
 function toTitleCase(value: string) {
   if (!value) {

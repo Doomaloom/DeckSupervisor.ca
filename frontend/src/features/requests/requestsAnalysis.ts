@@ -1,4 +1,10 @@
 import type { ClassRoster } from '../../types/app'
+import {
+  buildCsvHeaderIndex,
+  getCsvHeaderValue,
+  hasAnyCsvHeader,
+  parseCsvText,
+} from '../../shared/csv/csvUtils'
 
 export type RequestCsvRow = {
   rowNumber: number
@@ -54,10 +60,6 @@ export type RequestsAnalysisResult = {
   unmatched: UnmatchedRequest[]
 }
 
-type ParsedCsv = {
-  rows: string[][]
-}
-
 const dayMap: Record<string, string> = {
   monday: 'Mo',
   mon: 'Mo',
@@ -86,92 +88,7 @@ const dayMap: Record<string, string> = {
 }
 
 const dayOrder = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const
-
-function parseCsvText(text: string): ParsedCsv {
-  const rows: string[][] = []
-  let row: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index]
-    const next = text[index + 1]
-
-    if (char === '"' && next === '"') {
-      current += '"'
-      index += 1
-      continue
-    }
-
-    if (char === '"') {
-      inQuotes = !inQuotes
-      continue
-    }
-
-    if (char === ',' && !inQuotes) {
-      row.push(current)
-      current = ''
-      continue
-    }
-
-    if ((char === '\n' || char === '\r') && !inQuotes) {
-      if (char === '\r' && next === '\n') {
-        index += 1
-      }
-      row.push(current)
-      current = ''
-      if (row.length > 1 || row[0]?.trim()) {
-        rows.push(row)
-      }
-      row = []
-      continue
-    }
-
-    current += char
-  }
-
-  if (current.length > 0 || row.length > 0) {
-    row.push(current)
-    if (row.length > 1 || row[0]?.trim()) {
-      rows.push(row)
-    }
-  }
-
-  return { rows }
-}
-
-function normalizeHeader(value: string) {
-  return value
-    .trim()
-    .replace(/^\uFEFF/, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '')
-}
-
-function buildHeaderIndex(headerRow: string[]) {
-  const index = new Map<string, number>()
-  headerRow.forEach((header, columnIndex) => {
-    const normalized = normalizeHeader(header)
-    if (normalized) {
-      index.set(normalized, columnIndex)
-    }
-  })
-  return index
-}
-
-function getHeaderValue(row: string[], headerIndex: Map<string, number>, headers: string[]) {
-  for (const header of headers) {
-    const columnIndex = headerIndex.get(normalizeHeader(header))
-    if (columnIndex !== undefined && columnIndex < row.length) {
-      return row[columnIndex]?.trim() ?? ''
-    }
-  }
-  return ''
-}
-
-function hasAnyHeader(headerIndex: Map<string, number>, headers: string[]) {
-  return headers.some(header => headerIndex.has(normalizeHeader(header)))
-}
+const csvHeaderOptions = { stripNonAlphanumeric: true } as const
 
 export function normalizePersonName(value: string) {
   return value
@@ -251,7 +168,7 @@ function parseRequestedDays(value: string) {
 }
 
 export function parseRequestsCsv(text: string): RequestCsvRow[] {
-  const { rows } = parseCsvText(text)
+  const rows = parseCsvText(text)
   if (rows.length < 2) {
     throw new Error('The requests CSV does not contain any request rows.')
   }
@@ -270,9 +187,9 @@ export function parseRequestsCsv(text: string): RequestCsvRow[] {
   let headerIndex = new Map<string, number>()
 
   for (let rowIndex = 0; rowIndex < Math.min(rows.length, 10); rowIndex += 1) {
-    const candidateIndex = buildHeaderIndex(rows[rowIndex])
+    const candidateIndex = buildCsvHeaderIndex(rows[rowIndex], csvHeaderOptions)
     const matchedGroupCount = requiredHeaderGroups.filter(group =>
-      hasAnyHeader(candidateIndex, group.headers),
+      hasAnyCsvHeader(candidateIndex, group.headers, csvHeaderOptions),
     ).length
     if (matchedGroupCount >= 3) {
       headerRowIndex = rowIndex
@@ -283,11 +200,11 @@ export function parseRequestsCsv(text: string): RequestCsvRow[] {
 
   if (headerRowIndex === -1) {
     headerRowIndex = 0
-    headerIndex = buildHeaderIndex(rows[0])
+    headerIndex = buildCsvHeaderIndex(rows[0], csvHeaderOptions)
   }
 
   const missing = requiredHeaderGroups
-    .filter(group => !hasAnyHeader(headerIndex, group.headers))
+    .filter(group => !hasAnyCsvHeader(headerIndex, group.headers, csvHeaderOptions))
     .map(group => group.label)
 
   if (missing.length > 0) {
@@ -302,15 +219,30 @@ export function parseRequestsCsv(text: string): RequestCsvRow[] {
       continue
     }
 
-    const firstName = getHeaderValue(row, headerIndex, ['First Name', 'FirstName', 'Student First Name'])
-    const lastName = getHeaderValue(row, headerIndex, ['Last Name', 'LastName', 'Student Last Name'])
-    const requestedInstructor = getHeaderValue(row, headerIndex, [
+    const firstName = getCsvHeaderValue(
+      row,
+      headerIndex,
+      ['First Name', 'FirstName', 'Student First Name'],
+      csvHeaderOptions,
+    )
+    const lastName = getCsvHeaderValue(
+      row,
+      headerIndex,
+      ['Last Name', 'LastName', 'Student Last Name'],
+      csvHeaderOptions,
+    )
+    const requestedInstructor = getCsvHeaderValue(row, headerIndex, [
       'Instructor Requested',
       'Requested Instructor',
       'Instructor',
       'Requested Staff',
-    ])
-    const originalDayValue = getHeaderValue(row, headerIndex, ['Day Of Week', 'DayOfTheWeek', 'Day', 'Requested Day'])
+    ], csvHeaderOptions)
+    const originalDayValue = getCsvHeaderValue(
+      row,
+      headerIndex,
+      ['Day Of Week', 'DayOfTheWeek', 'Day', 'Requested Day'],
+      csvHeaderOptions,
+    )
 
     const fullName = [firstName, lastName].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
     if (!fullName && !requestedInstructor && !originalDayValue) {
