@@ -97,6 +97,7 @@ export function useSchematicBoard({
 
     const toggleCourseSelection = (course: Course, columnIndex: number) => {
         if (course.isLockedToInstructor) {
+            setSelectedCourseCodes([course.code])
             return
         }
         setSelectedCourseCodes(current => {

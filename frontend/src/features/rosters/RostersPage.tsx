@@ -409,6 +409,25 @@ function RostersPage() {
 
     const fullTimeSchematicHeight = Math.max(fullTimeSchematicTimeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
 
+    const selectedFullTimeCourse = useMemo(() => {
+        if (fullTimeSelectedCourseCodes.length !== 1) {
+            return null
+        }
+        const selectedCode = fullTimeSelectedCourseCodes[0]
+        return fullTimeColumns
+            .flat()
+            .find(course => course.code === selectedCode) ?? null
+    }, [fullTimeColumns, fullTimeSelectedCourseCodes])
+
+    const selectedFullTimeCourseRequests = useMemo(() => {
+        if (!selectedFullTimeCourse) {
+            return []
+        }
+        return fullTimeRequestEntries.filter(entry => {
+            return entry.matchedDay === fullTimeSchematicDay && entry.matchedCode === selectedFullTimeCourse.code
+        })
+    }, [fullTimeRequestEntries, fullTimeSchematicDay, selectedFullTimeCourse])
+
     const handleFullTimeRosterUpload = async (file: File | null) => {
         if (!file || !currentTeamId) {
             return
@@ -651,6 +670,27 @@ function RostersPage() {
         saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next)
     }
 
+    const handleMarkFullTimeRequestsConflicting = (requestIds: string[]) => {
+        if (!currentTeamId || requestIds.length === 0) {
+            return
+        }
+        setFullTimeRequestEntries(current => {
+            const requestIdSet = new Set(requestIds)
+            const next = current.map(entry => {
+                if (!requestIdSet.has(entry.id)) {
+                    return entry
+                }
+                return {
+                    ...entry,
+                    accommodated: false,
+                    reason: 'conflicting_request',
+                }
+            })
+            saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next)
+            return next
+        })
+    }
+
     if (accountType === 'full_time') {
         return (
             <div id="rosters-page" data-component="rosters-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -836,6 +876,84 @@ function RostersPage() {
                                                 Remove Empty Columns
                                             </button>
                                         </div>
+                                        {selectedFullTimeCourse ? (
+                                            <div className="mb-4 rounded-2xl border border-secondary/20 bg-bg p-4 text-secondary">
+                                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
+                                                            Selected Class Requests
+                                                        </p>
+                                                        <h4 className="mt-2 text-lg font-semibold">
+                                                            {selectedFullTimeCourse.level} • {selectedFullTimeCourse.code}
+                                                        </h4>
+                                                        <p className="mt-1 text-sm text-secondary/70">
+                                                            {selectedFullTimeCourse.startTime} - {selectedFullTimeCourse.endTime}
+                                                            {selectedFullTimeCourse.assignedInstructor
+                                                                ? ` • Assigned to ${selectedFullTimeCourse.assignedInstructor}`
+                                                                : ''}
+                                                        </p>
+                                                    </div>
+                                                    {selectedFullTimeCourseRequests.some(entry => entry.accommodated) ? (
+                                                        <button
+                                                            type="button"
+                                                            className="rounded-2xl border border-danger/30 bg-danger/10 px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/20"
+                                                            onClick={() =>
+                                                                handleMarkFullTimeRequestsConflicting(
+                                                                    selectedFullTimeCourseRequests
+                                                                        .filter(entry => entry.accommodated)
+                                                                        .map(entry => entry.id),
+                                                                )
+                                                            }
+                                                        >
+                                                            Mark All Conflicting
+                                                        </button>
+                                                    ) : null}
+                                                </div>
+                                                {selectedFullTimeCourseRequests.length === 0 ? (
+                                                    <p className="mt-3 text-sm text-secondary/70">
+                                                        No matched requests are linked to this class yet.
+                                                    </p>
+                                                ) : (
+                                                    <div className="mt-4 flex flex-col gap-3">
+                                                        {selectedFullTimeCourseRequests.map(entry => (
+                                                            <div
+                                                                key={entry.id}
+                                                                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-secondary/15 bg-accent/60 px-4 py-3"
+                                                            >
+                                                                <div>
+                                                                    <p className="font-semibold text-secondary">
+                                                                        {[entry.firstName, entry.lastName].filter(Boolean).join(' ')}
+                                                                    </p>
+                                                                    <p className="text-sm text-secondary/75">
+                                                                        {entry.phone}
+                                                                        {entry.instructor ? ` • Requested: ${entry.instructor}` : ''}
+                                                                        {entry.matchedBy ? ` • Matched by ${entry.matchedBy}` : ''}
+                                                                    </p>
+                                                                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-secondary/60">
+                                                                        {entry.accommodated
+                                                                            ? 'Accommodated'
+                                                                            : entry.reason === 'conflicting_request'
+                                                                                ? 'Not accommodated: conflicting request'
+                                                                                : entry.reason
+                                                                                    ? `Not accommodated: ${entry.reason.replaceAll('_', ' ')}`
+                                                                                    : 'Not accommodated'}
+                                                                    </p>
+                                                                </div>
+                                                                {entry.accommodated ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="rounded-2xl border border-danger/30 bg-danger/10 px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger/20"
+                                                                        onClick={() => handleMarkFullTimeRequestsConflicting([entry.id])}
+                                                                    >
+                                                                        Mark Conflicting
+                                                                    </button>
+                                                                ) : null}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : null}
                                         <SchematicBoard
                                             columns={fullTimeColumns}
                                             instructors={fullTimeInstructors}
