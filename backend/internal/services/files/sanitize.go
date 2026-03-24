@@ -22,6 +22,7 @@ func SanitizeFilename(input string) string {
 		}
 		return -1
 	}, input)
+	clean = strings.Trim(clean, "-_")
 	if clean == "" {
 		return fallback
 	}

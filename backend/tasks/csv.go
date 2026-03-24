@@ -118,6 +118,7 @@ func ProcessCSVRows(rows []csvRow, instructorMap map[string]string, fallbackDay 
 func normalizeHeader(header string) string {
 	clean := strings.TrimSpace(header)
 	clean = strings.TrimPrefix(clean, "\uFEFF")
+	clean = strings.TrimSpace(clean)
 	clean = strings.ToLower(clean)
 	return clean
 }
