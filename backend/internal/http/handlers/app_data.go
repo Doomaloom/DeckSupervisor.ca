@@ -245,6 +245,11 @@ func CurrentSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	profile, err := loadOrCreateProfile(r, client)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	sessionID := mux.Vars(r)["id"]
 	if strings.TrimSpace(sessionID) == "" {
 		http.Error(w, "Missing session id", http.StatusBadRequest)
@@ -266,7 +271,7 @@ func CurrentSession(w http.ResponseWriter, r *http.Request) {
 	row := rows[0]
 
 	access := map[string]any{"mode": "none", "allowRosterEdits": false}
-	if row.CreatedBy == client.User.ID {
+	if row.CreatedBy == profile.ID {
 		access["mode"] = "owner"
 		access["allowRosterEdits"] = true
 		writeJSON(w, map[string]any{"session": row, "access": access})
@@ -299,8 +304,13 @@ func MySessions(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	profile, err := loadOrCreateProfile(r, client)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	query := url.Values{}
-	query.Set("created_by", "eq."+client.User.ID)
+	query.Set("created_by", "eq."+profile.ID)
 	query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors")
 	var rows []sessionRow
 	if err := client.Get(r.Context(), "/rest/v1/sessions", query, &rows); err != nil {
@@ -419,6 +429,11 @@ func UpdateSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	profile, err := loadOrCreateProfile(r, client)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	sessionID := mux.Vars(r)["id"]
 	var payload map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -430,7 +445,7 @@ func UpdateSession(w http.ResponseWriter, r *http.Request) {
 
 	query := url.Values{}
 	query.Set("id", "eq."+sessionID)
-	query.Set("created_by", "eq."+client.User.ID)
+	query.Set("created_by", "eq."+profile.ID)
 	var rows []map[string]any
 	if err := client.Patch(r.Context(), "/rest/v1/sessions", query, payload, "return=representation", &rows); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -455,9 +470,15 @@ func DeleteSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	profile, err := loadOrCreateProfile(r, client)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	sessionID := mux.Vars(r)["id"]
 	query := url.Values{}
 	query.Set("id", "eq."+sessionID)
+	query.Set("created_by", "eq."+profile.ID)
 	if err := client.Delete(r.Context(), "/rest/v1/sessions", query, "", nil); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

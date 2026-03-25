@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
@@ -83,8 +83,11 @@ function ManageSessionsPage() {
   const [editRosterFile, setEditRosterFile] = useState<File | null>(null)
   const [editRosterFileName, setEditRosterFileName] = useState<string | undefined>(undefined)
   const [editMessage, setEditMessage] = useState('')
+  const [editMessageTone, setEditMessageTone] = useState<'success' | 'error'>('success')
+  const [isSaving, setIsSaving] = useState(false)
   const [sessionsVersion, setSessionsVersion] = useState(0)
   const [currentSessionId, setCurrentSessionIdState] = useState(() => getCurrentSessionId())
+  const lastLoadedSessionIdRef = useRef('')
 
   const seasonOptions = ['Winter', 'Spring', 'Summer', 'Fall']
 
@@ -132,6 +135,11 @@ function ManageSessionsPage() {
     if (!currentSession) {
       return
     }
+    const loadedSessionId = isGuest
+      ? (currentSession as SessionEntry).id
+      : currentSessionRecord?.id ?? ''
+    const didSessionChange = loadedSessionId !== lastLoadedSessionIdRef.current
+    lastLoadedSessionIdRef.current = loadedSessionId
     if (isGuest) {
       const localSession = currentSession as SessionEntry
       setEditSessionDay(localSession.sessionDay)
@@ -144,7 +152,9 @@ function ManageSessionsPage() {
       setEditInstructors(localSession.instructors.length ? localSession.instructors : [{ name: '' }])
       setEditRosterFile(null)
       setEditRosterFileName(localSession.rosterFileName)
-      setEditMessage('')
+      if (didSessionChange) {
+        setEditMessage('')
+      }
       return
     }
     const dbSession = currentSessionRecord
@@ -160,8 +170,10 @@ function ManageSessionsPage() {
     setEditInstructors(dbSession?.instructors?.length ? dbSession.instructors : [{ name: '' }])
     setEditRosterFile(null)
     setEditRosterFileName(undefined)
-    setEditMessage('')
-  }, [currentSession])
+    if (didSessionChange) {
+      setEditMessage('')
+    }
+  }, [currentSession, currentSessionRecord, isGuest])
 
   useEffect(() => {
     if (isGuest || !editTeamId || editTeamId === NO_TEAM_VALUE) {
@@ -228,6 +240,7 @@ function ManageSessionsPage() {
     if (!currentSessionId) {
       return
     }
+    setIsSaving(true)
     if (isGuest) {
       const sessionsToUpdate = loadSessions()
       const updatedSessions = sessionsToUpdate.map(session => {
@@ -247,25 +260,32 @@ function ManageSessionsPage() {
         }
       })
       saveSessions(updatedSessions)
+      setEditMessageTone('success')
       setEditMessage('Session updated.')
       setSessionsVersion(version => version + 1)
       setCurrentSessionId(currentSessionId)
       setCurrentSessionIdState(currentSessionId)
       setSelectedDay(editSessionDay || '')
+      setIsSaving(false)
       return
     }
 
     if (!user) {
+      setEditMessageTone('error')
+      setEditMessage('You must be signed in to update this session.')
+      setIsSaving(false)
       return
     }
     if (!currentSessionRecord) {
+      setEditMessageTone('error')
       setEditMessage('Session data is not ready yet. Please try again.')
+      setIsSaving(false)
       return
     }
 
     const previousTeamId = currentSessionRecord.team_id ?? null
     const previousSessionDay = currentSessionRecord.session_day ?? ''
-    const previousSessionLabel = getSessionTermLabel(
+    const previousSessionLabel = formatSessionTermLabel(
       currentSessionRecord.session_season,
       currentSessionRecord.session_year,
       currentSessionRecord.start_date,
@@ -274,7 +294,11 @@ function ManageSessionsPage() {
     const sessionYearValue = resolveSessionYear(editSessionYear, editStartDate, editEndDate)
     const nextTeamId = editTeamId && editTeamId !== NO_TEAM_VALUE ? editTeamId : null
     const nextSessionDay = editSessionDay
-    const nextSessionLabel = getSessionTermLabel(editSessionSeason || null, sessionYearValue, editStartDate)
+    const nextSessionLabel = formatSessionTermLabel(
+      editSessionSeason || null,
+      sessionYearValue,
+      editStartDate,
+    )
 
     const didReportCardScopeChange =
       previousTeamId !== nextTeamId ||
@@ -306,14 +330,18 @@ function ManageSessionsPage() {
           : undefined,
       })
     } catch (error) {
+      setEditMessageTone('error')
       setEditMessage(error instanceof Error ? error.message : 'Failed to update session')
+      setIsSaving(false)
       return
     }
 
+    setEditMessageTone('success')
     setEditMessage('Session updated.')
     setCurrentSessionId(currentSessionId)
     setCurrentSessionIdState(currentSessionId)
     setSelectedDay(editSessionDay || '')
+    setIsSaving(false)
   }
 
   const handleDeleteSession = async () => {
@@ -557,9 +585,10 @@ function ManageSessionsPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <button
                   type="submit"
-                  className="rounded-2xl bg-primary px-5 py-2 text-white transition hover:-translate-y-0.5 hover:bg-secondary"
+                  className="rounded-2xl bg-primary px-5 py-2 text-white transition hover:-translate-y-0.5 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSaving}
                 >
-                  Save Changes
+                  {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button
                   type="button"
@@ -568,7 +597,11 @@ function ManageSessionsPage() {
                 >
                   Delete Session
                 </button>
-                {editMessage ? <span className="font-semibold text-secondary">{editMessage}</span> : null}
+                {editMessage ? (
+                  <span className={`font-semibold ${editMessageTone === 'error' ? 'text-danger' : 'text-primary'}`}>
+                    {editMessage}
+                  </span>
+                ) : null}
               </div>
             </form>
           )}

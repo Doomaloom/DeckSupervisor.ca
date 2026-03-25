@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import { useDay } from './DayContext'
 import { useCurrentTeam } from './useCurrentTeam'
-import { formatTermLabel, useCurrentTerm } from './useCurrentTerm'
+import { useCurrentTerm } from './useCurrentTerm'
 import { extractClassesFromCsv, processCsvAndStore } from '../lib/api'
 import { setExtractedClassesForScope, setExtractedClassesForSession } from '../lib/extractedClassesStorage'
 import { getSessionTermLabel, syncReportCardsForDay } from '../lib/reportCardSync'
-import { createSession, fetchCsvSessionCandidates, fetchRequestAssignments } from '../lib/serverApi'
+import { createSession, fetchCsvSessionCandidates } from '../lib/serverApi'
 import {
   getInstructorsForDay,
   getStudentsForDay,
@@ -83,54 +83,6 @@ function buildInstructorUploadConfig(day: string): InstructorEntry[] {
     result.push({ name, codes })
   }
   return result
-}
-
-function mergeInstructorUploadConfigs(
-  baseAssignments: InstructorEntry[],
-  requestAssignments: Array<{ instructor: string; eventId: string }>,
-): InstructorEntry[] {
-  const codesByInstructor = new Map<string, string[]>()
-
-  baseAssignments.forEach(entry => {
-    const name = entry.name.trim()
-    if (!name) {
-      return
-    }
-    const codes = entry.codes
-      .split(',')
-      .map(code => code.trim())
-      .filter(Boolean)
-    if (codes.length === 0) {
-      return
-    }
-    codesByInstructor.set(name, Array.from(new Set(codes)))
-  })
-
-  requestAssignments.forEach(entry => {
-    const name = entry.instructor.trim()
-    const code = entry.eventId.trim()
-    if (!name || !code) {
-      return
-    }
-    const existing = codesByInstructor.get(name) ?? []
-    if (!existing.includes(code)) {
-      existing.push(code)
-    }
-    codesByInstructor.set(name, existing)
-  })
-
-  return Array.from(codesByInstructor.entries()).map(([name, codes]) => ({
-    name,
-    codes: codes.join(','),
-  }))
-}
-
-async function loadAutofillAssignments(term: string, location: string) {
-  if (!term || !location) {
-    return []
-  }
-  const response = await fetchRequestAssignments({ term, location })
-  return response.assignments ?? []
 }
 
 function getCandidateLabel(candidate: CsvSessionCandidate) {
@@ -362,21 +314,7 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       setSelectedDay(candidate.dayOfWeek)
 
       const uploadInstructors = buildInstructorUploadConfig(candidate.dayOfWeek)
-      const requestAssignments =
-        accountType === 'part_time' && !isGuest
-          ? await loadAutofillAssignments(
-              formatTermLabel(candidate.sessionSeason, candidate.sessionYear),
-              candidate.location,
-            )
-          : []
-      const mergedUploadInstructors = mergeInstructorUploadConfigs(
-        uploadInstructors,
-        requestAssignments.map(entry => ({
-          instructor: entry.instructor,
-          eventId: entry.eventId,
-        })),
-      )
-      await processCsvAndStore(state.file, candidate.dayOfWeek, mergedUploadInstructors, {
+      await processCsvAndStore(state.file, candidate.dayOfWeek, uploadInstructors, {
         courseCodes: (state.classesBySession[candidate.sessionKey] ?? []).map(classEntry => classEntry.courseCode),
       })
 

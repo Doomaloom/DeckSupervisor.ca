@@ -91,7 +91,7 @@ func CSVSessionCandidates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	candidates := buildCSVSessionCandidates(extracted.Sessions, scopeSessions, client.User.ID)
+	candidates := buildCSVSessionCandidates(extracted.Sessions, scopeSessions, profile.ID)
 	writeJSON(w, map[string]any{
 		"sessions":         candidates,
 		"classesBySession": extracted.ClassesBySession,
@@ -127,7 +127,7 @@ func loadCSVMatchScopeSessions(r *http.Request, client *supabasesvc.Client, prof
 	}
 
 	ownQuery := url.Values{}
-	ownQuery.Set("created_by", "eq."+client.User.ID)
+	ownQuery.Set("created_by", "eq."+profile.ID)
 	ownQuery.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors,updated_at")
 	var ownRows []sessionRow
 	if err := client.Get(r.Context(), "/rest/v1/sessions", ownQuery, &ownRows); err != nil {
