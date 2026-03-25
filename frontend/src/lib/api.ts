@@ -54,6 +54,7 @@ function rosterToStudents(rosters: ClassRoster[]): Student[] {
         phone: student.phone,
         instructor: student.instructor || roster.instructor,
         level: student.level || roster.serviceName,
+        waitlist: Boolean(student.waitlist),
       })
     })
   })

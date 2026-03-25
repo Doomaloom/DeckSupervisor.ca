@@ -44,6 +44,7 @@ func TestProcessCSVRowsBuildsClassRosters(t *testing.T) {
 			"firstname":     "John",
 			"lastname":      "Smith",
 			"attendeephone": "5551113333",
+			"status":        "Waitlist",
 		},
 	}
 
@@ -73,6 +74,9 @@ func TestProcessCSVRowsBuildsClassRosters(t *testing.T) {
 	}
 	if class.Students[1].Name != "John Smith" {
 		t.Fatalf("expected first/last name fallback, got %q", class.Students[1].Name)
+	}
+	if !class.Students[1].Waitlist {
+		t.Fatalf("expected second student to be marked waitlist")
 	}
 }
 

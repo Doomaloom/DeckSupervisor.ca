@@ -43,6 +43,13 @@ type ExtractedCSVResult struct {
 	ClassesBySession map[string][]ExtractedClass `json:"classesBySession"`
 }
 
+type extractedClassAccumulator struct {
+	Class              ExtractedClass
+	RosterStudentCount int
+	AttendeeRowsSeen   bool
+	BookedAttendeeRows int
+}
+
 func ExtractClassesFromCSV(csvReader io.Reader) (*ExtractedCSVResult, error) {
 	rows, err := readCSVRows(csvReader)
 	if err != nil {
@@ -56,7 +63,7 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		return nil, fmt.Errorf("no rows to process")
 	}
 
-	classMap := map[string]*ExtractedClass{}
+	classMap := map[string]*extractedClassAccumulator{}
 
 	for _, row := range rows {
 		courseCode := NormalizeEventID(rowValue(row, "EventID", "Event Id", "ClassCode", "Code", "ID"))
@@ -112,7 +119,9 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		sessionKey := BuildExtractedSessionKey(dayValue, sessionSeason, sessionYear, location)
 
 		studentCountFromRoster := parsePositiveInt(rowValue(row, "RegTotal", "Registered", "Enrollment", "Students"))
+		statusValue := rowValue(row, "Status", "AttendeeStatus", "Attendee Status")
 		hasAttendee := strings.TrimSpace(rowValue(row, "AttendeeName", "Name", "FirstName")) != ""
+		isWaitlist := strings.EqualFold(strings.TrimSpace(statusValue), "waitlist")
 
 		key := strings.Join([]string{
 			sessionKey,
@@ -123,49 +132,55 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 
 		existing, exists := classMap[key]
 		if !exists {
-			existing = &ExtractedClass{
-				SessionKey:      sessionKey,
-				DayOfWeek:       dayValue,
-				SessionSeason:   sessionSeason,
-				SessionYear:     sessionYear,
-				StartDate:       formatDate(startDate),
-				EndDate:         formatDate(endDate),
-				CourseCode:      courseCode,
-				ServiceName:     serviceName,
-				Location:        location,
-				StartTime24:     startTime24,
-				EndTime24:       endTime24,
-				DurationMinutes: durationMinutes,
-				StudentCount:    0,
+			existing = &extractedClassAccumulator{
+				Class: ExtractedClass{
+					SessionKey:      sessionKey,
+					DayOfWeek:       dayValue,
+					SessionSeason:   sessionSeason,
+					SessionYear:     sessionYear,
+					StartDate:       formatDate(startDate),
+					EndDate:         formatDate(endDate),
+					CourseCode:      courseCode,
+					ServiceName:     serviceName,
+					Location:        location,
+					StartTime24:     startTime24,
+					EndTime24:       endTime24,
+					DurationMinutes: durationMinutes,
+					StudentCount:    0,
+				},
 			}
 			classMap[key] = existing
 		}
 
-		if existing.ServiceName == "" && serviceName != "" {
-			existing.ServiceName = serviceName
+		if existing.Class.ServiceName == "" && serviceName != "" {
+			existing.Class.ServiceName = serviceName
 		}
-		if existing.Location == "" && location != "" {
-			existing.Location = location
+		if existing.Class.Location == "" && location != "" {
+			existing.Class.Location = location
 		}
-		if existing.SessionSeason == "" && sessionSeason != "" {
-			existing.SessionSeason = sessionSeason
+		if existing.Class.SessionSeason == "" && sessionSeason != "" {
+			existing.Class.SessionSeason = sessionSeason
 		}
-		if existing.SessionYear == 0 && sessionYear > 0 {
-			existing.SessionYear = sessionYear
+		if existing.Class.SessionYear == 0 && sessionYear > 0 {
+			existing.Class.SessionYear = sessionYear
 		}
-		if existing.StartDate == "" && !startDate.IsZero() {
-			existing.StartDate = formatDate(startDate)
+		if existing.Class.StartDate == "" && !startDate.IsZero() {
+			existing.Class.StartDate = formatDate(startDate)
 		}
-		if existing.EndDate == "" && !endDate.IsZero() {
-			existing.EndDate = formatDate(endDate)
+		if existing.Class.EndDate == "" && !endDate.IsZero() {
+			existing.Class.EndDate = formatDate(endDate)
 		}
 
 		if studentCountFromRoster > 0 {
-			if studentCountFromRoster > existing.StudentCount {
-				existing.StudentCount = studentCountFromRoster
+			if studentCountFromRoster > existing.RosterStudentCount {
+				existing.RosterStudentCount = studentCountFromRoster
 			}
-		} else if hasAttendee {
-			existing.StudentCount += 1
+		}
+		if hasAttendee {
+			existing.AttendeeRowsSeen = true
+			if !isWaitlist {
+				existing.BookedAttendeeRows += 1
+			}
 		}
 	}
 
@@ -174,36 +189,43 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 	sessionMeta := map[string]*ExtractedSession{}
 
 	for _, class := range classMap {
-		classesBySession[class.SessionKey] = append(classesBySession[class.SessionKey], *class)
+		extractedClass := class.Class
+		if class.AttendeeRowsSeen {
+			extractedClass.StudentCount = class.BookedAttendeeRows
+		} else {
+			extractedClass.StudentCount = class.RosterStudentCount
+		}
 
-		meta, exists := sessionMeta[class.SessionKey]
+		classesBySession[extractedClass.SessionKey] = append(classesBySession[extractedClass.SessionKey], extractedClass)
+
+		meta, exists := sessionMeta[extractedClass.SessionKey]
 		if !exists {
 			meta = &ExtractedSession{
-				SessionKey:    class.SessionKey,
-				DayOfWeek:     class.DayOfWeek,
-				SessionSeason: class.SessionSeason,
-				SessionYear:   class.SessionYear,
-				StartDate:     class.StartDate,
-				EndDate:       class.EndDate,
-				Location:      class.Location,
+				SessionKey:    extractedClass.SessionKey,
+				DayOfWeek:     extractedClass.DayOfWeek,
+				SessionSeason: extractedClass.SessionSeason,
+				SessionYear:   extractedClass.SessionYear,
+				StartDate:     extractedClass.StartDate,
+				EndDate:       extractedClass.EndDate,
+				Location:      extractedClass.Location,
 			}
-			sessionMeta[class.SessionKey] = meta
-			sessionCourseCodes[class.SessionKey] = map[string]struct{}{}
+			sessionMeta[extractedClass.SessionKey] = meta
+			sessionCourseCodes[extractedClass.SessionKey] = map[string]struct{}{}
 		}
 
 		meta.ClassCount++
-		meta.StudentCount += class.StudentCount
-		if meta.StartDate == "" && class.StartDate != "" {
-			meta.StartDate = class.StartDate
+		meta.StudentCount += extractedClass.StudentCount
+		if meta.StartDate == "" && extractedClass.StartDate != "" {
+			meta.StartDate = extractedClass.StartDate
 		}
-		if meta.EndDate == "" && class.EndDate != "" {
-			meta.EndDate = class.EndDate
+		if meta.EndDate == "" && extractedClass.EndDate != "" {
+			meta.EndDate = extractedClass.EndDate
 		}
-		if meta.Location == "" && class.Location != "" {
-			meta.Location = class.Location
+		if meta.Location == "" && extractedClass.Location != "" {
+			meta.Location = extractedClass.Location
 		}
-		if code := strings.TrimSpace(class.CourseCode); code != "" {
-			sessionCourseCodes[class.SessionKey][code] = struct{}{}
+		if code := strings.TrimSpace(extractedClass.CourseCode); code != "" {
+			sessionCourseCodes[extractedClass.SessionKey][code] = struct{}{}
 		}
 	}
 

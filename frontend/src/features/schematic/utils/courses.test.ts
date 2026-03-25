@@ -15,6 +15,7 @@ const students: Student[] = [
     phone: '5551112222',
     instructor: '',
     level: 'Splash 2A',
+    waitlist: false,
   },
   {
     id: '2',
@@ -28,6 +29,7 @@ const students: Student[] = [
     phone: '5551113333',
     instructor: '',
     level: 'Splash 2A',
+    waitlist: false,
   },
   {
     id: '3',
@@ -41,6 +43,21 @@ const students: Student[] = [
     phone: '5551114444',
     instructor: '',
     level: 'Splash 3',
+    waitlist: false,
+  },
+  {
+    id: '4',
+    service_name: 'Splash 2A',
+    code: '1001',
+    day: 'Mo',
+    time: '09:00-09:30',
+    location: 'Pool A',
+    schedule: 'Morning',
+    name: 'Waitlisted Wendy',
+    phone: '5551115555',
+    instructor: '',
+    level: 'Splash 2A',
+    waitlist: true,
   },
 ]
 

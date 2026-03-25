@@ -8,7 +8,9 @@ export function buildCourses(students: Student[], requestInstructorByCode?: Map<
     students.forEach(student => {
         const existing = map.get(student.code)
         if (existing) {
-            existing.studentCount += 1
+            if (!student.waitlist) {
+                existing.studentCount += 1
+            }
             return
         }
         const assignedInstructor = requestInstructorByCode?.get(student.code) ?? ''
@@ -24,7 +26,7 @@ export function buildCourses(students: Student[], requestInstructorByCode?: Map<
             endTime,
             startMinutes,
             endMinutes,
-            studentCount: 1,
+            studentCount: student.waitlist ? 0 : 1,
             studentName: student.name,
             assignedInstructor: assignedInstructor || undefined,
             isRequested: Boolean(assignedInstructor),

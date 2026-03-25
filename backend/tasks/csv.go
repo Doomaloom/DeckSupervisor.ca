@@ -11,6 +11,7 @@ type RosterStudent struct {
 	Phone      string `json:"phone"`
 	Instructor string `json:"instructor"`
 	Level      string `json:"level"`
+	Waitlist   bool   `json:"waitlist"`
 }
 
 type ClassRoster struct {
@@ -49,6 +50,7 @@ func ProcessCSVRows(rows []csvRow, instructorMap map[string]string, fallbackDay 
 		schedule := rowValue(row, "EventSchedule", "Schedule")
 		phone := rowValue(row, "AttendeePhone", "Phone")
 		instructorFromRow := rowValue(row, "Instructor", "Instructor Name", "InstructorName", "Teacher", "Staff")
+		waitlistValue := rowValue(row, "Status")
 
 		name := rowValue(row, "AttendeeName", "Name")
 		if strings.Contains(name, ",") {
@@ -103,6 +105,7 @@ func ProcessCSVRows(rows []csvRow, instructorMap map[string]string, fallbackDay 
 			Phone:      phone,
 			Instructor: instructor,
 			Level:      level,
+			Waitlist:   strings.EqualFold(waitlistValue, "waitlist"),
 		})
 		totalStudents++
 	}

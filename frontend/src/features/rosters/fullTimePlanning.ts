@@ -511,6 +511,7 @@ export function buildStudentsForDay(rosters: ClassRoster[], day: string): Studen
                 phone: student.phone,
                 instructor: student.instructor || roster.instructor,
                 level: student.level || roster.serviceName,
+                waitlist: Boolean(student.waitlist),
             })),
         )
 }

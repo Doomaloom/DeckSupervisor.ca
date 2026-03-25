@@ -25,6 +25,7 @@ export function parseStudentsFromCsv(
   fallbackDay: string
 ): Student[] {
   const rows = parseCsvText(text)
+  const headers = rows[0]?.map(value => value.trim().toLowerCase().replace(/\s+/g, '')) ?? []
   const rawHeader = rows[0]?.join(',') ?? ''
   if (rows.length < 2) {
     return []
@@ -40,6 +41,7 @@ export function parseStudentsFromCsv(
   let NAME = 18
   let PHONE = 20
   let series = true
+  const STATUS = headers.findIndex(header => header === 'status' || header === 'attendeestatus')
 
   if (!rawHeader.includes('EventSchedule')) {
     SERVICE_NAME = 10
@@ -73,6 +75,7 @@ export function parseStudentsFromCsv(
     const location = (row[LOCATION] ?? '').trim()
     const schedule = (row[SCHEDULE] ?? '').trim()
     const phone = (row[PHONE] ?? '').trim()
+    const waitlist = STATUS >= 0 && (row[STATUS] ?? '').trim().toLowerCase() === 'waitlist'
 
     let name = ''
     if (series) {
@@ -103,6 +106,7 @@ export function parseStudentsFromCsv(
       phone,
       instructor,
       level,
+      waitlist,
     })
   }
 

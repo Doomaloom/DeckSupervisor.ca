@@ -120,6 +120,7 @@ function convertClassRosterToItem(roster: ClassRoster): FullTimeRosterItem {
                 phone: student.phone,
                 instructor: student.instructor || roster.instructor,
                 level: student.level || roster.serviceName,
+                waitlist: Boolean(student.waitlist),
             })),
         },
     }
@@ -345,6 +346,7 @@ function RostersPage() {
                     phone: student.phone,
                     instructor: student.instructor || roster.instructor,
                     level: student.level || roster.serviceName,
+                    waitlist: Boolean(student.waitlist),
                 })),
             )
     }, [fullTimeRosterClasses, fullTimeSchematicDay])

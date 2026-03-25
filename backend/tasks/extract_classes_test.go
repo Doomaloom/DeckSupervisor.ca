@@ -65,6 +65,52 @@ func TestExtractClassesRowsBuildsSessionAndClassSummaries(t *testing.T) {
 	}
 }
 
+func TestExtractClassesRowsExcludesWaitlistAttendeesFromCounts(t *testing.T) {
+	t.Parallel()
+
+	rows := []csvRow{
+		{
+			"eventid":       "00123",
+			"servicename":   "Splash 2A",
+			"location":      "Pool A",
+			"dayoftheweek":  "Monday",
+			"starts":        "2026-03-23 3:15 PM",
+			"ends":          "2026-03-23 3:45 PM",
+			"eventschedule": "From 2026-03-01 to 2026-05-30",
+			"attendeename":  "Jane Doe",
+			"status":        "Booked",
+			"regtotal":      "2",
+		},
+		{
+			"eventid":       "00123",
+			"servicename":   "Splash 2A",
+			"location":      "Pool A",
+			"dayoftheweek":  "Monday",
+			"starts":        "2026-03-23 3:15 PM",
+			"ends":          "2026-03-23 3:45 PM",
+			"eventschedule": "From 2026-03-01 to 2026-05-30",
+			"attendeename":  "John Doe",
+			"status":        "Waitlist",
+			"regtotal":      "2",
+		},
+	}
+
+	result, err := ExtractClassesRows(rows)
+	if err != nil {
+		t.Fatalf("ExtractClassesRows returned error: %v", err)
+	}
+
+	session := result.Sessions[0]
+	if session.StudentCount != 1 {
+		t.Fatalf("expected session student count 1, got %d", session.StudentCount)
+	}
+
+	classes := result.ClassesBySession[session.SessionKey]
+	if classes[0].StudentCount != 1 {
+		t.Fatalf("expected class student count 1, got %d", classes[0].StudentCount)
+	}
+}
+
 func TestExtractHelpers(t *testing.T) {
 	t.Parallel()
 

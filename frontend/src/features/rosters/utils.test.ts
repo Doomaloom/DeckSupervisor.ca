@@ -15,6 +15,7 @@ const students: Student[] = [
     phone: '5551113333',
     instructor: 'Coach Amy',
     level: 'Splash 2A',
+    waitlist: false,
   },
   {
     id: '2',
@@ -28,6 +29,7 @@ const students: Student[] = [
     phone: '5551112222',
     instructor: 'Coach Amy',
     level: 'Splash 2A',
+    waitlist: false,
   },
   {
     id: '3',
@@ -41,6 +43,7 @@ const students: Student[] = [
     phone: '5551114444',
     instructor: '',
     level: 'Little Splash 1',
+    waitlist: false,
   },
 ]
 
