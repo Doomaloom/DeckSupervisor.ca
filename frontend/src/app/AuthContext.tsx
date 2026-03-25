@@ -42,18 +42,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileResolved, setProfileResolved] = useState(false)
 
   const loadProfile = useCallback(async (activeUser: AuthUser | null) => {
     if (!activeUser) {
       setProfile(null)
+      setProfileResolved(true)
       return
     }
+    setProfileResolved(false)
     try {
       const data = await fetchAccountData()
       setProfile(data.profile)
     } catch (error) {
       console.error('Failed to load profile', error)
       setProfile(null)
+    } finally {
+      setProfileResolved(true)
     }
   }, [])
 
@@ -81,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(null)
           setUser(null)
           setProfile(null)
+          setProfileResolved(true)
           setStorageScope('guest')
           setLoading(false)
         }
@@ -147,6 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null)
     setUser(null)
     setProfile(null)
+    setProfileResolved(true)
     setStorageScope('guest')
   }, [])
 
@@ -158,14 +165,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       isGuest: !user,
       accountType: profile?.account_type ?? null,
-      needsProfile: Boolean(user && (!profile?.first_name || !profile?.last_name)),
+      needsProfile: Boolean(user && profileResolved && (!profile?.first_name || !profile?.last_name)),
       signIn,
       signUp,
       refreshProfile,
       completeProfile,
       signOut,
     }),
-    [completeProfile, loading, profile, refreshProfile, session, signIn, signOut, signUp, user]
+    [completeProfile, loading, profile, profileResolved, refreshProfile, session, signIn, signOut, signUp, user]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
