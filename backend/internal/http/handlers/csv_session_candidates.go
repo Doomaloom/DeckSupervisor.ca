@@ -21,6 +21,7 @@ type csvSessionCandidate struct {
 	Location       string             `json:"location"`
 	ClassCount     int                `json:"classCount"`
 	StudentCount   int                `json:"studentCount"`
+	WaitlistCount  int                `json:"waitlistCount"`
 	CourseCodes    []string           `json:"courseCodes"`
 	MatchedSession *csvMatchedSession `json:"matchedSession"`
 }
@@ -201,6 +202,7 @@ func buildCSVSessionCandidates(extractedSessions []tasks.ExtractedSession, sessi
 			Location:      extractedSession.Location,
 			ClassCount:    extractedSession.ClassCount,
 			StudentCount:  extractedSession.StudentCount,
+			WaitlistCount: extractedSession.WaitlistCount,
 			CourseCodes:   extractedSession.CourseCodes,
 			MatchedSession: matchCSVSessionCandidate(&csvCandidateBucket{
 				sessionKey:    extractedSession.SessionKey,

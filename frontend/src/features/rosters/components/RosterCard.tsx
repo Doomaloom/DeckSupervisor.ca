@@ -73,7 +73,7 @@ function RosterCard({
                     }}
                 />
             </div>
-            {roster.students.map(student => (
+            {roster.students.filter(student => !student.waitlist).map(student => (
                 <StudentRow
                     key={student.id}
                     student={student}

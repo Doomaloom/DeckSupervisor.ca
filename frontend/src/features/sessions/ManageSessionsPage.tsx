@@ -14,6 +14,7 @@ import {
   clearCurrentSessionId,
   getCurrentSessionId,
   loadSessions,
+  onCurrentSessionChanged,
   saveSessions,
   setCurrentSessionId,
 } from '../../lib/sessionStorage'
@@ -207,6 +208,13 @@ function ManageSessionsPage() {
       setSelectedDay('')
     }
   }, [currentSessionId, setSelectedDay])
+
+  useEffect(() => {
+    const unsubscribe = onCurrentSessionChanged(id => {
+      setCurrentSessionIdState(id)
+    })
+    return unsubscribe
+  }, [])
 
   useEffect(() => {
     return onStorageScopeChanged(() => {

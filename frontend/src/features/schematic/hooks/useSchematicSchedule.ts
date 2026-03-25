@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { formatSessionTermLabel as getSessionTermLabel } from '../../../shared/session/sessionLabels'
 import {
+    getExtractedClassesForSession,
+    onExtractedClassesBySessionUpdated,
+} from '../../../lib/extractedClassesStorage'
+import {
     getScheduleForDay,
     getStudentsForDay,
     onStudentsUpdated,
@@ -12,9 +16,10 @@ import {
 import { useCurrentSession } from '../../../app/useCurrentSession'
 import { fetchRequestAssignments, fetchSchematic, upsertSchematic } from '../../../lib/serverApi'
 import { prefetchInstructorPacket } from '../../../lib/instructorPdfCache'
-import type { RequestAssignment, Student } from '../../../types/app'
+import type { ExtractedClass, RequestAssignment, Student } from '../../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
 import { buildCourses } from '../utils/courses'
+import { normalizeCourseCodeForCompare } from '../utils/courseCode'
 import type { StoredCourseLayout } from '../utils/layout'
 import { useSchematicBoard } from './useSchematicBoard'
 import { buildTimeLabels } from '../utils/time'
@@ -22,6 +27,7 @@ import { buildTimeLabels } from '../utils/time'
 export function useSchematicSchedule(selectedDay: string | null) {
     const { access, session: currentSession, sessionId } = useCurrentSession()
     const [students, setStudents] = useState<Student[]>([])
+    const [extractedClasses, setExtractedClasses] = useState<ExtractedClass[]>([])
     const [remoteSchedule, setRemoteSchedule] = useState<StoredCourseLayout | null>(null)
     const [requestAssignments, setRequestAssignments] = useState<RequestAssignment[]>([])
 
@@ -36,6 +42,22 @@ export function useSchematicSchedule(selectedDay: string | null) {
             }
         })
     }, [selectedDay])
+
+    useEffect(() => {
+        if (!sessionId) {
+            setExtractedClasses([])
+            return () => {}
+        }
+
+        const load = () => setExtractedClasses(getExtractedClassesForSession(sessionId))
+        load()
+
+        return onExtractedClassesBySessionUpdated(updatedSessionId => {
+            if (updatedSessionId === sessionId) {
+                load()
+            }
+        })
+    }, [sessionId])
 
     useEffect(() => {
         if (access.mode === 'guest' || !currentSession?.location) {
@@ -88,7 +110,37 @@ export function useSchematicSchedule(selectedDay: string | null) {
         return map
     }, [requestAssignments])
 
-    const courses = useMemo(() => buildCourses(students, requestInstructorByCode), [requestInstructorByCode, students])
+    const extractedStudentCountByCode = useMemo(() => {
+        const counts = new Map<string, number>()
+        extractedClasses.forEach(classEntry => {
+            if (selectedDay && classEntry.dayOfWeek && classEntry.dayOfWeek !== selectedDay) {
+                return
+            }
+            const normalizedCode = normalizeCourseCodeForCompare(classEntry.courseCode)
+            if (!normalizedCode || counts.has(normalizedCode)) {
+                return
+            }
+            counts.set(normalizedCode, Math.max(classEntry.studentCount, 0))
+        })
+        return counts
+    }, [extractedClasses, selectedDay])
+
+    const courses = useMemo(() => {
+        const rosterCourses = buildCourses(students, requestInstructorByCode)
+        if (extractedStudentCountByCode.size === 0) {
+            return rosterCourses
+        }
+        return rosterCourses.map(course => {
+            const extractedCount = extractedStudentCountByCode.get(normalizeCourseCodeForCompare(course.code))
+            if (extractedCount === undefined) {
+                return course
+            }
+            return {
+                ...course,
+                studentCount: extractedCount,
+            }
+        })
+    }, [extractedStudentCountByCode, requestInstructorByCode, students])
     const scheduleStartMinutes = useMemo(() => {
         if (courses.length === 0) {
             return 0

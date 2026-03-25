@@ -67,6 +67,31 @@ function getSessionSeason(value: string | null) {
     return (value ?? '').trim().toLowerCase()
 }
 
+function buildBookedCountByCode(
+    students: Student[],
+    selectedLocation: string,
+) {
+    const bookedCountByCode = new Map<string, number>()
+    const seenRosterCodes = new Set<string>()
+
+    students.forEach(student => {
+        if (normalizeLocationMatch(student.location) !== selectedLocation) {
+            return
+        }
+        const normalizedCode = normalizeCourseCodeForCompare(student.code)
+        if (!normalizedCode) {
+            return
+        }
+        seenRosterCodes.add(normalizedCode)
+        if (student.waitlist) {
+            return
+        }
+        bookedCountByCode.set(normalizedCode, (bookedCountByCode.get(normalizedCode) ?? 0) + 1)
+    })
+
+    return { bookedCountByCode, seenRosterCodes }
+}
+
 export function useFullTimeSchematicView(enabled: boolean) {
     const { currentTeamId } = useCurrentTeam()
     const { currentTerm } = useCurrentTerm()
@@ -353,6 +378,8 @@ export function useFullTimeSchematicView(enabled: boolean) {
 
         const seenCodes = new Set<string>()
         const next: Course[] = []
+        const dayStudents = studentsByDay[selectedDay] ?? []
+        const { bookedCountByCode, seenRosterCodes } = buildBookedCountByCode(dayStudents, selectedLocation)
 
         sortedClasses.forEach(classEntry => {
             const code = classEntry.courseCode.trim()
@@ -373,6 +400,11 @@ export function useFullTimeSchematicView(enabled: boolean) {
             }
 
             seenCodes.add(code)
+            const normalizedCode = normalizeCourseCodeForCompare(code)
+            const hasRosterRows = seenRosterCodes.has(normalizedCode)
+            const studentCount = hasRosterRows
+                ? bookedCountByCode.get(normalizedCode) ?? 0
+                : Math.max(classEntry.studentCount, 0)
             next.push({
                 code,
                 level: classEntry.serviceName.trim() || code,
@@ -381,12 +413,12 @@ export function useFullTimeSchematicView(enabled: boolean) {
                 endTime: classEntry.endTime24,
                 startMinutes,
                 endMinutes,
-                studentCount: Math.max(classEntry.studentCount, 0),
+                studentCount,
             })
         })
 
         return next
-    }, [selectedLocationClasses])
+    }, [selectedDay, selectedLocation, selectedLocationClasses, studentsByDay])
 
     const mappedDbSchedule = useMemo(() => {
         const remoteCodes = selectedSessionSchematic?.codes ?? []

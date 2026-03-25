@@ -23,6 +23,7 @@ type ExtractedClass struct {
 	EndTime24       string `json:"endTime24"`
 	DurationMinutes int    `json:"durationMinutes"`
 	StudentCount    int    `json:"studentCount"`
+	WaitlistCount   int    `json:"waitlistCount"`
 }
 
 type ExtractedSession struct {
@@ -35,6 +36,7 @@ type ExtractedSession struct {
 	Location      string   `json:"location"`
 	ClassCount    int      `json:"classCount"`
 	StudentCount  int      `json:"studentCount"`
+	WaitlistCount int      `json:"waitlistCount"`
 	CourseCodes   []string `json:"courseCodes"`
 }
 
@@ -44,10 +46,9 @@ type ExtractedCSVResult struct {
 }
 
 type extractedClassAccumulator struct {
-	Class              ExtractedClass
-	RosterStudentCount int
-	AttendeeRowsSeen   bool
-	BookedAttendeeRows int
+	Class                 ExtractedClass
+	BookedCountFromRoster int
+	WaitlistAttendeeRows  int
 }
 
 func ExtractClassesFromCSV(csvReader io.Reader) (*ExtractedCSVResult, error) {
@@ -118,10 +119,10 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		sessionSeason, sessionYear := getSeasonAndYear(eventSchedule, startDate, endDate)
 		sessionKey := BuildExtractedSessionKey(dayValue, sessionSeason, sessionYear, location)
 
-		studentCountFromRoster := parsePositiveInt(rowValue(row, "RegTotal", "Registered", "Enrollment", "Students"))
-		statusValue := rowValue(row, "Status", "AttendeeStatus", "Attendee Status")
+		bookedCountFromRoster := parsePositiveInt(rowValue(row, "Booked", "Booked Count"))
+		statusValue := rowValue(row, "AttendeeStatus", "Attendee Status", "Status")
 		hasAttendee := strings.TrimSpace(rowValue(row, "AttendeeName", "Name", "FirstName")) != ""
-		isWaitlist := strings.EqualFold(strings.TrimSpace(statusValue), "waitlist")
+		isWaitlist := isWaitingStatus(statusValue)
 
 		key := strings.Join([]string{
 			sessionKey,
@@ -171,16 +172,13 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 			existing.Class.EndDate = formatDate(endDate)
 		}
 
-		if studentCountFromRoster > 0 {
-			if studentCountFromRoster > existing.RosterStudentCount {
-				existing.RosterStudentCount = studentCountFromRoster
+		if bookedCountFromRoster > 0 {
+			if bookedCountFromRoster > existing.BookedCountFromRoster {
+				existing.BookedCountFromRoster = bookedCountFromRoster
 			}
 		}
-		if hasAttendee {
-			existing.AttendeeRowsSeen = true
-			if !isWaitlist {
-				existing.BookedAttendeeRows += 1
-			}
+		if hasAttendee && isWaitlist {
+			existing.WaitlistAttendeeRows += 1
 		}
 	}
 
@@ -190,11 +188,8 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 
 	for _, class := range classMap {
 		extractedClass := class.Class
-		if class.AttendeeRowsSeen {
-			extractedClass.StudentCount = class.BookedAttendeeRows
-		} else {
-			extractedClass.StudentCount = class.RosterStudentCount
-		}
+		extractedClass.StudentCount = class.BookedCountFromRoster
+		extractedClass.WaitlistCount = class.WaitlistAttendeeRows
 
 		classesBySession[extractedClass.SessionKey] = append(classesBySession[extractedClass.SessionKey], extractedClass)
 
@@ -215,6 +210,7 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 
 		meta.ClassCount++
 		meta.StudentCount += extractedClass.StudentCount
+		meta.WaitlistCount += extractedClass.WaitlistCount
 		if meta.StartDate == "" && extractedClass.StartDate != "" {
 			meta.StartDate = extractedClass.StartDate
 		}
@@ -504,4 +500,9 @@ func daySortKey(day string) int {
 	default:
 		return 99
 	}
+}
+
+func isWaitingStatus(value string) bool {
+	normalized := strings.TrimSpace(strings.ToLower(value))
+	return normalized == "waiting" || normalized == "waitlist"
 }

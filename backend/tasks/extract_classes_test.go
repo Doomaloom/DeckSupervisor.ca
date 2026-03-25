@@ -7,26 +7,26 @@ func TestExtractClassesRowsBuildsSessionAndClassSummaries(t *testing.T) {
 
 	rows := []csvRow{
 		{
-			"eventid":        "00123",
-			"servicename":    "Splash 2A",
-			"location":       "Pool A",
-			"dayoftheweek":   "Monday",
-			"starts":         "2026-03-23 3:15 PM",
-			"ends":           "2026-03-23 3:45 PM",
-			"eventschedule":  "From 2026-03-01 to 2026-05-30",
-			"attendeename":   "Jane Doe",
-			"registered":     "",
-			"regtotal":       "",
+			"eventid":       "00123",
+			"servicename":   "Splash 2A",
+			"location":      "Pool A",
+			"dayoftheweek":  "Monday",
+			"starts":        "2026-03-23 3:15 PM",
+			"ends":          "2026-03-23 3:45 PM",
+			"eventschedule": "From 2026-03-01 to 2026-05-30",
+			"attendeename":  "Jane Doe",
+			"booked":        "2",
 		},
 		{
-			"eventid":        "00123",
-			"servicename":    "Splash 2A",
-			"location":       "Pool A",
-			"dayoftheweek":   "Monday",
-			"starts":         "2026-03-23 3:15 PM",
-			"ends":           "2026-03-23 3:45 PM",
-			"eventschedule":  "From 2026-03-01 to 2026-05-30",
-			"attendeename":   "John Doe",
+			"eventid":       "00123",
+			"servicename":   "Splash 2A",
+			"location":      "Pool A",
+			"dayoftheweek":  "Monday",
+			"starts":        "2026-03-23 3:15 PM",
+			"ends":          "2026-03-23 3:45 PM",
+			"eventschedule": "From 2026-03-01 to 2026-05-30",
+			"attendeename":  "John Doe",
+			"booked":        "2",
 		},
 	}
 
@@ -63,35 +63,38 @@ func TestExtractClassesRowsBuildsSessionAndClassSummaries(t *testing.T) {
 	if class.StudentCount != 2 {
 		t.Fatalf("expected student count 2, got %d", class.StudentCount)
 	}
+	if class.WaitlistCount != 0 {
+		t.Fatalf("expected waitlist count 0, got %d", class.WaitlistCount)
+	}
 }
 
-func TestExtractClassesRowsExcludesWaitlistAttendeesFromCounts(t *testing.T) {
+func TestExtractClassesRowsUsesBookedColumnAndCountsWaitingAttendees(t *testing.T) {
 	t.Parallel()
 
 	rows := []csvRow{
 		{
-			"eventid":       "00123",
-			"servicename":   "Splash 2A",
-			"location":      "Pool A",
-			"dayoftheweek":  "Monday",
-			"starts":        "2026-03-23 3:15 PM",
-			"ends":          "2026-03-23 3:45 PM",
-			"eventschedule": "From 2026-03-01 to 2026-05-30",
-			"attendeename":  "Jane Doe",
-			"status":        "Booked",
-			"regtotal":      "2",
+			"eventid":        "00123",
+			"servicename":    "Splash 2A",
+			"location":       "Pool A",
+			"dayoftheweek":   "Monday",
+			"starts":         "2026-03-23 3:15 PM",
+			"ends":           "2026-03-23 3:45 PM",
+			"eventschedule":  "From 2026-03-01 to 2026-05-30",
+			"attendeename":   "Jane Doe",
+			"attendeestatus": "Booked",
+			"booked":         "5",
 		},
 		{
-			"eventid":       "00123",
-			"servicename":   "Splash 2A",
-			"location":      "Pool A",
-			"dayoftheweek":  "Monday",
-			"starts":        "2026-03-23 3:15 PM",
-			"ends":          "2026-03-23 3:45 PM",
-			"eventschedule": "From 2026-03-01 to 2026-05-30",
-			"attendeename":  "John Doe",
-			"status":        "Waitlist",
-			"regtotal":      "2",
+			"eventid":        "00123",
+			"servicename":    "Splash 2A",
+			"location":       "Pool A",
+			"dayoftheweek":   "Monday",
+			"starts":         "2026-03-23 3:15 PM",
+			"ends":           "2026-03-23 3:45 PM",
+			"eventschedule":  "From 2026-03-01 to 2026-05-30",
+			"attendeename":   "John Doe",
+			"attendeestatus": "Waiting",
+			"booked":         "5",
 		},
 	}
 
@@ -101,13 +104,57 @@ func TestExtractClassesRowsExcludesWaitlistAttendeesFromCounts(t *testing.T) {
 	}
 
 	session := result.Sessions[0]
-	if session.StudentCount != 1 {
-		t.Fatalf("expected session student count 1, got %d", session.StudentCount)
+	if session.StudentCount != 5 {
+		t.Fatalf("expected session student count 5, got %d", session.StudentCount)
+	}
+	if session.WaitlistCount != 1 {
+		t.Fatalf("expected session waitlist count 1, got %d", session.WaitlistCount)
 	}
 
 	classes := result.ClassesBySession[session.SessionKey]
-	if classes[0].StudentCount != 1 {
-		t.Fatalf("expected class student count 1, got %d", classes[0].StudentCount)
+	if classes[0].StudentCount != 5 {
+		t.Fatalf("expected class student count 5, got %d", classes[0].StudentCount)
+	}
+	if classes[0].WaitlistCount != 1 {
+		t.Fatalf("expected class waitlist count 1, got %d", classes[0].WaitlistCount)
+	}
+}
+
+func TestExtractClassesRowsUsesBookedColumnWithoutAttendeeRows(t *testing.T) {
+	t.Parallel()
+
+	rows := []csvRow{
+		{
+			"eventid":       "00456",
+			"servicename":   "Splash 4",
+			"location":      "Pool B",
+			"dayoftheweek":  "Tuesday",
+			"starts":        "2026-03-24 4:00 PM",
+			"ends":          "2026-03-24 4:30 PM",
+			"eventschedule": "From 2026-03-01 to 2026-05-30",
+			"booked":        "5",
+		},
+	}
+
+	result, err := ExtractClassesRows(rows)
+	if err != nil {
+		t.Fatalf("ExtractClassesRows returned error: %v", err)
+	}
+
+	session := result.Sessions[0]
+	if session.StudentCount != 5 {
+		t.Fatalf("expected session student count 5, got %d", session.StudentCount)
+	}
+	if session.WaitlistCount != 0 {
+		t.Fatalf("expected session waitlist count 0, got %d", session.WaitlistCount)
+	}
+
+	classes := result.ClassesBySession[session.SessionKey]
+	if classes[0].StudentCount != 5 {
+		t.Fatalf("expected class student count 5, got %d", classes[0].StudentCount)
+	}
+	if classes[0].WaitlistCount != 0 {
+		t.Fatalf("expected class waitlist count 0, got %d", classes[0].WaitlistCount)
 	}
 }
 

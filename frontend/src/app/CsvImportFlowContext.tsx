@@ -5,7 +5,7 @@ import { useDay } from './DayContext'
 import { useCurrentTeam } from './useCurrentTeam'
 import { formatTermLabel, useCurrentTerm } from './useCurrentTerm'
 import { extractClassesFromCsv, processCsvAndStore } from '../lib/api'
-import { setExtractedClassesForScope } from '../lib/extractedClassesStorage'
+import { setExtractedClassesForScope, setExtractedClassesForSession } from '../lib/extractedClassesStorage'
 import { getSessionTermLabel, syncReportCardsForDay } from '../lib/reportCardSync'
 import { createSession, fetchCsvSessionCandidates, fetchRequestAssignments } from '../lib/serverApi'
 import {
@@ -150,6 +150,7 @@ function toGuestCandidates(classesResponse: {
     location: string
     classCount: number
     studentCount: number
+    waitlistCount: number
     courseCodes: string[]
   }>
 }): CsvSessionCandidate[] {
@@ -378,6 +379,13 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       await processCsvAndStore(state.file, candidate.dayOfWeek, mergedUploadInstructors, {
         courseCodes: (state.classesBySession[candidate.sessionKey] ?? []).map(classEntry => classEntry.courseCode),
       })
+
+      if (accountType !== 'full_time') {
+        const extractedClassesForSession = state.classesBySession[candidate.sessionKey] ?? []
+        if (extractedClassesForSession.length > 0) {
+          setExtractedClassesForSession(targetSession.id, extractedClassesForSession)
+        }
+      }
 
       await syncPostImportState(
         candidate.dayOfWeek,

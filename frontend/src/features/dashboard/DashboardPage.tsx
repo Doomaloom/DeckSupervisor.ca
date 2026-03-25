@@ -16,6 +16,7 @@ import {
   clearCurrentSessionId,
   getCurrentSessionId,
   loadSessions,
+  onCurrentSessionChanged,
   saveSessions,
   setCurrentSessionId,
 } from '../../lib/sessionStorage'
@@ -500,6 +501,13 @@ function Dashboard() {
       setLocation(options[0])
     }
   }, [location, selectedTeamId, teams])
+
+  useEffect(() => {
+    const unsubscribe = onCurrentSessionChanged(id => {
+      setCurrentSessionIdState(id)
+    })
+    return unsubscribe
+  }, [])
 
   useEffect(() => {
     return onStorageScopeChanged(() => {

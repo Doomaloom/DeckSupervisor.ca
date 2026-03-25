@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { getSelectedDay, setSelectedDay as setSelectedDayStorage } from '../lib/storage'
 import { onStorageScopeChanged } from '../lib/storageScope'
 
@@ -18,17 +18,17 @@ export function DayProvider({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  const setSelectedDay = (day: string) => {
+  const setSelectedDay = useCallback((day: string) => {
     setSelectedDayState(day)
     setSelectedDayStorage(day)
-  }
+  }, [])
 
   const value = useMemo(
     () => ({
       selectedDay,
       setSelectedDay,
     }),
-    [selectedDay]
+    [selectedDay, setSelectedDay]
   )
 
   return <DayContext.Provider value={value}>{children}</DayContext.Provider>
