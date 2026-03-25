@@ -16,6 +16,7 @@ type MasterlistOptionsModalProps = {
   extras: MasterlistExtras
   coverOrientation: 'portrait' | 'landscape'
   formatOptions: FormatOptions
+  notice?: React.ReactNode
   onToggleFormat: (key: keyof FormatOptions) => void
   onClose: () => void
   onToggle: (key: keyof MasterlistExtras) => void
@@ -28,6 +29,7 @@ function MasterlistOptionsModal({
   extras,
   coverOrientation,
   formatOptions,
+  notice,
   onToggleFormat,
   onClose,
   onToggle,
@@ -42,6 +44,7 @@ function MasterlistOptionsModal({
     <PrintModalShell
       title="Masterlist Options"
       description="Choose formatting options and add a schematic coverpage to the masterlist."
+      notice={notice}
       onClose={onClose}
     >
       <div className="mt-6 grid gap-4 md:grid-cols-2">

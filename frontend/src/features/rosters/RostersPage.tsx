@@ -43,6 +43,7 @@ import { useRosterData } from './hooks/useRosterData'
 import { useRosterEdits } from './hooks/useRosterEdits'
 import { useRosterFilters } from './hooks/useRosterFilters'
 import { useRosterPrint } from './hooks/useRosterPrint'
+import PrintPopupBlockedNotice from '../../components/PrintPopupBlockedNotice'
 import { buildCustomRosterGroups, getEmptyMessage } from './utils'
 import type {
     FullTimeInstructorAssignments,
@@ -206,7 +207,12 @@ function RostersPage() {
         currentUserId: user?.id,
         canEdit: isGuest || access.mode === 'owner' || access.allowRosterEdits,
     })
-    const { handlePrintRoster } = useRosterPrint()
+    const {
+        blockedPrintJob,
+        clearBlockedPrintJob,
+        handlePrintRoster,
+        retryBlockedPrint,
+    } = useRosterPrint()
     const emptyMessage = getEmptyMessage(students.length)
     const handleToggleStudentLevelEdits = (code: string) => {
         setStudentLevelEditMap(current => ({
@@ -1091,11 +1097,21 @@ function RostersPage() {
 
             <RostersTabs activeTab={activeTab} onChange={setActiveTab} />
             <div className="flex flex-col gap-6">
+                {blockedPrintJob ? (
+                    <PrintPopupBlockedNotice
+                        jobLabel={blockedPrintJob.jobLabel}
+                        pdfBlob={blockedPrintJob.pdfBlob}
+                        filename={blockedPrintJob.filename}
+                        onRetry={retryBlockedPrint}
+                        onDismiss={clearBlockedPrintJob}
+                    />
+                ) : null}
                 {activeTab === 'custom' ? (
                     <CustomRostersPanel
                         rosters={rosters}
                         instructorOptions={instructorOptions}
                         customRosters={customRosters}
+                        onPrintRoster={handlePrintRoster}
                         onSave={saveCustomRosters}
                     />
                 ) : (

@@ -9,6 +9,7 @@ type InstructorOptionsModalProps = {
   isRefreshing: boolean
   refreshLabel?: string
   isPrintingAll: boolean
+  notice?: React.ReactNode
   extras: {
     schematicCoverPage: boolean
     highlightCoverInstructor: boolean
@@ -31,6 +32,7 @@ function InstructorOptionsModal({
   isRefreshing,
   refreshLabel,
   isPrintingAll,
+  notice,
   extras,
   coverOrientation,
   onClose,
@@ -49,6 +51,7 @@ function InstructorOptionsModal({
     <PrintModalShell
       title="Instructor Sheets Options"
       description="Print instructor packets as they are ready."
+      notice={notice}
       onClose={onClose}
     >
       <div className="mt-6 flex items-center justify-between gap-3">

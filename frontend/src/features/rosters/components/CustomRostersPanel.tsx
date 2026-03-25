@@ -3,7 +3,6 @@ import { extractEndTime, extractStartTime } from '../../../lib/time'
 import type { CustomRoster } from '../../../types/app'
 import type { RosterGroup } from '../types'
 import { buildCustomRosterGroups } from '../utils'
-import { useRosterPrint } from '../hooks/useRosterPrint'
 import InstructorSelect from './InstructorSelect'
 import LevelSelect from './LevelSelect'
 
@@ -11,6 +10,7 @@ type CustomRostersPanelProps = {
     rosters: RosterGroup[]
     instructorOptions: string[]
     customRosters: CustomRoster[]
+    onPrintRoster: (roster: RosterGroup) => void
     onSave: (next: CustomRoster[]) => void
 }
 
@@ -20,7 +20,13 @@ function buildTimeKey(time: string) {
     return `${start}-${end}`
 }
 
-function CustomRostersPanel({ rosters, instructorOptions, customRosters, onSave }: CustomRostersPanelProps) {
+function CustomRostersPanel({
+    rosters,
+    instructorOptions,
+    customRosters,
+    onPrintRoster,
+    onSave,
+}: CustomRostersPanelProps) {
     const [isCreating, setIsCreating] = useState(false)
     const [editingRosterId, setEditingRosterId] = useState<string | null>(null)
     const [newLevel, setNewLevel] = useState('')
@@ -63,9 +69,6 @@ function CustomRostersPanel({ rosters, instructorOptions, customRosters, onSave 
         })
         return ids
     }, [selectedRosters])
-
-    const { handlePrintRoster } = useRosterPrint()
-
     useEffect(() => {
         setSelectedSourceCodes(current => current.filter(code => rosterByCode.has(code)))
     }, [rosterByCode])
@@ -223,7 +226,7 @@ function CustomRostersPanel({ rosters, instructorOptions, customRosters, onSave 
                                         <button
                                             type="button"
                                             className="rounded-lg border border-secondary/40 px-3 py-1 text-sm transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
-                                            onClick={() => rosterGroup && handlePrintRoster(rosterGroup)}
+                                            onClick={() => rosterGroup && onPrintRoster(rosterGroup)}
                                         >
                                             Print
                                         </button>

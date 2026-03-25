@@ -3,11 +3,12 @@ import React from 'react'
 type PrintModalShellProps = {
   title: string
   description?: string
+  notice?: React.ReactNode
   onClose: () => void
   children: React.ReactNode
 }
 
-function PrintModalShell({ title, description, onClose, children }: PrintModalShellProps) {
+function PrintModalShell({ title, description, notice, onClose, children }: PrintModalShellProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6"
@@ -27,6 +28,7 @@ function PrintModalShell({ title, description, onClose, children }: PrintModalSh
         </button>
         <h3 className="text-2xl font-semibold">{title}</h3>
         {description ? <p className="mt-2 text-secondary/80">{description}</p> : null}
+        {notice ? <div className="mt-6">{notice}</div> : null}
         {children}
       </div>
     </div>

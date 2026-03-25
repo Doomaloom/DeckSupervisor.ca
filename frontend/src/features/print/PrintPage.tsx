@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useDay } from '../../app/DayContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
+import PrintPopupBlockedNotice from '../../components/PrintPopupBlockedNotice'
 import {
   getCustomRosterDayKey,
   getCustomRostersForDay,
@@ -20,6 +21,7 @@ import { buildCustomRosterGroups, buildRosterGroups, sanitizeLevel } from '../ro
 import { printOptions } from './constants'
 import type { FormatOptions } from '../../types/app'
 import type { PrintOptionKey } from './types'
+import { openPdfPrintDialog, openPrintWindow } from '../../lib/browserPrint'
 import { useSessionInstructors } from './hooks/useSessionInstructors'
 import Day1OptionsModal from './components/Day1OptionsModal'
 import InstructorOptionsModal from './components/InstructorOptionsModal'
@@ -95,6 +97,25 @@ const formatMonthDay = (value: string) => {
   return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+const toFileToken = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+const buildPdfFilename = (...parts: Array<string | null | undefined>) => {
+  const filtered = parts.map(part => (part ? toFileToken(part) : '')).filter(Boolean)
+  return `${filtered.join('-') || 'print'}.pdf`
+}
+
+type BlockedPrintJob = {
+  jobLabel: string
+  filename: string
+  pdfBlob: Blob
+  retry: () => void
+}
+
 function PrintPage() {
   const { selectedDay } = useDay()
   const { session: currentSession } = useCurrentSession()
@@ -134,6 +155,7 @@ function PrintPage() {
   const [masterlistFormatOptions, setMasterlistFormatOptions] = useState<FormatOptions>(() =>
     getMasterlistDraftOptions(),
   )
+  const [blockedPrintJob, setBlockedPrintJob] = useState<BlockedPrintJob | null>(null)
   const [schematicOptions, setSchematicOptions] = useState({
     highlightInstructor: false,
     selectedInstructor: 'none',
@@ -220,6 +242,20 @@ function PrintPage() {
     schematicOptions.highlightInstructor,
     schematicOptions.selectedInstructor,
   ])
+
+  const clearBlockedPrintJob = () => {
+    setBlockedPrintJob(null)
+  }
+
+  const blockedPrintNotice = blockedPrintJob ? (
+    <PrintPopupBlockedNotice
+      jobLabel={blockedPrintJob.jobLabel}
+      pdfBlob={blockedPrintJob.pdfBlob}
+      filename={blockedPrintJob.filename}
+      onRetry={blockedPrintJob.retry}
+      onDismiss={clearBlockedPrintJob}
+    />
+  ) : null
 
   const handleToggleInfo = (key: PrintOptionKey) => {
     setActiveInfo(current => (current === key ? null : key))
@@ -392,11 +428,8 @@ function PrintPage() {
       return
     }
 
+    clearBlockedPrintJob()
     const printWindow = openPrintWindow('Schematic')
-    if (!printWindow) {
-      alert('Pop-up blocked. Please allow pop-ups to print.')
-      return
-    }
 
     try {
       const highlightOptions = {
@@ -448,11 +481,29 @@ function PrintPage() {
           pdfs.map((pdf, index) => ({ blob: pdf, filename: `schematic-${index + 1}.pdf` })),
           'schematic',
         )
-        openPdfPrintDialog(combined, printWindow, 'Schematic')
+        if (!printWindow || !openPdfPrintDialog(combined, printWindow, 'Schematic')) {
+          setBlockedPrintJob({
+            jobLabel: 'Schematic',
+            filename: 'schematic.pdf',
+            pdfBlob: combined,
+            retry: () => {
+              void handlePrintSchematic()
+            },
+          })
+        }
       } else {
         const payload = buildSchematicPayload(schematicOptions.orientation, highlightOptions)
         const pdfBlob = await fetchSchematicPdf(payload)
-        openPdfPrintDialog(pdfBlob, printWindow, 'Schematic')
+        if (!printWindow || !openPdfPrintDialog(pdfBlob, printWindow, 'Schematic')) {
+          setBlockedPrintJob({
+            jobLabel: 'Schematic',
+            filename: 'schematic.pdf',
+            pdfBlob,
+            retry: () => {
+              void handlePrintSchematic()
+            },
+          })
+        }
       }
     } catch (error) {
       console.error(error)
@@ -461,7 +512,7 @@ function PrintPage() {
           ? error.message
           : 'Unable to generate the schematic PDF. Please try again.'
       alert(message)
-      printWindow.close()
+      printWindow?.close()
     }
   }
 
@@ -480,96 +531,6 @@ function PrintPage() {
     const studentsById = new Map(students.map(student => [student.id, student]))
     const customGroups = buildCustomRosterGroups(customRosters, rosterByCode, studentsById)
     return [...rosterGroups, ...customGroups]
-  }
-
-  const escapeHtml = (value: string) =>
-    value
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;')
-
-  const openPdfPrintDialog = (pdfBlob: Blob, existingWindow?: Window | null, title = 'Print PDF') => {
-    const blobUrl = window.URL.createObjectURL(pdfBlob)
-    const printWindow = existingWindow ?? window.open('', '_blank')
-
-    if (!printWindow) {
-      window.URL.revokeObjectURL(blobUrl)
-      alert('Pop-up blocked. Please allow pop-ups to print.')
-      return
-    }
-
-    const safeTitle = escapeHtml(title)
-    printWindow.document.open()
-    printWindow.document.write(`<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>${safeTitle}</title>
-    <style>
-      html, body {
-        margin: 0;
-        height: 100%;
-        background: #f5f5f5;
-      }
-      .viewer-shell {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-      }
-      .viewer-bar {
-        flex: 0 0 auto;
-        padding: 10px 14px;
-        font: 600 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        color: #1f2937;
-        background: #ffffff;
-        border-bottom: 1px solid #d1d5db;
-      }
-      .viewer-frame {
-        flex: 1 1 auto;
-        width: 100%;
-        border: 0;
-        background: #525252;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="viewer-shell">
-      <div class="viewer-bar">${safeTitle}</div>
-      <iframe class="viewer-frame" src="${blobUrl}" title="${safeTitle}"></iframe>
-    </div>
-  </body>
-</html>`)
-    printWindow.document.close()
-
-    const cleanup = () => {
-      window.URL.revokeObjectURL(blobUrl)
-    }
-
-    printWindow.addEventListener('beforeunload', cleanup, { once: true })
-
-    const triggerPrint = () => {
-      printWindow.focus()
-      printWindow.print()
-    }
-
-    printWindow.onload = () => {
-      setTimeout(triggerPrint, 1000)
-    }
-
-    setTimeout(triggerPrint, 3000)
-  }
-
-  const openPrintWindow = (title = 'Preparing PDF') => {
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) {
-      return null
-    }
-    printWindow.document.write(
-      `<title>${escapeHtml(title)}</title><p style="font-family: sans-serif;">Preparing PDF...</p>`,
-    )
-    return printWindow
   }
 
   const concatPdfs = async (pdfs: Array<{ blob: Blob; filename: string }>, filename: string) => {
@@ -735,11 +696,8 @@ function PrintPage() {
       return
     }
 
+    clearBlockedPrintJob()
     const printWindow = openPrintWindow('Instructor Sheets')
-    if (!printWindow) {
-      alert('Pop-up blocked. Please allow pop-ups to print.')
-      return
-    }
 
     setIsPrintingAllInstructors(true)
 
@@ -752,7 +710,7 @@ function PrintPage() {
 
       if (orderedNames.length === 0) {
         alert('No instructor sheets available to print.')
-        printWindow.close()
+        printWindow?.close()
         return
       }
 
@@ -840,7 +798,7 @@ function PrintPage() {
 
       if (pdfs.length === 0) {
         alert('No instructor sheets available to print.')
-        printWindow.close()
+        printWindow?.close()
         return
       }
 
@@ -864,7 +822,16 @@ function PrintPage() {
       if (shouldRefresh) {
         await refreshCachedPacket()
       }
-      openPdfPrintDialog(combinedPdf, printWindow, 'Instructor Sheets')
+      if (!printWindow || !openPdfPrintDialog(combinedPdf, printWindow, 'Instructor Sheets')) {
+        setBlockedPrintJob({
+          jobLabel: 'Instructor Sheets',
+          filename: 'instructor-sheets.pdf',
+          pdfBlob: combinedPdf,
+          retry: () => {
+            void handlePrintAllInstructorSheets()
+          },
+        })
+      }
     } catch (error) {
       console.error(error)
       const message =
@@ -872,7 +839,7 @@ function PrintPage() {
           ? error.message
           : 'Unable to generate instructor sheets. Please try again.'
       alert(message)
-      printWindow.close()
+      printWindow?.close()
     } finally {
       setIsPrintingAllInstructors(false)
     }
@@ -901,11 +868,8 @@ function PrintPage() {
       return
     }
 
+    clearBlockedPrintJob()
     const printWindow = openPrintWindow(`Instructor - ${name}`)
-    if (!printWindow) {
-      alert('Pop-up blocked. Please allow pop-ups to print.')
-      return
-    }
 
     setBusyInstructors(current => ({
       ...current,
@@ -931,14 +895,34 @@ function PrintPage() {
           const combined = await concatPdfs(
             [
               { blob: schematicCover, filename: 'schematic-cover.pdf' },
-              ...(schematicBlank ? [{ blob: schematicBlank, filename: 'schematic-blank.pdf' }] : []),
+              ...(schematicBlank
+                ? [{ blob: schematicBlank, filename: 'schematic-blank.pdf' }]
+                : []),
               { blob: cached, filename: `instructor-${name}.pdf` },
             ],
             `instructor-${name}`,
           )
-          openPdfPrintDialog(combined, printWindow, `Instructor - ${name}`)
+          if (!printWindow || !openPdfPrintDialog(combined, printWindow, `Instructor - ${name}`)) {
+            setBlockedPrintJob({
+              jobLabel: `Instructor - ${name}`,
+              filename: buildPdfFilename('instructor', name),
+              pdfBlob: combined,
+              retry: () => {
+                void handlePrintInstructorSheet(name)
+              },
+            })
+          }
         } else {
-          openPdfPrintDialog(cached, printWindow, `Instructor - ${name}`)
+          if (!printWindow || !openPdfPrintDialog(cached, printWindow, `Instructor - ${name}`)) {
+            setBlockedPrintJob({
+              jobLabel: `Instructor - ${name}`,
+              filename: buildPdfFilename('instructor', name),
+              pdfBlob: cached,
+              retry: () => {
+                void handlePrintInstructorSheet(name)
+              },
+            })
+          }
         }
         return
       }
@@ -947,7 +931,7 @@ function PrintPage() {
 
       if (rostersToPrint.length === 0) {
         alert(`No classes found for ${name}.`)
-        printWindow.close()
+        printWindow?.close()
         return
       }
 
@@ -976,9 +960,27 @@ function PrintPage() {
           ],
           `instructor-${name}`,
         )
-        openPdfPrintDialog(combined, printWindow, `Instructor - ${name}`)
+        if (!printWindow || !openPdfPrintDialog(combined, printWindow, `Instructor - ${name}`)) {
+          setBlockedPrintJob({
+            jobLabel: `Instructor - ${name}`,
+            filename: buildPdfFilename('instructor', name),
+            pdfBlob: combined,
+            retry: () => {
+              void handlePrintInstructorSheet(name)
+            },
+          })
+        }
       } else {
-        openPdfPrintDialog(pdfBlob, printWindow, `Instructor - ${name}`)
+        if (!printWindow || !openPdfPrintDialog(pdfBlob, printWindow, `Instructor - ${name}`)) {
+          setBlockedPrintJob({
+            jobLabel: `Instructor - ${name}`,
+            filename: buildPdfFilename('instructor', name),
+            pdfBlob,
+            retry: () => {
+              void handlePrintInstructorSheet(name)
+            },
+          })
+        }
       }
     } catch (error) {
       console.error(error)
@@ -987,7 +989,7 @@ function PrintPage() {
           ? error.message
           : 'Unable to generate instructor sheets. Please try again.'
       alert(message)
-      printWindow.close()
+      printWindow?.close()
     } finally {
       setBusyInstructors(current => ({
         ...current,
@@ -1071,11 +1073,8 @@ function PrintPage() {
     const generatedDate = formatGeneratedDate(new Date())
     const sessionWeek = getSessionWeek(currentSession?.start_date ?? '') ?? 1
 
+    clearBlockedPrintJob()
     const printWindow = openPrintWindow('Masterlist')
-    if (!printWindow) {
-      alert('Pop-up blocked. Please allow pop-ups to print.')
-      return
-    }
 
     try {
       let schematicCover: Blob | null = null
@@ -1116,9 +1115,27 @@ function PrintPage() {
           ],
           'masterlist',
         )
-        openPdfPrintDialog(combined, printWindow, 'Masterlist')
+        if (!printWindow || !openPdfPrintDialog(combined, printWindow, 'Masterlist')) {
+          setBlockedPrintJob({
+            jobLabel: 'Masterlist',
+            filename: 'masterlist.pdf',
+            pdfBlob: combined,
+            retry: () => {
+              void handlePrintMasterlist()
+            },
+          })
+        }
       } else {
-        openPdfPrintDialog(masterlistBlob, printWindow, 'Masterlist')
+        if (!printWindow || !openPdfPrintDialog(masterlistBlob, printWindow, 'Masterlist')) {
+          setBlockedPrintJob({
+            jobLabel: 'Masterlist',
+            filename: 'masterlist.pdf',
+            pdfBlob: masterlistBlob,
+            retry: () => {
+              void handlePrintMasterlist()
+            },
+          })
+        }
       }
     } catch (error) {
       console.error(error)
@@ -1127,7 +1144,7 @@ function PrintPage() {
           ? error.message
           : 'Unable to generate masterlist. Please try again.'
       alert(message)
-      printWindow.close()
+      printWindow?.close()
     }
   }
 
@@ -1318,16 +1335,16 @@ function PrintPage() {
       return
     }
 
+    clearBlockedPrintJob()
     const printWindows = [
       openPrintWindow('Schematic'),
       openPrintWindow('Masterlist'),
       ...orderedNames.map(name => openPrintWindow(`Instructor - ${name}`)),
     ]
+    const popupBlocked = printWindows.some(windowRef => !windowRef)
 
-    if (printWindows.some(windowRef => !windowRef)) {
+    if (popupBlocked) {
       printWindows.forEach(windowRef => windowRef?.close())
-      alert('Pop-up blocked. Please allow pop-ups to print.')
-      return
     }
 
     try {
@@ -1350,14 +1367,41 @@ function PrintPage() {
       }
 
       const schematicBlob = await schematicResponse.blob()
-      openPdfPrintDialog(schematicBlob, printWindows[0], 'Schematic')
-
       const masterlistBlob = await buildDay1MasterlistBlob()
-      openPdfPrintDialog(masterlistBlob, printWindows[1], 'Masterlist')
+      const instructorBlobs: Array<{ name: string; blob: Blob }> = []
 
-      for (const [index, name] of orderedNames.entries()) {
+      for (const name of orderedNames) {
         const instructorBlob = await buildDay1InstructorBlob(name)
-        openPdfPrintDialog(instructorBlob, printWindows[index + 2], `Instructor - ${name}`)
+        instructorBlobs.push({ name, blob: instructorBlob })
+      }
+
+      if (popupBlocked) {
+        const combinedDay1Blob = await concatPdfs(
+          [
+            { blob: schematicBlob, filename: 'schematic.pdf' },
+            { blob: masterlistBlob, filename: 'masterlist.pdf' },
+            ...instructorBlobs.map(entry => ({
+              blob: entry.blob,
+              filename: buildPdfFilename('instructor', entry.name),
+            })),
+          ],
+          'day1-materials',
+        )
+        setBlockedPrintJob({
+          jobLabel: 'Day 1 Materials',
+          filename: 'day1-materials.pdf',
+          pdfBlob: combinedDay1Blob,
+          retry: () => {
+            void handlePrintDay1()
+          },
+        })
+        return
+      }
+
+      openPdfPrintDialog(schematicBlob, printWindows[0], 'Schematic')
+      openPdfPrintDialog(masterlistBlob, printWindows[1], 'Masterlist')
+      for (const [index, entry] of instructorBlobs.entries()) {
+        openPdfPrintDialog(entry.blob, printWindows[index + 2], `Instructor - ${entry.name}`)
       }
     } catch (error) {
       console.error(error)
@@ -1411,6 +1455,7 @@ function PrintPage() {
         open={activeModal === 'day1'}
         options={day1Options}
         formatOptions={masterlistFormatOptions}
+        notice={activeModal === 'day1' ? blockedPrintNotice : null}
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleDay1Option}
         onToggleFormat={handleToggleMasterlistOption}
@@ -1434,6 +1479,7 @@ function PrintPage() {
             : undefined
         }
         isPrintingAll={isPrintingAllInstructors}
+        notice={activeModal === 'instructors' ? blockedPrintNotice : null}
         extras={instructorExtras}
         coverOrientation={instructorCoverOrientation}
         onClose={() => setActiveModal(null)}
@@ -1449,6 +1495,7 @@ function PrintPage() {
         extras={masterlistExtras}
         coverOrientation={coverOrientation}
         formatOptions={masterlistFormatOptions}
+        notice={activeModal === 'masterlist' ? blockedPrintNotice : null}
         onToggleFormat={handleToggleMasterlistOption}
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleMasterlistExtra}
@@ -1459,6 +1506,7 @@ function PrintPage() {
         open={activeModal === 'schematic'}
         options={schematicOptions}
         instructorNames={instructorNames}
+        notice={activeModal === 'schematic' ? blockedPrintNotice : null}
         onClose={() => setActiveModal(null)}
         onToggleHighlight={handleToggleSchematicHighlight}
         onSelectOrientation={handleSelectSchematicOrientation}

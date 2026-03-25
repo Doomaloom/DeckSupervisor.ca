@@ -1,7 +1,9 @@
-import type { RosterGroup } from '../types'
+import { useState } from 'react'
+import { openPdfPrintDialog, openPrintWindow } from '../../../lib/browserPrint'
 import { sanitizeLevel } from '../utils'
 import { useCurrentSession } from '../../../app/useCurrentSession'
 import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
+import type { RosterGroup } from '../types'
 
 function getSessionName(sessionDay: string, sessionSeason: string | null, startDate: string | null) {
     return formatSessionDisplayName({
@@ -12,41 +14,30 @@ function getSessionName(sessionDay: string, sessionSeason: string | null, startD
     })
 }
 
-function openPdfPrintDialog(pdfBlob: Blob, existingWindow?: Window | null) {
-    const blobUrl = window.URL.createObjectURL(pdfBlob)
-    const printWindow = existingWindow ?? window.open(blobUrl, '_blank')
+function toFileToken(value: string) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+}
 
-    if (!printWindow) {
-        window.URL.revokeObjectURL(blobUrl)
-        alert('Pop-up blocked. Please allow pop-ups to print.')
-        return
-    }
-
-    if (existingWindow) {
-        printWindow.location.href = blobUrl
-    }
-
-    const cleanup = () => {
-        window.URL.revokeObjectURL(blobUrl)
-    }
-
-    printWindow.addEventListener('beforeunload', cleanup, { once: true })
-
-    const triggerPrint = () => {
-        printWindow.focus()
-        printWindow.print()
-    }
-
-    printWindow.onload = () => {
-        setTimeout(triggerPrint, 1000)
-    }
-
-    setTimeout(triggerPrint, 3000)
+function buildRosterFilename(roster: RosterGroup) {
+    const parts = [roster.code, roster.serviceName, roster.time].filter(Boolean).map(toFileToken).filter(Boolean)
+    return `${parts.join('-') || 'attendance-roster'}.pdf`
 }
 
 export function useRosterPrint() {
     const { session: currentSession } = useCurrentSession()
+    const [blockedPrintJob, setBlockedPrintJob] = useState<{
+        jobLabel: string
+        filename: string
+        pdfBlob: Blob
+        roster: RosterGroup
+    } | null>(null)
+
     const handlePrintRoster = async (roster: RosterGroup) => {
+        setBlockedPrintJob(null)
         const template = sanitizeLevel(roster.level)
         const sessionName = currentSession
             ? getSessionName(
@@ -55,12 +46,7 @@ export function useRosterPrint() {
                   currentSession.start_date ?? null,
               )
             : 'Summer 2025'
-        const printWindow = window.open('', '_blank')
-        if (!printWindow) {
-            alert('Pop-up blocked. Please allow pop-ups to print.')
-            return
-        }
-        printWindow.document.write('<p style="font-family: sans-serif;">Preparing PDF...</p>')
+        const printWindow = openPrintWindow('Attendance Roster')
 
         try {
             const response = await fetch('/api/attendance-pdf', {
@@ -92,15 +78,37 @@ export function useRosterPrint() {
             }
 
             const pdfBlob = await response.blob()
-            openPdfPrintDialog(pdfBlob, printWindow)
+            const jobLabel = `Attendance - ${roster.serviceName || roster.code || 'Roster'}`
+            const filename = buildRosterFilename(roster)
+            if (printWindow) {
+                const opened = openPdfPrintDialog(pdfBlob, printWindow, jobLabel)
+                if (opened) {
+                    return
+                }
+            }
+
+            setBlockedPrintJob({
+                jobLabel,
+                filename,
+                pdfBlob,
+                roster,
+            })
         } catch (error) {
             console.error(error)
             alert('Unable to generate attendance PDF. Please try again.')
-            printWindow.close()
+            printWindow?.close()
         }
     }
 
     return {
+        blockedPrintJob,
+        clearBlockedPrintJob: () => setBlockedPrintJob(null),
         handlePrintRoster,
+        retryBlockedPrint: () => {
+            if (!blockedPrintJob) {
+                return
+            }
+            void handlePrintRoster(blockedPrintJob.roster)
+        },
     }
 }

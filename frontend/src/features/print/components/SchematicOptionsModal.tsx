@@ -11,6 +11,7 @@ type SchematicOptionsModalProps = {
   open: boolean
   options: SchematicOptions
   instructorNames: string[]
+  notice?: React.ReactNode
   onClose: () => void
   onToggleHighlight: () => void
   onSelectInstructor: (value: string) => void
@@ -22,6 +23,7 @@ function SchematicOptionsModal({
   open,
   options,
   instructorNames,
+  notice,
   onClose,
   onToggleHighlight,
   onSelectInstructor,
@@ -36,6 +38,7 @@ function SchematicOptionsModal({
     <PrintModalShell
       title="Schematic Options"
       description="Highlight a specific instructor or generate one for each."
+      notice={notice}
       onClose={onClose}
     >
       <div className="mt-6 grid gap-4 md:grid-cols-2">

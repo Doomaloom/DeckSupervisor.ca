@@ -17,6 +17,7 @@ type Day1OptionsModalProps = {
   open: boolean
   options: Day1Options
   formatOptions: FormatOptions
+  notice?: React.ReactNode
   onClose: () => void
   onToggle: (key: keyof Day1Options) => void
   onToggleFormat: (key: keyof FormatOptions) => void
@@ -27,6 +28,7 @@ function Day1OptionsModal({
   open,
   options,
   formatOptions,
+  notice,
   onClose,
   onToggle,
   onToggleFormat,
@@ -40,6 +42,7 @@ function Day1OptionsModal({
     <PrintModalShell
       title="Day 1 Print Options"
       description="Choose the cover and masterlist settings for the Day 1 print set."
+      notice={notice}
       onClose={onClose}
     >
       <div className="mt-6 flex flex-col gap-4">
