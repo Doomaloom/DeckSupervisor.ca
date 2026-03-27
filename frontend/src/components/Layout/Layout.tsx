@@ -22,6 +22,10 @@ import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { formatSessionDisplayName } from '../../shared/session/sessionLabels'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
+import {
+    consumeSuppressedPrefetchForSession,
+    prefetchInstructorPacket,
+} from '../../lib/instructorPdfCache'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 import {
     getCustomRosterDayKey,
@@ -33,6 +37,8 @@ import {
 type LayoutProps = {
     children: React.ReactNode
 }
+
+const attemptedInstructorPrefetches = new Set<string>()
 
 function Layout({ children }: LayoutProps) {
     const location = useLocation()
@@ -87,6 +93,29 @@ function Layout({ children }: LayoutProps) {
             setScopeVersion(version => version + 1)
         })
     }, [])
+
+    useEffect(() => {
+        const sessionId = currentSession?.id?.trim() ?? ''
+        const targetDay = (selectedDay || currentSession?.session_day || '').trim()
+        if (!sessionId || !targetDay) {
+            return
+        }
+        if (consumeSuppressedPrefetchForSession(sessionId)) {
+            return
+        }
+
+        const prefetchKey = `${sessionId}::${targetDay}`
+        if (attemptedInstructorPrefetches.has(prefetchKey)) {
+            return
+        }
+        attemptedInstructorPrefetches.add(prefetchKey)
+
+        void prefetchInstructorPacket(sessionId, targetDay, {
+            concurrency: 1,
+        }).catch(error => {
+            console.error('Failed to prefetch instructor PDFs', error)
+        })
+    }, [currentSession?.id, currentSession?.session_day, selectedDay])
 
     useEffect(() => {
         const sessionId = currentSession?.id

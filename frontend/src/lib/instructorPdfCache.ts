@@ -13,6 +13,7 @@ const CACHE_UPDATED_EVENT = 'decksupervisor:instructor-pdf-cache-updated'
 
 const FALLBACK_SESSION_NAME = 'Summer 2025'
 const DEFAULT_PREFETCH_CONCURRENCY = 1
+const suppressedSessionPrefetches = new Set<string>()
 
 type InstructorPdfEntry = {
   name: string
@@ -119,6 +120,10 @@ function normalizeInstructorNames(names: string[]) {
         .filter(Boolean),
     ),
   ).sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' }))
+}
+
+function normalizeSessionPrefetchKey(sessionId: string) {
+  return sessionId.trim()
 }
 
 function getPrintableRosterGroupsForDay(sessionId: string, day: string): RosterGroup[] {
@@ -616,6 +621,23 @@ export async function prefetchInstructorPacket(
     completed,
     failed,
   }
+}
+
+export function suppressNextPrefetchForSession(sessionId: string): void {
+  const normalizedSessionId = normalizeSessionPrefetchKey(sessionId)
+  if (!normalizedSessionId) {
+    return
+  }
+  suppressedSessionPrefetches.add(normalizedSessionId)
+}
+
+export function consumeSuppressedPrefetchForSession(sessionId: string): boolean {
+  const normalizedSessionId = normalizeSessionPrefetchKey(sessionId)
+  if (!normalizedSessionId || !suppressedSessionPrefetches.has(normalizedSessionId)) {
+    return false
+  }
+  suppressedSessionPrefetches.delete(normalizedSessionId)
+  return true
 }
 
 export async function flushDirtyInstructorPdfs(

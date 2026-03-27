@@ -11,6 +11,7 @@ import {
   resolveSessionYear,
 } from '../../shared/session/sessionLabels'
 import { getTorontoDate } from '../../lib/torontoDate'
+import { suppressNextPrefetchForSession } from '../../lib/instructorPdfCache'
 import { createSession, fetchMySessions, fetchSharedSessionsToday, fetchTeamSessions } from '../../lib/serverApi'
 import {
   clearCurrentSessionId,
@@ -166,6 +167,7 @@ function Dashboard() {
       const sessions = loadSessions()
       sessions.push(nextSession)
       saveSessions(sessions)
+      suppressNextPrefetchForSession(id)
       setCurrentSessionId(id)
       setCurrentSessionIdState(id)
       setSaveMessage('Session saved.')
@@ -204,6 +206,7 @@ function Dashboard() {
       setSaveMessage(error instanceof Error ? error.message : 'Failed to save session')
       return
     }
+    suppressNextPrefetchForSession(id)
     setCurrentSessionId(id)
     setCurrentSessionIdState(id)
     setSaveMessage('Session saved.')

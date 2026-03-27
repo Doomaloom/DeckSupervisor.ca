@@ -8,6 +8,7 @@ import { extractClassesFromCsv, processCsvAndStore } from '../lib/api'
 import { setExtractedClassesForScope, setExtractedClassesForSession } from '../lib/extractedClassesStorage'
 import { getSessionTermLabel, syncReportCardsForDay } from '../lib/reportCardSync'
 import { createSession, fetchCsvSessionCandidates } from '../lib/serverApi'
+import { suppressNextPrefetchForSession } from '../lib/instructorPdfCache'
 import {
   getInstructorsForDay,
   getStudentsForDay,
@@ -310,6 +311,9 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
           ? createGuestSessionFromCandidate(candidate, state.file.name)
           : await createRemoteSessionFromCandidate(candidate)
 
+      if (!matchedSession) {
+        suppressNextPrefetchForSession(targetSession.id)
+      }
       setCurrentSessionId(targetSession.id)
       setSelectedDay(candidate.dayOfWeek)
 
