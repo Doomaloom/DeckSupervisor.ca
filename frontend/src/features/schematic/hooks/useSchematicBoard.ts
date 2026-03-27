@@ -61,13 +61,11 @@ export function useSchematicBoard({
     const [dragged, setDragged] = useState<DragState | null>(null)
     const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>([])
     const [extraEmptyColumns, setExtraEmptyColumns] = useState(0)
+    const storedLayoutKey = `${(storedLayout?.codes ?? []).join('\u0001')}::${(storedLayout?.instructors ?? []).join('\u0001')}`
 
     useEffect(() => {
-        const emptyStoredColumns = allowStoredEmptyColumns
-            ? (storedLayout?.codes ?? []).filter(code => !code.trim()).length
-            : 0
-        setExtraEmptyColumns(emptyStoredColumns)
-    }, [allowStoredEmptyColumns, storedLayout])
+        setExtraEmptyColumns(0)
+    }, [allowStoredEmptyColumns, storedLayoutKey])
 
     useEffect(() => {
         const layout = createRequestAwareLayout(courses, storedLayout)
@@ -79,7 +77,7 @@ export function useSchematicBoard({
         setColumns(layout.columns)
         setInstructors(layout.instructors)
         setLockedInstructors(layout.lockedInstructors)
-    }, [courses, extraEmptyColumns, storedLayout])
+    }, [courses, extraEmptyColumns, storedLayout, storedLayoutKey])
 
     useEffect(() => {
         setSelectedCourseCodes(current => current.filter(code => courses.some(course => course.code === code)))

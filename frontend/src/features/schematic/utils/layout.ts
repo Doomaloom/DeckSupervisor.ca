@@ -22,35 +22,56 @@ type ColumnFitScore = {
     blockSize: number
 }
 
-function getStoredCourseOrder(courses: Course[], stored: StoredCourseLayout | null) {
-    if (!stored || stored.codes.length === 0) {
-        return courses
+type RestoredStoredLayout = {
+    columns: Course[][]
+    instructors: string[]
+    lockedInstructors: string[]
+    remainingCourses: Course[]
+}
+
+function restoreStoredLayout(courses: Course[], stored: StoredCourseLayout | null): RestoredStoredLayout | null {
+    if (!stored || (stored.codes.length === 0 && stored.instructors.length === 0)) {
+        return null
     }
+
     const courseMap = new Map(courses.map(course => [normalizeCourseCodeForCompare(course.code), course]))
-    const ordered: Course[] = []
     const seen = new Set<string>()
+    const columnCount = Math.max(stored.codes.length, stored.instructors.length)
+    const columns: Course[][] = []
+    const instructors: string[] = []
+    const lockedInstructors: string[] = []
 
-    stored.codes.forEach(value => {
-        value
+    for (let index = 0; index < columnCount; index += 1) {
+        const columnCourses = (stored.codes[index] ?? '')
             .split(',')
-            .map(code => courseMap.get(normalizeCourseCodeForCompare(code)))
-            .filter(Boolean)
-            .forEach(course => {
-                if (!course || seen.has(course.code)) {
-                    return
+            .map(code => normalizeCourseCodeForCompare(code))
+            .map(code => {
+                if (!code || seen.has(code)) {
+                    return null
                 }
-                seen.add(course.code)
-                ordered.push(course)
+                const course = courseMap.get(code)
+                if (!course) {
+                    return null
+                }
+                seen.add(code)
+                return course
             })
-    })
+            .filter((course): course is Course => Boolean(course))
 
-    courses.forEach(course => {
-        if (!seen.has(course.code)) {
-            ordered.push(course)
-        }
-    })
+        const sortedColumn = sortCoursesByStart(columnCourses)
+        const lockedInstructor = getLockedInstructorForColumn(sortedColumn)
 
-    return ordered
+        columns.push(sortedColumn)
+        instructors.push(lockedInstructor || stored.instructors[index] || '')
+        lockedInstructors.push(lockedInstructor)
+    }
+
+    return {
+        columns,
+        instructors,
+        lockedInstructors,
+        remainingCourses: courses.filter(course => !seen.has(normalizeCourseCodeForCompare(course.code))),
+    }
 }
 
 function getBestFitColumnIndex(
@@ -152,12 +173,16 @@ export function createRequestAwareLayout(
     courses: Course[],
     stored: StoredCourseLayout | null = null,
 ): RequestAwareLayout {
-    const orderedCourses = getStoredCourseOrder(courses, stored)
-    const lockedCourses = orderedCourses.filter(course => course.isLockedToInstructor && course.assignedInstructor)
-    const flexibleCourses = orderedCourses.filter(course => !course.isLockedToInstructor || !course.assignedInstructor)
-    const columns: Course[][] = []
-    const instructors: string[] = []
-    const lockedInstructors: string[] = []
+    const restoredLayout = restoreStoredLayout(courses, stored)
+    const lockedCourses = (restoredLayout?.remainingCourses ?? courses).filter(
+        course => course.isLockedToInstructor && course.assignedInstructor,
+    )
+    const flexibleCourses = (restoredLayout?.remainingCourses ?? courses).filter(
+        course => !course.isLockedToInstructor || !course.assignedInstructor,
+    )
+    const columns: Course[][] = restoredLayout?.columns.map(column => [...column]) ?? []
+    const instructors: string[] = restoredLayout?.instructors.slice() ?? []
+    const lockedInstructors: string[] = restoredLayout?.lockedInstructors.slice() ?? []
 
     lockedCourses.forEach(course => {
         const targetIndex = getBestFitColumnIndex(columns, course, {
@@ -206,15 +231,6 @@ export function createRequestAwareLayout(
         columns.push([fallbackCourse])
         instructors.push('')
         lockedInstructors.push('')
-    }
-
-    if (stored?.instructors?.length) {
-        instructors.forEach((value, index) => {
-            if (value || lockedInstructors[index]) {
-                return
-            }
-            instructors[index] = stored.instructors[index] ?? ''
-        })
     }
 
     return {
