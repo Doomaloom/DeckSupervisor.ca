@@ -203,19 +203,6 @@ function ManageSessionsPage() {
   }, [editTeamId, isGuest, teams])
 
   useEffect(() => {
-    if (isGuest || !editTeamId || editTeamId === NO_TEAM_VALUE) {
-      return
-    }
-    if (availableLocations.length === 0) {
-      setEditLocation('')
-      return
-    }
-    if (!editLocation || !availableLocations.includes(editLocation)) {
-      setEditLocation(availableLocations[0])
-    }
-  }, [availableLocations, editLocation, editTeamId, isGuest])
-
-  useEffect(() => {
     if (!currentSessionId) {
       setSelectedDay('')
     }
@@ -315,7 +302,7 @@ function ManageSessionsPage() {
         session_year: sessionYearValue,
         start_date: editStartDate || null,
         end_date: editEndDate || null,
-        location: nextTeamId ? editLocation || null : null,
+        location: editLocation || null,
         instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
         updated_at: updateTimestamp,
         report_card_sync: didReportCardScopeChange
@@ -511,29 +498,26 @@ function ManageSessionsPage() {
                     </label>
                     <label className="flex flex-col gap-2 font-semibold text-secondary">
                       Location (optional)
-                      {editTeamId === NO_TEAM_VALUE ? (
-                        <input
-                          className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
-                          type="text"
-                          value={editLocation}
-                          onChange={event => setEditLocation(event.target.value)}
-                          placeholder="Session location"
-                        />
-                      ) : (
-                        <select
-                          className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
-                          value={editLocation}
-                          onChange={event => setEditLocation(event.target.value)}
-                          disabled={!editTeamId}
-                        >
-                          <option value="">Select a location</option>
-                          {availableLocations.map(option => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                      <input
+                        className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                        type="text"
+                        value={editLocation}
+                        onChange={event => setEditLocation(event.target.value)}
+                        list={availableLocations.length > 0 ? 'manage-session-location-options' : undefined}
+                        placeholder="Session location"
+                      />
+                      {availableLocations.length > 0 ? (
+                        <>
+                          <datalist id="manage-session-location-options">
+                            {availableLocations.map(option => (
+                              <option key={option} value={option} />
+                            ))}
+                          </datalist>
+                          <span className="text-xs font-medium text-secondary/70">
+                            Team locations are suggestions only. The session location is saved independently.
+                          </span>
+                        </>
+                      ) : null}
                     </label>
                   </>
                 ) : null}

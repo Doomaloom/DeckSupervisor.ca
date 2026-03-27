@@ -185,11 +185,6 @@ function Dashboard() {
     const hasTeam = selectedTeamId !== NO_TEAM_VALUE
     const sessionYearValue = resolveSessionYear(sessionYear, startDate, endDate)
 
-    if (hasTeam && !location) {
-      setSaveMessage('Select a location before saving.')
-      return
-    }
-
     const payload = {
       id,
       team_id: hasTeam ? selectedTeamId : null,
@@ -487,20 +482,12 @@ function Dashboard() {
   useEffect(() => {
     if (!selectedTeamId || selectedTeamId === NO_TEAM_VALUE) {
       setAvailableLocations([])
-      setLocation('')
       return
     }
     const selected = teams.find(team => team.id === selectedTeamId)
     const options = selected?.available_locations ?? []
     setAvailableLocations(options)
-    if (options.length === 0) {
-      setLocation('')
-      return
-    }
-    if (!location || !options.includes(location)) {
-      setLocation(options[0])
-    }
-  }, [location, selectedTeamId, teams])
+  }, [selectedTeamId, teams])
 
   useEffect(() => {
     const unsubscribe = onCurrentSessionChanged(id => {
@@ -736,19 +723,26 @@ function Dashboard() {
                       </label>
                       <label className="flex flex-col gap-2 font-semibold text-secondary">
                         Location
-                        <select
+                        <input
                           className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                          type="text"
                           value={location}
                           onChange={event => setLocation(event.target.value)}
-                          disabled={!selectedTeamId || selectedTeamId === NO_TEAM_VALUE}
-                        >
-                          <option value="">Select a location</option>
-                          {availableLocations.map(option => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
+                          list={availableLocations.length > 0 ? 'dashboard-session-location-options' : undefined}
+                          placeholder="Session location"
+                        />
+                        {availableLocations.length > 0 ? (
+                          <>
+                            <datalist id="dashboard-session-location-options">
+                              {availableLocations.map(option => (
+                                <option key={option} value={option} />
+                              ))}
+                            </datalist>
+                            <span className="text-xs font-medium text-secondary/70">
+                              Team locations are suggestions only. The session location is saved independently.
+                            </span>
+                          </>
+                        ) : null}
                       </label>
                     </>
                   ) : null}
