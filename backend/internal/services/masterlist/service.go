@@ -6,15 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"html"
-	"os"
-	"os/exec"
-	"runtime"
 	"strings"
 	"time"
 
+	"cob-aquatics/internal/services/pdf"
 	"cob-aquatics/tasks"
 	"github.com/chromedp/cdproto/page"
-	"github.com/chromedp/chromedp"
 )
 
 type Options struct {
@@ -316,104 +313,20 @@ func buildColumnWidths(rows []row, headers []string) []float64 {
 }
 
 func renderPDF(ctx context.Context, htmlContent string) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	allocatorOptions, err := buildChromeAllocatorOptions()
-	if err != nil {
-		return nil, err
-	}
-
-	allocatorCtx, allocatorCancel := chromedp.NewExecAllocator(ctx, allocatorOptions...)
-	defer allocatorCancel()
-
-	taskCtx, taskCancel := chromedp.NewContext(allocatorCtx)
-	defer taskCancel()
-
-	file, err := os.CreateTemp("", "masterlist-*.html")
-	if err != nil {
-		return nil, err
-	}
-	filePath := file.Name()
-	if _, err := file.WriteString(htmlContent); err != nil {
-		file.Close()
-		return nil, err
-	}
-	if err := file.Close(); err != nil {
-		return nil, err
-	}
-	defer os.Remove(filePath)
-
-	fileURL := "file://" + filePath
-	var pdfBytes []byte
-
-	err = chromedp.Run(taskCtx,
-		chromedp.Navigate(fileURL),
-		chromedp.WaitReady("#masterlist-table", chromedp.ByID),
-		chromedp.Sleep(400*time.Millisecond),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			var err error
-			pdfBytes, _, err = page.PrintToPDF().
-				WithPrintBackground(true).
+	return pdf.RenderHTML(ctx, pdf.RenderRequest{
+		HTML:            htmlContent,
+		ReadySelector:   "#masterlist-table",
+		AfterReadyDelay: 400 * time.Millisecond,
+		Timeout:         30 * time.Second,
+		ConfigurePrint: func(params *page.PrintToPDFParams) *page.PrintToPDFParams {
+			return params.WithPrintBackground(true).
 				WithPreferCSSPageSize(true).
-				WithScale(1.0).
-				Do(ctx)
-			return err
-		}),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if len(pdfBytes) == 0 {
-		return nil, errors.New("empty PDF payload")
-	}
-	return pdfBytes, nil
+				WithScale(1.0)
+		},
+	})
 }
 
 func buildFilename() string {
 	now := time.Now()
 	return fmt.Sprintf("MasterList_%d_%d_%d.pdf", now.Month(), now.Day(), now.Year())
-}
-
-func buildChromeAllocatorOptions() ([]chromedp.ExecAllocatorOption, error) {
-	allocatorOptions := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.NoSandbox,
-		chromedp.Flag("disable-gpu", true),
-		chromedp.Flag("disable-dev-shm-usage", true),
-	)
-	chromePath, err := resolveChromePath()
-	if err != nil {
-		return nil, err
-	}
-	if chromePath != "" {
-		allocatorOptions = append(allocatorOptions, chromedp.ExecPath(chromePath))
-	}
-	return allocatorOptions, nil
-}
-
-func resolveChromePath() (string, error) {
-	if value := os.Getenv("CHROME_PATH"); value != "" {
-		return value, nil
-	}
-	if runtime.GOOS == "linux" {
-		paths := []string{"google-chrome", "chromium-browser", "chromium"}
-		for _, path := range paths {
-			if resolved, err := exec.LookPath(path); err == nil {
-				return resolved, nil
-			}
-		}
-		return "", errors.New("chrome executable not found; install Chrome/Chromium or set CHROME_PATH")
-	}
-	if runtime.GOOS == "darwin" {
-		path := "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-		if _, err := os.Stat(path); err == nil {
-			return path, nil
-		}
-		path = "/Applications/Chromium.app/Contents/MacOS/Chromium"
-		if _, err := os.Stat(path); err == nil {
-			return path, nil
-		}
-		return "", errors.New("chrome executable not found; install Chrome/Chromium or set CHROME_PATH")
-	}
-	return "", errors.New("chrome executable not found; install Chrome/Chromium or set CHROME_PATH")
 }

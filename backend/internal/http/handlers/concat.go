@@ -16,6 +16,7 @@ import (
 type concatPDFRequest struct {
 	PDFs     []string `json:"pdfs"`
 	Filename string   `json:"filename"`
+	Title    string   `json:"title"`
 }
 
 func ConcatPDF(w http.ResponseWriter, r *http.Request) {
@@ -23,13 +24,14 @@ func ConcatPDF(w http.ResponseWriter, r *http.Request) {
 	var (
 		pdfs     [][]byte
 		filename string
+		title    string
 		err      error
 	)
 
 	if strings.HasPrefix(contentType, "multipart/form-data") {
-		pdfs, filename, err = readMultipartPDFs(r)
+		pdfs, filename, title, err = readMultipartPDFs(r)
 	} else {
-		pdfs, filename, err = readJSONPDFs(r)
+		pdfs, filename, title, err = readJSONPDFs(r)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -48,65 +50,71 @@ func ConcatPDF(w http.ResponseWriter, r *http.Request) {
 	}
 
 	outputName := buildConcatFilename(filename)
+	if title == "" {
+		title = strings.TrimSuffix(outputName, ".pdf")
+	}
+	if stamped, stampErr := pdf.SetDocumentTitle(output, title); stampErr == nil {
+		output = stamped
+	}
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", outputName))
 	w.Write(output)
 }
 
-func readMultipartPDFs(r *http.Request) ([][]byte, string, error) {
+func readMultipartPDFs(r *http.Request) ([][]byte, string, string, error) {
 	if err := r.ParseMultipartForm(64 << 20); err != nil {
-		return nil, "", errors.New("unable to parse multipart form")
+		return nil, "", "", errors.New("unable to parse multipart form")
 	}
 
 	if r.MultipartForm == nil {
-		return nil, "", errors.New("missing multipart form data")
+		return nil, "", "", errors.New("missing multipart form data")
 	}
 
 	files := r.MultipartForm.File["pdfs"]
 	if len(files) == 0 {
-		return nil, "", errors.New("missing pdfs")
+		return nil, "", "", errors.New("missing pdfs")
 	}
 
 	pdfs := make([][]byte, 0, len(files))
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
 		if err != nil {
-			return nil, "", errors.New("unable to open pdf")
+			return nil, "", "", errors.New("unable to open pdf")
 		}
 		data, err := io.ReadAll(file)
 		file.Close()
 		if err != nil {
-			return nil, "", errors.New("unable to read pdf")
+			return nil, "", "", errors.New("unable to read pdf")
 		}
 		if len(data) == 0 {
-			return nil, "", errors.New("empty pdf payload")
+			return nil, "", "", errors.New("empty pdf payload")
 		}
 		pdfs = append(pdfs, data)
 	}
 
-	return pdfs, r.FormValue("filename"), nil
+	return pdfs, r.FormValue("filename"), r.FormValue("title"), nil
 }
 
-func readJSONPDFs(r *http.Request) ([][]byte, string, error) {
+func readJSONPDFs(r *http.Request) ([][]byte, string, string, error) {
 	var req concatPDFRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, "", errors.New("invalid request body")
+		return nil, "", "", errors.New("invalid request body")
 	}
 
 	if len(req.PDFs) == 0 {
-		return nil, "", errors.New("missing pdfs")
+		return nil, "", "", errors.New("missing pdfs")
 	}
 
 	pdfs := make([][]byte, 0, len(req.PDFs))
 	for index, encoded := range req.PDFs {
 		data, err := decodeBase64PDF(encoded)
 		if err != nil {
-			return nil, "", fmt.Errorf("pdf %d: %w", index+1, err)
+			return nil, "", "", fmt.Errorf("pdf %d: %w", index+1, err)
 		}
 		pdfs = append(pdfs, data)
 	}
 
-	return pdfs, req.Filename, nil
+	return pdfs, req.Filename, req.Title, nil
 }
 
 func decodeBase64PDF(input string) ([]byte, error) {

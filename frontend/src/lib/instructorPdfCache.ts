@@ -5,7 +5,7 @@ import { buildCustomRosterGroups, buildRosterGroups, sanitizeLevel } from '../fe
 import type { RosterGroup } from '../features/rosters/types'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
-const DB_VERSION = 2
+const DB_VERSION = 3
 const PDF_STORE_NAME = 'instructorPdfs'
 const DIRTY_STORE_NAME = 'dirtyInstructorSets'
 const LEGACY_PACKET_STORE_NAME = 'instructorPackets'
@@ -201,6 +201,7 @@ function buildPdfRequestBody(sessionName: string, instructor: string, rosters: R
   return {
     session: sessionName,
     filename: instructor,
+    title: `Instructor - ${instructor}`,
     rosters: rosters.map(roster => ({
       template: sanitizeLevel(roster.level),
       roster: {
@@ -227,6 +228,7 @@ function openDb(): Promise<IDBDatabase> {
     const request = window.indexedDB.open(DB_NAME, DB_VERSION)
     request.onupgradeneeded = () => {
       const db = request.result
+      const transaction = request.transaction
       if (db.objectStoreNames.contains(LEGACY_PACKET_STORE_NAME)) {
         db.deleteObjectStore(LEGACY_PACKET_STORE_NAME)
       }
@@ -235,6 +237,14 @@ function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(DIRTY_STORE_NAME)) {
         db.createObjectStore(DIRTY_STORE_NAME, { keyPath: 'key' })
+      }
+      if (request.oldVersion < 3) {
+        if (db.objectStoreNames.contains(PDF_STORE_NAME)) {
+          transaction?.objectStore(PDF_STORE_NAME).clear()
+        }
+        if (db.objectStoreNames.contains(DIRTY_STORE_NAME)) {
+          transaction?.objectStore(DIRTY_STORE_NAME).clear()
+        }
       }
     }
     request.onerror = () => reject(request.error ?? new Error('Failed to open IndexedDB'))

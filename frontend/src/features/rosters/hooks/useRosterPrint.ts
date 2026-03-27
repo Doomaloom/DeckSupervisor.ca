@@ -69,6 +69,7 @@ export function useRosterPrint() {
                             name: student.name,
                         })),
                     },
+                    title: `Attendance - ${roster.serviceName || roster.code || 'Roster'}`,
                 }),
             })
 
@@ -81,7 +82,10 @@ export function useRosterPrint() {
             const jobLabel = `Attendance - ${roster.serviceName || roster.code || 'Roster'}`
             const filename = buildRosterFilename(roster)
             if (printWindow) {
-                const opened = openPdfPrintDialog(pdfBlob, printWindow, jobLabel)
+                const opened = openPdfPrintDialog(pdfBlob, printWindow, {
+                    title: jobLabel,
+                    filename,
+                })
                 if (opened) {
                     return
                 }

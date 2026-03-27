@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 
 	"cob-aquatics/internal/services/attendance"
+	"cob-aquatics/internal/services/pdf"
 )
 
 func AttendancePDF(w http.ResponseWriter, r *http.Request) {
@@ -30,5 +32,12 @@ func AttendancePDF(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "inline; filename=\""+filename+"\"")
+	title := strings.TrimSpace(req.Title)
+	if title == "" {
+		title = strings.TrimSuffix(filename, ".pdf")
+	}
+	if stamped, stampErr := pdf.SetDocumentTitle(pdfBytes, title); stampErr == nil {
+		pdfBytes = stamped
+	}
 	w.Write(pdfBytes)
 }

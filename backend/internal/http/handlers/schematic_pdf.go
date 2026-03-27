@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"cob-aquatics/internal/services/pdf"
 	"cob-aquatics/internal/services/schematicpdf"
 )
 
@@ -20,7 +21,12 @@ func SchematicPDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := output.Data
+	if stamped, stampErr := pdf.SetDocumentTitle(data, "Schematic"); stampErr == nil {
+		data = stamped
+	}
+
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "inline; filename=\""+output.Filename+"\"")
-	w.Write(output.Data)
+	w.Write(data)
 }

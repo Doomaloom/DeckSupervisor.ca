@@ -38,6 +38,7 @@ type Request struct {
 	Template string `json:"template"`
 	Session  string `json:"session"`
 	Filename string `json:"filename"`
+	Title    string `json:"title"`
 	Roster   Roster `json:"roster"`
 	Rosters  []Item `json:"rosters"`
 }

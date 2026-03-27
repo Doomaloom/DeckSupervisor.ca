@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"cob-aquatics/internal/services/blankpdf"
+	"cob-aquatics/internal/services/pdf"
 )
 
 func BlankPDF(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +21,12 @@ func BlankPDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := output.Data
+	if stamped, stampErr := pdf.SetDocumentTitle(data, "Blank"); stampErr == nil {
+		data = stamped
+	}
+
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "inline; filename=\""+output.Filename+"\"")
-	w.Write(output.Data)
+	w.Write(data)
 }

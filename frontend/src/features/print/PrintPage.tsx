@@ -484,9 +484,15 @@ function PrintPage() {
 
         const combined = await concatPdfs(
           pdfs.map((pdf, index) => ({ blob: pdf, filename: `schematic-${index + 1}.pdf` })),
-          'schematic',
+          { filename: 'schematic', title: 'Schematic' },
         )
-        if (!printWindow || !openPdfPrintDialog(combined, printWindow, 'Schematic')) {
+        if (
+          !printWindow ||
+          !openPdfPrintDialog(combined, printWindow, {
+            title: 'Schematic',
+            filename: 'schematic.pdf',
+          })
+        ) {
           setBlockedPrintJob({
             jobLabel: 'Schematic',
             filename: 'schematic.pdf',
@@ -499,7 +505,13 @@ function PrintPage() {
       } else {
         const payload = buildSchematicPayload(schematicOptions.orientation, highlightOptions)
         const pdfBlob = await fetchSchematicPdf(payload)
-        if (!printWindow || !openPdfPrintDialog(pdfBlob, printWindow, 'Schematic')) {
+        if (
+          !printWindow ||
+          !openPdfPrintDialog(pdfBlob, printWindow, {
+            title: 'Schematic',
+            filename: 'schematic.pdf',
+          })
+        ) {
           setBlockedPrintJob({
             jobLabel: 'Schematic',
             filename: 'schematic.pdf',
@@ -542,12 +554,16 @@ function PrintPage() {
     return [...rosterGroups, ...customGroups]
   }
 
-  const concatPdfs = async (pdfs: Array<{ blob: Blob; filename: string }>, filename: string) => {
+  const concatPdfs = async (
+    pdfs: Array<{ blob: Blob; filename: string }>,
+    options: { filename: string; title: string },
+  ) => {
     const formData = new FormData()
     pdfs.forEach(pdf => {
       formData.append('pdfs', pdf.blob, pdf.filename)
     })
-    formData.append('filename', filename)
+    formData.append('filename', options.filename)
+    formData.append('title', options.title)
 
     const response = await fetch('/api/concat-pdfs', {
       method: 'POST',
@@ -768,6 +784,7 @@ function PrintPage() {
         formData.append('pdfs', pdf, `instructor-${index + 1}.pdf`)
       })
       formData.append('filename', 'instructor-sheets')
+      formData.append('title', 'Instructor Sheets')
 
       const concatResponse = await fetch('/api/concat-pdfs', {
         method: 'POST',
@@ -781,7 +798,13 @@ function PrintPage() {
 
       const combinedPdf = await concatResponse.blob()
       await refreshCachedPacket()
-      if (!printWindow || !openPdfPrintDialog(combinedPdf, printWindow, 'Instructor Sheets')) {
+      if (
+        !printWindow ||
+        !openPdfPrintDialog(combinedPdf, printWindow, {
+          title: 'Instructor Sheets',
+          filename: 'instructor-sheets.pdf',
+        })
+      ) {
         setBlockedPrintJob({
           jobLabel: 'Instructor Sheets',
           filename: 'instructor-sheets.pdf',
@@ -857,9 +880,18 @@ function PrintPage() {
             ...(schematicBlank ? [{ blob: schematicBlank, filename: 'schematic-blank.pdf' }] : []),
             { blob: pdfBlob, filename: `instructor-${name}.pdf` },
           ],
-          `instructor-${name}`,
+          {
+            filename: buildPdfFilename('instructor', name).replace(/\.pdf$/i, ''),
+            title: `Instructor - ${name}`,
+          },
         )
-        if (!printWindow || !openPdfPrintDialog(combined, printWindow, `Instructor - ${name}`)) {
+        if (
+          !printWindow ||
+          !openPdfPrintDialog(combined, printWindow, {
+            title: `Instructor - ${name}`,
+            filename: buildPdfFilename('instructor', name),
+          })
+        ) {
           setBlockedPrintJob({
             jobLabel: `Instructor - ${name}`,
             filename: buildPdfFilename('instructor', name),
@@ -870,7 +902,13 @@ function PrintPage() {
           })
         }
       } else {
-        if (!printWindow || !openPdfPrintDialog(pdfBlob, printWindow, `Instructor - ${name}`)) {
+        if (
+          !printWindow ||
+          !openPdfPrintDialog(pdfBlob, printWindow, {
+            title: `Instructor - ${name}`,
+            filename: buildPdfFilename('instructor', name),
+          })
+        ) {
           setBlockedPrintJob({
             jobLabel: `Instructor - ${name}`,
             filename: buildPdfFilename('instructor', name),
@@ -1012,9 +1050,15 @@ function PrintPage() {
             ...(schematicBlank ? [{ blob: schematicBlank, filename: 'schematic-blank.pdf' }] : []),
             { blob: masterlistBlob, filename: 'masterlist.pdf' },
           ],
-          'masterlist',
+          { filename: 'masterlist', title: 'Masterlist' },
         )
-        if (!printWindow || !openPdfPrintDialog(combined, printWindow, 'Masterlist')) {
+        if (
+          !printWindow ||
+          !openPdfPrintDialog(combined, printWindow, {
+            title: 'Masterlist',
+            filename: 'masterlist.pdf',
+          })
+        ) {
           setBlockedPrintJob({
             jobLabel: 'Masterlist',
             filename: 'masterlist.pdf',
@@ -1025,7 +1069,13 @@ function PrintPage() {
           })
         }
       } else {
-        if (!printWindow || !openPdfPrintDialog(masterlistBlob, printWindow, 'Masterlist')) {
+        if (
+          !printWindow ||
+          !openPdfPrintDialog(masterlistBlob, printWindow, {
+            title: 'Masterlist',
+            filename: 'masterlist.pdf',
+          })
+        ) {
           setBlockedPrintJob({
             jobLabel: 'Masterlist',
             filename: 'masterlist.pdf',
@@ -1150,7 +1200,7 @@ function PrintPage() {
       return masterlistBlob
     }
 
-    return concatPdfs(pdfs, 'day1-masterlist')
+    return concatPdfs(pdfs, { filename: 'day1-masterlist', title: 'Masterlist' })
   }
 
   const buildDay1InstructorBlob = async (name: string) => {
@@ -1185,7 +1235,10 @@ function PrintPage() {
         { blob: result.blankPage, filename: 'schematic-blank.pdf' },
         { blob: pdfBlob, filename: `instructor-${name}.pdf` },
       ],
-      `day1-instructor-${name}`,
+      {
+        filename: buildPdfFilename('day1', 'instructor', name).replace(/\.pdf$/i, ''),
+        title: `Instructor - ${name}`,
+      },
     )
   }
 
@@ -1267,7 +1320,7 @@ function PrintPage() {
               filename: buildPdfFilename('instructor', entry.name),
             })),
           ],
-          'day1-materials',
+          { filename: 'day1-materials', title: 'Day 1 Materials' },
         )
         setBlockedPrintJob({
           jobLabel: 'Day 1 Materials',
@@ -1280,10 +1333,19 @@ function PrintPage() {
         return
       }
 
-      openPdfPrintDialog(schematicBlob, printWindows[0], 'Schematic')
-      openPdfPrintDialog(masterlistBlob, printWindows[1], 'Masterlist')
+      openPdfPrintDialog(schematicBlob, printWindows[0], {
+        title: 'Schematic',
+        filename: 'schematic.pdf',
+      })
+      openPdfPrintDialog(masterlistBlob, printWindows[1], {
+        title: 'Masterlist',
+        filename: 'masterlist.pdf',
+      })
       for (const [index, entry] of instructorBlobs.entries()) {
-        openPdfPrintDialog(entry.blob, printWindows[index + 2], `Instructor - ${entry.name}`)
+        openPdfPrintDialog(entry.blob, printWindows[index + 2], {
+          title: `Instructor - ${entry.name}`,
+          filename: buildPdfFilename('instructor', entry.name),
+        })
       }
     } catch (error) {
       console.error(error)

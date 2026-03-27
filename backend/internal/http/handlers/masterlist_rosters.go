@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"cob-aquatics/internal/services/masterlist"
+	"cob-aquatics/internal/services/pdf"
 	"cob-aquatics/tasks"
 )
 
@@ -44,6 +45,10 @@ func MasterlistRosters(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+
+	if stamped, stampErr := pdf.SetDocumentTitle(pdfBytes, "Masterlist"); stampErr == nil {
+		pdfBytes = stamped
 	}
 
 	w.Header().Set("Content-Type", "application/pdf")

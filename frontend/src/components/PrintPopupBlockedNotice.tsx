@@ -20,7 +20,7 @@ function PrintPopupBlockedNotice({
     if (!pdfBlob) {
       return
     }
-    if (!openPdfPreview(pdfBlob, jobLabel) && filename) {
+    if (!openPdfPreview(pdfBlob, { title: jobLabel, filename }) && filename) {
       downloadBlob(pdfBlob, filename)
     }
   }
