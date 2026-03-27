@@ -5,6 +5,7 @@ import {
 } from '../../../lib/extractedClassesStorage'
 import {
     getScheduleForDay,
+    getInstructorCoursesForDay,
     getStudentsForDay,
     onStudentsUpdated,
     setInstructorsForDay,
@@ -14,7 +15,7 @@ import {
 } from '../../../lib/storage'
 import { useCurrentSession } from '../../../app/useCurrentSession'
 import { fetchSchematic, upsertSchematic } from '../../../lib/serverApi'
-import { prefetchInstructorPacket } from '../../../lib/instructorPdfCache'
+import { invalidateInstructorPdfs, prefetchInstructorPacket } from '../../../lib/instructorPdfCache'
 import type { ExtractedClass, Student } from '../../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
 import { buildCourses } from '../utils/courses'
@@ -23,6 +24,43 @@ import type { StoredCourseLayout } from '../utils/layout'
 import { useSchematicBoard } from './useSchematicBoard'
 import { buildTimeLabels } from '../utils/time'
 
+function normalizeAssignmentCodes(codes: string[]) {
+    return [...codes].map(code => code.trim()).filter(Boolean).sort((left, right) => left.localeCompare(right))
+}
+
+function buildAssignmentCodeMap(
+    assignments: Array<{ name: string; codes: string[] }>,
+) {
+    const byInstructor = new Map<string, string[]>()
+    assignments.forEach(entry => {
+        const name = entry.name.trim()
+        if (!name) {
+            return
+        }
+        const existing = byInstructor.get(name) ?? []
+        byInstructor.set(name, normalizeAssignmentCodes([...existing, ...entry.codes]))
+    })
+    return byInstructor
+}
+
+function getChangedInstructorAssignments(
+    previousAssignments: Array<{ name: string; codes: string[] }>,
+    nextAssignments: Array<{ name: string; codes: string[] }>,
+) {
+    const previousMap = buildAssignmentCodeMap(previousAssignments)
+    const nextMap = buildAssignmentCodeMap(nextAssignments)
+    const names = new Set([...previousMap.keys(), ...nextMap.keys()])
+
+    return Array.from(names).filter(name => {
+        const previousCodes = previousMap.get(name) ?? []
+        const nextCodes = nextMap.get(name) ?? []
+        if (previousCodes.length !== nextCodes.length) {
+            return true
+        }
+        return previousCodes.some((code, index) => code !== nextCodes[index])
+    })
+}
+
 export function useSchematicSchedule(selectedDay: string | null) {
     const { access, session: currentSession, sessionId } = useCurrentSession()
     const [students, setStudents] = useState<Student[]>([])
@@ -30,13 +68,13 @@ export function useSchematicSchedule(selectedDay: string | null) {
     const [remoteSchedule, setRemoteSchedule] = useState<StoredCourseLayout | null>(null)
 
     useEffect(() => {
-        setStudents(getStudentsForDay(selectedDay))
+        setStudents(getStudentsForDay(selectedDay ?? ''))
     }, [selectedDay])
 
     useEffect(() => {
         return onStudentsUpdated(day => {
             if (day === selectedDay) {
-                setStudents(getStudentsForDay(selectedDay))
+                setStudents(getStudentsForDay(selectedDay ?? ''))
             }
         })
     }, [selectedDay])
@@ -139,7 +177,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
         }
     }, [access.mode, currentSession, sessionId])
 
-    const storedLayout = access.mode === 'guest' ? getScheduleForDay(selectedDay) : remoteSchedule
+    const storedLayout = access.mode === 'guest' ? getScheduleForDay(selectedDay ?? '') : remoteSchedule
     const {
         columns,
         instructors,
@@ -168,6 +206,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
             return
         }
         const codes = columns.map(column => column.map(course => course.code).join(','))
+        const previousAssignments = getInstructorCoursesForDay(selectedDay)?.instructors ?? []
         setScheduleForDay(selectedDay, {
             instructors,
             codes,
@@ -217,7 +256,14 @@ export function useSchematicSchedule(selectedDay: string | null) {
         }
 
         setStudentsForDay(selectedDay, updated)
-        void prefetchInstructorPacket(selectedDay)
+        const changedInstructors = getChangedInstructorAssignments(previousAssignments, assignments)
+        if (sessionId && changedInstructors.length > 0) {
+            await invalidateInstructorPdfs(sessionId, selectedDay, changedInstructors)
+            void prefetchInstructorPacket(sessionId, selectedDay, {
+                instructors: changedInstructors,
+                concurrency: 1,
+            })
+        }
         alert('Schedule saved successfully!')
     }
 

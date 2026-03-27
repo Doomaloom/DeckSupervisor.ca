@@ -4,7 +4,24 @@ import { resolveCustomRosters, saveCustomRoster, deleteCustomRoster } from '../.
 import { getCustomRosterDayKey, getCustomRostersForDay, setCustomRostersForDay } from '../../../lib/storage'
 import type { CustomRoster, Student } from '../../../types/app'
 
-export function useCustomRosters(selectedDay: string, students: Student[], sessionId?: string) {
+function rosterChanged(previous: CustomRoster | undefined, next: CustomRoster | undefined) {
+    if (!previous || !next) {
+        return true
+    }
+    return (
+        previous.serviceName !== next.serviceName ||
+        (previous.instructor ?? '') !== (next.instructor ?? '') ||
+        previous.sourceCodes.join(',') !== next.sourceCodes.join(',') ||
+        previous.studentIds.join(',') !== next.studentIds.join(',')
+    )
+}
+
+export function useCustomRosters(
+    selectedDay: string,
+    students: Student[],
+    sessionId?: string,
+    onInstructorPdfDirty?: (instructors: string[]) => void,
+) {
     const { user } = useAuth()
     const [customRosters, setCustomRosters] = useState<CustomRoster[]>([])
     const customRostersRef = useRef<CustomRoster[]>([])
@@ -58,6 +75,20 @@ export function useCustomRosters(selectedDay: string, students: Student[], sessi
         const isGuestMode = !user
         const localKey = getCustomRosterDayKey(selectedDay, sessionId, isGuestMode)
         setCustomRostersForDay(localKey, next)
+        const previousById = new Map(previous.map(roster => [roster.id, roster]))
+        const nextById = new Map(next.map(roster => [roster.id, roster]))
+        const changedIds = new Set([...previousById.keys(), ...nextById.keys()])
+        const dirtyInstructors = Array.from(changedIds).flatMap(id => {
+            const previousRoster = previousById.get(id)
+            const nextRoster = nextById.get(id)
+            if (!rosterChanged(previousRoster, nextRoster)) {
+                return []
+            }
+            return [previousRoster?.instructor ?? '', nextRoster?.instructor ?? '']
+        }).map(name => name.trim()).filter(Boolean)
+        if (dirtyInstructors.length > 0) {
+            onInstructorPdfDirty?.(Array.from(new Set(dirtyInstructors)))
+        }
         if (!user || !sessionId) {
             return
         }

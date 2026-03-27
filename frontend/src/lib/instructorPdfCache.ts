@@ -1,24 +1,39 @@
 import { getCustomRosterDayKey, getCustomRostersForDay, getStudentsForDay } from './storage'
 import { getCurrentSessionId as getStoredCurrentSessionId, loadSessions } from './sessionStorage'
+import { getStorageScope } from './storageScope'
 import { buildCustomRosterGroups, buildRosterGroups, sanitizeLevel } from '../features/rosters/utils'
+import type { RosterGroup } from '../features/rosters/types'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
-const DB_VERSION = 1
-const STORE_NAME = 'instructorPackets'
+const DB_VERSION = 2
+const PDF_STORE_NAME = 'instructorPdfs'
+const DIRTY_STORE_NAME = 'dirtyInstructorSets'
+const LEGACY_PACKET_STORE_NAME = 'instructorPackets'
+const CACHE_UPDATED_EVENT = 'decksupervisor:instructor-pdf-cache-updated'
 
 const FALLBACK_SESSION_NAME = 'Summer 2025'
-const PREFETCH_CONCURRENCY = 2
-
-type SessionEntry = {
-  id: string
-  sessionDay: string
-  sessionSeason: string
-  startDate: string
-}
+const DEFAULT_PREFETCH_CONCURRENCY = 1
 
 type InstructorPdfEntry = {
   name: string
   blob: Blob
+}
+
+type InstructorPdfCacheEntry = {
+  key: string
+  sessionId: string
+  day: string
+  instructor: string
+  blob: Blob
+  generatedAt: number
+}
+
+type DirtyInstructorSet = {
+  key: string
+  sessionId: string
+  day: string
+  instructors: string[]
+  updatedAt: number
 }
 
 export type InstructorPdfPacket = {
@@ -37,7 +52,8 @@ type PrefetchProgress = {
 
 type PrefetchOptions = {
   concurrency?: number
-  incremental?: boolean
+  force?: boolean
+  instructors?: string[]
   onStart?: (total: number) => void
   onProgress?: (progress: PrefetchProgress) => void
 }
@@ -48,7 +64,12 @@ export type PrefetchResult = {
   failed: string[]
 }
 
-const pendingPrefetches = new Map<string, Promise<PrefetchResult>>()
+type CacheUpdateDetail = {
+  sessionId: string
+  day: string
+}
+
+const pendingGenerations = new Map<string, Promise<Blob>>()
 
 const mapWithConcurrency = async <T, R>(
   items: T[],
@@ -78,14 +99,35 @@ const mapWithConcurrency = async <T, R>(
   return results
 }
 
-function buildRosterGroupsForDay(day: string) {
+function getPacketKey(sessionId: string, day: string) {
+  return `${sessionId}::${day}`
+}
+
+function getPdfEntryKey(sessionId: string, day: string, instructor: string) {
+  return `${getPacketKey(sessionId, day)}::${instructor}`
+}
+
+function normalizeInstructorName(name: string) {
+  return name.trim()
+}
+
+function normalizeInstructorNames(names: string[]) {
+  return Array.from(
+    new Set(
+      names
+        .map(normalizeInstructorName)
+        .filter(Boolean),
+    ),
+  ).sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' }))
+}
+
+function getPrintableRosterGroupsForDay(sessionId: string, day: string): RosterGroup[] {
   const students = getStudentsForDay(day)
   const rosterGroups = buildRosterGroups(students)
   if (!day) {
     return rosterGroups
   }
-  const sessionId = getCurrentSessionId()
-  const customDayKey = getCustomRosterDayKey(day, sessionId, !sessionId)
+  const customDayKey = getCustomRosterDayKey(day, sessionId, getStorageScope() === 'guest')
   const customRosters = getCustomRostersForDay(customDayKey)
   if (customRosters.length === 0) {
     return rosterGroups
@@ -96,52 +138,36 @@ function buildRosterGroupsForDay(day: string) {
   return [...rosterGroups, ...customGroups]
 }
 
-function openDb(): Promise<IDBDatabase> {
-  if (typeof window === 'undefined' || !window.indexedDB) {
-    return Promise.reject(new Error('IndexedDB not available'))
-  }
-  return new Promise((resolve, reject) => {
-    const request = window.indexedDB.open(DB_NAME, DB_VERSION)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'key' })
-      }
+function groupPrintableRostersByInstructor(sessionId: string, day: string) {
+  const grouped = new Map<string, RosterGroup[]>()
+  getPrintableRosterGroupsForDay(sessionId, day).forEach(roster => {
+    const instructor = normalizeInstructorName(roster.instructor)
+    if (!instructor) {
+      return
     }
-    request.onerror = () => reject(request.error ?? new Error('Failed to open IndexedDB'))
-    request.onsuccess = () => resolve(request.result)
+    const existing = grouped.get(instructor)
+    if (existing) {
+      existing.push(roster)
+      return
+    }
+    grouped.set(instructor, [roster])
   })
+  return grouped
 }
 
-async function withStore<T>(
-  mode: IDBTransactionMode,
-  fn: (store: IDBObjectStore) => IDBRequest<T>,
-): Promise<T> {
-  const db = await openDb()
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, mode)
-    const store = transaction.objectStore(STORE_NAME)
-    const request = fn(store)
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'))
-    transaction.oncomplete = () => db.close()
-    transaction.onerror = () => db.close()
-    transaction.onabort = () => db.close()
-  })
+function getPrintableInstructorNames(sessionId: string, day: string) {
+  return Array.from(groupPrintableRostersByInstructor(sessionId, day).keys()).sort((left, right) =>
+    left.localeCompare(right, 'en', { sensitivity: 'base' }),
+  )
 }
 
-export function getCurrentSessionId(): string {
-  return getStoredCurrentSessionId()
-}
-
-export function getCurrentSessionName(): string {
-  const currentSessionId = getStoredCurrentSessionId()
+function getSessionName(sessionId: string): string {
   const sessions = loadSessions()
-  if (!currentSessionId || sessions.length === 0) {
+  if (!sessionId || sessions.length === 0) {
     return ''
   }
   try {
-    const session = sessions.find(item => item.id === currentSessionId)
+    const session = sessions.find(item => item.id === sessionId)
     if (!session) {
       return ''
     }
@@ -166,27 +192,240 @@ export function getCurrentSessionName(): string {
   }
 }
 
-function getPacketKey(sessionId: string, day: string) {
-  return `${sessionId}::${day}`
+function buildPdfRequestBody(sessionName: string, instructor: string, rosters: RosterGroup[]) {
+  return {
+    session: sessionName,
+    filename: instructor,
+    rosters: rosters.map(roster => ({
+      template: sanitizeLevel(roster.level),
+      roster: {
+        code: roster.code,
+        level: roster.level,
+        serviceName: roster.serviceName,
+        time: roster.time,
+        instructor: roster.instructor,
+        location: roster.location,
+        schedule: roster.schedule,
+        students: roster.students.map(student => ({
+          name: student.name,
+        })),
+      },
+    })),
+  }
 }
 
-export async function saveInstructorPacket(packet: InstructorPdfPacket): Promise<void> {
-  await withStore('readwrite', store => store.put(packet))
+function openDb(): Promise<IDBDatabase> {
+  if (typeof window === 'undefined' || !window.indexedDB) {
+    return Promise.reject(new Error('IndexedDB not available'))
+  }
+  return new Promise((resolve, reject) => {
+    const request = window.indexedDB.open(DB_NAME, DB_VERSION)
+    request.onupgradeneeded = () => {
+      const db = request.result
+      if (db.objectStoreNames.contains(LEGACY_PACKET_STORE_NAME)) {
+        db.deleteObjectStore(LEGACY_PACKET_STORE_NAME)
+      }
+      if (!db.objectStoreNames.contains(PDF_STORE_NAME)) {
+        db.createObjectStore(PDF_STORE_NAME, { keyPath: 'key' })
+      }
+      if (!db.objectStoreNames.contains(DIRTY_STORE_NAME)) {
+        db.createObjectStore(DIRTY_STORE_NAME, { keyPath: 'key' })
+      }
+    }
+    request.onerror = () => reject(request.error ?? new Error('Failed to open IndexedDB'))
+    request.onsuccess = () => resolve(request.result)
+  })
+}
+
+async function withStore<T>(
+  storeName: string,
+  mode: IDBTransactionMode,
+  fn: (store: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> {
+  const db = await openDb()
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, mode)
+    const store = transaction.objectStore(storeName)
+    const request = fn(store)
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'))
+    transaction.oncomplete = () => db.close()
+    transaction.onerror = () => db.close()
+    transaction.onabort = () => db.close()
+  })
+}
+
+function buildDayRange(prefix: string) {
+  return IDBKeyRange.bound(prefix, `${prefix}\uffff`)
+}
+
+async function readInstructorPdfEntry(
+  sessionId: string,
+  day: string,
+  instructor: string,
+): Promise<InstructorPdfCacheEntry | null> {
+  try {
+    const entry = await withStore<InstructorPdfCacheEntry | undefined>(PDF_STORE_NAME, 'readonly', store =>
+      store.get(getPdfEntryKey(sessionId, day, instructor)),
+    )
+    return entry ?? null
+  } catch (error) {
+    console.error('Failed to read cached instructor PDF', error)
+    return null
+  }
+}
+
+async function readInstructorPdfEntriesForDay(sessionId: string, day: string): Promise<InstructorPdfCacheEntry[]> {
+  try {
+    const prefix = `${getPacketKey(sessionId, day)}::`
+    const entries = await withStore<InstructorPdfCacheEntry[]>(PDF_STORE_NAME, 'readonly', store =>
+      store.getAll(buildDayRange(prefix)),
+    )
+    return entries ?? []
+  } catch (error) {
+    console.error('Failed to read instructor PDF cache entries', error)
+    return []
+  }
+}
+
+async function writeInstructorPdfEntry(entry: InstructorPdfCacheEntry): Promise<void> {
+  await withStore(PDF_STORE_NAME, 'readwrite', store => store.put(entry))
+}
+
+async function deleteInstructorPdfEntry(sessionId: string, day: string, instructor: string): Promise<void> {
+  await withStore(PDF_STORE_NAME, 'readwrite', store =>
+    store.delete(getPdfEntryKey(sessionId, day, instructor)),
+  )
+}
+
+async function readDirtyInstructorSet(sessionId: string, day: string): Promise<DirtyInstructorSet | null> {
+  try {
+    const set = await withStore<DirtyInstructorSet | undefined>(DIRTY_STORE_NAME, 'readonly', store =>
+      store.get(getPacketKey(sessionId, day)),
+    )
+    return set ?? null
+  } catch (error) {
+    console.error('Failed to read dirty instructor set', error)
+    return null
+  }
+}
+
+async function getDirtyInstructorNames(sessionId: string, day: string): Promise<string[]> {
+  const dirtySet = await readDirtyInstructorSet(sessionId, day)
+  return dirtySet?.instructors ?? []
+}
+
+async function saveDirtyInstructorNames(sessionId: string, day: string, instructors: string[]): Promise<void> {
+  const normalized = normalizeInstructorNames(instructors)
+  if (normalized.length === 0) {
+    await withStore(DIRTY_STORE_NAME, 'readwrite', store => store.delete(getPacketKey(sessionId, day)))
+    return
+  }
+  await withStore(DIRTY_STORE_NAME, 'readwrite', store =>
+    store.put({
+      key: getPacketKey(sessionId, day),
+      sessionId,
+      day,
+      instructors: normalized,
+      updatedAt: Date.now(),
+    } satisfies DirtyInstructorSet),
+  )
+}
+
+function emitCacheUpdate(sessionId: string, day: string) {
+  if (typeof window === 'undefined') {
+    return
+  }
+  window.dispatchEvent(new CustomEvent<CacheUpdateDetail>(CACHE_UPDATED_EVENT, { detail: { sessionId, day } }))
+}
+
+async function clearDirtyInstructorNames(sessionId: string, day: string, instructors: string[]) {
+  const existing = new Set(await getDirtyInstructorNames(sessionId, day))
+  let changed = false
+  normalizeInstructorNames(instructors).forEach(name => {
+    if (existing.delete(name)) {
+      changed = true
+    }
+  })
+  if (!changed) {
+    return
+  }
+  await saveDirtyInstructorNames(sessionId, day, Array.from(existing))
+  emitCacheUpdate(sessionId, day)
+}
+
+async function generateInstructorPdf(
+  sessionId: string,
+  instructor: string,
+  rosters: RosterGroup[],
+): Promise<Blob> {
+  const response = await fetch('/api/attendance-pdf', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(buildPdfRequestBody(getSessionName(sessionId) || FALLBACK_SESSION_NAME, instructor, rosters)),
+  })
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(message || `Failed to generate sheets for ${instructor}`)
+  }
+
+  return response.blob()
+}
+
+export function getCurrentSessionId(): string {
+  return getStoredCurrentSessionId()
+}
+
+export function getCurrentSessionName(): string {
+  return getSessionName(getStoredCurrentSessionId())
+}
+
+export function onInstructorPdfCacheUpdated(handler: (detail: CacheUpdateDetail) => void) {
+  if (typeof window === 'undefined') {
+    return () => {}
+  }
+  const listener = (event: Event) => {
+    const custom = event as CustomEvent<CacheUpdateDetail>
+    const detail = custom.detail
+    if (!detail) {
+      return
+    }
+    handler(detail)
+  }
+  window.addEventListener(CACHE_UPDATED_EVENT, listener)
+  return () => window.removeEventListener(CACHE_UPDATED_EVENT, listener)
 }
 
 export async function getInstructorPacket(
   sessionId: string,
   day: string,
 ): Promise<InstructorPdfPacket | null> {
-  try {
-    const key = getPacketKey(sessionId, day)
-    const packet = await withStore<InstructorPdfPacket | undefined>('readonly', store =>
-      store.get(key),
-    )
-    return packet ?? null
-  } catch (error) {
-    console.error('Failed to read cached instructor PDFs', error)
+  const [entries, dirtyInstructors] = await Promise.all([
+    readInstructorPdfEntriesForDay(sessionId, day),
+    getDirtyInstructorNames(sessionId, day),
+  ])
+  const printableNames = new Set(getPrintableInstructorNames(sessionId, day))
+  const dirtySet = new Set(dirtyInstructors)
+  const visibleEntries = entries
+    .filter(entry => printableNames.has(entry.instructor) && !dirtySet.has(entry.instructor))
+    .sort((left, right) => left.instructor.localeCompare(right.instructor, 'en', { sensitivity: 'base' }))
+
+  if (visibleEntries.length === 0) {
     return null
+  }
+
+  return {
+    key: getPacketKey(sessionId, day),
+    sessionId,
+    day,
+    generatedAt: Math.max(...visibleEntries.map(entry => entry.generatedAt)),
+    instructors: visibleEntries.map(entry => ({
+      name: entry.instructor,
+      blob: entry.blob,
+    })),
   }
 }
 
@@ -196,24 +435,21 @@ export async function upsertInstructorPdf(
   instructor: string,
   blob: Blob,
 ): Promise<void> {
-  try {
-    const existing = await getInstructorPacket(sessionId, day)
-    const key = getPacketKey(sessionId, day)
-    const next: InstructorPdfPacket = existing ?? {
-      key,
-      sessionId,
-      day,
-      generatedAt: Date.now(),
-      instructors: [],
-    }
-    const updated = next.instructors.filter(item => item.name !== instructor)
-    updated.push({ name: instructor, blob })
-    next.instructors = updated
-    next.generatedAt = Date.now()
-    await saveInstructorPacket(next)
-  } catch (error) {
-    console.error('Failed to cache instructor PDF', error)
+  const normalizedInstructor = normalizeInstructorName(instructor)
+  if (!sessionId || !day || !normalizedInstructor) {
+    return
   }
+
+  await writeInstructorPdfEntry({
+    key: getPdfEntryKey(sessionId, day, normalizedInstructor),
+    sessionId,
+    day,
+    instructor: normalizedInstructor,
+    blob,
+    generatedAt: Date.now(),
+  })
+  await clearDirtyInstructorNames(sessionId, day, [normalizedInstructor])
+  emitCacheUpdate(sessionId, day)
 }
 
 export async function getCachedInstructorPdf(
@@ -221,143 +457,184 @@ export async function getCachedInstructorPdf(
   day: string,
   instructor: string,
 ): Promise<Blob | null> {
-  const packet = await getInstructorPacket(sessionId, day)
-  if (!packet) {
+  const normalizedInstructor = normalizeInstructorName(instructor)
+  if (!sessionId || !day || !normalizedInstructor) {
     return null
   }
-  const match = packet.instructors.find(entry => entry.name === instructor)
-  return match?.blob ?? null
+
+  const dirtySet = new Set(await getDirtyInstructorNames(sessionId, day))
+  if (dirtySet.has(normalizedInstructor)) {
+    return null
+  }
+
+  const entry = await readInstructorPdfEntry(sessionId, day, normalizedInstructor)
+  if (!entry) {
+    return null
+  }
+
+  const printableNames = new Set(getPrintableInstructorNames(sessionId, day))
+  if (!printableNames.has(normalizedInstructor)) {
+    await deleteInstructorPdfEntry(sessionId, day, normalizedInstructor)
+    emitCacheUpdate(sessionId, day)
+    return null
+  }
+
+  return entry.blob
+}
+
+export async function invalidateInstructorPdfs(
+  sessionId: string,
+  day: string,
+  instructors: string[],
+): Promise<void> {
+  const normalized = normalizeInstructorNames(instructors)
+  if (!sessionId || !day || normalized.length === 0) {
+    return
+  }
+
+  const printableSet = new Set(getPrintableInstructorNames(sessionId, day))
+  const dirtySet = new Set(await getDirtyInstructorNames(sessionId, day))
+
+  await Promise.all(
+    normalized.map(async instructor => {
+      await deleteInstructorPdfEntry(sessionId, day, instructor)
+      if (printableSet.has(instructor)) {
+        dirtySet.add(instructor)
+      } else {
+        dirtySet.delete(instructor)
+      }
+    }),
+  )
+
+  await saveDirtyInstructorNames(sessionId, day, Array.from(dirtySet))
+  emitCacheUpdate(sessionId, day)
+}
+
+export async function ensureInstructorPdf(
+  sessionId: string,
+  day: string,
+  instructor: string,
+  options: { force?: boolean } = {},
+): Promise<Blob> {
+  const normalizedInstructor = normalizeInstructorName(instructor)
+  if (!sessionId || !day || !normalizedInstructor) {
+    throw new Error('Missing instructor PDF context.')
+  }
+
+  const pendingKey = getPdfEntryKey(sessionId, day, normalizedInstructor)
+  const pending = pendingGenerations.get(pendingKey)
+  if (pending) {
+    return pending
+  }
+
+  if (!options.force) {
+    const cached = await getCachedInstructorPdf(sessionId, day, normalizedInstructor)
+    if (cached) {
+      return cached
+    }
+  }
+
+  const groups = groupPrintableRostersByInstructor(sessionId, day)
+  const rosters = groups.get(normalizedInstructor) ?? []
+  if (rosters.length === 0) {
+    await deleteInstructorPdfEntry(sessionId, day, normalizedInstructor)
+    await clearDirtyInstructorNames(sessionId, day, [normalizedInstructor])
+    throw new Error(`No classes found for ${normalizedInstructor}.`)
+  }
+
+  const generation = generateInstructorPdf(sessionId, normalizedInstructor, rosters)
+    .then(async blob => {
+      await writeInstructorPdfEntry({
+        key: pendingKey,
+        sessionId,
+        day,
+        instructor: normalizedInstructor,
+        blob,
+        generatedAt: Date.now(),
+      })
+      await clearDirtyInstructorNames(sessionId, day, [normalizedInstructor])
+      emitCacheUpdate(sessionId, day)
+      return blob
+    })
+    .finally(() => {
+      pendingGenerations.delete(pendingKey)
+    })
+
+  pendingGenerations.set(pendingKey, generation)
+  return generation
 }
 
 export async function prefetchInstructorPacket(
+  sessionId: string,
   day: string,
   options: PrefetchOptions = {},
 ): Promise<PrefetchResult> {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || !sessionId || !day) {
     return { total: 0, completed: 0, failed: [] }
   }
-  const sessionId = getCurrentSessionId()
-  if (!sessionId || !day) {
+
+  const printableSet = new Set(getPrintableInstructorNames(sessionId, day))
+  const requested = options.instructors?.length
+    ? normalizeInstructorNames(options.instructors)
+    : Array.from(printableSet).sort((left, right) =>
+        left.localeCompare(right, 'en', { sensitivity: 'base' }),
+      )
+  const targetInstructors = requested.filter(name => printableSet.has(name))
+  const removedInstructors = requested.filter(name => !printableSet.has(name))
+
+  if (removedInstructors.length > 0) {
+    await Promise.all(removedInstructors.map(name => deleteInstructorPdfEntry(sessionId, day, name)))
+    await clearDirtyInstructorNames(sessionId, day, removedInstructors)
+  }
+
+  options.onStart?.(targetInstructors.length)
+
+  let completed = 0
+  const failed: string[] = []
+
+  await mapWithConcurrency(
+    targetInstructors,
+    options.concurrency ?? DEFAULT_PREFETCH_CONCURRENCY,
+    async name => {
+      try {
+        await ensureInstructorPdf(sessionId, day, name, { force: options.force })
+        completed += 1
+        options.onProgress?.({
+          name,
+          completed,
+          total: targetInstructors.length,
+        })
+      } catch (error) {
+        failed.push(name)
+        console.error(`Failed to prefetch instructor PDF for ${name}`, error)
+      }
+    },
+  )
+
+  return {
+    total: targetInstructors.length,
+    completed,
+    failed,
+  }
+}
+
+export async function flushDirtyInstructorPdfs(
+  sessionId: string,
+  day: string,
+  options: { concurrency?: number } = {},
+): Promise<PrefetchResult> {
+  if (typeof window === 'undefined' || !sessionId || !day) {
     return { total: 0, completed: 0, failed: [] }
   }
-  const key = getPacketKey(sessionId, day)
-  const existing = pendingPrefetches.get(key)
-  if (existing) {
-    return existing
+
+  const dirtyInstructors = normalizeInstructorNames(await getDirtyInstructorNames(sessionId, day))
+  if (dirtyInstructors.length === 0) {
+    return { total: 0, completed: 0, failed: [] }
   }
 
-  const promise = (async () => {
-    const rosterGroups = buildRosterGroupsForDay(day)
-    const grouped = new Map<string, typeof rosterGroups>()
-    rosterGroups.forEach(roster => {
-      const name = roster.instructor?.trim()
-      if (!name) {
-        return
-      }
-      const existingGroup = grouped.get(name)
-      if (existingGroup) {
-        existingGroup.push(roster)
-      } else {
-        grouped.set(name, [roster])
-      }
-    })
-
-    const sessionName = getCurrentSessionName() || FALLBACK_SESSION_NAME
-    const groupedEntries = Array.from(grouped.entries())
-    const total = groupedEntries.length
-    let completed = 0
-    const failed: string[] = []
-
-    options.onStart?.(total)
-
-    const entries = await mapWithConcurrency(
-      groupedEntries,
-      options.concurrency ?? PREFETCH_CONCURRENCY,
-      async ([name, rosters]) => {
-        try {
-          const response = await fetch('/api/attendance-pdf', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              session: sessionName,
-              filename: name,
-              rosters: rosters.map(roster => ({
-                template: sanitizeLevel(roster.level),
-                roster: {
-                  code: roster.code,
-                  level: roster.level,
-                  serviceName: roster.serviceName,
-                  time: roster.time,
-                  instructor: roster.instructor,
-                  location: roster.location,
-                  schedule: roster.schedule,
-                  students: roster.students.map(student => ({
-                    name: student.name,
-                  })),
-                },
-              })),
-            }),
-          })
-
-          if (!response.ok) {
-            const message = await response.text()
-            throw new Error(message || `Failed to prefetch instructor packet for ${name}`)
-          }
-
-          const blob = await response.blob()
-          if (options.incremental) {
-            await upsertInstructorPdf(sessionId, day, name, blob)
-          }
-          completed += 1
-          options.onProgress?.({
-            name,
-            completed,
-            total,
-          })
-
-          return {
-            name,
-            blob,
-          }
-        } catch (error) {
-          failed.push(name)
-          console.error(`Failed to prefetch instructor PDF for ${name}`, error)
-          return null
-        }
-      },
-    )
-
-    if (!options.incremental) {
-      const packet: InstructorPdfPacket = {
-        key,
-        sessionId,
-        day,
-        generatedAt: Date.now(),
-        instructors: entries.filter((entry): entry is InstructorPdfEntry => entry !== null),
-      }
-      await saveInstructorPacket(packet)
-    }
-
-    return {
-      total,
-      completed,
-      failed,
-    }
-  })()
-    .catch(error => {
-      console.error('Failed to prefetch instructor PDFs', error)
-      return {
-        total: 0,
-        completed: 0,
-        failed: [],
-      }
-    })
-    .finally(() => {
-      pendingPrefetches.delete(key)
-    })
-
-  pendingPrefetches.set(key, promise)
-  return promise
+  return prefetchInstructorPacket(sessionId, day, {
+    concurrency: options.concurrency ?? DEFAULT_PREFETCH_CONCURRENCY,
+    force: true,
+    instructors: dirtyInstructors,
+  })
 }

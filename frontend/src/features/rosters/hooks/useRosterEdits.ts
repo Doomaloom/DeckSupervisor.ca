@@ -9,6 +9,7 @@ type UseRosterEditsParams = {
     sessionId?: string
     currentUserId?: string
     canEdit?: boolean
+    onInstructorPdfDirty?: (instructors: string[]) => void
 }
 
 export function useRosterEdits({
@@ -18,15 +19,25 @@ export function useRosterEdits({
     sessionId,
     currentUserId,
     canEdit,
+    onInstructorPdfDirty,
 }: UseRosterEditsParams) {
+    const notifyDirtyInstructors = (instructors: string[]) => {
+        const names = Array.from(new Set(instructors.map(name => name.trim()).filter(Boolean)))
+        if (names.length === 0) {
+            return
+        }
+        onInstructorPdfDirty?.(names)
+    }
+
     const saveRosterLevelEdit = async (code: string, level: string) => {
         if (!sessionId || !currentUserId) {
             return
         }
-        const { error } = await upsertRosterLevelEdit(sessionId, currentUserId, code, level)
-        if (error) {
+        try {
+            await upsertRosterLevelEdit(sessionId, currentUserId, code, level)
+        } catch (error) {
             console.error('Failed to save roster level edit', error)
-            alert(`Failed to save roster level edit: ${error.message}`)
+            alert(`Failed to save roster level edit: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
     }
 
@@ -44,9 +55,11 @@ export function useRosterEdits({
         if (!result) {
             return
         }
-        if (result.error) {
-            console.error('Failed to save roster student level edit', result.error)
-            alert(`Failed to save student level edit: ${result.error.message}`)
+        try {
+            await result
+        } catch (error) {
+            console.error('Failed to save roster student level edit', error)
+            alert(`Failed to save student level edit: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
     }
 
@@ -59,6 +72,11 @@ export function useRosterEdits({
         )
         setStudents(updated)
         setStudentsForDay(selectedDay, updated)
+        notifyDirtyInstructors(
+            updated
+                .filter(student => student.code === code)
+                .map(student => student.instructor),
+        )
         void saveRosterLevelEdit(code, level)
     }
 
@@ -72,6 +90,9 @@ export function useRosterEdits({
         setStudents(updated)
         updateStudentForDay(selectedDay, studentId, { level })
         const student = students.find(item => item.id === studentId)
+        if (student?.instructor) {
+            notifyDirtyInstructors([student.instructor])
+        }
         if (student) {
             void saveStudentLevelEdit(student, level)
         }
