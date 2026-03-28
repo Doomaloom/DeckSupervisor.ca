@@ -50,7 +50,7 @@ func ProcessCSVRows(rows []csvRow, instructorMap map[string]string, fallbackDay 
 		schedule := rowValue(row, "EventSchedule", "Schedule")
 		phone := rowValue(row, "AttendeePhone", "Phone")
 		instructorFromRow := rowValue(row, "Instructor", "Instructor Name", "InstructorName", "Teacher", "Staff")
-		waitlistValue := rowValue(row, "Status")
+		waitlistValue := rowValue(row, "AttendeeStatus", "Status")
 
 		name := rowValue(row, "AttendeeName", "Name")
 		if strings.Contains(name, ",") {
@@ -105,7 +105,7 @@ func ProcessCSVRows(rows []csvRow, instructorMap map[string]string, fallbackDay 
 			Phone:      phone,
 			Instructor: instructor,
 			Level:      level,
-			Waitlist:   strings.EqualFold(waitlistValue, "waitlist"),
+			Waitlist:   isWaitingStatus(waitlistValue),
 		})
 		totalStudents++
 	}

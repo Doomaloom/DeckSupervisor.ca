@@ -19,6 +19,11 @@ function buildInstructorMap(instructors: InstructorEntry[]): Record<string, stri
   return map
 }
 
+function isWaitingStatus(value: string) {
+  const normalized = value.trim().toLowerCase()
+  return normalized === 'waiting' || normalized === 'waitlist'
+}
+
 export function parseStudentsFromCsv(
   text: string,
   instructors: InstructorEntry[],
@@ -75,7 +80,7 @@ export function parseStudentsFromCsv(
     const location = (row[LOCATION] ?? '').trim()
     const schedule = (row[SCHEDULE] ?? '').trim()
     const phone = (row[PHONE] ?? '').trim()
-    const waitlist = STATUS >= 0 && (row[STATUS] ?? '').trim().toLowerCase() === 'waitlist'
+    const waitlist = STATUS >= 0 && isWaitingStatus(row[STATUS] ?? '')
 
     let name = ''
     if (series) {

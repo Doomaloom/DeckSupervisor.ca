@@ -89,6 +89,16 @@ export function buildRosterGroups(students: Student[]): RosterGroup[] {
     return sorted
 }
 
+export function getVisibleRosterStudents(students: Student[]): Student[] {
+    return students.filter(student => !student.waitlist)
+}
+
+export function buildAttendanceRosterStudents(students: Student[]) {
+    return getVisibleRosterStudents(students).map(student => ({
+        name: student.name,
+    }))
+}
+
 export function buildCustomRosterGroups(
     customRosters: CustomRoster[],
     rosterByCode: Map<string, RosterGroup>,

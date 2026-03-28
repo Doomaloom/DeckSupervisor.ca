@@ -10,6 +10,9 @@ export function buildCourses(students: Student[], requestInstructorByCode?: Map<
         if (existing) {
             if (!student.waitlist) {
                 existing.studentCount += 1
+                if (!existing.studentName) {
+                    existing.studentName = student.name
+                }
             }
             return
         }
@@ -27,7 +30,7 @@ export function buildCourses(students: Student[], requestInstructorByCode?: Map<
             startMinutes,
             endMinutes,
             studentCount: student.waitlist ? 0 : 1,
-            studentName: student.name,
+            studentName: student.waitlist ? undefined : student.name,
             assignedInstructor: assignedInstructor || undefined,
             isRequested: Boolean(assignedInstructor),
             isLockedToInstructor: Boolean(assignedInstructor),

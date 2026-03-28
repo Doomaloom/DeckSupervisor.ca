@@ -1,7 +1,12 @@
 import { getCustomRosterDayKey, getCustomRostersForDay, getStudentsForDay } from './storage'
 import { getCurrentSessionId as getStoredCurrentSessionId, loadSessions } from './sessionStorage'
 import { getStorageScope } from './storageScope'
-import { buildCustomRosterGroups, buildRosterGroups, sanitizeLevel } from '../features/rosters/utils'
+import {
+  buildAttendanceRosterStudents,
+  buildCustomRosterGroups,
+  buildRosterGroups,
+  sanitizeLevel,
+} from '../features/rosters/utils'
 import type { RosterGroup } from '../features/rosters/types'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
@@ -212,9 +217,7 @@ function buildPdfRequestBody(sessionName: string, instructor: string, rosters: R
         instructor: roster.instructor,
         location: roster.location,
         schedule: roster.schedule,
-        students: roster.students.map(student => ({
-          name: student.name,
-        })),
+        students: buildAttendanceRosterStudents(roster.students),
       },
     })),
   }

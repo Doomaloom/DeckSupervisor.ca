@@ -1,5 +1,6 @@
 import React from 'react'
 import type { RosterGroup } from '../types'
+import { getVisibleRosterStudents } from '../utils'
 import LevelSelect from './LevelSelect'
 import StudentRow from './StudentRow'
 
@@ -73,7 +74,7 @@ function RosterCard({
                     }}
                 />
             </div>
-            {roster.students.filter(student => !student.waitlist).map(student => (
+            {getVisibleRosterStudents(roster.students).map(student => (
                 <StudentRow
                     key={student.id}
                     student={student}

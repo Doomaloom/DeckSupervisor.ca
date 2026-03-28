@@ -328,6 +328,23 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       await processCsvAndStore(state.file, candidate.dayOfWeek, uploadInstructors, {
         courseCodes: (state.classesBySession[candidate.sessionKey] ?? []).map(classEntry => classEntry.courseCode),
       })
+      const dayStudents = getStudentsForDay(candidate.dayOfWeek)
+      console.log('[csv-import] selected day students', {
+        day: candidate.dayOfWeek,
+        sessionKey: candidate.sessionKey,
+        sessionId: targetSession.id,
+        studentCount: dayStudents.length,
+        waitlistCount: dayStudents.filter(student => student.waitlist).length,
+        students: dayStudents.map(student => ({
+          id: student.id,
+          code: student.code,
+          name: student.name,
+          instructor: student.instructor,
+          level: student.level,
+          waitlist: student.waitlist,
+          time: student.time,
+        })),
+      })
 
       if (accountType !== 'full_time') {
         const extractedClassesForSession = state.classesBySession[candidate.sessionKey] ?? []

@@ -16,6 +16,18 @@ type ExtractClassesResponse = {
   classesBySession: Record<string, ExtractedClass[]>
 }
 
+function summarizeProcessCsvClasses(classes: ClassRoster[]) {
+  return classes.map(roster => ({
+    code: roster.code,
+    studentCount: roster.students.length,
+    waitlistCount: roster.students.filter(student => Boolean(student.waitlist)).length,
+    students: roster.students.map(student => ({
+      name: student.name,
+      waitlist: Boolean(student.waitlist),
+    })),
+  }))
+}
+
 async function processCsv(file: File, day: string, instructors: InstructorEntry[] = []): Promise<ProcessCsvResponse> {
   const formData = new FormData()
   formData.append('csv_file', file)
@@ -68,6 +80,11 @@ export async function processCsvAndStore(
   options?: { courseCodes?: string[] }
 ): Promise<ProcessCsvResponse> {
   const data = await processCsv(file, day, instructors)
+  console.log('[csv-import] process-csv raw response', {
+    requestedDay: day,
+    classCount: data.classes?.length ?? 0,
+    classes: summarizeProcessCsvClasses(data.classes ?? []),
+  })
   const allowedCodes = new Set((options?.courseCodes ?? []).map(code => code.trim()).filter(Boolean))
   const classes =
     allowedCodes.size > 0

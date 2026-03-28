@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { openPdfPrintDialog, openPrintWindow } from '../../../lib/browserPrint'
-import { sanitizeLevel } from '../utils'
+import { buildAttendanceRosterStudents, sanitizeLevel } from '../utils'
 import { useCurrentSession } from '../../../app/useCurrentSession'
 import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
 import type { RosterGroup } from '../types'
@@ -75,9 +75,7 @@ export function useRosterPrint() {
                         instructor: roster.instructor,
                         location: roster.location,
                         schedule: roster.schedule,
-                        students: roster.students.map(student => ({
-                            name: student.name,
-                        })),
+                        students: buildAttendanceRosterStudents(roster.students),
                     },
                     title: `Attendance - ${roster.serviceName || roster.code || 'Roster'}`,
                 }),

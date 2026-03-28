@@ -84,4 +84,45 @@ describe('course utils', () => {
     expect(coursesMatchTime(courses[0], { ...courses[0] })).toBe(true)
     expect(coursesOverlap(courses[0], courses[1])).toBe(false)
   })
+
+  it('uses the first non-waitlist student name for private lessons', () => {
+    const courses = buildCourses([
+      {
+        id: 'private-1',
+        service_name: 'Private Lesson',
+        code: 'P1',
+        day: 'Mo',
+        time: '10:00-10:30',
+        location: 'Pool B',
+        schedule: 'Morning',
+        name: 'Waitlisted Wendy',
+        phone: '5551116666',
+        instructor: '',
+        level: 'Private Lesson',
+        waitlist: true,
+      },
+      {
+        id: 'private-2',
+        service_name: 'Private Lesson',
+        code: 'P1',
+        day: 'Mo',
+        time: '10:00-10:30',
+        location: 'Pool B',
+        schedule: 'Morning',
+        name: 'Active Alex',
+        phone: '5551117777',
+        instructor: '',
+        level: 'Private Lesson',
+        waitlist: false,
+      },
+    ])
+
+    expect(courses).toHaveLength(1)
+    expect(courses[0]).toMatchObject({
+      code: 'P1',
+      level: 'Private Lesson',
+      studentCount: 1,
+      studentName: 'Active Alex',
+    })
+  })
 })

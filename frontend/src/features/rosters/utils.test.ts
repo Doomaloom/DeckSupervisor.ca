@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { CustomRoster, Student } from '../../types/app'
-import { buildCustomRosterGroups, buildRosterGroups, getEmptyMessage, sanitizeLevel } from './utils'
+import {
+  buildAttendanceRosterStudents,
+  buildCustomRosterGroups,
+  buildRosterGroups,
+  getEmptyMessage,
+  getVisibleRosterStudents,
+  sanitizeLevel,
+} from './utils'
 
 const students: Student[] = [
   {
@@ -90,5 +97,36 @@ describe('roster utils', () => {
     expect(customGroups[0].students.map(student => student.name)).toEqual(['Alice', 'Ben'])
     expect(getEmptyMessage(0)).toBe('No rosters loaded. Upload a CSV file to see rosters.')
     expect(getEmptyMessage(3)).toBe('No rosters match the current filters.')
+  })
+
+  it('excludes waitlisted students from visible roster and attendance payloads', () => {
+    const rosterStudents = [
+      ...students,
+      {
+        id: '4',
+        service_name: 'Splash 2A',
+        code: '1001',
+        day: 'Mo',
+        time: '09:00-09:30',
+        location: 'Pool A',
+        schedule: 'Morning',
+        name: 'Waitlisted Wendy',
+        phone: '5551115555',
+        instructor: 'Coach Amy',
+        level: 'Splash 2A',
+        waitlist: true,
+      },
+    ]
+
+    expect(getVisibleRosterStudents(rosterStudents).map(student => student.name)).toEqual([
+      'Ben',
+      'Alice',
+      'Cara',
+    ])
+    expect(buildAttendanceRosterStudents(rosterStudents)).toEqual([
+      { name: 'Ben' },
+      { name: 'Alice' },
+      { name: 'Cara' },
+    ])
   })
 })

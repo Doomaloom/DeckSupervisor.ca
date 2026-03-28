@@ -80,6 +80,33 @@ func TestProcessCSVRowsBuildsClassRosters(t *testing.T) {
 	}
 }
 
+func TestProcessCSVRowsTreatsWaitingStatusAsWaitlist(t *testing.T) {
+	t.Parallel()
+
+	rows := []csvRow{
+		{
+			"servicename":  "Splash 3",
+			"eventid":      "0010",
+			"attendeename": "Taylor Swift",
+			"status":       "Waiting",
+		},
+	}
+
+	classes, totalStudents, err := ProcessCSVRows(rows, nil, "Monday")
+	if err != nil {
+		t.Fatalf("ProcessCSVRows returned error: %v", err)
+	}
+	if totalStudents != 1 {
+		t.Fatalf("expected 1 student, got %d", totalStudents)
+	}
+	if len(classes) != 1 {
+		t.Fatalf("expected 1 class, got %d", len(classes))
+	}
+	if !classes[0].Students[0].Waitlist {
+		t.Fatalf("expected Waiting status to be marked waitlist")
+	}
+}
+
 func TestNormalizeHeaderAndDay(t *testing.T) {
 	t.Parallel()
 
