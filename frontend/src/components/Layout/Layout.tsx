@@ -73,6 +73,8 @@ function Layout({ children }: LayoutProps) {
             sessionSeason,
             sessionYear,
             startDate,
+            sessionStartTime24: currentSession.session_start_time24 ?? null,
+            sessionEndTime24: currentSession.session_end_time24 ?? null,
         })
     }, [accountType, currentSession, currentTerm, scopeVersion])
 

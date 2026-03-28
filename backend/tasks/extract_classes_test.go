@@ -39,8 +39,11 @@ func TestExtractClassesRowsBuildsSessionAndClassSummaries(t *testing.T) {
 		t.Fatalf("expected 1 session, got %d", len(result.Sessions))
 	}
 	session := result.Sessions[0]
-	if session.SessionKey != "Mo|spring|2026|pool a" {
+	if session.SessionKey != "Mo|spring|2026|pool a|15:15|15:45" {
 		t.Fatalf("unexpected session key %q", session.SessionKey)
+	}
+	if session.SessionStartTime24 != "15:15" || session.SessionEndTime24 != "15:45" {
+		t.Fatalf("unexpected session window %s-%s", session.SessionStartTime24, session.SessionEndTime24)
 	}
 	if session.ClassCount != 1 || session.StudentCount != 2 {
 		t.Fatalf("unexpected session counts: %+v", session)
@@ -161,7 +164,7 @@ func TestExtractClassesRowsUsesBookedColumnWithoutAttendeeRows(t *testing.T) {
 func TestExtractHelpers(t *testing.T) {
 	t.Parallel()
 
-	if got := BuildExtractedSessionKey("Mo", "Spring", 2026, "Pool A"); got != "Mo|spring|2026|pool a" {
+	if got := BuildExtractedSessionKey("Mo", "Spring", 2026, "Pool A", "15:15", "15:45"); got != "Mo|spring|2026|pool a|15:15|15:45" {
 		t.Fatalf("BuildExtractedSessionKey returned %q", got)
 	}
 
@@ -184,5 +187,140 @@ func TestExtractHelpers(t *testing.T) {
 	}
 	if got := daySortKey("Fr"); got != 5 {
 		t.Fatalf("daySortKey returned %d", got)
+	}
+}
+
+func TestExtractClassesRowsSplitsSessionsWhenGapExceedsThirtyMinutes(t *testing.T) {
+	t.Parallel()
+
+	rows := []csvRow{
+		{
+			"eventid":       "00100",
+			"servicename":   "Splash 1",
+			"location":      "Pool",
+			"dayoftheweek":  "Saturday",
+			"starts":        "2026-01-10 9:00 AM",
+			"ends":          "2026-01-10 1:00 PM",
+			"eventschedule": "From 2026-01-03 to 2026-02-28",
+			"booked":        "8",
+		},
+		{
+			"eventid":       "00200",
+			"servicename":   "Splash 4",
+			"location":      "Pool",
+			"dayoftheweek":  "Saturday",
+			"starts":        "2026-01-10 4:00 PM",
+			"ends":          "2026-01-10 7:00 PM",
+			"eventschedule": "From 2026-01-03 to 2026-02-28",
+			"booked":        "6",
+		},
+	}
+
+	result, err := ExtractClassesRows(rows)
+	if err != nil {
+		t.Fatalf("ExtractClassesRows returned error: %v", err)
+	}
+
+	if len(result.Sessions) != 2 {
+		t.Fatalf("expected 2 sessions, got %d", len(result.Sessions))
+	}
+
+	first := result.Sessions[0]
+	if first.SessionKey != "Sa|winter|2026|pool|09:00|13:00" {
+		t.Fatalf("unexpected first session key %q", first.SessionKey)
+	}
+	second := result.Sessions[1]
+	if second.SessionKey != "Sa|winter|2026|pool|16:00|19:00" {
+		t.Fatalf("unexpected second session key %q", second.SessionKey)
+	}
+}
+
+func TestExtractClassesRowsKeepsClassesTogetherWhenGapIsThirtyMinutesOrLess(t *testing.T) {
+	t.Parallel()
+
+	rows := []csvRow{
+		{
+			"eventid":       "00100",
+			"servicename":   "Splash 1",
+			"location":      "Pool",
+			"dayoftheweek":  "Saturday",
+			"starts":        "2026-01-10 9:00 AM",
+			"ends":          "2026-01-10 10:00 AM",
+			"eventschedule": "From 2026-01-03 to 2026-02-28",
+			"booked":        "8",
+		},
+		{
+			"eventid":       "00200",
+			"servicename":   "Splash 4",
+			"location":      "Pool",
+			"dayoftheweek":  "Saturday",
+			"starts":        "2026-01-10 10:30 AM",
+			"ends":          "2026-01-10 11:00 AM",
+			"eventschedule": "From 2026-01-03 to 2026-02-28",
+			"booked":        "6",
+		},
+	}
+
+	result, err := ExtractClassesRows(rows)
+	if err != nil {
+		t.Fatalf("ExtractClassesRows returned error: %v", err)
+	}
+
+	if len(result.Sessions) != 1 {
+		t.Fatalf("expected 1 session, got %d", len(result.Sessions))
+	}
+	session := result.Sessions[0]
+	if session.SessionStartTime24 != "09:00" || session.SessionEndTime24 != "11:00" {
+		t.Fatalf("unexpected merged session window %s-%s", session.SessionStartTime24, session.SessionEndTime24)
+	}
+}
+
+func TestExtractClassesRowsUsesRollingEndBeforeSplitting(t *testing.T) {
+	t.Parallel()
+
+	rows := []csvRow{
+		{
+			"eventid":       "00100",
+			"servicename":   "Splash 1",
+			"location":      "Pool",
+			"dayoftheweek":  "Saturday",
+			"starts":        "2026-01-10 9:00 AM",
+			"ends":          "2026-01-10 10:00 AM",
+			"eventschedule": "From 2026-01-03 to 2026-02-28",
+			"booked":        "8",
+		},
+		{
+			"eventid":       "00200",
+			"servicename":   "Splash 2",
+			"location":      "Pool",
+			"dayoftheweek":  "Saturday",
+			"starts":        "2026-01-10 9:45 AM",
+			"ends":          "2026-01-10 11:00 AM",
+			"eventschedule": "From 2026-01-03 to 2026-02-28",
+			"booked":        "6",
+		},
+		{
+			"eventid":       "00300",
+			"servicename":   "Splash 3",
+			"location":      "Pool",
+			"dayoftheweek":  "Saturday",
+			"starts":        "2026-01-10 11:20 AM",
+			"ends":          "2026-01-10 12:00 PM",
+			"eventschedule": "From 2026-01-03 to 2026-02-28",
+			"booked":        "5",
+		},
+	}
+
+	result, err := ExtractClassesRows(rows)
+	if err != nil {
+		t.Fatalf("ExtractClassesRows returned error: %v", err)
+	}
+
+	if len(result.Sessions) != 1 {
+		t.Fatalf("expected 1 session, got %d", len(result.Sessions))
+	}
+	session := result.Sessions[0]
+	if session.SessionStartTime24 != "09:00" || session.SessionEndTime24 != "12:00" {
+		t.Fatalf("unexpected rolling session window %s-%s", session.SessionStartTime24, session.SessionEndTime24)
 	}
 }

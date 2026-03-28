@@ -13,6 +13,8 @@ type SessionDisplayInput = {
   sessionSeason?: string | null
   sessionYear?: number | null
   startDate?: string | null
+  sessionStartTime24?: string | null
+  sessionEndTime24?: string | null
   fallback?: string
 }
 
@@ -63,17 +65,54 @@ export function formatSessionTermLabel(
   return [season, yearLabel].filter(Boolean).join(' ')
 }
 
+export function formatSessionTimeLabel(value: string | null | undefined) {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed) {
+    return ''
+  }
+  const parts = trimmed.split(':')
+  if (parts.length !== 2) {
+    return trimmed
+  }
+  const parsedHour = Number.parseInt(parts[0], 10)
+  const parsedMinute = Number.parseInt(parts[1], 10)
+  if (!Number.isFinite(parsedHour) || !Number.isFinite(parsedMinute)) {
+    return trimmed
+  }
+  const suffix = parsedHour >= 12 ? 'PM' : 'AM'
+  const normalizedHour = parsedHour % 12 || 12
+  return `${normalizedHour}:${String(parsedMinute).padStart(2, '0')} ${suffix}`
+}
+
+export function formatSessionTimeRange(
+  sessionStartTime24: string | null | undefined,
+  sessionEndTime24: string | null | undefined,
+) {
+  const start = formatSessionTimeLabel(sessionStartTime24)
+  const end = formatSessionTimeLabel(sessionEndTime24)
+  if (!start || !end) {
+    return ''
+  }
+  return `${start}-${end}`
+}
+
 export function formatSessionDisplayName({
   sessionDay,
   sessionSeason,
   sessionYear,
   startDate,
+  sessionStartTime24,
+  sessionEndTime24,
   fallback = 'Session',
 }: SessionDisplayInput) {
   const dayLabel = getDayLabel(sessionDay)
   const season = sessionSeason?.trim() ?? ''
   const year = sessionYear ?? getYearFromDate(startDate)
   const yearLabel = year ? String(year) : ''
-  const parts = [dayLabel, season, yearLabel].filter(Boolean)
-  return parts.length ? parts.join(' ') : fallback
+  const label = [dayLabel, season, yearLabel].filter(Boolean).join(' ')
+  const timeRange = formatSessionTimeRange(sessionStartTime24, sessionEndTime24)
+  if (label) {
+    return timeRange ? `${label} | ${timeRange}` : label
+  }
+  return timeRange || fallback
 }

@@ -1,15 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
 import { useCsvImportFlow } from '../../app/CsvImportFlowContext'
 import { createTermKey, formatTermLabel, useCurrentTerm } from '../../app/useCurrentTerm'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
+import { extractClassesFromCsv } from '../../lib/api'
 import {
   formatSessionDisplayName,
   getYearFromDate,
   resolveSessionYear,
 } from '../../shared/session/sessionLabels'
+import {
+  findSingleMatchingExtractedSession,
+  type SessionIdentityCriteria,
+} from '../../shared/session/sessionTimeInference'
 import { getTorontoDate } from '../../lib/torontoDate'
 import { suppressNextPrefetchForSession } from '../../lib/instructorPdfCache'
 import { createSession, fetchMySessions, fetchSharedSessionsToday, fetchTeamSessions } from '../../lib/serverApi'
@@ -22,6 +27,7 @@ import {
   setCurrentSessionId,
 } from '../../lib/sessionStorage'
 import { onStorageScopeChanged } from '../../lib/storageScope'
+import type { ExtractedSession } from '../../types/app'
 
 type InstructorEntry = { name: string }
 type SessionEntry = {
@@ -31,6 +37,8 @@ type SessionEntry = {
   sessionYear?: number | null
   startDate: string
   endDate: string
+  sessionStartTime24?: string | null
+  sessionEndTime24?: string | null
   location?: string | null
   instructors: InstructorEntry[]
   rosterFileName?: string
@@ -46,6 +54,8 @@ type DbSessionEntry = {
   start_date: string | null
   end_date: string | null
   location: string | null
+  session_start_time24: string | null
+  session_end_time24: string | null
   instructors: InstructorEntry[]
 }
 
@@ -85,6 +95,8 @@ function getSessionName(session: SessionEntry) {
     sessionSeason: session.sessionSeason,
     sessionYear: session.sessionYear ?? null,
     startDate: session.startDate,
+    sessionStartTime24: session.sessionStartTime24 ?? null,
+    sessionEndTime24: session.sessionEndTime24 ?? null,
   })
 }
 
@@ -94,7 +106,33 @@ function getDbSessionName(session: DbSessionEntry) {
     sessionSeason: session.session_season,
     sessionYear: session.session_year,
     startDate: session.start_date,
+    sessionStartTime24: session.session_start_time24,
+    sessionEndTime24: session.session_end_time24,
   })
+}
+
+function buildIdentityCriteria(input: {
+  sessionDay?: string
+  sessionSeason?: string
+  sessionYear?: string
+  location?: string
+}): SessionIdentityCriteria {
+  const parsedYear = Number.parseInt((input.sessionYear ?? '').trim(), 10)
+  return {
+    dayOfWeek: input.sessionDay?.trim() ?? '',
+    sessionSeason: input.sessionSeason?.trim() ?? '',
+    sessionYear: Number.isFinite(parsedYear) && parsedYear > 0 ? parsedYear : null,
+    location: input.location?.trim() ?? '',
+  }
+}
+
+function hasIdentityCriteria(criteria: SessionIdentityCriteria) {
+  return Boolean(
+    (criteria.dayOfWeek ?? '').trim() ||
+      (criteria.sessionSeason ?? '').trim() ||
+      (criteria.location ?? '').trim() ||
+      (criteria.sessionYear ?? 0) > 0,
+  )
 }
 
 function Dashboard() {
@@ -112,6 +150,11 @@ function Dashboard() {
   const [sessionYear, setSessionYear] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [sessionStartTime24, setSessionStartTime24] = useState('')
+  const [sessionEndTime24, setSessionEndTime24] = useState('')
+  const [newSessionExtractedSessions, setNewSessionExtractedSessions] = useState<ExtractedSession[]>([])
+  const [newSessionTimeMessage, setNewSessionTimeMessage] = useState('')
+  const [isInspectingRosterFile, setIsInspectingRosterFile] = useState(false)
   const [instructors, setInstructors] = useState<InstructorEntry[]>([{ name: '' }])
   const [saveMessage, setSaveMessage] = useState('')
   const [rosterFile, setRosterFile] = useState<File | null>(null)
@@ -125,6 +168,8 @@ function Dashboard() {
   const [currentSessionId, setCurrentSessionIdState] = useState(() => getCurrentSessionId())
   const [selectMessage, setSelectMessage] = useState('')
   const [sessionsVersion, setSessionsVersion] = useState(0)
+  const didManuallyEditSessionTimesRef = useRef(false)
+  const didAutofillSessionTimesRef = useRef(false)
 
   const seasonOptions = ['Winter', 'Spring', 'Summer', 'Fall']
 
@@ -140,10 +185,32 @@ function Dashboard() {
     })
   }
 
+  const inspectNewSessionRosterFile = async (file: File) => {
+    setIsInspectingRosterFile(true)
+    setNewSessionTimeMessage('')
+    try {
+      const extracted = await extractClassesFromCsv(file)
+      const sessions = extracted.sessions ?? []
+      setNewSessionExtractedSessions(sessions)
+      if (sessions.length === 0) {
+        setNewSessionTimeMessage('No session times were found in this CSV.')
+      }
+    } catch (error) {
+      setNewSessionExtractedSessions([])
+      setNewSessionTimeMessage(error instanceof Error ? error.message : 'Failed to inspect the roster CSV.')
+    } finally {
+      setIsInspectingRosterFile(false)
+    }
+  }
+
 
   const handleSaveSession = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!isGuest && !user) {
+      return
+    }
+    if (Boolean(sessionStartTime24) !== Boolean(sessionEndTime24)) {
+      setSaveMessage('Enter both session start and end time, or leave both blank.')
       return
     }
     const id =
@@ -159,6 +226,8 @@ function Dashboard() {
         sessionYear: resolveSessionYear(sessionYear, startDate, endDate),
         startDate,
         endDate,
+        sessionStartTime24: sessionStartTime24 || null,
+        sessionEndTime24: sessionEndTime24 || null,
         location: null,
         instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
         rosterFileName: rosterFile?.name,
@@ -197,6 +266,8 @@ function Dashboard() {
       start_date: startDate || null,
       end_date: endDate || null,
       location: location || null,
+      session_start_time24: sessionStartTime24 || null,
+      session_end_time24: sessionEndTime24 || null,
       instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
     }
 
@@ -379,6 +450,61 @@ function Dashboard() {
       setSessionYear(String(derivedYear))
     }
   }, [sessionYear, startDate])
+
+  useEffect(() => {
+    if (didManuallyEditSessionTimesRef.current) {
+      return
+    }
+    if (!didAutofillSessionTimesRef.current && (sessionStartTime24 || sessionEndTime24)) {
+      return
+    }
+    if (newSessionExtractedSessions.length === 0) {
+      return
+    }
+
+    const identityCriteria = buildIdentityCriteria({
+      sessionDay,
+      sessionSeason,
+      sessionYear,
+      location,
+    })
+    const match = hasIdentityCriteria(identityCriteria)
+      ? findSingleMatchingExtractedSession(newSessionExtractedSessions, identityCriteria)
+      : newSessionExtractedSessions.length === 1
+        ? newSessionExtractedSessions[0]
+        : null
+
+    if (match) {
+      setSessionStartTime24(match.sessionStartTime24)
+      setSessionEndTime24(match.sessionEndTime24)
+      didAutofillSessionTimesRef.current = true
+      setNewSessionTimeMessage('Session times autofilled from the roster CSV.')
+      return
+    }
+
+    if (didAutofillSessionTimesRef.current) {
+      setSessionStartTime24('')
+      setSessionEndTime24('')
+      didAutofillSessionTimesRef.current = false
+    }
+
+    if (!hasIdentityCriteria(identityCriteria) && newSessionExtractedSessions.length > 1) {
+      setNewSessionTimeMessage('CSV has multiple session windows. Fill session details to narrow it down.')
+      return
+    }
+
+    if (hasIdentityCriteria(identityCriteria)) {
+      setNewSessionTimeMessage('CSV did not resolve to one session window with the current session details.')
+    }
+  }, [
+    location,
+    newSessionExtractedSessions,
+    sessionDay,
+    sessionEndTime24,
+    sessionSeason,
+    sessionStartTime24,
+    sessionYear,
+  ])
 
   useEffect(() => {
     if (!currentSessionId) {
@@ -706,6 +832,40 @@ function Dashboard() {
                       onChange={event => setEndDate(event.target.value)}
                     />
                   </label>
+                  <label className="flex flex-col gap-2 font-semibold text-secondary">
+                    Session Start Time
+                    <input
+                      className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                      type="time"
+                      value={sessionStartTime24}
+                      onChange={event => {
+                        didManuallyEditSessionTimesRef.current = true
+                        didAutofillSessionTimesRef.current = false
+                        setSessionStartTime24(event.target.value)
+                        setNewSessionTimeMessage('')
+                      }}
+                    />
+                  </label>
+                  <label className="flex flex-col gap-2 font-semibold text-secondary">
+                    Session End Time
+                    <input
+                      className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                      type="time"
+                      value={sessionEndTime24}
+                      onChange={event => {
+                        didManuallyEditSessionTimesRef.current = true
+                        didAutofillSessionTimesRef.current = false
+                        setSessionEndTime24(event.target.value)
+                        setNewSessionTimeMessage('')
+                      }}
+                    />
+                  </label>
+                  {isInspectingRosterFile ? (
+                    <p className="text-sm font-medium text-secondary/70">Inspecting roster CSV for session times...</p>
+                  ) : null}
+                  {newSessionTimeMessage ? (
+                    <p className="text-sm font-medium text-secondary/70">{newSessionTimeMessage}</p>
+                  ) : null}
                   {!isGuest ? (
                     <>
                       <label className="flex flex-col gap-2 font-semibold text-secondary">
@@ -757,7 +917,18 @@ function Dashboard() {
                         className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                         type="file"
                         accept=".csv"
-                        onChange={event => setRosterFile(event.target.files?.[0] ?? null)}
+                        onChange={event => {
+                          const file = event.target.files?.[0] ?? null
+                          setRosterFile(file)
+                          setNewSessionExtractedSessions([])
+                          setNewSessionTimeMessage('')
+                          didManuallyEditSessionTimesRef.current = false
+                          didAutofillSessionTimesRef.current = false
+                          if (!file) {
+                            return
+                          }
+                          void inspectNewSessionRosterFile(file)
+                        }}
                       />
                     </label>
                   </div>

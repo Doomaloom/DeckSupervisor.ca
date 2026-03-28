@@ -26,6 +26,8 @@ create table if not exists sessions (
   start_date date,
   end_date date,
   location text,
+  session_start_time24 text,
+  session_end_time24 text,
   instructors jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -39,6 +41,8 @@ alter table sessions add column if not exists session_year integer;
 alter table sessions add column if not exists start_date date;
 alter table sessions add column if not exists end_date date;
 alter table sessions add column if not exists location text;
+alter table sessions add column if not exists session_start_time24 text;
+alter table sessions add column if not exists session_end_time24 text;
 alter table sessions add column if not exists instructors jsonb default '[]'::jsonb;
 alter table sessions add column if not exists created_at timestamptz default now();
 alter table sessions add column if not exists updated_at timestamptz default now();

@@ -46,17 +46,19 @@ type teamRow struct {
 }
 
 type sessionRow struct {
-	ID            string              `json:"id"`
-	TeamID        *string             `json:"team_id"`
-	CreatedBy     string              `json:"created_by"`
-	SessionDay    string              `json:"session_day"`
-	SessionSeason *string             `json:"session_season"`
-	SessionYear   *int                `json:"session_year"`
-	StartDate     *string             `json:"start_date"`
-	EndDate       *string             `json:"end_date"`
-	Location      *string             `json:"location"`
-	Instructors   []map[string]string `json:"instructors"`
-	UpdatedAt     *string             `json:"updated_at,omitempty"`
+	ID                 string              `json:"id"`
+	TeamID             *string             `json:"team_id"`
+	CreatedBy          string              `json:"created_by"`
+	SessionDay         string              `json:"session_day"`
+	SessionSeason      *string             `json:"session_season"`
+	SessionYear        *int                `json:"session_year"`
+	StartDate          *string             `json:"start_date"`
+	EndDate            *string             `json:"end_date"`
+	Location           *string             `json:"location"`
+	SessionStartTime24 *string             `json:"session_start_time24"`
+	SessionEndTime24   *string             `json:"session_end_time24"`
+	Instructors        []map[string]string `json:"instructors"`
+	UpdatedAt          *string             `json:"updated_at,omitempty"`
 }
 
 type shareRow struct {
@@ -258,7 +260,7 @@ func CurrentSession(w http.ResponseWriter, r *http.Request) {
 
 	query := url.Values{}
 	query.Set("id", "eq."+sessionID)
-	query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors")
+	query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors")
 	var rows []sessionRow
 	if err := client.Get(r.Context(), "/rest/v1/sessions", query, &rows); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -311,7 +313,7 @@ func MySessions(w http.ResponseWriter, r *http.Request) {
 	}
 	query := url.Values{}
 	query.Set("created_by", "eq."+profile.ID)
-	query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors")
+	query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors")
 	var rows []sessionRow
 	if err := client.Get(r.Context(), "/rest/v1/sessions", query, &rows); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -329,7 +331,7 @@ func SharedSessionsToday(w http.ResponseWriter, r *http.Request) {
 	query := url.Values{}
 	query.Set("shared_with", "eq."+client.User.ID)
 	query.Set("share_date", "eq."+torontoToday())
-	query.Set("select", "id,share_date,allow_roster_edits,sessions(id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors)")
+	query.Set("select", "id,share_date,allow_roster_edits,sessions(id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors)")
 	var rows []map[string]any
 	if err := client.Get(r.Context(), "/rest/v1/session_shares", query, &rows); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -351,7 +353,7 @@ func TeamSessions(w http.ResponseWriter, r *http.Request) {
 	}
 	selectFields := r.URL.Query().Get("select")
 	if selectFields == "" {
-		selectFields = "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors,updated_at"
+		selectFields = "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors,updated_at"
 	}
 	query := url.Values{}
 	query.Set("team_id", "eq."+teamID)

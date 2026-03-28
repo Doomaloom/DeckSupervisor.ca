@@ -5,11 +5,19 @@ import { useCurrentSession } from '../../../app/useCurrentSession'
 import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
 import type { RosterGroup } from '../types'
 
-function getSessionName(sessionDay: string, sessionSeason: string | null, startDate: string | null) {
+function getSessionName(
+    sessionDay: string,
+    sessionSeason: string | null,
+    startDate: string | null,
+    sessionStartTime24: string | null,
+    sessionEndTime24: string | null,
+) {
     return formatSessionDisplayName({
         sessionDay,
         sessionSeason,
         startDate,
+        sessionStartTime24,
+        sessionEndTime24,
         fallback: '',
     })
 }
@@ -44,6 +52,8 @@ export function useRosterPrint() {
                   currentSession.session_day,
                   currentSession.session_season ?? null,
                   currentSession.start_date ?? null,
+                  currentSession.session_start_time24 ?? null,
+                  currentSession.session_end_time24 ?? null,
               )
             : 'Summer 2025'
         const printWindow = openPrintWindow('Attendance Roster')

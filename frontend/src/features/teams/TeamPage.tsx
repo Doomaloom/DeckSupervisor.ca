@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
+import { formatSessionDisplayName } from '../../shared/session/sessionLabels'
 import {
   createSessionShare,
   createTeam,
@@ -52,26 +53,19 @@ type SessionEntry = {
   session_year: number | null
   start_date: string | null
   end_date: string | null
-}
-
-const dayNames: Record<string, string> = {
-  Mo: 'Monday',
-  Tu: 'Tuesday',
-  We: 'Wednesday',
-  Th: 'Thursday',
-  Fr: 'Friday',
-  Sa: 'Saturday',
-  Su: 'Sunday',
+  session_start_time24: string | null
+  session_end_time24: string | null
 }
 
 function getSessionLabel(session: SessionEntry) {
-  const dayLabel = session.session_day ? dayNames[session.session_day] ?? session.session_day : ''
-  const season = session.session_season?.trim()
-  const startYear = session.start_date ? new Date(session.start_date).getFullYear() : NaN
-  const year = session.session_year ?? (Number.isFinite(startYear) && startYear > 0 ? startYear : null)
-  const yearLabel = year ? String(year) : ''
-  const parts = [dayLabel, season, yearLabel].filter(Boolean)
-  return parts.length ? parts.join(' ') : 'Session'
+  return formatSessionDisplayName({
+    sessionDay: session.session_day,
+    sessionSeason: session.session_season,
+    sessionYear: session.session_year,
+    startDate: session.start_date,
+    sessionStartTime24: session.session_start_time24,
+    sessionEndTime24: session.session_end_time24,
+  })
 }
 
 function TeamPage() {

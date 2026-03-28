@@ -1,4 +1,5 @@
 import type { CsvSessionCandidate } from '../types/app'
+import { formatSessionDisplayName } from '../shared/session/sessionLabels'
 
 type CsvSessionImportModalProps = {
   open: boolean
@@ -11,23 +12,18 @@ type CsvSessionImportModalProps = {
   onSelectCandidate: (candidate: CsvSessionCandidate) => void
 }
 
-const dayNames: Record<string, string> = {
-  Mo: 'Monday',
-  Tu: 'Tuesday',
-  We: 'Wednesday',
-  Th: 'Thursday',
-  Fr: 'Friday',
-  Sa: 'Saturday',
-  Su: 'Sunday',
-}
-
 function getCandidateLabel(candidate: CsvSessionCandidate) {
-  const dayLabel = candidate.dayOfWeek ? dayNames[candidate.dayOfWeek] ?? candidate.dayOfWeek : ''
-  const season = candidate.sessionSeason.trim()
-  const year = candidate.sessionYear > 0 ? String(candidate.sessionYear) : ''
+  const sessionLabel = formatSessionDisplayName({
+    sessionDay: candidate.dayOfWeek,
+    sessionSeason: candidate.sessionSeason,
+    sessionYear: candidate.sessionYear,
+    startDate: candidate.startDate,
+    sessionStartTime24: candidate.sessionStartTime24,
+    sessionEndTime24: candidate.sessionEndTime24,
+    fallback: '',
+  })
   const location = candidate.location.trim()
-  return [dayLabel, season, year].filter(Boolean).join(' ')
-    + (location ? ` | ${location}` : '')
+  return [sessionLabel, location].filter(Boolean).join(' | ')
 }
 
 function CsvSessionImportModal({

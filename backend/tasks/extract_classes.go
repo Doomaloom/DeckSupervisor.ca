@@ -27,17 +27,19 @@ type ExtractedClass struct {
 }
 
 type ExtractedSession struct {
-	SessionKey    string   `json:"sessionKey"`
-	DayOfWeek     string   `json:"dayOfWeek"`
-	SessionSeason string   `json:"sessionSeason"`
-	SessionYear   int      `json:"sessionYear"`
-	StartDate     string   `json:"startDate"`
-	EndDate       string   `json:"endDate"`
-	Location      string   `json:"location"`
-	ClassCount    int      `json:"classCount"`
-	StudentCount  int      `json:"studentCount"`
-	WaitlistCount int      `json:"waitlistCount"`
-	CourseCodes   []string `json:"courseCodes"`
+	SessionKey         string   `json:"sessionKey"`
+	DayOfWeek          string   `json:"dayOfWeek"`
+	SessionSeason      string   `json:"sessionSeason"`
+	SessionYear        int      `json:"sessionYear"`
+	StartDate          string   `json:"startDate"`
+	EndDate            string   `json:"endDate"`
+	Location           string   `json:"location"`
+	SessionStartTime24 string   `json:"sessionStartTime24"`
+	SessionEndTime24   string   `json:"sessionEndTime24"`
+	ClassCount         int      `json:"classCount"`
+	StudentCount       int      `json:"studentCount"`
+	WaitlistCount      int      `json:"waitlistCount"`
+	CourseCodes        []string `json:"courseCodes"`
 }
 
 type ExtractedCSVResult struct {
@@ -117,7 +119,7 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		}
 
 		sessionSeason, sessionYear := getSeasonAndYear(eventSchedule, startDate, endDate)
-		sessionKey := BuildExtractedSessionKey(dayValue, sessionSeason, sessionYear, location)
+		sessionBucketKey := buildExtractedSessionBucketKey(dayValue, sessionSeason, sessionYear, location)
 
 		bookedCountFromRoster := parsePositiveInt(rowValue(row, "Booked", "Booked Count"))
 		statusValue := rowValue(row, "AttendeeStatus", "Attendee Status", "Status")
@@ -125,7 +127,7 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		isWaitlist := isWaitingStatus(statusValue)
 
 		key := strings.Join([]string{
-			sessionKey,
+			sessionBucketKey,
 			courseCode,
 			startTime24,
 			endTime24,
@@ -135,7 +137,7 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		if !exists {
 			existing = &extractedClassAccumulator{
 				Class: ExtractedClass{
-					SessionKey:      sessionKey,
+					SessionKey:      sessionBucketKey,
 					DayOfWeek:       dayValue,
 					SessionSeason:   sessionSeason,
 					SessionYear:     sessionYear,
@@ -182,61 +184,20 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		}
 	}
 
-	classesBySession := map[string][]ExtractedClass{}
-	sessionCourseCodes := map[string]map[string]struct{}{}
-	sessionMeta := map[string]*ExtractedSession{}
-
+	classesByBucket := map[string][]ExtractedClass{}
 	for _, class := range classMap {
 		extractedClass := class.Class
 		extractedClass.StudentCount = class.BookedCountFromRoster
 		extractedClass.WaitlistCount = class.WaitlistAttendeeRows
-
-		classesBySession[extractedClass.SessionKey] = append(classesBySession[extractedClass.SessionKey], extractedClass)
-
-		meta, exists := sessionMeta[extractedClass.SessionKey]
-		if !exists {
-			meta = &ExtractedSession{
-				SessionKey:    extractedClass.SessionKey,
-				DayOfWeek:     extractedClass.DayOfWeek,
-				SessionSeason: extractedClass.SessionSeason,
-				SessionYear:   extractedClass.SessionYear,
-				StartDate:     extractedClass.StartDate,
-				EndDate:       extractedClass.EndDate,
-				Location:      extractedClass.Location,
-			}
-			sessionMeta[extractedClass.SessionKey] = meta
-			sessionCourseCodes[extractedClass.SessionKey] = map[string]struct{}{}
-		}
-
-		meta.ClassCount++
-		meta.StudentCount += extractedClass.StudentCount
-		meta.WaitlistCount += extractedClass.WaitlistCount
-		if meta.StartDate == "" && extractedClass.StartDate != "" {
-			meta.StartDate = extractedClass.StartDate
-		}
-		if meta.EndDate == "" && extractedClass.EndDate != "" {
-			meta.EndDate = extractedClass.EndDate
-		}
-		if meta.Location == "" && extractedClass.Location != "" {
-			meta.Location = extractedClass.Location
-		}
-		if code := strings.TrimSpace(extractedClass.CourseCode); code != "" {
-			sessionCourseCodes[extractedClass.SessionKey][code] = struct{}{}
-		}
+		classesByBucket[extractedClass.SessionKey] = append(classesByBucket[extractedClass.SessionKey], extractedClass)
 	}
 
-	sessions := make([]ExtractedSession, 0, len(sessionMeta))
-	for sessionKey, meta := range sessionMeta {
-		courseCodes := make([]string, 0, len(sessionCourseCodes[sessionKey]))
-		for code := range sessionCourseCodes[sessionKey] {
-			courseCodes = append(courseCodes, code)
-		}
-		sort.Strings(courseCodes)
-		meta.CourseCodes = courseCodes
-
-		sort.Slice(classesBySession[sessionKey], func(i, j int) bool {
-			left := classesBySession[sessionKey][i]
-			right := classesBySession[sessionKey][j]
+	classesBySession := map[string][]ExtractedClass{}
+	sessions := make([]ExtractedSession, 0, len(classesByBucket))
+	for _, bucketClasses := range classesByBucket {
+		sort.Slice(bucketClasses, func(i, j int) bool {
+			left := bucketClasses[i]
+			right := bucketClasses[j]
 			if left.StartTime24 != right.StartTime24 {
 				return left.StartTime24 < right.StartTime24
 			}
@@ -246,7 +207,38 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 			return left.CourseCode < right.CourseCode
 		})
 
-		sessions = append(sessions, *meta)
+		for _, segment := range splitExtractedSessionClasses(bucketClasses) {
+			sessionKey := BuildExtractedSessionKey(
+				segment.DayOfWeek,
+				segment.SessionSeason,
+				segment.SessionYear,
+				segment.Location,
+				segment.SessionStartTime24,
+				segment.SessionEndTime24,
+			)
+
+			assigned := make([]ExtractedClass, 0, len(segment.Classes))
+			for _, class := range segment.Classes {
+				class.SessionKey = sessionKey
+				assigned = append(assigned, class)
+			}
+			classesBySession[sessionKey] = assigned
+			sessions = append(sessions, ExtractedSession{
+				SessionKey:         sessionKey,
+				DayOfWeek:          segment.DayOfWeek,
+				SessionSeason:      segment.SessionSeason,
+				SessionYear:        segment.SessionYear,
+				StartDate:          segment.StartDate,
+				EndDate:            segment.EndDate,
+				Location:           segment.Location,
+				SessionStartTime24: segment.SessionStartTime24,
+				SessionEndTime24:   segment.SessionEndTime24,
+				ClassCount:         segment.ClassCount,
+				StudentCount:       segment.StudentCount,
+				WaitlistCount:      segment.WaitlistCount,
+				CourseCodes:        segment.CourseCodes,
+			})
+		}
 	}
 
 	sort.Slice(sessions, func(i, j int) bool {
@@ -263,7 +255,18 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		if seasonI != seasonJ {
 			return seasonI < seasonJ
 		}
-		return strings.ToLower(strings.TrimSpace(sessions[i].Location)) < strings.ToLower(strings.TrimSpace(sessions[j].Location))
+		locationI := strings.ToLower(strings.TrimSpace(sessions[i].Location))
+		locationJ := strings.ToLower(strings.TrimSpace(sessions[j].Location))
+		if locationI != locationJ {
+			return locationI < locationJ
+		}
+		if sessions[i].SessionStartTime24 != sessions[j].SessionStartTime24 {
+			return sessions[i].SessionStartTime24 < sessions[j].SessionStartTime24
+		}
+		if sessions[i].SessionEndTime24 != sessions[j].SessionEndTime24 {
+			return sessions[i].SessionEndTime24 < sessions[j].SessionEndTime24
+		}
+		return sessions[i].SessionKey < sessions[j].SessionKey
 	})
 
 	return &ExtractedCSVResult{
@@ -272,13 +275,121 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 	}, nil
 }
 
-func BuildExtractedSessionKey(dayOfWeek, sessionSeason string, sessionYear int, location string) string {
+func BuildExtractedSessionKey(dayOfWeek, sessionSeason string, sessionYear int, location, sessionStartTime24, sessionEndTime24 string) string {
+	return strings.Join([]string{
+		buildExtractedSessionBucketKey(dayOfWeek, sessionSeason, sessionYear, location),
+		strings.TrimSpace(sessionStartTime24),
+		strings.TrimSpace(sessionEndTime24),
+	}, "|")
+}
+
+type extractedSessionSegment struct {
+	DayOfWeek          string
+	SessionSeason      string
+	SessionYear        int
+	StartDate          string
+	EndDate            string
+	Location           string
+	SessionStartTime24 string
+	SessionEndTime24   string
+	ClassCount         int
+	StudentCount       int
+	WaitlistCount      int
+	CourseCodes        []string
+	Classes            []ExtractedClass
+}
+
+func buildExtractedSessionBucketKey(dayOfWeek, sessionSeason string, sessionYear int, location string) string {
 	return strings.Join([]string{
 		strings.TrimSpace(dayOfWeek),
 		strings.ToLower(strings.TrimSpace(sessionSeason)),
 		strconv.Itoa(sessionYear),
 		strings.ToLower(strings.TrimSpace(location)),
 	}, "|")
+}
+
+func splitExtractedSessionClasses(classes []ExtractedClass) []extractedSessionSegment {
+	if len(classes) == 0 {
+		return nil
+	}
+
+	segments := make([]extractedSessionSegment, 0, 1)
+	current := initExtractedSessionSegment(classes[0])
+	currentEndMinutes := time24ToMinutes(current.SessionEndTime24)
+
+	for _, class := range classes[1:] {
+		startMinutes := time24ToMinutes(class.StartTime24)
+		if startMinutes-currentEndMinutes > 30 {
+			segments = append(segments, finalizeExtractedSessionSegment(current))
+			current = initExtractedSessionSegment(class)
+			currentEndMinutes = time24ToMinutes(current.SessionEndTime24)
+			continue
+		}
+
+		appendClassToExtractedSessionSegment(&current, class)
+		if endMinutes := time24ToMinutes(class.EndTime24); endMinutes > currentEndMinutes {
+			currentEndMinutes = endMinutes
+			current.SessionEndTime24 = class.EndTime24
+		}
+	}
+
+	segments = append(segments, finalizeExtractedSessionSegment(current))
+	return segments
+}
+
+func initExtractedSessionSegment(class ExtractedClass) extractedSessionSegment {
+	segment := extractedSessionSegment{
+		DayOfWeek:          class.DayOfWeek,
+		SessionSeason:      class.SessionSeason,
+		SessionYear:        class.SessionYear,
+		StartDate:          class.StartDate,
+		EndDate:            class.EndDate,
+		Location:           class.Location,
+		SessionStartTime24: class.StartTime24,
+		SessionEndTime24:   class.EndTime24,
+	}
+	appendClassToExtractedSessionSegment(&segment, class)
+	return segment
+}
+
+func appendClassToExtractedSessionSegment(segment *extractedSessionSegment, class ExtractedClass) {
+	segment.Classes = append(segment.Classes, class)
+	segment.ClassCount++
+	segment.StudentCount += class.StudentCount
+	segment.WaitlistCount += class.WaitlistCount
+	if segment.StartDate == "" && class.StartDate != "" {
+		segment.StartDate = class.StartDate
+	}
+	if segment.EndDate == "" && class.EndDate != "" {
+		segment.EndDate = class.EndDate
+	}
+	if segment.Location == "" && class.Location != "" {
+		segment.Location = class.Location
+	}
+}
+
+func finalizeExtractedSessionSegment(segment extractedSessionSegment) extractedSessionSegment {
+	courseCodeSet := make(map[string]struct{}, len(segment.Classes))
+	for _, class := range segment.Classes {
+		if code := strings.TrimSpace(class.CourseCode); code != "" {
+			courseCodeSet[code] = struct{}{}
+		}
+	}
+
+	segment.CourseCodes = make([]string, 0, len(courseCodeSet))
+	for code := range courseCodeSet {
+		segment.CourseCodes = append(segment.CourseCodes, code)
+	}
+	sort.Strings(segment.CourseCodes)
+	return segment
+}
+
+func time24ToMinutes(value string) int {
+	parsed, err := time.Parse("15:04", strings.TrimSpace(value))
+	if err != nil {
+		return 0
+	}
+	return parsed.Hour()*60 + parsed.Minute()
 }
 
 func splitTimeRange(value string) (string, string) {

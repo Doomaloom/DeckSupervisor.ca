@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"sort"
@@ -12,18 +13,20 @@ import (
 )
 
 type csvSessionCandidate struct {
-	SessionKey     string             `json:"sessionKey"`
-	DayOfWeek      string             `json:"dayOfWeek"`
-	SessionSeason  string             `json:"sessionSeason"`
-	SessionYear    int                `json:"sessionYear"`
-	StartDate      string             `json:"startDate"`
-	EndDate        string             `json:"endDate"`
-	Location       string             `json:"location"`
-	ClassCount     int                `json:"classCount"`
-	StudentCount   int                `json:"studentCount"`
-	WaitlistCount  int                `json:"waitlistCount"`
-	CourseCodes    []string           `json:"courseCodes"`
-	MatchedSession *csvMatchedSession `json:"matchedSession"`
+	SessionKey         string             `json:"sessionKey"`
+	DayOfWeek          string             `json:"dayOfWeek"`
+	SessionSeason      string             `json:"sessionSeason"`
+	SessionYear        int                `json:"sessionYear"`
+	StartDate          string             `json:"startDate"`
+	EndDate            string             `json:"endDate"`
+	Location           string             `json:"location"`
+	SessionStartTime24 string             `json:"sessionStartTime24"`
+	SessionEndTime24   string             `json:"sessionEndTime24"`
+	ClassCount         int                `json:"classCount"`
+	StudentCount       int                `json:"studentCount"`
+	WaitlistCount      int                `json:"waitlistCount"`
+	CourseCodes        []string           `json:"courseCodes"`
+	MatchedSession     *csvMatchedSession `json:"matchedSession"`
 }
 
 type csvMatchedSession struct {
@@ -39,6 +42,8 @@ type csvCandidateBucket struct {
 	sessionSeason string
 	sessionYear   int
 	location      string
+	startTime24   string
+	endTime24     string
 }
 
 func CSVSessionCandidates(w http.ResponseWriter, r *http.Request) {
@@ -106,7 +111,7 @@ func loadCSVMatchScopeSessions(r *http.Request, client *supabasesvc.Client, prof
 
 		query := url.Values{}
 		query.Set("team_id", "eq."+teamID)
-		query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors,updated_at")
+		query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors,updated_at")
 		var rows []sessionRow
 		if err := client.Get(r.Context(), "/rest/v1/sessions", query, &rows); err != nil {
 			return nil, err
@@ -128,7 +133,7 @@ func loadCSVMatchScopeSessions(r *http.Request, client *supabasesvc.Client, prof
 
 	ownQuery := url.Values{}
 	ownQuery.Set("created_by", "eq."+profile.ID)
-	ownQuery.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors,updated_at")
+	ownQuery.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors,updated_at")
 	var ownRows []sessionRow
 	if err := client.Get(r.Context(), "/rest/v1/sessions", ownQuery, &ownRows); err != nil {
 		return nil, err
@@ -137,7 +142,7 @@ func loadCSVMatchScopeSessions(r *http.Request, client *supabasesvc.Client, prof
 	shareQuery := url.Values{}
 	shareQuery.Set("shared_with", "eq."+client.User.ID)
 	shareQuery.Set("share_date", "eq."+torontoToday())
-	shareQuery.Set("select", "sessions(id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,instructors,updated_at)")
+	shareQuery.Set("select", "sessions(id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors,updated_at)")
 	var sharedRows []struct {
 		Sessions *sessionRow `json:"sessions"`
 	}
@@ -193,23 +198,27 @@ func buildCSVSessionCandidates(extractedSessions []tasks.ExtractedSession, sessi
 	candidates := make([]csvSessionCandidate, 0, len(extractedSessions))
 	for _, extractedSession := range extractedSessions {
 		candidate := csvSessionCandidate{
-			SessionKey:    extractedSession.SessionKey,
-			DayOfWeek:     extractedSession.DayOfWeek,
-			SessionSeason: extractedSession.SessionSeason,
-			SessionYear:   extractedSession.SessionYear,
-			StartDate:     extractedSession.StartDate,
-			EndDate:       extractedSession.EndDate,
-			Location:      extractedSession.Location,
-			ClassCount:    extractedSession.ClassCount,
-			StudentCount:  extractedSession.StudentCount,
-			WaitlistCount: extractedSession.WaitlistCount,
-			CourseCodes:   extractedSession.CourseCodes,
+			SessionKey:         extractedSession.SessionKey,
+			DayOfWeek:          extractedSession.DayOfWeek,
+			SessionSeason:      extractedSession.SessionSeason,
+			SessionYear:        extractedSession.SessionYear,
+			StartDate:          extractedSession.StartDate,
+			EndDate:            extractedSession.EndDate,
+			Location:           extractedSession.Location,
+			SessionStartTime24: extractedSession.SessionStartTime24,
+			SessionEndTime24:   extractedSession.SessionEndTime24,
+			ClassCount:         extractedSession.ClassCount,
+			StudentCount:       extractedSession.StudentCount,
+			WaitlistCount:      extractedSession.WaitlistCount,
+			CourseCodes:        extractedSession.CourseCodes,
 			MatchedSession: matchCSVSessionCandidate(&csvCandidateBucket{
 				sessionKey:    extractedSession.SessionKey,
 				dayOfWeek:     extractedSession.DayOfWeek,
 				sessionSeason: extractedSession.SessionSeason,
 				sessionYear:   extractedSession.SessionYear,
 				location:      extractedSession.Location,
+				startTime24:   extractedSession.SessionStartTime24,
+				endTime24:     extractedSession.SessionEndTime24,
 			}, sessions, userID),
 		}
 		candidates = append(candidates, candidate)
@@ -236,7 +245,8 @@ func buildCSVSessionCandidates(extractedSessions []tasks.ExtractedSession, sessi
 }
 
 func matchCSVSessionCandidate(bucket *csvCandidateBucket, sessions []sessionRow, userID string) *csvMatchedSession {
-	matches := make([]sessionRow, 0, len(sessions))
+	exactMatches := make([]sessionRow, 0, len(sessions))
+	legacyMatches := make([]sessionRow, 0, 1)
 	candidateSeason := strings.ToLower(strings.TrimSpace(bucket.sessionSeason))
 	candidateLocation := strings.ToLower(strings.TrimSpace(bucket.location))
 	for _, session := range sessions {
@@ -254,39 +264,58 @@ func matchCSVSessionCandidate(bucket *csvCandidateBucket, sessions []sessionRow,
 		if sessionLocation != candidateLocation {
 			continue
 		}
-		matches = append(matches, session)
+
+		sessionStartTime24 := strings.TrimSpace(csvStringValue(session.SessionStartTime24))
+		sessionEndTime24 := strings.TrimSpace(csvStringValue(session.SessionEndTime24))
+		if sessionStartTime24 == bucket.startTime24 && sessionEndTime24 == bucket.endTime24 {
+			exactMatches = append(exactMatches, session)
+			continue
+		}
+		if sessionStartTime24 == "" && sessionEndTime24 == "" {
+			legacyMatches = append(legacyMatches, session)
+		}
 	}
-	if len(matches) == 0 {
+	if len(exactMatches) > 0 {
+		sortSessionRowsForMatch(exactMatches)
+		return buildCSVMatchedSession(exactMatches[0], userID)
+	}
+	if len(legacyMatches) != 1 {
 		return nil
 	}
+	return buildCSVMatchedSession(legacyMatches[0], userID)
+}
 
-	sort.Slice(matches, func(i, j int) bool {
-		left := strings.TrimSpace(csvStringValue(matches[i].UpdatedAt))
-		right := strings.TrimSpace(csvStringValue(matches[j].UpdatedAt))
-		if left != right {
-			return left > right
-		}
-		return matches[i].ID > matches[j].ID
-	})
-
-	match := matches[0]
+func buildCSVMatchedSession(match sessionRow, userID string) *csvMatchedSession {
 	return &csvMatchedSession{
 		ID:          match.ID,
 		Label:       csvSessionLabel(match),
 		OwnedByUser: match.CreatedBy == userID,
 		Session: map[string]any{
-			"id":             match.ID,
-			"team_id":        match.TeamID,
-			"created_by":     match.CreatedBy,
-			"session_day":    match.SessionDay,
-			"session_season": match.SessionSeason,
-			"session_year":   match.SessionYear,
-			"start_date":     match.StartDate,
-			"end_date":       match.EndDate,
-			"location":       match.Location,
-			"instructors":    match.Instructors,
+			"id":                   match.ID,
+			"team_id":              match.TeamID,
+			"created_by":           match.CreatedBy,
+			"session_day":          match.SessionDay,
+			"session_season":       match.SessionSeason,
+			"session_year":         match.SessionYear,
+			"start_date":           match.StartDate,
+			"end_date":             match.EndDate,
+			"location":             match.Location,
+			"session_start_time24": match.SessionStartTime24,
+			"session_end_time24":   match.SessionEndTime24,
+			"instructors":          match.Instructors,
 		},
 	}
+}
+
+func sortSessionRowsForMatch(rows []sessionRow) {
+	sort.Slice(rows, func(i, j int) bool {
+		left := strings.TrimSpace(csvStringValue(rows[i].UpdatedAt))
+		right := strings.TrimSpace(csvStringValue(rows[j].UpdatedAt))
+		if left != right {
+			return left > right
+		}
+		return rows[i].ID > rows[j].ID
+	})
 }
 
 func sessionYearValue(row sessionRow) int {
@@ -320,10 +349,17 @@ func csvSessionLabel(row sessionRow) string {
 	if location := strings.TrimSpace(csvStringValue(row.Location)); location != "" {
 		parts = append(parts, location)
 	}
-	if len(parts) == 0 {
+	label := strings.Join(parts, " ")
+	if timeRange := formatSessionTimeRange(csvStringValue(row.SessionStartTime24), csvStringValue(row.SessionEndTime24)); timeRange != "" {
+		if label == "" {
+			return timeRange
+		}
+		return label + " | " + timeRange
+	}
+	if label == "" {
 		return "Session"
 	}
-	return strings.Join(parts, " ")
+	return label
 }
 
 func csvStringValue(value *string) string {
@@ -331,6 +367,45 @@ func csvStringValue(value *string) string {
 		return ""
 	}
 	return *value
+}
+
+func formatSessionTimeRange(startTime24, endTime24 string) string {
+	startLabel := formatTime24(startTime24)
+	endLabel := formatTime24(endTime24)
+	if startLabel == "" || endLabel == "" {
+		return ""
+	}
+	return startLabel + "-" + endLabel
+}
+
+func formatTime24(value string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return ""
+	}
+	parts := strings.Split(trimmed, ":")
+	if len(parts) != 2 {
+		return trimmed
+	}
+	hour, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return trimmed
+	}
+	minute, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return trimmed
+	}
+	suffix := "AM"
+	switch {
+	case hour == 0:
+		hour = 12
+	case hour == 12:
+		suffix = "PM"
+	case hour > 12:
+		hour -= 12
+		suffix = "PM"
+	}
+	return strconv.Itoa(hour) + ":" + fmt.Sprintf("%02d", minute) + " " + suffix
 }
 
 func csvCandidateDaySortKey(day string) int {

@@ -99,6 +99,8 @@ export type ExtractedSession = {
     startDate: string
     endDate: string
     location: string
+    sessionStartTime24: string
+    sessionEndTime24: string
     classCount: number
     studentCount: number
     waitlistCount: number
@@ -119,6 +121,8 @@ export type CsvMatchedSession = {
         start_date: string | null
         end_date: string | null
         location: string | null
+        session_start_time24: string | null
+        session_end_time24: string | null
         instructors: { name: string }[]
     }
 }
@@ -131,6 +135,8 @@ export type CsvSessionCandidate = {
     startDate: string
     endDate: string
     location: string
+    sessionStartTime24: string
+    sessionEndTime24: string
     classCount: number
     studentCount: number
     waitlistCount: number

@@ -3,13 +3,22 @@ import { useNavigate } from 'react-router-dom'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
+import { createTermKey } from '../../app/useCurrentTerm'
 import { useCurrentSession } from '../../app/useCurrentSession'
+import {
+  getExtractedClassesForScope,
+  getExtractedClassesForSession,
+} from '../../lib/extractedClassesStorage'
 import {
   formatSessionDisplayName,
   formatSessionTermLabel,
   getYearFromDate,
   resolveSessionYear,
 } from '../../shared/session/sessionLabels'
+import {
+  inferSingleSessionWindowFromClasses,
+  type SessionIdentityCriteria,
+} from '../../shared/session/sessionTimeInference'
 import {
   clearCurrentSessionId,
   getCurrentSessionId,
@@ -29,6 +38,8 @@ type SessionEntry = {
   sessionYear?: number | null
   startDate: string
   endDate: string
+  sessionStartTime24?: string | null
+  sessionEndTime24?: string | null
   location?: string | null
   instructors: InstructorEntry[]
   rosterFileName?: string
@@ -47,6 +58,8 @@ function getSessionName(session: SessionEntry) {
     sessionSeason: session.sessionSeason,
     sessionYear: session.sessionYear ?? null,
     startDate: session.startDate,
+    sessionStartTime24: session.sessionStartTime24 ?? null,
+    sessionEndTime24: session.sessionEndTime24 ?? null,
   })
 }
 
@@ -55,13 +68,31 @@ function getDbSessionName(
   sessionSeason: string | null,
   sessionYear: number | null,
   startDate: string | null,
+  sessionStartTime24?: string | null,
+  sessionEndTime24?: string | null,
 ) {
   return formatSessionDisplayName({
     sessionDay,
     sessionSeason,
     sessionYear,
     startDate,
+    sessionStartTime24,
+    sessionEndTime24,
   })
+}
+
+function buildSessionIdentityCriteria(input: {
+  sessionDay?: string | null
+  sessionSeason?: string | null
+  sessionYear?: number | null
+  location?: string | null
+}): SessionIdentityCriteria {
+  return {
+    dayOfWeek: input.sessionDay?.trim() ?? '',
+    sessionSeason: input.sessionSeason?.trim() ?? '',
+    sessionYear: input.sessionYear ?? null,
+    location: input.location?.trim() ?? '',
+  }
 }
 
 function ManageSessionsPage() {
@@ -76,6 +107,8 @@ function ManageSessionsPage() {
   const [editTeamId, setEditTeamId] = useState(NO_TEAM_VALUE)
   const [editStartDate, setEditStartDate] = useState('')
   const [editEndDate, setEditEndDate] = useState('')
+  const [editSessionStartTime24, setEditSessionStartTime24] = useState('')
+  const [editSessionEndTime24, setEditSessionEndTime24] = useState('')
   const [editLocation, setEditLocation] = useState('')
   const [availableLocations, setAvailableLocations] = useState<string[]>([])
   const [teamName, setTeamName] = useState('')
@@ -88,6 +121,7 @@ function ManageSessionsPage() {
   const [sessionsVersion, setSessionsVersion] = useState(0)
   const [currentSessionId, setCurrentSessionIdState] = useState(() => getCurrentSessionId())
   const lastLoadedSessionIdRef = useRef('')
+  const inferredTimesSessionIdRef = useRef('')
 
   const seasonOptions = ['Winter', 'Spring', 'Summer', 'Fall']
 
@@ -148,6 +182,8 @@ function ManageSessionsPage() {
       setEditTeamId(NO_TEAM_VALUE)
       setEditStartDate(localSession.startDate)
       setEditEndDate(localSession.endDate)
+      setEditSessionStartTime24(localSession.sessionStartTime24 ?? '')
+      setEditSessionEndTime24(localSession.sessionEndTime24 ?? '')
       setEditLocation(localSession.location ?? '')
       setEditInstructors(localSession.instructors.length ? localSession.instructors : [{ name: '' }])
       setEditRosterFile(null)
@@ -166,6 +202,8 @@ function ManageSessionsPage() {
     setEditTeamId(dbSession?.team_id ?? NO_TEAM_VALUE)
     setEditStartDate(dbSession?.start_date ?? '')
     setEditEndDate(dbSession?.end_date ?? '')
+    setEditSessionStartTime24(dbSession?.session_start_time24 ?? '')
+    setEditSessionEndTime24(dbSession?.session_end_time24 ?? '')
     setEditLocation(dbSession?.location ?? '')
     setEditInstructors(dbSession?.instructors?.length ? dbSession.instructors : [{ name: '' }])
     setEditRosterFile(null)
@@ -222,9 +260,114 @@ function ManageSessionsPage() {
     })
   }, [])
 
+  useEffect(() => {
+    const sessionId = currentSessionId.trim()
+    if (!sessionId || inferredTimesSessionIdRef.current === sessionId) {
+      return
+    }
+    if (!currentSession) {
+      return
+    }
+
+    const hasSavedTimes = isGuest
+      ? Boolean(
+          (currentSession as SessionEntry).sessionStartTime24 ||
+            (currentSession as SessionEntry).sessionEndTime24,
+        )
+      : Boolean(
+          currentSessionRecord?.session_start_time24 ||
+            currentSessionRecord?.session_end_time24,
+        )
+    if (hasSavedTimes) {
+      return
+    }
+    if (!isGuest && access.mode !== 'owner') {
+      return
+    }
+
+    let extractedClasses = getExtractedClassesForSession(sessionId)
+    if (!isGuest) {
+      const teamID = currentSessionRecord?.team_id ?? ''
+      const sessionSeason = currentSessionRecord?.session_season ?? ''
+      const sessionYear = currentSessionRecord?.session_year ?? getYearFromDate(currentSessionRecord?.start_date)
+      const termKey = createTermKey(sessionSeason, sessionYear ?? 0)
+      if (teamID && termKey) {
+        extractedClasses = getExtractedClassesForScope(teamID, termKey)
+      }
+    }
+    if (extractedClasses.length === 0) {
+      return
+    }
+
+    const criteria = isGuest
+      ? buildSessionIdentityCriteria({
+          sessionDay: (currentSession as SessionEntry).sessionDay,
+          sessionSeason: (currentSession as SessionEntry).sessionSeason,
+          sessionYear: (currentSession as SessionEntry).sessionYear ?? null,
+          location: (currentSession as SessionEntry).location ?? null,
+        })
+      : buildSessionIdentityCriteria({
+          sessionDay: currentSessionRecord?.session_day ?? null,
+          sessionSeason: currentSessionRecord?.session_season ?? null,
+          sessionYear: currentSessionRecord?.session_year ?? null,
+          location: currentSessionRecord?.location ?? null,
+        })
+
+    const inferredWindow = inferSingleSessionWindowFromClasses(extractedClasses, criteria)
+    if (!inferredWindow) {
+      return
+    }
+
+    inferredTimesSessionIdRef.current = sessionId
+    setEditSessionStartTime24(inferredWindow.sessionStartTime24)
+    setEditSessionEndTime24(inferredWindow.sessionEndTime24)
+
+    const persist = async () => {
+      if (isGuest) {
+        const updatedSessions = loadSessions().map(session =>
+          session.id === sessionId
+            ? {
+                ...session,
+                sessionStartTime24: inferredWindow.sessionStartTime24,
+                sessionEndTime24: inferredWindow.sessionEndTime24,
+              }
+            : session,
+        )
+        saveSessions(updatedSessions)
+        setSessionsVersion(version => version + 1)
+        setEditMessageTone('success')
+        setEditMessage('Session times autofilled from stored roster data.')
+        return
+      }
+
+      try {
+        await updateSession(sessionId, {
+          session_start_time24: inferredWindow.sessionStartTime24,
+          session_end_time24: inferredWindow.sessionEndTime24,
+          updated_at: new Date().toISOString(),
+        })
+        setCurrentSessionId(sessionId)
+        setCurrentSessionIdState(sessionId)
+        setEditMessageTone('success')
+        setEditMessage('Session times autofilled from stored roster data.')
+      } catch (error) {
+        inferredTimesSessionIdRef.current = ''
+        setEditMessageTone('error')
+        setEditMessage(error instanceof Error ? error.message : 'Failed to autofill session times.')
+      }
+    }
+
+    void persist()
+  }, [access.mode, currentSession, currentSessionId, currentSessionRecord, isGuest])
+
   const handleUpdateSession = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!currentSessionId) {
+      return
+    }
+    if (Boolean(editSessionStartTime24) !== Boolean(editSessionEndTime24)) {
+      setEditMessageTone('error')
+      setEditMessage('Enter both session start and end time, or leave both blank.')
       return
     }
     setIsSaving(true)
@@ -241,6 +384,8 @@ function ManageSessionsPage() {
           sessionYear: resolveSessionYear(editSessionYear, editStartDate, editEndDate),
           startDate: editStartDate,
           endDate: editEndDate,
+          sessionStartTime24: editSessionStartTime24 || null,
+          sessionEndTime24: editSessionEndTime24 || null,
           location: editLocation || null,
           instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
           rosterFileName: editRosterFile ? editRosterFile.name : editRosterFileName,
@@ -302,6 +447,8 @@ function ManageSessionsPage() {
         session_year: sessionYearValue,
         start_date: editStartDate || null,
         end_date: editEndDate || null,
+        session_start_time24: editSessionStartTime24 || null,
+        session_end_time24: editSessionEndTime24 || null,
         location: editLocation || null,
         instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
         updated_at: updateTimestamp,
@@ -397,6 +544,8 @@ function ManageSessionsPage() {
                     currentSessionRecord?.session_season ?? null,
                     currentSessionRecord?.session_year ?? null,
                     currentSessionRecord?.start_date ?? null,
+                    currentSessionRecord?.session_start_time24 ?? null,
+                    currentSessionRecord?.session_end_time24 ?? null,
                   )}
                 </h3>
                 <p>
@@ -476,6 +625,24 @@ function ManageSessionsPage() {
                     type="date"
                     value={editEndDate}
                     onChange={event => setEditEndDate(event.target.value)}
+                  />
+                </label>
+                <label className="flex flex-col gap-2 font-semibold text-secondary">
+                  Session Start Time
+                  <input
+                    className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                    type="time"
+                    value={editSessionStartTime24}
+                    onChange={event => setEditSessionStartTime24(event.target.value)}
+                  />
+                </label>
+                <label className="flex flex-col gap-2 font-semibold text-secondary">
+                  Session End Time
+                  <input
+                    className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                    type="time"
+                    value={editSessionEndTime24}
+                    onChange={event => setEditSessionEndTime24(event.target.value)}
                   />
                 </label>
                 {!isGuest ? (

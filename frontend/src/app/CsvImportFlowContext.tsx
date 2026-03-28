@@ -9,6 +9,7 @@ import { setExtractedClassesForScope, setExtractedClassesForSession } from '../l
 import { getSessionTermLabel, syncReportCardsForDay } from '../lib/reportCardSync'
 import { createSession, fetchCsvSessionCandidates } from '../lib/serverApi'
 import { suppressNextPrefetchForSession } from '../lib/instructorPdfCache'
+import { formatSessionDisplayName } from '../shared/session/sessionLabels'
 import {
   getInstructorsForDay,
   getStudentsForDay,
@@ -50,16 +51,6 @@ const emptyState: ModalState = {
   classesBySession: {},
 }
 
-const dayNames: Record<string, string> = {
-  Mo: 'Monday',
-  Tu: 'Tuesday',
-  We: 'Wednesday',
-  Th: 'Thursday',
-  Fr: 'Friday',
-  Sa: 'Saturday',
-  Su: 'Sunday',
-}
-
 function createLocalId() {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID()
@@ -87,11 +78,17 @@ function buildInstructorUploadConfig(day: string): InstructorEntry[] {
 }
 
 function getCandidateLabel(candidate: CsvSessionCandidate) {
-  const dayLabel = candidate.dayOfWeek ? dayNames[candidate.dayOfWeek] ?? candidate.dayOfWeek : ''
-  const season = candidate.sessionSeason.trim()
-  const year = candidate.sessionYear > 0 ? String(candidate.sessionYear) : ''
+  const sessionLabel = formatSessionDisplayName({
+    sessionDay: candidate.dayOfWeek,
+    sessionSeason: candidate.sessionSeason,
+    sessionYear: candidate.sessionYear,
+    startDate: candidate.startDate,
+    sessionStartTime24: candidate.sessionStartTime24,
+    sessionEndTime24: candidate.sessionEndTime24,
+    fallback: '',
+  })
   const location = candidate.location.trim()
-  return [dayLabel, season, year, location].filter(Boolean).join(' | ')
+  return [sessionLabel, location].filter(Boolean).join(' | ')
 }
 
 function toGuestCandidates(classesResponse: {
@@ -100,7 +97,11 @@ function toGuestCandidates(classesResponse: {
     dayOfWeek: string
     sessionSeason: string
     sessionYear: number
+    startDate: string
+    endDate: string
     location: string
+    sessionStartTime24: string
+    sessionEndTime24: string
     classCount: number
     studentCount: number
     waitlistCount: number
@@ -214,6 +215,8 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       sessionYear: candidate.sessionYear || null,
       startDate: candidate.startDate || '',
       endDate: candidate.endDate || '',
+      sessionStartTime24: candidate.sessionStartTime24 || null,
+      sessionEndTime24: candidate.sessionEndTime24 || null,
       location: candidate.location || null,
       instructors: [],
       rosterFileName: fileName,
@@ -231,6 +234,8 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       start_date: nextSession.startDate || null,
       end_date: nextSession.endDate || null,
       location: nextSession.location ?? null,
+      session_start_time24: nextSession.sessionStartTime24 ?? null,
+      session_end_time24: nextSession.sessionEndTime24 ?? null,
       instructors: [],
     }
   }
@@ -250,6 +255,8 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       start_date: candidate.startDate || null,
       end_date: candidate.endDate || null,
       location: candidate.location || null,
+      session_start_time24: candidate.sessionStartTime24 || null,
+      session_end_time24: candidate.sessionEndTime24 || null,
       instructors: [],
     }
 

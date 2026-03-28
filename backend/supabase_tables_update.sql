@@ -14,6 +14,8 @@ create table if not exists sessions (
   start_date date,
   end_date date,
   location text,
+  session_start_time24 text,
+  session_end_time24 text,
   instructors jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -21,6 +23,8 @@ create table if not exists sessions (
 
 alter table sessions
   add column if not exists session_year integer,
+  add column if not exists session_start_time24 text,
+  add column if not exists session_end_time24 text,
   alter column team_id drop not null,
   alter column location drop not null;
 

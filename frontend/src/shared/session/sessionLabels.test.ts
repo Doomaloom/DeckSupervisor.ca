@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   formatSessionDisplayName,
   formatSessionTermLabel,
+  formatSessionTimeLabel,
+  formatSessionTimeRange,
   getDayLabel,
   getYearFromDate,
   resolveSessionYear,
@@ -31,14 +33,23 @@ describe('sessionLabels', () => {
     expect(formatSessionTermLabel('', null, null)).toBe('')
   })
 
+  it('formats session times and time ranges from 24-hour input', () => {
+    expect(formatSessionTimeLabel('09:00')).toBe('9:00 AM')
+    expect(formatSessionTimeLabel('13:15')).toBe('1:15 PM')
+    expect(formatSessionTimeRange('09:00', '13:00')).toBe('9:00 AM-1:00 PM')
+    expect(formatSessionTimeRange('', '13:00')).toBe('')
+  })
+
   it('formats a session display name and falls back when needed', () => {
     expect(
       formatSessionDisplayName({
         sessionDay: 'Tu',
         sessionSeason: 'Winter',
         sessionYear: 2026,
+        sessionStartTime24: '09:00',
+        sessionEndTime24: '13:00',
       }),
-    ).toBe('Tuesday Winter 2026')
+    ).toBe('Tuesday Winter 2026 | 9:00 AM-1:00 PM')
     expect(formatSessionDisplayName({ fallback: 'My Session' })).toBe('My Session')
   })
 })
