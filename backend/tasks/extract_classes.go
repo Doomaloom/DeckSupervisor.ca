@@ -124,7 +124,9 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		bookedCountFromRoster := parsePositiveInt(rowValue(row, "Booked", "Booked Count"))
 		statusValue := rowValue(row, "AttendeeStatus", "Attendee Status", "Status")
 		hasAttendee := strings.TrimSpace(rowValue(row, "AttendeeName", "Name", "FirstName")) != ""
+		fmt.Println("Status:", statusValue)
 		isWaitlist := isWaitingStatus(statusValue)
+		fmt.Println("Is waitlist:", isWaitlist)
 
 		key := strings.Join([]string{
 			sessionBucketKey,

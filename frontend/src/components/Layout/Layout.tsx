@@ -26,6 +26,7 @@ import {
     consumeSuppressedPrefetchForSession,
     prefetchInstructorPacket,
 } from '../../lib/instructorPdfCache'
+import { fetchSchematic } from '../../lib/serverApi'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 import {
     getCustomRosterDayKey,
@@ -33,19 +34,21 @@ import {
     getStudentsForDay,
     setCustomRostersForDay,
 } from '../../lib/storage'
+import { prefetchSchematicPdfs } from '../../features/print/utils/printCachePrefetch'
+import type { StoredCourseLayout } from '../../features/schematic/utils/layout'
 
 type LayoutProps = {
     children: React.ReactNode
 }
 
-const attemptedInstructorPrefetches = new Set<string>()
+const attemptedPrintPrefetches = new Set<string>()
 
 function Layout({ children }: LayoutProps) {
     const location = useLocation()
     const { selectedDay } = useDay()
     const { accountType, completeProfile, isGuest, needsProfile, profile, signOut, user } = useAuth()
     const { requestCsvFile } = useCsvImportFlow()
-    const { access, session: currentSession } = useCurrentSession()
+    const { access, loading: currentSessionLoading, session: currentSession } = useCurrentSession()
     const { currentTeam, currentTeamId, loading: teamLoading } = useCurrentTeam()
     const { currentTerm } = useCurrentTerm()
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
@@ -97,29 +100,6 @@ function Layout({ children }: LayoutProps) {
     }, [])
 
     useEffect(() => {
-        const sessionId = currentSession?.id?.trim() ?? ''
-        const targetDay = (selectedDay || currentSession?.session_day || '').trim()
-        if (!sessionId || !targetDay) {
-            return
-        }
-        if (consumeSuppressedPrefetchForSession(sessionId)) {
-            return
-        }
-
-        const prefetchKey = `${sessionId}::${targetDay}`
-        if (attemptedInstructorPrefetches.has(prefetchKey)) {
-            return
-        }
-        attemptedInstructorPrefetches.add(prefetchKey)
-
-        void prefetchInstructorPacket(sessionId, targetDay, {
-            concurrency: 1,
-        }).catch(error => {
-            console.error('Failed to prefetch instructor PDFs', error)
-        })
-    }, [currentSession?.id, currentSession?.session_day, selectedDay])
-
-    useEffect(() => {
         const sessionId = currentSession?.id
         if (!selectedDay || !user || !sessionId) {
             return
@@ -148,6 +128,84 @@ function Layout({ children }: LayoutProps) {
             active = false
         }
     }, [currentSession?.id, selectedDay, user, scopeVersion])
+
+    useEffect(() => {
+        const sessionId = currentSession?.id?.trim() ?? ''
+        const targetDay = (selectedDay || currentSession?.session_day || '').trim()
+        if (currentSessionLoading || !currentSession || !sessionId || !targetDay) {
+            return
+        }
+        if (consumeSuppressedPrefetchForSession(sessionId)) {
+            return
+        }
+
+        const prefetchKey = `${sessionId}::${targetDay}`
+        if (attemptedPrintPrefetches.has(prefetchKey)) {
+            return
+        }
+
+        const students = getStudentsForDay(targetDay)
+        if (students.length === 0) {
+            return
+        }
+        attemptedPrintPrefetches.add(prefetchKey)
+
+        let active = true
+        const prefetch = async () => {
+            let customRosters = getCustomRostersForDay(getCustomRosterDayKey(targetDay, sessionId, !user))
+            if (user) {
+                try {
+                    customRosters = await resolveCustomRosters(targetDay, sessionId, students)
+                    if (!active) {
+                        return
+                    }
+                } catch (error) {
+                    console.error('Failed to resolve custom rosters for schematic prefetch', error)
+                }
+            }
+
+            let storedLayout: StoredCourseLayout | null = null
+            if (user) {
+                try {
+                    const response = await fetchSchematic(sessionId)
+                    if (!active) {
+                        return
+                    }
+                    const remote = response.schematic?.data
+                    if (remote?.codes?.length || remote?.instructors?.length) {
+                        storedLayout = {
+                            codes: remote.codes ?? [],
+                            instructors: remote.instructors ?? [],
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to load schematic for print prefetch', error)
+                }
+            }
+
+            await Promise.all([
+                prefetchInstructorPacket(sessionId, targetDay, {
+                    concurrency: 1,
+                }),
+                prefetchSchematicPdfs({
+                    day: targetDay,
+                    sessionId,
+                    session: currentSession,
+                    storedLayout,
+                    customRostersOverride: customRosters,
+                }),
+            ])
+        }
+
+        void prefetch().catch(error => {
+            attemptedPrintPrefetches.delete(prefetchKey)
+            console.error('Failed to prefetch print PDFs', error)
+        })
+
+        return () => {
+            active = false
+        }
+    }, [currentSession, currentSessionLoading, selectedDay, user, scopeVersion])
 
     const navBaseClasses =
         'flex items-center justify-start rounded-[10px] bg-white/10 px-3 py-2 text-accent transition hover:-translate-y-0.5'

@@ -14,9 +14,11 @@ import {
     setStudentsForDay,
 } from '../../../lib/storage'
 import { useCurrentSession } from '../../../app/useCurrentSession'
+import { invalidateCachedSchematicPdfs } from '../../../lib/printPdfCache'
 import { fetchSchematic, upsertSchematic } from '../../../lib/serverApi'
 import { invalidateInstructorPdfs, prefetchInstructorPacket } from '../../../lib/instructorPdfCache'
 import type { ExtractedClass, Student } from '../../../types/app'
+import { prefetchSchematicPdfs } from '../../print/utils/printCachePrefetch'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
 import { buildCourses } from '../utils/courses'
 import { normalizeCourseCodeForCompare } from '../utils/courseCode'
@@ -262,6 +264,14 @@ export function useSchematicSchedule(selectedDay: string | null) {
             void prefetchInstructorPacket(sessionId, selectedDay, {
                 instructors: changedInstructors,
                 concurrency: 1,
+            })
+        }
+        if (sessionId) {
+            await invalidateCachedSchematicPdfs(sessionId, selectedDay)
+            void prefetchSchematicPdfs({
+                day: selectedDay,
+                sessionId,
+                session: currentSession,
             })
         }
         alert('Schedule saved successfully!')

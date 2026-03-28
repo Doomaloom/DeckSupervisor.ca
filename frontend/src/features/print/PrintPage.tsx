@@ -10,6 +10,7 @@ import {
   getStudentsForDay,
   setMasterlistDraftOptions,
 } from '../../lib/storage'
+import { ensureCachedSchematicPdf } from '../../lib/printPdfCache'
 import { getStorageScope } from '../../lib/storageScope'
 import {
   ensureInstructorPdf,
@@ -29,11 +30,16 @@ import InstructorOptionsModal from './components/InstructorOptionsModal'
 import MasterlistOptionsModal from './components/MasterlistOptionsModal'
 import PrintOptionButton from './components/PrintOptionButton'
 import SchematicOptionsModal from './components/SchematicOptionsModal'
-import { dayNames } from '../schematic/constants'
 import { useSchematicSchedule } from '../schematic/hooks/useSchematicSchedule'
 import { getCapacity } from '../schematic/utils/capacity'
+import { fetchBlankPdf, fetchMasterlistPdf, fetchSchematicPdf } from './utils/printApi'
+import {
+  buildMasterlistRequestBody,
+  buildDateRangeLabel,
+  buildSessionTitle,
+  buildWeeksLabel,
+} from './utils/printPayloads'
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24
 const INSTRUCTOR_PDF_CONCURRENCY = 2
 
 const mapWithConcurrency = async <T, R>(
@@ -62,40 +68,6 @@ const mapWithConcurrency = async <T, R>(
 
   await Promise.all(Array.from({ length: workerCount }, () => worker()))
   return results
-}
-
-const formatGeneratedDate = (date: Date) =>
-  date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-
-const getSessionWeek = (startDate: string, now = new Date()) => {
-  if (!startDate) {
-    return null
-  }
-  const start = new Date(startDate)
-  if (Number.isNaN(start.getTime())) {
-    return null
-  }
-  const diffDays = Math.floor((now.getTime() - start.getTime()) / MS_PER_DAY)
-  const week = Math.floor(diffDays / 7) + 1
-  return week < 1 ? 1 : week
-}
-
-const formatMonthDay = (value: string) => {
-  if (!value) {
-    return ''
-  }
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
-  const parsed = match
-    ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-    : new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return value
-  }
-  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 const toFileToken = (value: string) =>
@@ -168,35 +140,9 @@ function PrintPage() {
   })
   const schematicPreview = useSchematicSchedule(selectedDay ?? null)
   const sessionInfo = currentSession
-  const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
-  const seasonLabel = sessionInfo?.session_season?.trim() ?? ''
-  const yearLabel = sessionInfo?.start_date ? new Date(sessionInfo.start_date).getFullYear() : NaN
-  const sessionTitle = [dayLabel, seasonLabel, Number.isFinite(yearLabel) ? String(yearLabel) : '']
-    .filter(Boolean)
-    .join(' ')
-  const dateRange = sessionInfo?.start_date && sessionInfo?.end_date
-    ? `${formatMonthDay(sessionInfo.start_date)} - ${formatMonthDay(sessionInfo.end_date)}`
-    : sessionInfo?.start_date
-    ? formatMonthDay(sessionInfo.start_date)
-    : 'Date range unavailable'
-  const weeksLabel = (() => {
-    if (!sessionInfo?.start_date || !sessionInfo?.end_date) {
-      return ''
-    }
-    const start = new Date(sessionInfo.start_date)
-    const end = new Date(sessionInfo.end_date)
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return ''
-    }
-    const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate())
-    const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate())
-    if (endDate < startDate) {
-      return ''
-    }
-    const days = Math.floor((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1
-    const weeks = Math.floor((days + 6) / 7)
-    return `# of weeks ${weeks} classes`
-  })()
+  const sessionTitle = buildSessionTitle(sessionInfo, selectedDay)
+  const dateRange = buildDateRangeLabel(sessionInfo)
+  const weeksLabel = buildWeeksLabel(sessionInfo)
 
   useEffect(() => {
     if (!activeModal) {
@@ -369,6 +315,20 @@ function PrintPage() {
     ),
   })
 
+  const getCachedSchematicPdf = async (payload: ReturnType<typeof buildSchematicPayload> & {
+    rotateCounterClockwise90?: boolean
+  }) => {
+    if (!selectedDay) {
+      throw new Error('Please select a day before printing the schematic.')
+    }
+    const sessionId = getCurrentSessionId()
+    if (!sessionId) {
+      throw new Error('Please select a session before printing.')
+    }
+    const requestKey = JSON.stringify(payload)
+    return ensureCachedSchematicPdf(sessionId, selectedDay, requestKey, () => fetchSchematicPdf(payload))
+  }
+
   const fetchSchematicCoverWithBlank = async (
     orientation: 'portrait' | 'landscape',
     highlightOptions?: { highlightInstructor: boolean; selectedInstructor: string },
@@ -380,45 +340,17 @@ function PrintPage() {
 
     const shouldRotateCounterClockwise90 =
       rotateForInstructorSheets && orientation === 'portrait'
-
-    const schematicResponse = await fetch('/api/schematic-pdf', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(
-        {
-          ...buildSchematicPayload(
-            orientation,
-            highlightOptions ?? { highlightInstructor: false, selectedInstructor: 'none' },
-          ),
-          rotateCounterClockwise90: shouldRotateCounterClockwise90,
-        },
-      ),
-    })
-
-    if (!schematicResponse.ok) {
-      const message = await schematicResponse.text()
-      throw new Error(message || 'Failed to generate schematic cover.')
-    }
-    const schematicCover = await schematicResponse.blob()
-
-    const blankResponse = await fetch('/api/blank-pdf', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const schematicCover = await getCachedSchematicPdf({
+      ...buildSchematicPayload(
         orientation,
-        rotateCounterClockwise90: shouldRotateCounterClockwise90,
-      }),
+        highlightOptions ?? { highlightInstructor: false, selectedInstructor: 'none' },
+      ),
+      rotateCounterClockwise90: shouldRotateCounterClockwise90,
     })
-
-    if (!blankResponse.ok) {
-      const message = await blankResponse.text()
-      throw new Error(message || 'Failed to generate blank page.')
-    }
-    const blankPage = await blankResponse.blob()
+    const blankPage = await fetchBlankPdf({
+      orientation,
+      rotateCounterClockwise90: shouldRotateCounterClockwise90,
+    })
 
     return { schematicCover, blankPage }
   }
@@ -442,22 +374,6 @@ function PrintPage() {
         selectedInstructor: schematicOptions.selectedInstructor,
       }
 
-      const fetchSchematicPdf = async (payload: ReturnType<typeof buildSchematicPayload>) => {
-        const response = await fetch('/api/schematic-pdf', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        })
-
-        if (!response.ok) {
-          const message = await response.text()
-          throw new Error(message || 'Failed to generate schematic PDF.')
-        }
-        return response.blob()
-      }
-
       if (
         highlightOptions.highlightInstructor &&
         highlightOptions.selectedInstructor === 'one-each'
@@ -479,7 +395,7 @@ function PrintPage() {
             { highlightInstructor: true, selectedInstructor: name },
             instructorLabels,
           )
-          pdfs.push(await fetchSchematicPdf(payload))
+          pdfs.push(await getCachedSchematicPdf(payload))
         }
 
         const combined = await concatPdfs(
@@ -504,7 +420,7 @@ function PrintPage() {
         }
       } else {
         const payload = buildSchematicPayload(schematicOptions.orientation, highlightOptions)
-        const pdfBlob = await fetchSchematicPdf(payload)
+        const pdfBlob = await getCachedSchematicPdf(payload)
         if (
           !printWindow ||
           !openPdfPrintDialog(pdfBlob, printWindow, {
@@ -947,73 +863,19 @@ function PrintPage() {
       return
     }
 
-    const rosters = rosterGroups.flatMap(roster => {
-      const mappedStudents = roster.students.map(student => ({
-        name: student.name,
-        phone: student.phone,
-        instructor: student.instructor,
-        level: student.level,
-        code: student.code,
-      }))
-
-      if (!roster.code.startsWith('custom-')) {
-        return [
-          {
-            code: roster.code,
-            serviceName: roster.serviceName,
-            day: selectedDay,
-            time: roster.time,
-            location: roster.location,
-            schedule: roster.schedule,
-            instructor: roster.instructor,
-            students: mappedStudents.map(({ code: _code, ...student }) => student),
-          },
-        ]
-      }
-
-      const studentsByOriginalCode = new Map<
-        string,
-        Array<{ name: string; phone: string; instructor: string; level: string }>
-      >()
-      mappedStudents.forEach(student => {
-        const originalCode = student.code?.trim()
-        if (!originalCode) {
-          return
-        }
-        const bucket = studentsByOriginalCode.get(originalCode)
-        const studentPayload = {
-          name: student.name,
-          phone: student.phone,
-          instructor: student.instructor,
-          level: student.level,
-        }
-        if (bucket) {
-          bucket.push(studentPayload)
-        } else {
-          studentsByOriginalCode.set(originalCode, [studentPayload])
-        }
-      })
-
-      return Array.from(studentsByOriginalCode.entries()).map(([code, students]) => ({
-        code,
-        serviceName: roster.serviceName,
-        day: selectedDay,
-        time: roster.time,
-        location: roster.location,
-        schedule: roster.schedule,
-        instructor: roster.instructor,
-        students,
-      }))
-    })
-
-    const sessionName = sessionTitle || 'Summer 2025'
-    const generatedDate = formatGeneratedDate(new Date())
-    const sessionWeek = getSessionWeek(currentSession?.start_date ?? '') ?? 1
-
     clearBlockedPrintJob()
     const printWindow = openPrintWindow('Masterlist')
 
     try {
+      const masterlistBody = buildMasterlistRequestBody({
+        day: selectedDay,
+        sessionId: getCurrentSessionId(),
+        session: currentSession,
+        options: masterlistFormatOptions,
+      })
+      if (!masterlistBody) {
+        throw new Error('No roster data found for the selected day.')
+      }
       let schematicCover: Blob | null = null
       let schematicBlank: Blob | null = null
       if (masterlistExtras.schematicCoverPage) {
@@ -1022,26 +884,7 @@ function PrintPage() {
         schematicBlank = result.blankPage
       }
 
-      const response = await fetch('/api/masterlist-rosters', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rosters,
-          options: masterlistFormatOptions,
-          sessionName,
-          generatedDate,
-          sessionWeek,
-        }),
-      })
-
-      if (!response.ok) {
-        const message = await response.text()
-        throw new Error(message || 'Failed to generate masterlist.')
-      }
-
-      const masterlistBlob = await response.blob()
+      const masterlistBlob = await fetchMasterlistPdf(masterlistBody)
 
       if (schematicCover) {
         const combined = await concatPdfs(
@@ -1102,90 +945,17 @@ function PrintPage() {
       throw new Error('Please select a day before printing Day 1 materials.')
     }
 
-    const rosterGroups = buildRosterGroupsForDay(selectedDay)
-    if (rosterGroups.length === 0) {
+    const body = buildMasterlistRequestBody({
+      day: selectedDay,
+      sessionId: getCurrentSessionId(),
+      session: currentSession,
+      options: day1Options.customMasterlistFormat ? masterlistFormatOptions : getFormatOptions(),
+    })
+    if (!body) {
       throw new Error('No roster data found for the selected day.')
     }
 
-    const rosters = rosterGroups.flatMap(roster => {
-      const mappedStudents = roster.students.map(student => ({
-        name: student.name,
-        phone: student.phone,
-        instructor: student.instructor,
-        level: student.level,
-        code: student.code,
-      }))
-
-      if (!roster.code.startsWith('custom-')) {
-        return [
-          {
-            code: roster.code,
-            serviceName: roster.serviceName,
-            day: selectedDay,
-            time: roster.time,
-            location: roster.location,
-            schedule: roster.schedule,
-            instructor: roster.instructor,
-            students: mappedStudents.map(({ code: _code, ...student }) => student),
-          },
-        ]
-      }
-
-      const studentsByOriginalCode = new Map<
-        string,
-        Array<{ name: string; phone: string; instructor: string; level: string }>
-      >()
-      mappedStudents.forEach(student => {
-        const originalCode = student.code?.trim()
-        if (!originalCode) {
-          return
-        }
-        const bucket = studentsByOriginalCode.get(originalCode)
-        const studentPayload = {
-          name: student.name,
-          phone: student.phone,
-          instructor: student.instructor,
-          level: student.level,
-        }
-        if (bucket) {
-          bucket.push(studentPayload)
-        } else {
-          studentsByOriginalCode.set(originalCode, [studentPayload])
-        }
-      })
-
-      return Array.from(studentsByOriginalCode.entries()).map(([code, students]) => ({
-        code,
-        serviceName: roster.serviceName,
-        day: selectedDay,
-        time: roster.time,
-        location: roster.location,
-        schedule: roster.schedule,
-        instructor: roster.instructor,
-        students,
-      }))
-    })
-
-    const response = await fetch('/api/masterlist-rosters', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        rosters,
-        options: day1Options.customMasterlistFormat ? masterlistFormatOptions : getFormatOptions(),
-        sessionName: sessionTitle || 'Summer 2025',
-        generatedDate: formatGeneratedDate(new Date()),
-        sessionWeek: getSessionWeek(currentSession?.start_date ?? '') ?? 1,
-      }),
-    })
-
-    if (!response.ok) {
-      const message = await response.text()
-      throw new Error(message || 'Failed to generate masterlist.')
-    }
-
-    const masterlistBlob = await response.blob()
+    const masterlistBlob = await fetchMasterlistPdf(body)
     const pdfs: Array<{ blob: Blob; filename: string }> = []
 
     if (day1Options.schematicCoverPage) {
@@ -1283,25 +1053,12 @@ function PrintPage() {
     }
 
     try {
-      const schematicResponse = await fetch('/api/schematic-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(
-          buildSchematicPayload(schematicOptions.orientation, {
-            highlightInstructor: false,
-            selectedInstructor: 'none',
-          }),
-        ),
-      })
-
-      if (!schematicResponse.ok) {
-        const message = await schematicResponse.text()
-        throw new Error(message || 'Failed to generate schematic PDF.')
-      }
-
-      const schematicBlob = await schematicResponse.blob()
+      const schematicBlob = await getCachedSchematicPdf(
+        buildSchematicPayload(schematicOptions.orientation, {
+          highlightInstructor: false,
+          selectedInstructor: 'none',
+        }),
+      )
       const masterlistBlob = await buildDay1MasterlistBlob()
       const instructorBlobs: Array<{ name: string; blob: Blob }> = []
 
