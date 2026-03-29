@@ -717,8 +717,10 @@ func UpsertSchematic(w http.ResponseWriter, r *http.Request) {
 		"data":       payload.Data,
 		"updated_at": time.Now().UTC().Format(time.RFC3339),
 	}
+	query := url.Values{}
+	query.Set("on_conflict", "session_id")
 	var rows []schematicRow
-	if err := client.Post(r.Context(), "/rest/v1/schematics", nil, body, "resolution=merge-duplicates,return=representation", &rows); err != nil {
+	if err := client.Post(r.Context(), "/rest/v1/schematics", query, body, "resolution=merge-duplicates,return=representation", &rows); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
