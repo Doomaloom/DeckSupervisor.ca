@@ -5,23 +5,6 @@ import { useCurrentSession } from '../../../app/useCurrentSession'
 import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
 import type { RosterGroup } from '../types'
 
-function getSessionName(
-    sessionDay: string,
-    sessionSeason: string | null,
-    startDate: string | null,
-    sessionStartTime24: string | null,
-    sessionEndTime24: string | null,
-) {
-    return formatSessionDisplayName({
-        sessionDay,
-        sessionSeason,
-        startDate,
-        sessionStartTime24,
-        sessionEndTime24,
-        fallback: '',
-    })
-}
-
 function toFileToken(value: string) {
     return value
         .trim()
@@ -47,15 +30,16 @@ export function useRosterPrint() {
     const handlePrintRoster = async (roster: RosterGroup) => {
         setBlockedPrintJob(null)
         const template = sanitizeLevel(roster.level)
-        const sessionName = currentSession
-            ? getSessionName(
-                  currentSession.session_day,
-                  currentSession.session_season ?? null,
-                  currentSession.start_date ?? null,
-                  currentSession.session_start_time24 ?? null,
-                  currentSession.session_end_time24 ?? null,
-              )
-            : 'Summer 2025'
+        const sessionName = formatSessionDisplayName({
+            sessionDay: currentSession?.session_day,
+            includeDay: false,
+            sessionSeason: currentSession?.session_season ?? null,
+            sessionYear: currentSession?.session_year ?? null,
+            startDate: currentSession?.start_date ?? null,
+            sessionStartTime24: currentSession?.session_start_time24 ?? null,
+            sessionEndTime24: currentSession?.session_end_time24 ?? null,
+            fallback: 'Session',
+        })
         const printWindow = openPrintWindow('Attendance Roster')
 
         try {

@@ -1,5 +1,5 @@
 import { getCustomRosterDayKey, getCustomRostersForDay, getStudentsForDay } from './storage'
-import { getCurrentSessionId as getStoredCurrentSessionId, loadSessions } from './sessionStorage'
+import { getCurrentSessionId as getStoredCurrentSessionId } from './sessionStorage'
 import { getStorageScope } from './storageScope'
 import {
   buildAttendanceRosterStudents,
@@ -10,13 +10,13 @@ import {
 import type { RosterGroup } from '../features/rosters/types'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
-const DB_VERSION = 3
+const DB_VERSION = 4
 const PDF_STORE_NAME = 'instructorPdfs'
 const DIRTY_STORE_NAME = 'dirtyInstructorSets'
 const LEGACY_PACKET_STORE_NAME = 'instructorPackets'
 const CACHE_UPDATED_EVENT = 'decksupervisor:instructor-pdf-cache-updated'
 
-const FALLBACK_SESSION_NAME = 'Summer 2025'
+const DEFAULT_SESSION_NAME = 'Session'
 const DEFAULT_PREFETCH_CONCURRENCY = 1
 const suppressedSessionPrefetches = new Set<string>()
 
@@ -30,6 +30,7 @@ type InstructorPdfCacheEntry = {
   sessionId: string
   day: string
   instructor: string
+  sessionName: string
   blob: Blob
   generatedAt: number
 }
@@ -60,6 +61,7 @@ type PrefetchOptions = {
   concurrency?: number
   force?: boolean
   instructors?: string[]
+  sessionName?: string
   onStart?: (total: number) => void
   onProgress?: (progress: PrefetchProgress) => void
 }
@@ -76,6 +78,10 @@ type CacheUpdateDetail = {
 }
 
 const pendingGenerations = new Map<string, Promise<Blob>>()
+
+function normalizeStoredSessionName(entry: { sessionName?: string | null }) {
+  return entry.sessionName?.trim() ?? ''
+}
 
 const mapWithConcurrency = async <T, R>(
   items: T[],
@@ -171,37 +177,6 @@ function getPrintableInstructorNames(sessionId: string, day: string) {
   )
 }
 
-function getSessionName(sessionId: string): string {
-  const sessions = loadSessions()
-  if (!sessionId || sessions.length === 0) {
-    return ''
-  }
-  try {
-    const session = sessions.find(item => item.id === sessionId)
-    if (!session) {
-      return ''
-    }
-    const dayNames: Record<string, string> = {
-      Mo: 'Monday',
-      Tu: 'Tuesday',
-      We: 'Wednesday',
-      Th: 'Thursday',
-      Fr: 'Friday',
-      Sa: 'Saturday',
-      Su: 'Sunday',
-    }
-    const dayLabel = session.sessionDay ? dayNames[session.sessionDay] ?? session.sessionDay : ''
-    const season = session.sessionSeason?.trim()
-    const year = session.startDate ? new Date(session.startDate).getFullYear() : NaN
-    const yearLabel = Number.isFinite(year) && year > 0 ? String(year) : ''
-    const parts = [dayLabel, season, yearLabel].filter(Boolean)
-    return parts.length ? parts.join(' ') : ''
-  } catch (error) {
-    console.error('Failed to parse stored sessions', error)
-    return ''
-  }
-}
-
 function buildPdfRequestBody(sessionName: string, instructor: string, rosters: RosterGroup[]) {
   return {
     session: sessionName,
@@ -241,7 +216,7 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(DIRTY_STORE_NAME)) {
         db.createObjectStore(DIRTY_STORE_NAME, { keyPath: 'key' })
       }
-      if (request.oldVersion < 3) {
+      if (request.oldVersion < 4) {
         if (db.objectStoreNames.contains(PDF_STORE_NAME)) {
           transaction?.objectStore(PDF_STORE_NAME).clear()
         }
@@ -373,7 +348,7 @@ async function clearDirtyInstructorNames(sessionId: string, day: string, instruc
 }
 
 async function generateInstructorPdf(
-  sessionId: string,
+  sessionName: string,
   instructor: string,
   rosters: RosterGroup[],
 ): Promise<Blob> {
@@ -382,7 +357,9 @@ async function generateInstructorPdf(
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(buildPdfRequestBody(getSessionName(sessionId) || FALLBACK_SESSION_NAME, instructor, rosters)),
+    body: JSON.stringify(
+      buildPdfRequestBody(sessionName.trim() || DEFAULT_SESSION_NAME, instructor, rosters),
+    ),
   })
 
   if (!response.ok) {
@@ -395,10 +372,6 @@ async function generateInstructorPdf(
 
 export function getCurrentSessionId(): string {
   return getStoredCurrentSessionId()
-}
-
-export function getCurrentSessionName(): string {
-  return getSessionName(getStoredCurrentSessionId())
 }
 
 export function onInstructorPdfCacheUpdated(handler: (detail: CacheUpdateDetail) => void) {
@@ -420,6 +393,7 @@ export function onInstructorPdfCacheUpdated(handler: (detail: CacheUpdateDetail)
 export async function getInstructorPacket(
   sessionId: string,
   day: string,
+  options: { sessionName?: string } = {},
 ): Promise<InstructorPdfPacket | null> {
   const [entries, dirtyInstructors] = await Promise.all([
     readInstructorPdfEntriesForDay(sessionId, day),
@@ -427,8 +401,18 @@ export async function getInstructorPacket(
   ])
   const printableNames = new Set(getPrintableInstructorNames(sessionId, day))
   const dirtySet = new Set(dirtyInstructors)
+  const expectedSessionName = options.sessionName?.trim() ?? ''
   const visibleEntries = entries
-    .filter(entry => printableNames.has(entry.instructor) && !dirtySet.has(entry.instructor))
+    .filter(entry => {
+      if (!printableNames.has(entry.instructor) || dirtySet.has(entry.instructor)) {
+        return false
+      }
+      if (expectedSessionName && normalizeStoredSessionName(entry) !== expectedSessionName) {
+        void deleteInstructorPdfEntry(sessionId, day, entry.instructor)
+        return false
+      }
+      return true
+    })
     .sort((left, right) => left.instructor.localeCompare(right.instructor, 'en', { sensitivity: 'base' }))
 
   if (visibleEntries.length === 0) {
@@ -452,6 +436,7 @@ export async function upsertInstructorPdf(
   day: string,
   instructor: string,
   blob: Blob,
+  sessionName = DEFAULT_SESSION_NAME,
 ): Promise<void> {
   const normalizedInstructor = normalizeInstructorName(instructor)
   if (!sessionId || !day || !normalizedInstructor) {
@@ -463,6 +448,7 @@ export async function upsertInstructorPdf(
     sessionId,
     day,
     instructor: normalizedInstructor,
+    sessionName,
     blob,
     generatedAt: Date.now(),
   })
@@ -474,6 +460,7 @@ export async function getCachedInstructorPdf(
   sessionId: string,
   day: string,
   instructor: string,
+  options: { sessionName?: string } = {},
 ): Promise<Blob | null> {
   const normalizedInstructor = normalizeInstructorName(instructor)
   if (!sessionId || !day || !normalizedInstructor) {
@@ -487,6 +474,12 @@ export async function getCachedInstructorPdf(
 
   const entry = await readInstructorPdfEntry(sessionId, day, normalizedInstructor)
   if (!entry) {
+    return null
+  }
+  const expectedSessionName = options.sessionName?.trim() ?? ''
+  if (expectedSessionName && normalizeStoredSessionName(entry) !== expectedSessionName) {
+    await deleteInstructorPdfEntry(sessionId, day, normalizedInstructor)
+    emitCacheUpdate(sessionId, day)
     return null
   }
 
@@ -532,7 +525,7 @@ export async function ensureInstructorPdf(
   sessionId: string,
   day: string,
   instructor: string,
-  options: { force?: boolean } = {},
+  options: { force?: boolean; sessionName?: string } = {},
 ): Promise<Blob> {
   const normalizedInstructor = normalizeInstructorName(instructor)
   if (!sessionId || !day || !normalizedInstructor) {
@@ -546,7 +539,9 @@ export async function ensureInstructorPdf(
   }
 
   if (!options.force) {
-    const cached = await getCachedInstructorPdf(sessionId, day, normalizedInstructor)
+    const cached = await getCachedInstructorPdf(sessionId, day, normalizedInstructor, {
+      sessionName: options.sessionName,
+    })
     if (cached) {
       return cached
     }
@@ -560,13 +555,18 @@ export async function ensureInstructorPdf(
     throw new Error(`No classes found for ${normalizedInstructor}.`)
   }
 
-  const generation = generateInstructorPdf(sessionId, normalizedInstructor, rosters)
+  const generation = generateInstructorPdf(
+    options.sessionName ?? DEFAULT_SESSION_NAME,
+    normalizedInstructor,
+    rosters,
+  )
     .then(async blob => {
       await writeInstructorPdfEntry({
         key: pendingKey,
         sessionId,
         day,
         instructor: normalizedInstructor,
+        sessionName: options.sessionName?.trim() || DEFAULT_SESSION_NAME,
         blob,
         generatedAt: Date.now(),
       })
@@ -615,7 +615,10 @@ export async function prefetchInstructorPacket(
     options.concurrency ?? DEFAULT_PREFETCH_CONCURRENCY,
     async name => {
       try {
-        await ensureInstructorPdf(sessionId, day, name, { force: options.force })
+        await ensureInstructorPdf(sessionId, day, name, {
+          force: options.force,
+          sessionName: options.sessionName,
+        })
         completed += 1
         options.onProgress?.({
           name,
@@ -656,7 +659,7 @@ export function consumeSuppressedPrefetchForSession(sessionId: string): boolean 
 export async function flushDirtyInstructorPdfs(
   sessionId: string,
   day: string,
-  options: { concurrency?: number } = {},
+  options: { concurrency?: number; sessionName?: string } = {},
 ): Promise<PrefetchResult> {
   if (typeof window === 'undefined' || !sessionId || !day) {
     return { total: 0, completed: 0, failed: [] }
@@ -671,5 +674,6 @@ export async function flushDirtyInstructorPdfs(
     concurrency: options.concurrency ?? DEFAULT_PREFETCH_CONCURRENCY,
     force: true,
     instructors: dirtyInstructors,
+    sessionName: options.sessionName,
   })
 }

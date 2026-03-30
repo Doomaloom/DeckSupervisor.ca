@@ -10,11 +10,16 @@ const dayNames: Record<string, string> = {
 
 type SessionDisplayInput = {
   sessionDay?: string | null
+  dayOverride?: string | null
+  includeDay?: boolean
   sessionSeason?: string | null
   sessionYear?: number | null
   startDate?: string | null
+  termSeason?: string | null
+  termYear?: number | null
   sessionStartTime24?: string | null
   sessionEndTime24?: string | null
+  includeTimeRange?: boolean
   fallback?: string
 }
 
@@ -59,7 +64,10 @@ export function formatSessionTermLabel(
   sessionYear: number | null | undefined,
   startDate: string | null | undefined,
 ) {
-  const season = sessionSeason?.trim() ?? ''
+  const normalizedSeason = sessionSeason?.trim() ?? ''
+  const season = normalizedSeason
+    ? normalizedSeason.slice(0, 1).toUpperCase() + normalizedSeason.slice(1).toLowerCase()
+    : ''
   const year = sessionYear ?? getYearFromDate(startDate)
   const yearLabel = year ? String(year) : ''
   return [season, yearLabel].filter(Boolean).join(' ')
@@ -98,21 +106,31 @@ export function formatSessionTimeRange(
 
 export function formatSessionDisplayName({
   sessionDay,
+  dayOverride,
+  includeDay = true,
   sessionSeason,
   sessionYear,
   startDate,
+  termSeason,
+  termYear,
   sessionStartTime24,
   sessionEndTime24,
+  includeTimeRange = true,
   fallback = 'Session',
 }: SessionDisplayInput) {
-  const dayLabel = getDayLabel(sessionDay)
-  const season = sessionSeason?.trim() ?? ''
-  const year = sessionYear ?? getYearFromDate(startDate)
-  const yearLabel = year ? String(year) : ''
-  const label = [dayLabel, season, yearLabel].filter(Boolean).join(' ')
+  const dayLabel = includeDay ? getDayLabel(dayOverride ?? sessionDay) : ''
+  const sessionTermLabel = formatSessionTermLabel(sessionSeason, sessionYear, startDate)
+  const fallbackTermLabel = formatSessionTermLabel(termSeason, termYear, null)
+  const label = [dayLabel, sessionTermLabel || fallbackTermLabel].filter(Boolean).join(' ')
   const timeRange = formatSessionTimeRange(sessionStartTime24, sessionEndTime24)
   if (label) {
+    if (!includeTimeRange) {
+      return label
+    }
     return timeRange ? `${label} | ${timeRange}` : label
+  }
+  if (!includeTimeRange) {
+    return fallback
   }
   return timeRange || fallback
 }

@@ -86,7 +86,7 @@ describe('printPayloads', () => {
       options: defaultFormatOptions,
     })
 
-    expect(payload?.sessionName).toBe('Monday Spring 2026')
+    expect(payload?.sessionName).toBe('Spring 2026')
     expect(payload?.rosters).toEqual([
       {
         code: 'C1',
@@ -157,6 +157,25 @@ describe('printPayloads', () => {
         ],
       },
     ])
+  })
+
+  it('uses the selected term for masterlist titles when no current session record is available', () => {
+    setStudentsForDay('Mo', [makeStudent({ id: 'student-1', code: 'C1', name: 'Alice' })])
+
+    const payload = buildMasterlistRequestBody({
+      day: 'Mo',
+      sessionId: 'session-1',
+      session: null,
+      term: {
+        key: 'spring-2026',
+        season: 'spring',
+        year: 2026,
+        label: 'Spring 2026',
+      },
+      options: defaultFormatOptions,
+    })
+
+    expect(payload?.sessionName).toBe('Spring 2026')
   })
 
   it('builds the base schematic payload from the saved layout and extracted counts', () => {

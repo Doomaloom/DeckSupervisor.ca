@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useDay } from '../../app/DayContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
+import { useCurrentTerm } from '../../app/useCurrentTerm'
 import PrintPopupBlockedNotice from '../../components/PrintPopupBlockedNotice'
 import {
   getCustomRosterDayKey,
@@ -92,6 +93,7 @@ type BlockedPrintJob = {
 function PrintPage() {
   const { selectedDay } = useDay()
   const { session: currentSession } = useCurrentSession()
+  const { currentTerm } = useCurrentTerm()
   const [activeInfo, setActiveInfo] = useState<PrintOptionKey | null>(null)
   const [activeModal, setActiveModal] = useState<PrintOptionKey | null>(null)
   const instructorNames = useSessionInstructors(
@@ -140,7 +142,7 @@ function PrintPage() {
   })
   const schematicPreview = useSchematicSchedule(selectedDay ?? null)
   const sessionInfo = currentSession
-  const sessionTitle = buildSessionTitle(sessionInfo, selectedDay)
+  const sessionTitle = buildSessionTitle(sessionInfo, selectedDay, currentTerm)
   const dateRange = buildDateRangeLabel(sessionInfo)
   const weeksLabel = buildWeeksLabel(sessionInfo)
 
@@ -506,7 +508,9 @@ function PrintPage() {
         setCachedInstructorPacket(null)
         return
       }
-      const packet = await getInstructorPacket(sessionId, selectedDay)
+      const packet = await getInstructorPacket(sessionId, selectedDay, {
+        sessionName: sessionTitle,
+      })
       if (isActive) {
         setCachedInstructorPacket(packet)
       }
@@ -532,7 +536,7 @@ function PrintPage() {
       isActive = false
       unsubscribe()
     }
-  }, [currentSession?.id, selectedDay])
+  }, [currentSession?.id, selectedDay, sessionTitle])
 
   const groupRostersByInstructor = (rosterGroups: ReturnType<typeof buildRosterGroups>) => {
     const grouped = new Map<string, typeof rosterGroups>()
@@ -561,7 +565,9 @@ function PrintPage() {
       setCachedInstructorPacket(null)
       return
     }
-    const packet = await getInstructorPacket(sessionId, selectedDay)
+    const packet = await getInstructorPacket(sessionId, selectedDay, {
+      sessionName: sessionTitle,
+    })
     setCachedInstructorPacket(packet)
   }
 
@@ -582,6 +588,7 @@ function PrintPage() {
       const result = await prefetchInstructorPacket(sessionId, selectedDay, {
         concurrency: 1,
         force: true,
+        sessionName: sessionTitle,
         onStart: total => {
           setRefreshProgress({ completed: 0, total })
         },
@@ -646,7 +653,9 @@ function PrintPage() {
         async name => {
           return {
             name,
-            pdfBlob: await ensureInstructorPdf(sessionId, selectedDay, name),
+            pdfBlob: await ensureInstructorPdf(sessionId, selectedDay, name, {
+              sessionName: sessionTitle,
+            }),
           }
         },
       )
@@ -787,7 +796,9 @@ function PrintPage() {
         schematicBlank = result.blankPage
       }
 
-      const pdfBlob = await ensureInstructorPdf(sessionId, selectedDay, name)
+      const pdfBlob = await ensureInstructorPdf(sessionId, selectedDay, name, {
+        sessionName: sessionTitle,
+      })
       await refreshCachedPacket()
       if (schematicCover) {
         const combined = await concatPdfs(
@@ -871,6 +882,7 @@ function PrintPage() {
         day: selectedDay,
         sessionId: getCurrentSessionId(),
         session: currentSession,
+        term: currentTerm,
         options: masterlistFormatOptions,
       })
       if (!masterlistBody) {
@@ -949,6 +961,7 @@ function PrintPage() {
       day: selectedDay,
       sessionId: getCurrentSessionId(),
       session: currentSession,
+      term: currentTerm,
       options: day1Options.customMasterlistFormat ? masterlistFormatOptions : getFormatOptions(),
     })
     if (!body) {
@@ -989,7 +1002,9 @@ function PrintPage() {
       throw new Error(`No classes found for ${name}.`)
     }
 
-    const pdfBlob = await ensureInstructorPdf(sessionId, selectedDay, name)
+    const pdfBlob = await ensureInstructorPdf(sessionId, selectedDay, name, {
+      sessionName: sessionTitle,
+    })
 
     if (!day1Options.schematicCoverPage) {
       return pdfBlob

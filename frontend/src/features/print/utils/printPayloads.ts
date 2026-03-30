@@ -1,4 +1,5 @@
 import type { SessionRecord } from '../../../app/useCurrentSession'
+import type { CurrentTerm } from '../../../app/useCurrentTerm'
 import { getExtractedClassesForSession } from '../../../lib/extractedClassesStorage'
 import {
   getCustomRosterDayKey,
@@ -12,9 +13,9 @@ import { getCapacity } from '../../schematic/utils/capacity'
 import { buildCourses } from '../../schematic/utils/courses'
 import { createRequestAwareLayout, type StoredCourseLayout } from '../../schematic/utils/layout'
 import { buildCustomRosterGroups, buildRosterGroups } from '../../rosters/utils'
+import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
-const FALLBACK_SESSION_NAME = 'Summer 2025'
 
 type HighlightOptions = {
   highlightInstructor: boolean
@@ -159,20 +160,23 @@ export const formatMonthDay = (value: string) => {
   return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export function buildSessionTitle(session: SessionRecord | null, selectedDay: string | null) {
-  const dayNames: Record<string, string> = {
-    Mo: 'Monday',
-    Tu: 'Tuesday',
-    We: 'Wednesday',
-    Th: 'Thursday',
-    Fr: 'Friday',
-    Sa: 'Saturday',
-    Su: 'Sunday',
-  }
-  const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : session?.session_day ?? ''
-  const seasonLabel = session?.session_season?.trim() ?? ''
-  const yearLabel = session?.start_date ? new Date(session.start_date).getFullYear() : NaN
-  return [dayLabel, seasonLabel, Number.isFinite(yearLabel) ? String(yearLabel) : ''].filter(Boolean).join(' ')
+export function buildSessionTitle(
+  session: SessionRecord | null,
+  selectedDay: string | null,
+  term?: CurrentTerm | null,
+) {
+  return formatSessionDisplayName({
+    sessionDay: session?.session_day,
+    dayOverride: selectedDay,
+    includeDay: false,
+    sessionSeason: session?.session_season,
+    sessionYear: session?.session_year,
+    startDate: session?.start_date,
+    termSeason: term?.season,
+    termYear: term?.year,
+    includeTimeRange: false,
+    fallback: 'Session',
+  })
 }
 
 export function buildDateRangeLabel(session: SessionRecord | null) {
@@ -294,6 +298,7 @@ export function buildMasterlistRequestBody(args: {
   day: string
   sessionId?: string
   session: SessionRecord | null
+  term?: CurrentTerm | null
   options: FormatOptions
   customRostersOverride?: CustomRoster[]
 }): MasterlistPdfPayload | null {
@@ -305,7 +310,7 @@ export function buildMasterlistRequestBody(args: {
   return {
     rosters,
     options: args.options,
-    sessionName: buildSessionTitle(args.session, args.day) || FALLBACK_SESSION_NAME,
+    sessionName: buildSessionTitle(args.session, args.day, args.term),
     generatedDate: formatGeneratedDate(new Date()),
     sessionWeek: getSessionWeek(args.session?.start_date ?? '') ?? 1,
   }
@@ -315,6 +320,7 @@ export function buildSchematicPrintContext(args: {
   day: string
   sessionId: string
   session: SessionRecord | null
+  term?: CurrentTerm | null
   storedLayout?: StoredCourseLayout | null
 }): SchematicPrintContext | null {
   const courses = applyExtractedStudentCounts(args.sessionId, args.day)
@@ -324,7 +330,7 @@ export function buildSchematicPrintContext(args: {
 
   const layout = createRequestAwareLayout(courses, args.storedLayout ?? getScheduleForDay(args.day))
   return {
-    title: buildSessionTitle(args.session, args.day),
+    title: buildSessionTitle(args.session, args.day, args.term),
     dateRange: buildDateRangeLabel(args.session),
     weeksLabel: buildWeeksLabel(args.session),
     instructors: layout.instructors,
@@ -366,6 +372,7 @@ export function buildBaseSchematicPayload(args: {
   day: string
   sessionId: string
   session: SessionRecord | null
+  term?: CurrentTerm | null
   storedLayout?: StoredCourseLayout | null
 }) {
   const context = buildSchematicPrintContext(args)
@@ -397,6 +404,7 @@ export function buildSchematicPrefetchPayloads(args: {
   day: string
   sessionId: string
   session: SessionRecord | null
+  term?: CurrentTerm | null
   storedLayout?: StoredCourseLayout | null
   customRostersOverride?: CustomRoster[]
 }): SchematicPrefetchPayload[] {

@@ -50,6 +50,21 @@ describe('sessionLabels', () => {
         sessionEndTime24: '13:00',
       }),
     ).toBe('Tuesday Winter 2026 | 9:00 AM-1:00 PM')
+    expect(
+      formatSessionDisplayName({
+        dayOverride: 'Mo',
+        termSeason: 'spring',
+        termYear: 2026,
+        includeDay: false,
+        includeTimeRange: false,
+      }),
+    ).toBe('Spring 2026')
+    expect(
+      formatSessionDisplayName({
+        dayOverride: 'Mo',
+        includeTimeRange: false,
+      }),
+    ).toBe('Monday')
     expect(formatSessionDisplayName({ fallback: 'My Session' })).toBe('My Session')
   })
 })

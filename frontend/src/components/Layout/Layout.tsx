@@ -80,6 +80,19 @@ function Layout({ children }: LayoutProps) {
             sessionEndTime24: currentSession.session_end_time24 ?? null,
         })
     }, [accountType, currentSession, currentTerm, scopeVersion])
+    const currentPrintSessionName = useMemo(() => {
+        if (!currentSession) {
+            return currentTerm?.label ?? 'Session'
+        }
+        return formatSessionDisplayName({
+            sessionSeason: currentSession.session_season ?? '',
+            sessionYear: currentSession.session_year ?? null,
+            startDate: currentSession.start_date ?? '',
+            includeDay: false,
+            includeTimeRange: false,
+            fallback: 'Session',
+        })
+    }, [currentSession, currentTerm])
 
     useEffect(() => {
         if (!needsProfile) {
@@ -186,6 +199,7 @@ function Layout({ children }: LayoutProps) {
             await Promise.all([
                 prefetchInstructorPacket(sessionId, targetDay, {
                     concurrency: 1,
+                    sessionName: currentPrintSessionName,
                 }),
                 prefetchSchematicPdfs({
                     day: targetDay,
@@ -205,7 +219,7 @@ function Layout({ children }: LayoutProps) {
         return () => {
             active = false
         }
-    }, [currentSession, currentSessionLoading, selectedDay, user, scopeVersion])
+    }, [currentPrintSessionName, currentSession, currentSessionLoading, selectedDay, user, scopeVersion])
 
     const navBaseClasses =
         'flex items-center justify-start rounded-[10px] bg-white/10 px-3 py-2 text-accent transition hover:-translate-y-0.5'

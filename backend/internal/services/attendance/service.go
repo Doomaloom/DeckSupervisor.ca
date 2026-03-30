@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	DefaultSessionName      = "Summer 2025"
+	DefaultSessionName      = "Session"
 	DefaultAttendanceLayout = "SplashFitness"
 	DefaultRenderWorkers    = 2
 )
