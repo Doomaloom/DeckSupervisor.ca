@@ -93,6 +93,11 @@ function CsvSessionImportModal({
                 <p className="text-sm text-secondary/80">
                   {candidate.classCount} classes • {candidate.studentCount} students
                 </p>
+                {candidate.rawLocations.length > 1 ? (
+                  <p className="text-sm text-secondary/70">
+                    Includes: {candidate.rawLocations.join(', ')}
+                  </p>
+                ) : null}
                 {candidate.matchedSession ? (
                   <p className="text-sm font-semibold text-secondary">
                     Existing: {candidate.matchedSession.label}

@@ -28,6 +28,8 @@ import {
 } from '../../lib/sessionStorage'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 import type { ExtractedSession } from '../../types/app'
+import SourceLocationsInput from '../../components/SourceLocationsInput'
+import { getEffectiveSourceLocations, normalizeSessionLocations } from '../../shared/session/sourceLocations'
 
 type InstructorEntry = { name: string }
 type SessionEntry = {
@@ -40,6 +42,7 @@ type SessionEntry = {
   sessionStartTime24?: string | null
   sessionEndTime24?: string | null
   location?: string | null
+  sourceLocations?: string[]
   instructors: InstructorEntry[]
   rosterFileName?: string
 }
@@ -54,6 +57,7 @@ type DbSessionEntry = {
   start_date: string | null
   end_date: string | null
   location: string | null
+  source_locations: string[]
   session_start_time24: string | null
   session_end_time24: string | null
   instructors: InstructorEntry[]
@@ -116,6 +120,7 @@ function buildIdentityCriteria(input: {
   sessionSeason?: string
   sessionYear?: string
   location?: string
+  locations?: string[]
 }): SessionIdentityCriteria {
   const parsedYear = Number.parseInt((input.sessionYear ?? '').trim(), 10)
   return {
@@ -123,6 +128,7 @@ function buildIdentityCriteria(input: {
     sessionSeason: input.sessionSeason?.trim() ?? '',
     sessionYear: Number.isFinite(parsedYear) && parsedYear > 0 ? parsedYear : null,
     location: input.location?.trim() ?? '',
+    locations: input.locations ?? [],
   }
 }
 
@@ -161,6 +167,7 @@ function Dashboard() {
   const [selectedTeamId, setSelectedTeamId] = useState('')
   const [availableLocations, setAvailableLocations] = useState<string[]>([])
   const [location, setLocation] = useState('')
+  const [sourceLocations, setSourceLocations] = useState<string[]>([])
   const [dbSessions, setDbSessions] = useState<DbSessionEntry[]>([])
   const [teamTermSessions, setTeamTermSessions] = useState<TeamTermSessionRow[]>([])
   const [teamTermSessionsLoading, setTeamTermSessionsLoading] = useState(false)
@@ -217,6 +224,15 @@ function Dashboard() {
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+    const normalizedSourceLocations = normalizeSessionLocations(
+      sourceLocations.length > 0 ? sourceLocations : [location],
+    )
+    const resolvedDisplayLocation =
+      location.trim() || (normalizedSourceLocations.length === 1 ? normalizedSourceLocations[0] : '')
+    if (normalizedSourceLocations.length > 1 && !location.trim()) {
+      setSaveMessage('Enter a display location when combining multiple raw locations.')
+      return
+    }
 
     if (isGuest) {
       const nextSession: SessionEntry = {
@@ -228,7 +244,8 @@ function Dashboard() {
         endDate,
         sessionStartTime24: sessionStartTime24 || null,
         sessionEndTime24: sessionEndTime24 || null,
-        location: null,
+        location: resolvedDisplayLocation || null,
+        sourceLocations: normalizedSourceLocations,
         instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
         rosterFileName: rosterFile?.name,
       }
@@ -265,7 +282,8 @@ function Dashboard() {
       session_year: sessionYearValue,
       start_date: startDate || null,
       end_date: endDate || null,
-      location: location || null,
+      location: resolvedDisplayLocation || null,
+      source_locations: normalizedSourceLocations,
       session_start_time24: sessionStartTime24 || null,
       session_end_time24: sessionEndTime24 || null,
       instructors: instructors.filter(instructor => instructor.name.trim().length > 0),
@@ -466,7 +484,8 @@ function Dashboard() {
       sessionDay,
       sessionSeason,
       sessionYear,
-      location,
+      location: '',
+      locations: sourceLocations.length > 0 ? sourceLocations : location ? [location] : [],
     })
     const match = hasIdentityCriteria(identityCriteria)
       ? findSingleMatchingExtractedSession(newSessionExtractedSessions, identityCriteria)
@@ -497,13 +516,14 @@ function Dashboard() {
       setNewSessionTimeMessage('CSV did not resolve to one session window with the current session details.')
     }
   }, [
-    location,
     newSessionExtractedSessions,
     sessionDay,
     sessionEndTime24,
     sessionSeason,
     sessionStartTime24,
     sessionYear,
+    location,
+    sourceLocations,
   ])
 
   useEffect(() => {
@@ -884,30 +904,37 @@ function Dashboard() {
                           ))}
                         </select>
                       </label>
-                      <label className="flex flex-col gap-2 font-semibold text-secondary">
-                        Location
-                        <input
-                          className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
-                          type="text"
-                          value={location}
-                          onChange={event => setLocation(event.target.value)}
-                          list={availableLocations.length > 0 ? 'dashboard-session-location-options' : undefined}
-                          placeholder="Session location"
-                        />
-                        {availableLocations.length > 0 ? (
-                          <>
-                            <datalist id="dashboard-session-location-options">
-                              {availableLocations.map(option => (
-                                <option key={option} value={option} />
-                              ))}
-                            </datalist>
-                            <span className="text-xs font-medium text-secondary/70">
-                              Team locations are suggestions only. The session location is saved independently.
-                            </span>
-                          </>
-                        ) : null}
-                      </label>
                     </>
+                  ) : null}
+                  <label className="flex flex-col gap-2 font-semibold text-secondary">
+                    Display Location
+                    <input
+                      className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                      type="text"
+                      value={location}
+                      onChange={event => setLocation(event.target.value)}
+                      list={availableLocations.length > 0 ? 'dashboard-session-location-options' : undefined}
+                      placeholder="Shown across the app"
+                    />
+                    {availableLocations.length > 0 ? (
+                      <datalist id="dashboard-session-location-options">
+                        {availableLocations.map(option => (
+                          <option key={option} value={option} />
+                        ))}
+                      </datalist>
+                    ) : null}
+                  </label>
+                  <SourceLocationsInput
+                    values={sourceLocations}
+                    suggestions={availableLocations}
+                    inputId="dashboard-source-location-options"
+                    helperText="These raw CSV locations will be treated as one session."
+                    onChange={setSourceLocations}
+                  />
+                  {availableLocations.length > 0 ? (
+                    <span className="text-xs font-medium text-secondary/70">
+                      Team locations are suggestions only. The display location and raw locations are saved independently.
+                    </span>
                   ) : null}
                   <div className="flex flex-col gap-2">
                     <span className="font-semibold text-secondary">Upload Roster (optional)</span>
@@ -1011,6 +1038,10 @@ function Dashboard() {
                   if (isGuest) {
                     const localSession = session as SessionEntry
                     const sessionName = getSessionName(localSession)
+                    const localSourceLocations = getEffectiveSourceLocations({
+                      location: localSession.location ?? null,
+                      source_locations: localSession.sourceLocations ?? [],
+                    })
                     return (
                       <button
                         key={localSession.id}
@@ -1029,6 +1060,11 @@ function Dashboard() {
                           <p>Roster: {localSession.rosterFileName}</p>
                         ) : null}
                         {localSession.location ? <p>{localSession.location}</p> : null}
+                        {localSourceLocations.length > 1 ? (
+                          <p className="text-sm text-secondary/70">
+                            Includes: {localSourceLocations.join(', ')}
+                          </p>
+                        ) : null}
                         {isCurrent ? (
                           <p className="font-semibold text-secondary">Current session</p>
                         ) : null}
@@ -1038,6 +1074,7 @@ function Dashboard() {
 
                   const dbSession = session as DbSessionEntry
                   const sessionName = getDbSessionName(dbSession)
+                  const dbSourceLocations = getEffectiveSourceLocations(dbSession)
                   return (
                     <button
                       key={dbSession.id}
@@ -1055,6 +1092,11 @@ function Dashboard() {
                       <p className="text-sm text-secondary/70">
                         {dbSession.location || 'No location set'}
                       </p>
+                      {dbSourceLocations.length > 1 ? (
+                        <p className="text-sm text-secondary/70">
+                          Includes: {dbSourceLocations.join(', ')}
+                        </p>
+                      ) : null}
                       {isCurrent ? <p className="font-semibold text-secondary">Current session</p> : null}
                     </button>
                   )

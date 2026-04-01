@@ -14,6 +14,7 @@ export type SessionRecord = {
   start_date: string | null
   end_date: string | null
   location: string | null
+  source_locations: string[]
   session_start_time24: string | null
   session_end_time24: string | null
   instructors: { name: string }[]
@@ -79,6 +80,7 @@ export function useCurrentSession() {
                   start_date: local.startDate ?? null,
                   end_date: local.endDate ?? null,
                   location: local.location ?? null,
+                  source_locations: local.sourceLocations ?? (local.location ? [local.location] : []),
                   session_start_time24: local.sessionStartTime24 ?? null,
                   session_end_time24: local.sessionEndTime24 ?? null,
                   instructors: local.instructors ?? [],

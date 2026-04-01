@@ -10,6 +10,7 @@ import { getSessionTermLabel, syncReportCardsForDay } from '../lib/reportCardSyn
 import { createSession, fetchCsvSessionCandidates } from '../lib/serverApi'
 import { suppressNextPrefetchForSession } from '../lib/instructorPdfCache'
 import { formatSessionDisplayName } from '../shared/session/sessionLabels'
+import { normalizeSessionLocations } from '../shared/session/sourceLocations'
 import {
   getInstructorsForDay,
   getStudentsForDay,
@@ -91,6 +92,30 @@ function getCandidateLabel(candidate: CsvSessionCandidate) {
   return [sessionLabel, location].filter(Boolean).join(' | ')
 }
 
+function getCandidateExtractedClasses(
+  classesBySession: Record<string, ExtractedClass[]>,
+  candidate: CsvSessionCandidate,
+) {
+  const merged: ExtractedClass[] = []
+  const seen = new Set<string>()
+  candidate.sourceSessionKeys.forEach(sessionKey => {
+    ;(classesBySession[sessionKey] ?? []).forEach(classEntry => {
+      const key = [
+        classEntry.courseCode.trim(),
+        classEntry.location.trim().toLowerCase(),
+        classEntry.startTime24.trim(),
+        classEntry.endTime24.trim(),
+      ].join('|')
+      if (seen.has(key)) {
+        return
+      }
+      seen.add(key)
+      merged.push(classEntry)
+    })
+  })
+  return merged
+}
+
 function toGuestCandidates(classesResponse: {
   sessions: Array<{
     sessionKey: string
@@ -110,6 +135,8 @@ function toGuestCandidates(classesResponse: {
 }): CsvSessionCandidate[] {
   return (classesResponse.sessions ?? []).map(session => ({
     ...session,
+    sourceSessionKeys: [session.sessionKey],
+    rawLocations: session.location ? [session.location] : [],
     matchedSession: null,
   }))
 }
@@ -218,6 +245,7 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       sessionStartTime24: candidate.sessionStartTime24 || null,
       sessionEndTime24: candidate.sessionEndTime24 || null,
       location: candidate.location || null,
+      sourceLocations: normalizeSessionLocations(candidate.rawLocations),
       instructors: [],
       rosterFileName: fileName,
     }
@@ -234,6 +262,7 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       start_date: nextSession.startDate || null,
       end_date: nextSession.endDate || null,
       location: nextSession.location ?? null,
+      source_locations: nextSession.sourceLocations ?? [],
       session_start_time24: nextSession.sessionStartTime24 ?? null,
       session_end_time24: nextSession.sessionEndTime24 ?? null,
       instructors: [],
@@ -255,6 +284,7 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       start_date: candidate.startDate || null,
       end_date: candidate.endDate || null,
       location: candidate.location || null,
+      source_locations: normalizeSessionLocations(candidate.rawLocations),
       session_start_time24: candidate.sessionStartTime24 || null,
       session_end_time24: candidate.sessionEndTime24 || null,
       instructors: [],
@@ -325,8 +355,10 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       setSelectedDay(candidate.dayOfWeek)
 
       const uploadInstructors = buildInstructorUploadConfig(candidate.dayOfWeek)
+      const extractedClassesForCandidate = getCandidateExtractedClasses(state.classesBySession, candidate)
       await processCsvAndStore(state.file, candidate.dayOfWeek, uploadInstructors, {
-        courseCodes: (state.classesBySession[candidate.sessionKey] ?? []).map(classEntry => classEntry.courseCode),
+        courseCodes: extractedClassesForCandidate.map(classEntry => classEntry.courseCode),
+        rawLocations: candidate.rawLocations,
       })
       const dayStudents = getStudentsForDay(candidate.dayOfWeek)
       console.log('[csv-import] selected day students', {
@@ -347,9 +379,8 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       })
 
       if (accountType !== 'full_time') {
-        const extractedClassesForSession = state.classesBySession[candidate.sessionKey] ?? []
-        if (extractedClassesForSession.length > 0) {
-          setExtractedClassesForSession(targetSession.id, extractedClassesForSession)
+        if (extractedClassesForCandidate.length > 0) {
+          setExtractedClassesForSession(targetSession.id, extractedClassesForCandidate)
         }
       }
 

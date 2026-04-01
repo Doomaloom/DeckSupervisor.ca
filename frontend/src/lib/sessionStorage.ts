@@ -15,6 +15,7 @@ export type StoredSessionEntry = {
   sessionStartTime24?: string | null
   sessionEndTime24?: string | null
   location?: string | null
+  sourceLocations?: string[]
   instructors: { name: string }[]
   rosterFileName?: string
 }

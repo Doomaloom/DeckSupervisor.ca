@@ -27,8 +27,14 @@ import {
   saveSessions,
   setCurrentSessionId,
 } from '../../lib/sessionStorage'
-import { deleteSession, fetchCurrentTeams, updateSession } from '../../lib/serverApi'
+import { deleteSession, fetchCurrentTeams, fetchMySessions, updateSession } from '../../lib/serverApi'
 import { onStorageScopeChanged } from '../../lib/storageScope'
+import SourceLocationsInput from '../../components/SourceLocationsInput'
+import {
+  getEffectiveSourceLocations,
+  normalizeSessionLocationKey,
+  normalizeSessionLocations,
+} from '../../shared/session/sourceLocations'
 
 type InstructorEntry = { name: string }
 type SessionEntry = {
@@ -41,6 +47,7 @@ type SessionEntry = {
   sessionStartTime24?: string | null
   sessionEndTime24?: string | null
   location?: string | null
+  sourceLocations?: string[]
   instructors: InstructorEntry[]
   rosterFileName?: string
 }
@@ -86,12 +93,14 @@ function buildSessionIdentityCriteria(input: {
   sessionSeason?: string | null
   sessionYear?: number | null
   location?: string | null
+  locations?: string[]
 }): SessionIdentityCriteria {
   return {
     dayOfWeek: input.sessionDay?.trim() ?? '',
     sessionSeason: input.sessionSeason?.trim() ?? '',
     sessionYear: input.sessionYear ?? null,
     location: input.location?.trim() ?? '',
+    locations: input.locations ?? [],
   }
 }
 
@@ -110,6 +119,7 @@ function ManageSessionsPage() {
   const [editSessionStartTime24, setEditSessionStartTime24] = useState('')
   const [editSessionEndTime24, setEditSessionEndTime24] = useState('')
   const [editLocation, setEditLocation] = useState('')
+  const [editSourceLocations, setEditSourceLocations] = useState<string[]>([])
   const [availableLocations, setAvailableLocations] = useState<string[]>([])
   const [teamName, setTeamName] = useState('')
   const [editInstructors, setEditInstructors] = useState<InstructorEntry[]>([{ name: '' }])
@@ -119,6 +129,17 @@ function ManageSessionsPage() {
   const [editMessageTone, setEditMessageTone] = useState<'success' | 'error'>('success')
   const [isSaving, setIsSaving] = useState(false)
   const [sessionsVersion, setSessionsVersion] = useState(0)
+  const [ownedSessions, setOwnedSessions] = useState<Array<{
+    id: string
+    session_day: string
+    session_season: string | null
+    session_year: number | null
+    start_date: string | null
+    location: string | null
+    source_locations: string[]
+    session_start_time24: string | null
+    session_end_time24: string | null
+  }>>([])
   const [currentSessionId, setCurrentSessionIdState] = useState(() => getCurrentSessionId())
   const lastLoadedSessionIdRef = useRef('')
   const inferredTimesSessionIdRef = useRef('')
@@ -185,6 +206,7 @@ function ManageSessionsPage() {
       setEditSessionStartTime24(localSession.sessionStartTime24 ?? '')
       setEditSessionEndTime24(localSession.sessionEndTime24 ?? '')
       setEditLocation(localSession.location ?? '')
+      setEditSourceLocations(normalizeSessionLocations(localSession.sourceLocations ?? [localSession.location ?? '']))
       setEditInstructors(localSession.instructors.length ? localSession.instructors : [{ name: '' }])
       setEditRosterFile(null)
       setEditRosterFileName(localSession.rosterFileName)
@@ -205,6 +227,7 @@ function ManageSessionsPage() {
     setEditSessionStartTime24(dbSession?.session_start_time24 ?? '')
     setEditSessionEndTime24(dbSession?.session_end_time24 ?? '')
     setEditLocation(dbSession?.location ?? '')
+    setEditSourceLocations(getEffectiveSourceLocations(dbSession))
     setEditInstructors(dbSession?.instructors?.length ? dbSession.instructors : [{ name: '' }])
     setEditRosterFile(null)
     setEditRosterFileName(undefined)
@@ -261,6 +284,30 @@ function ManageSessionsPage() {
   }, [])
 
   useEffect(() => {
+    if (isGuest || !user) {
+      setOwnedSessions([])
+      return
+    }
+    let active = true
+    const loadOwnedSessions = async () => {
+      try {
+        const response = await fetchMySessions()
+        if (!active) {
+          return
+        }
+        setOwnedSessions((response.sessions ?? []) as typeof ownedSessions)
+      } catch (error) {
+        console.error('Failed to load owned sessions', error)
+        setOwnedSessions([])
+      }
+    }
+    void loadOwnedSessions()
+    return () => {
+      active = false
+    }
+  }, [isGuest, sessionsVersion, user])
+
+  useEffect(() => {
     const sessionId = currentSessionId.trim()
     if (!sessionId || inferredTimesSessionIdRef.current === sessionId) {
       return
@@ -304,13 +351,17 @@ function ManageSessionsPage() {
           sessionDay: (currentSession as SessionEntry).sessionDay,
           sessionSeason: (currentSession as SessionEntry).sessionSeason,
           sessionYear: (currentSession as SessionEntry).sessionYear ?? null,
-          location: (currentSession as SessionEntry).location ?? null,
+          location: '',
+          locations: normalizeSessionLocations(
+            (currentSession as SessionEntry).sourceLocations ?? [(currentSession as SessionEntry).location ?? ''],
+          ),
         })
       : buildSessionIdentityCriteria({
           sessionDay: currentSessionRecord?.session_day ?? null,
           sessionSeason: currentSessionRecord?.session_season ?? null,
           sessionYear: currentSessionRecord?.session_year ?? null,
-          location: currentSessionRecord?.location ?? null,
+          location: '',
+          locations: getEffectiveSourceLocations(currentSessionRecord),
         })
 
     const inferredWindow = inferSingleSessionWindowFromClasses(extractedClasses, criteria)
@@ -370,6 +421,16 @@ function ManageSessionsPage() {
       setEditMessage('Enter both session start and end time, or leave both blank.')
       return
     }
+    const normalizedSourceLocations = normalizeSessionLocations(
+      editSourceLocations.length > 0 ? editSourceLocations : [editLocation],
+    )
+    const resolvedDisplayLocation =
+      editLocation.trim() || (normalizedSourceLocations.length === 1 ? normalizedSourceLocations[0] : '')
+    if (normalizedSourceLocations.length > 1 && !editLocation.trim()) {
+      setEditMessageTone('error')
+      setEditMessage('Enter a display location when combining multiple raw locations.')
+      return
+    }
     setIsSaving(true)
     if (isGuest) {
       const sessionsToUpdate = loadSessions()
@@ -386,7 +447,8 @@ function ManageSessionsPage() {
           endDate: editEndDate,
           sessionStartTime24: editSessionStartTime24 || null,
           sessionEndTime24: editSessionEndTime24 || null,
-          location: editLocation || null,
+          location: resolvedDisplayLocation || null,
+          sourceLocations: normalizedSourceLocations,
           instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
           rosterFileName: editRosterFile ? editRosterFile.name : editRosterFileName,
         }
@@ -449,7 +511,8 @@ function ManageSessionsPage() {
         end_date: editEndDate || null,
         session_start_time24: editSessionStartTime24 || null,
         session_end_time24: editSessionEndTime24 || null,
-        location: editLocation || null,
+        location: resolvedDisplayLocation || null,
+        source_locations: normalizedSourceLocations,
         instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
         updated_at: updateTimestamp,
         report_card_sync: didReportCardScopeChange
@@ -512,6 +575,85 @@ function ManageSessionsPage() {
     navigate('/')
   }
 
+  const overlapWarning = useMemo(() => {
+    if (!currentSessionId) {
+      return ''
+    }
+    const candidateYear = resolveSessionYear(editSessionYear, editStartDate, editEndDate)
+    const candidateLocations = normalizeSessionLocations(
+      editSourceLocations.length > 0 ? editSourceLocations : [editLocation],
+    )
+    if (
+      !editSessionDay.trim() ||
+      !editSessionSeason.trim() ||
+      !candidateYear ||
+      !editSessionStartTime24.trim() ||
+      !editSessionEndTime24.trim() ||
+      candidateLocations.length === 0
+    ) {
+      return ''
+    }
+
+    const sessionsToCompare = isGuest
+      ? loadSessions().map(session => ({
+          id: session.id,
+          session_day: session.sessionDay,
+          session_season: session.sessionSeason ?? null,
+          session_year: session.sessionYear ?? null,
+          start_date: session.startDate ?? null,
+          location: session.location ?? null,
+          source_locations: session.sourceLocations ?? [],
+          session_start_time24: session.sessionStartTime24 ?? null,
+          session_end_time24: session.sessionEndTime24 ?? null,
+        }))
+      : ownedSessions
+
+    const overlapping = sessionsToCompare.find(session => {
+      if (session.id === currentSessionId) {
+        return false
+      }
+      const sessionYear = session.session_year ?? getYearFromDate(session.start_date)
+      if (session.session_day !== editSessionDay) {
+        return false
+      }
+      if ((session.session_season ?? '').trim().toLowerCase() !== editSessionSeason.trim().toLowerCase()) {
+        return false
+      }
+      if (sessionYear !== candidateYear) {
+        return false
+      }
+      if ((session.session_start_time24 ?? '') !== editSessionStartTime24) {
+        return false
+      }
+      if ((session.session_end_time24 ?? '') !== editSessionEndTime24) {
+        return false
+      }
+      const sessionLocations = getEffectiveSourceLocations(session)
+      return sessionLocations.some(location =>
+        candidateLocations.some(candidate => normalizeSessionLocationKey(candidate) === normalizeSessionLocationKey(location)),
+      )
+    })
+
+    if (!overlapping) {
+      return ''
+    }
+
+    return `Warning: another saved session overlaps this same day, term, time, and raw location scope.`
+  }, [
+    currentSessionId,
+    editEndDate,
+    editLocation,
+    editSessionDay,
+    editSessionEndTime24,
+    editSessionSeason,
+    editSessionStartTime24,
+    editSessionYear,
+    editSourceLocations,
+    isGuest,
+    ownedSessions,
+    editStartDate,
+  ])
+
   return (
     <div id="manage-sessions-page" data-component="manage-sessions-page" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <h2 className="text-2xl font-semibold text-secondary">Manage Sessions</h2>
@@ -535,6 +677,17 @@ function ManageSessionsPage() {
                 {(currentSession as SessionEntry).rosterFileName ? (
                   <p>Roster: {(currentSession as SessionEntry).rosterFileName}</p>
                 ) : null}
+                {getEffectiveSourceLocations({
+                  location: (currentSession as SessionEntry).location ?? null,
+                  source_locations: (currentSession as SessionEntry).sourceLocations ?? [],
+                }).length > 1 ? (
+                  <p className="text-sm text-secondary/70">
+                    Includes: {getEffectiveSourceLocations({
+                      location: (currentSession as SessionEntry).location ?? null,
+                      source_locations: (currentSession as SessionEntry).sourceLocations ?? [],
+                    }).join(', ')}
+                  </p>
+                ) : null}
               </>
             ) : (
               <>
@@ -555,6 +708,11 @@ function ManageSessionsPage() {
                 <p>{currentSessionRecord?.instructors?.length ?? 0} instructors</p>
                 {teamName ? <p>Team: {teamName}</p> : null}
                 {currentSessionRecord?.location ? <p>Location: {currentSessionRecord.location}</p> : null}
+                {getEffectiveSourceLocations(currentSessionRecord).length > 1 ? (
+                  <p className="text-sm text-secondary/70">
+                    Includes: {getEffectiveSourceLocations(currentSessionRecord).join(', ')}
+                  </p>
+                ) : null}
               </>
             )}
           </div>
@@ -646,47 +804,52 @@ function ManageSessionsPage() {
                   />
                 </label>
                 {!isGuest ? (
-                  <>
-                    <label className="flex flex-col gap-2 font-semibold text-secondary">
-                      Team
-                      <select
-                        className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
-                        value={editTeamId}
-                        onChange={event => setEditTeamId(event.target.value)}
-                        disabled={teamsLoading}
-                      >
-                        <option value={NO_TEAM_VALUE}>No team</option>
-                        {teams.map(team => (
-                          <option key={team.id} value={team.id}>
-                            {team.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="flex flex-col gap-2 font-semibold text-secondary">
-                      Location (optional)
-                      <input
-                        className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
-                        type="text"
-                        value={editLocation}
-                        onChange={event => setEditLocation(event.target.value)}
-                        list={availableLocations.length > 0 ? 'manage-session-location-options' : undefined}
-                        placeholder="Session location"
-                      />
-                      {availableLocations.length > 0 ? (
-                        <>
-                          <datalist id="manage-session-location-options">
-                            {availableLocations.map(option => (
-                              <option key={option} value={option} />
-                            ))}
-                          </datalist>
-                          <span className="text-xs font-medium text-secondary/70">
-                            Team locations are suggestions only. The session location is saved independently.
-                          </span>
-                        </>
-                      ) : null}
-                    </label>
-                  </>
+                  <label className="flex flex-col gap-2 font-semibold text-secondary">
+                    Team
+                    <select
+                      className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                      value={editTeamId}
+                      onChange={event => setEditTeamId(event.target.value)}
+                      disabled={teamsLoading}
+                    >
+                      <option value={NO_TEAM_VALUE}>No team</option>
+                      {teams.map(team => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                <label className="flex flex-col gap-2 font-semibold text-secondary">
+                  Display Location
+                  <input
+                    className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                    type="text"
+                    value={editLocation}
+                    onChange={event => setEditLocation(event.target.value)}
+                    list={availableLocations.length > 0 ? 'manage-session-location-options' : undefined}
+                    placeholder="Shown across the app"
+                  />
+                  {availableLocations.length > 0 ? (
+                    <datalist id="manage-session-location-options">
+                      {availableLocations.map(option => (
+                        <option key={option} value={option} />
+                      ))}
+                    </datalist>
+                  ) : null}
+                </label>
+                <SourceLocationsInput
+                  values={editSourceLocations}
+                  suggestions={availableLocations}
+                  inputId="manage-session-source-location-options"
+                  helperText="These raw CSV locations will be treated as one session."
+                  onChange={setEditSourceLocations}
+                />
+                {availableLocations.length > 0 ? (
+                  <span className="text-xs font-medium text-secondary/70">
+                    Team locations are suggestions only. The display location and raw locations are saved independently.
+                  </span>
                 ) : null}
                 <div className="flex flex-col gap-2">
                   <span className="font-semibold text-secondary">Upload Roster (optional)</span>
@@ -734,6 +897,11 @@ function ManageSessionsPage() {
                 </button>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3">
+                {overlapWarning ? (
+                  <div className="w-full rounded-2xl border border-secondary/20 bg-bg px-4 py-3 text-sm text-secondary">
+                    {overlapWarning}
+                  </div>
+                ) : null}
                 <button
                   type="submit"
                   className="rounded-2xl bg-primary px-5 py-2 text-white transition hover:-translate-y-0.5 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"

@@ -1,5 +1,6 @@
 import type { ClassRoster, ExtractedClass, ExtractedSession, InstructorEntry, Student } from '../types/app'
 import { setStudentsForDay } from './storage'
+import { normalizeSessionLocationKey } from '../shared/session/sourceLocations'
 
 type ProcessCsvResponse = {
   success: boolean
@@ -77,7 +78,7 @@ export async function processCsvAndStore(
   file: File,
   day: string,
   instructors: InstructorEntry[] = [],
-  options?: { courseCodes?: string[] }
+  options?: { courseCodes?: string[]; rawLocations?: string[] }
 ): Promise<ProcessCsvResponse> {
   const data = await processCsv(file, day, instructors)
   console.log('[csv-import] process-csv raw response', {
@@ -86,9 +87,20 @@ export async function processCsvAndStore(
     classes: summarizeProcessCsvClasses(data.classes ?? []),
   })
   const allowedCodes = new Set((options?.courseCodes ?? []).map(code => code.trim()).filter(Boolean))
+  const allowedLocationKeys = new Set(
+    (options?.rawLocations ?? []).map(location => normalizeSessionLocationKey(location)).filter(Boolean),
+  )
   const classes =
     allowedCodes.size > 0
-      ? (data.classes ?? []).filter(roster => allowedCodes.has(roster.code.trim()))
+      ? (data.classes ?? []).filter(roster => {
+          if (!allowedCodes.has(roster.code.trim())) {
+            return false
+          }
+          if (allowedLocationKeys.size === 0) {
+            return true
+          }
+          return allowedLocationKeys.has(normalizeSessionLocationKey(roster.location))
+        })
       : (data.classes ?? [])
 
   if (classes.length) {

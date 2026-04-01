@@ -121,6 +121,7 @@ export type CsvMatchedSession = {
         start_date: string | null
         end_date: string | null
         location: string | null
+        source_locations: string[]
         session_start_time24: string | null
         session_end_time24: string | null
         instructors: { name: string }[]
@@ -129,6 +130,8 @@ export type CsvMatchedSession = {
 
 export type CsvSessionCandidate = {
     sessionKey: string
+    sourceSessionKeys: string[]
+    rawLocations: string[]
     dayOfWeek: string
     sessionSeason: string
     sessionYear: number

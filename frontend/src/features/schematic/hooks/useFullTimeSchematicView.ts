@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useCurrentTeam } from '../../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../../app/useCurrentTerm'
 import { getYearFromDate } from '../../../shared/session/sessionLabels'
+import { getEffectiveSourceLocations, normalizeSessionLocationKey } from '../../../shared/session/sourceLocations'
 import {
     getExtractedClassesForScope,
     onExtractedClassesUpdated,
@@ -28,6 +29,7 @@ type TeamSessionRow = {
     session_year: number | null
     start_date: string | null
     location: string | null
+    source_locations: string[]
     updated_at: string
 }
 
@@ -69,13 +71,14 @@ function getSessionSeason(value: string | null) {
 
 function buildBookedCountByCode(
     students: Student[],
-    selectedLocation: string,
+    sourceLocations: string[],
 ) {
+    const locationKeys = new Set(sourceLocations.map(location => normalizeSessionLocationKey(location)).filter(Boolean))
     const bookedCountByCode = new Map<string, number>()
     const seenRosterCodes = new Set<string>()
 
     students.forEach(student => {
-        if (normalizeLocationMatch(student.location) !== selectedLocation) {
+        if (locationKeys.size > 0 && !locationKeys.has(normalizeSessionLocationKey(student.location))) {
             return
         }
         const normalizedCode = normalizeCourseCodeForCompare(student.code)
@@ -121,7 +124,7 @@ export function useFullTimeSchematicView(enabled: boolean) {
         const loadSessions = async () => {
             setLoadingSessions(true)
             try {
-                const response = await fetchTeamSessions(currentTeamId, 'id,session_day,session_season,session_year,start_date,location,updated_at')
+                const response = await fetchTeamSessions(currentTeamId, 'id,session_day,session_season,session_year,start_date,location,source_locations,updated_at')
                 if (!active) {
                     return
                 }
@@ -344,12 +347,22 @@ export function useFullTimeSchematicView(enabled: boolean) {
         return schematicsBySession.get(selectedSession.id) ?? null
     }, [schematicsBySession, selectedSession])
 
+    const selectedSessionSourceLocations = useMemo(
+        () => getEffectiveSourceLocations(selectedSession),
+        [selectedSession],
+    )
+
     const selectedLocationClasses = useMemo(() => {
         return extractedClasses.filter(classEntry => {
             if (classEntry.dayOfWeek !== selectedDay) {
                 return false
             }
-            if (normalizeLocationMatch(classEntry.location) !== selectedLocation) {
+            if (
+                selectedSessionSourceLocations.length > 0 &&
+                !selectedSessionSourceLocations.some(
+                    location => normalizeSessionLocationKey(location) === normalizeSessionLocationKey(classEntry.location),
+                )
+            ) {
                 return false
             }
             if (currentTerm) {
@@ -363,7 +376,7 @@ export function useFullTimeSchematicView(enabled: boolean) {
             }
             return classEntry.courseCode.trim().length > 0
         })
-    }, [currentTerm, extractedClasses, selectedDay, selectedLocation])
+    }, [currentTerm, extractedClasses, selectedDay, selectedSessionSourceLocations])
 
     const courses = useMemo(() => {
         const sortedClasses = [...selectedLocationClasses].sort((a, b) => {
@@ -379,7 +392,7 @@ export function useFullTimeSchematicView(enabled: boolean) {
         const seenCodes = new Set<string>()
         const next: Course[] = []
         const dayStudents = studentsByDay[selectedDay] ?? []
-        const { bookedCountByCode, seenRosterCodes } = buildBookedCountByCode(dayStudents, selectedLocation)
+        const { bookedCountByCode, seenRosterCodes } = buildBookedCountByCode(dayStudents, selectedSessionSourceLocations)
 
         sortedClasses.forEach(classEntry => {
             const code = classEntry.courseCode.trim()
@@ -418,7 +431,7 @@ export function useFullTimeSchematicView(enabled: boolean) {
         })
 
         return next
-    }, [selectedDay, selectedLocation, selectedLocationClasses, studentsByDay])
+    }, [selectedDay, selectedLocationClasses, selectedSessionSourceLocations, studentsByDay])
 
     const mappedDbSchedule = useMemo(() => {
         const remoteCodes = selectedSessionSchematic?.codes ?? []

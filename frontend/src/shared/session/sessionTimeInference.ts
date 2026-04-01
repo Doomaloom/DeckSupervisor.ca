@@ -1,10 +1,12 @@
 import type { ExtractedClass, ExtractedSession } from '../../types/app'
+import { normalizeSessionLocationKey, normalizeSessionLocations } from './sourceLocations'
 
 export type SessionIdentityCriteria = {
   dayOfWeek?: string | null
   sessionSeason?: string | null
   sessionYear?: number | null
   location?: string | null
+  locations?: string[] | null
 }
 
 export type InferredSessionWindow = {
@@ -29,11 +31,13 @@ function normalizeDay(value: string | null | undefined) {
 }
 
 function hasIdentityCriteria(criteria: SessionIdentityCriteria) {
+  const locations = normalizeSessionLocations(criteria.locations ?? [])
   return Boolean(
     normalizeDay(criteria.dayOfWeek) ||
       normalizeText(criteria.sessionSeason) ||
       (criteria.sessionYear ?? 0) > 0 ||
-      normalizeText(criteria.location),
+      normalizeText(criteria.location) ||
+      locations.length > 0,
   )
 }
 
@@ -59,6 +63,14 @@ export function matchesSessionIdentity(
   const location = normalizeText(criteria.location)
   if (location && normalizeText(value.location) !== location) {
     return false
+  }
+
+  const locations = normalizeSessionLocations(criteria.locations ?? [])
+  if (locations.length > 0) {
+    const valueKey = normalizeSessionLocationKey(value.location)
+    if (!locations.some(locationValue => normalizeSessionLocationKey(locationValue) === valueKey)) {
+      return false
+    }
   }
 
   return true

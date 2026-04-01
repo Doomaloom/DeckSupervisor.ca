@@ -14,6 +14,7 @@ create table if not exists sessions (
   start_date date,
   end_date date,
   location text,
+  source_locations text[] not null default '{}',
   session_start_time24 text,
   session_end_time24 text,
   instructors jsonb not null default '[]'::jsonb,
@@ -23,6 +24,7 @@ create table if not exists sessions (
 
 alter table sessions
   add column if not exists session_year integer,
+  add column if not exists source_locations text[] not null default '{}',
   add column if not exists session_start_time24 text,
   add column if not exists session_end_time24 text,
   alter column team_id drop not null,
@@ -32,6 +34,12 @@ update sessions
 set session_year = extract(year from start_date)::integer
 where session_year is null
   and start_date is not null;
+
+update sessions
+set source_locations = array[location]
+where coalesce(array_length(source_locations, 1), 0) = 0
+  and location is not null
+  and btrim(location) <> '';
 
 create index if not exists sessions_team_id_idx on sessions(team_id);
 create index if not exists sessions_created_by_idx on sessions(created_by);

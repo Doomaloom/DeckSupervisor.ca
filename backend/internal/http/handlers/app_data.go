@@ -55,6 +55,7 @@ type sessionRow struct {
 	StartDate          *string             `json:"start_date"`
 	EndDate            *string             `json:"end_date"`
 	Location           *string             `json:"location"`
+	SourceLocations    []string            `json:"source_locations"`
 	SessionStartTime24 *string             `json:"session_start_time24"`
 	SessionEndTime24   *string             `json:"session_end_time24"`
 	Instructors        []map[string]string `json:"instructors"`
@@ -260,7 +261,7 @@ func CurrentSession(w http.ResponseWriter, r *http.Request) {
 
 	query := url.Values{}
 	query.Set("id", "eq."+sessionID)
-	query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors")
+	query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,source_locations,session_start_time24,session_end_time24,instructors")
 	var rows []sessionRow
 	if err := client.Get(r.Context(), "/rest/v1/sessions", query, &rows); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -271,6 +272,7 @@ func CurrentSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	row := rows[0]
+	row.SourceLocations = effectiveSessionSourceLocations(row.Location, row.SourceLocations)
 
 	access := map[string]any{"mode": "none", "allowRosterEdits": false}
 	if row.CreatedBy == profile.ID {
@@ -313,11 +315,14 @@ func MySessions(w http.ResponseWriter, r *http.Request) {
 	}
 	query := url.Values{}
 	query.Set("created_by", "eq."+profile.ID)
-	query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors")
+	query.Set("select", "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,source_locations,session_start_time24,session_end_time24,instructors")
 	var rows []sessionRow
 	if err := client.Get(r.Context(), "/rest/v1/sessions", query, &rows); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+	for index := range rows {
+		rows[index].SourceLocations = effectiveSessionSourceLocations(rows[index].Location, rows[index].SourceLocations)
 	}
 	writeJSON(w, map[string]any{"sessions": rows})
 }
@@ -331,7 +336,7 @@ func SharedSessionsToday(w http.ResponseWriter, r *http.Request) {
 	query := url.Values{}
 	query.Set("shared_with", "eq."+client.User.ID)
 	query.Set("share_date", "eq."+torontoToday())
-	query.Set("select", "id,share_date,allow_roster_edits,sessions(id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors)")
+	query.Set("select", "id,share_date,allow_roster_edits,sessions(id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,source_locations,session_start_time24,session_end_time24,instructors)")
 	var rows []map[string]any
 	if err := client.Get(r.Context(), "/rest/v1/session_shares", query, &rows); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -353,7 +358,7 @@ func TeamSessions(w http.ResponseWriter, r *http.Request) {
 	}
 	selectFields := r.URL.Query().Get("select")
 	if selectFields == "" {
-		selectFields = "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,session_start_time24,session_end_time24,instructors,updated_at"
+		selectFields = "id,team_id,created_by,session_day,session_season,session_year,start_date,end_date,location,source_locations,session_start_time24,session_end_time24,instructors,updated_at"
 	}
 	query := url.Values{}
 	query.Set("team_id", "eq."+teamID)
@@ -389,6 +394,7 @@ func CreateSession(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	normalizeSessionPayloadLocations(payload)
 	payload["created_by"] = profile.ID
 	serviceClient, err := supabasesvc.NewServiceClientFromEnv()
 	if err != nil {
@@ -442,6 +448,7 @@ func UpdateSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	normalizeSessionPayloadLocations(payload)
 	reportCardSync, _ := payload["report_card_sync"].(map[string]any)
 	delete(payload, "report_card_sync")
 

@@ -141,4 +141,22 @@ describe('sessionTimeInference', () => {
       }),
     ).toMatchObject({ sessionKey: '1' })
   })
+
+  it('supports matching across multiple raw locations', () => {
+    const window = inferSingleSessionWindowFromClasses([
+      buildClass({ courseCode: '100', location: 'Big Pool', startTime24: '09:00', endTime24: '10:00' }),
+      buildClass({ courseCode: '200', location: 'Small Pool', startTime24: '10:00', endTime24: '11:00' }),
+    ], {
+      dayOfWeek: 'Sa',
+      sessionSeason: 'Winter',
+      sessionYear: 2026,
+      locations: ['Big Pool', 'Small Pool'],
+    })
+
+    expect(window).toEqual({
+      sessionStartTime24: '09:00',
+      sessionEndTime24: '11:00',
+      classCount: 2,
+    })
+  })
 })
