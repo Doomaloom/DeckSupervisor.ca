@@ -2,6 +2,17 @@ package tasks
 
 import "testing"
 
+func TestNormalizeEventIDTreatsLeadingZerosAsEquivalent(t *testing.T) {
+	t.Parallel()
+
+	if got := NormalizeEventID("00012234234234"); got != "12234234234" {
+		t.Fatalf("expected leading zeros to be removed, got %q", got)
+	}
+	if got := NormalizeEventID("12234234234"); got != "12234234234" {
+		t.Fatalf("expected unchanged numeric event id, got %q", got)
+	}
+}
+
 func TestExtractClassesRowsBuildsSessionAndClassSummaries(t *testing.T) {
 	t.Parallel()
 

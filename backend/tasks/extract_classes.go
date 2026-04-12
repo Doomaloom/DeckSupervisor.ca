@@ -1,29 +1,58 @@
 package tasks
 
 import (
-	"fmt"
 	"io"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-gota/gota/dataframe"
 )
 
+type ClassRoster struct {
+	SessionKey    string `json:"sessionKey"`
+	Code          string `json:"courseCode"`
+	ServiceName   string `json:"serviceName"`
+	Location      string `json:"location"`
+	Time          string `json:"time"`
+	Instructor    string `json:"instructor"`
+	StudentCount  int    `json:"studentCount"`
+	WaitlistCount int    `json:"waitlistCount"`
+	Students      []RosterStudent
+}
+
+type RosterStudent struct {
+	Name       string `json:"name"`
+	Phone      string `json:"phone"`
+	Age        string `json:"age"`
+	Instructor string `json:"instructor"`
+	Level      string `json:"level"`
+	Waitlist   bool   `json:"waitlist"`
+}
+
+type ExtractOptions struct {
+	FallbackDay   string
+	InstructorMap map[string]string
+}
+
 type ExtractedClass struct {
-	SessionKey      string `json:"sessionKey"`
-	DayOfWeek       string `json:"dayOfWeek"`
-	SessionSeason   string `json:"sessionSeason"`
-	SessionYear     int    `json:"sessionYear"`
-	StartDate       string `json:"startDate"`
-	EndDate         string `json:"endDate"`
-	CourseCode      string `json:"courseCode"`
-	ServiceName     string `json:"serviceName"`
-	Location        string `json:"location"`
-	StartTime24     string `json:"startTime24"`
-	EndTime24       string `json:"endTime24"`
-	DurationMinutes int    `json:"durationMinutes"`
-	StudentCount    int    `json:"studentCount"`
-	WaitlistCount   int    `json:"waitlistCount"`
+	SessionKey      string          `json:"sessionKey"`
+	DayOfWeek       string          `json:"dayOfWeek"`
+	SessionSeason   string          `json:"sessionSeason"`
+	SessionYear     int             `json:"sessionYear"`
+	StartDate       string          `json:"startDate"`
+	EndDate         string          `json:"endDate"`
+	CourseCode      string          `json:"courseCode"`
+	ServiceName     string          `json:"serviceName"`
+	Location        string          `json:"location"`
+	StartTime24     string          `json:"startTime24"`
+	EndTime24       string          `json:"endTime24"`
+	DurationMinutes int             `json:"durationMinutes"`
+	StudentCount    int             `json:"studentCount"`
+	WaitlistCount   int             `json:"waitlistCount"`
+	Instructor      string          `json:"instructor"`
+	Roster          []RosterStudent `json:"roster"`
 }
 
 type ExtractedSession struct {
@@ -53,62 +82,49 @@ type extractedClassAccumulator struct {
 	WaitlistAttendeeRows  int
 }
 
-func ExtractClassesFromCSV(csvReader io.Reader) (*ExtractedCSVResult, error) {
-	rows, err := readCSVRows(csvReader)
+func ExtractClassesFromCSV(csvReader io.Reader, opts ...ExtractOptions) (*ExtractedCSVResult, error) {
+	rows, err := readCSVDataFrame(csvReader)
 	if err != nil {
 		return nil, err
 	}
-	return ExtractClassesRows(rows)
+	return extractClassesDataFrame(rows, resolveExtractOptions(opts...))
 }
 
-func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
-	if len(rows) == 0 {
-		return nil, fmt.Errorf("no rows to process")
-	}
+func ExtractClassesRows(rows []csvRow, opts ...ExtractOptions) (*ExtractedCSVResult, error) {
+	df := dataframe.LoadMaps(csvRowsToMaps(rows))
+	return extractClassesDataFrame(df, resolveExtractOptions(opts...))
+}
 
+func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*ExtractedCSVResult, error) {
 	classMap := map[string]*extractedClassAccumulator{}
 
-	for _, row := range rows {
-		courseCode := NormalizeEventID(rowValue(row, "EventID", "Event Id", "ClassCode", "Code", "ID"))
+	for i := 0; i < df.Nrow(); i++ {
+		row := df.Subset(i)
+		courseCode := NormalizeEventID(strings.TrimSpace(row.Col("EventID").Str()))
+		serviceName := strings.TrimSpace(row.Col("ServiceName").Str())
+		location := strings.TrimSpace(row.Col("Facility").Str())
+		dayValue := row.Col("DayOfTheWeek").Str()
+		eventSchedule := strings.TrimSpace(row.Col("EventSchedule").Str())
+		timeRange := strings.TrimSpace(row.Col("EventTime").Str())
 		if courseCode == "" {
 			continue
 		}
-
-		serviceName := rowValue(row, "ServiceName", "Service", "Service Name", "GroupName", "Level")
-		location := rowValue(row, "Location", "Facility", "MainFacility", "Main Facility")
-
-		dayValue := normalizeDay(rowValue(row, "DayOfTheWeek", "Day Of The Week"))
+		if dayValue == "" {
+			dayValue = opts.FallbackDay
+		}
 		if dayValue == "" {
 			continue
 		}
 
-		startRaw := rowValue(row, "Starts", "Start", "StartTime")
-		endRaw := rowValue(row, "Ends", "End", "EndTime")
-		eventSchedule := rowValue(row, "EventSchedule", "Schedule")
-		timeRange := rowValue(row, "EventTime", "Time")
-		if startRaw == "" || endRaw == "" {
-			left, right := splitTimeRange(timeRange)
-			if startRaw == "" {
-				startRaw = left
-			}
-			if endRaw == "" {
-				endRaw = right
-			}
-		}
+		start, end := splitTimeRange(timeRange)
 
-		startTime24, startDate := extractTimeAndDate(startRaw)
-		endTime24, endDate := extractTimeAndDate(endRaw)
+		startTime24, startDate := extractTimeAndDate(start)
+		endTime24, endDate := extractTimeAndDate(end)
 		if startTime24 == "" || endTime24 == "" {
 			continue
 		}
 
 		durationMinutes := getDurationMinutes(startTime24, endTime24)
-		if durationMinutes <= 0 {
-			durationMinutes = parsePositiveInt(rowValue(row, "Duration"))
-		}
-		if durationMinutes <= 0 {
-			continue
-		}
 
 		scheduleStartDate, scheduleEndDate := extractScheduleDateRange(eventSchedule)
 		if startDate.IsZero() && !scheduleStartDate.IsZero() {
@@ -120,11 +136,16 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 
 		sessionSeason, sessionYear := getSeasonAndYear(eventSchedule, startDate, endDate)
 		sessionBucketKey := buildExtractedSessionBucketKey(dayValue, sessionSeason, sessionYear, location)
+		bookedCountFromRoster := parsePositiveInt(strings.TrimSpace(row.Col("Booked").Str()))
 
-		bookedCountFromRoster := parsePositiveInt(rowValue(row, "Booked", "Booked Count"))
-		statusValue := rowValue(row, "AttendeeStatus", "Attendee Status", "Status")
-		hasAttendee := strings.TrimSpace(rowValue(row, "AttendeeName", "Name", "FirstName")) != ""
+		statusValue := strings.TrimSpace(row.Col("AttendeeStatus").Str())
 		isWaitlist := isWaitingStatus(statusValue)
+
+		phone := strings.TrimSpace(row.Col("AttendeePhone").Str())
+		name := normalizeExtractedStudentName(strings.TrimSpace(row.Col("AttendeeName").Str()))
+		age := strings.TrimSpace(row.Col("Age").Str())
+		hasAttendee := name != ""
+		instructor := resolveExtractedInstructor(courseCode, opts.InstructorMap)
 
 		key := strings.Join([]string{
 			sessionBucketKey,
@@ -150,37 +171,32 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 					EndTime24:       endTime24,
 					DurationMinutes: durationMinutes,
 					StudentCount:    0,
+					Instructor:      instructor,
+					Roster:          []RosterStudent{},
 				},
 			}
 			classMap[key] = existing
 		}
 
-		if existing.Class.ServiceName == "" && serviceName != "" {
-			existing.Class.ServiceName = serviceName
-		}
-		if existing.Class.Location == "" && location != "" {
-			existing.Class.Location = location
-		}
-		if existing.Class.SessionSeason == "" && sessionSeason != "" {
-			existing.Class.SessionSeason = sessionSeason
-		}
-		if existing.Class.SessionYear == 0 && sessionYear > 0 {
-			existing.Class.SessionYear = sessionYear
-		}
-		if existing.Class.StartDate == "" && !startDate.IsZero() {
-			existing.Class.StartDate = formatDate(startDate)
-		}
-		if existing.Class.EndDate == "" && !endDate.IsZero() {
-			existing.Class.EndDate = formatDate(endDate)
+		if existing.Class.Instructor == "" && instructor != "" {
+			existing.Class.Instructor = instructor
 		}
 
-		if bookedCountFromRoster > 0 {
-			if bookedCountFromRoster > existing.BookedCountFromRoster {
-				existing.BookedCountFromRoster = bookedCountFromRoster
-			}
+		if bookedCountFromRoster > existing.BookedCountFromRoster {
+			existing.BookedCountFromRoster = bookedCountFromRoster
 		}
-		if hasAttendee && isWaitlist {
-			existing.WaitlistAttendeeRows += 1
+		if hasAttendee {
+			existing.Class.Roster = append(existing.Class.Roster, RosterStudent{
+				Name:       name,
+				Phone:      phone,
+				Age:        age,
+				Instructor: instructor,
+				Level:      serviceName,
+				Waitlist:   isWaitlist,
+			})
+			if isWaitlist {
+				existing.WaitlistAttendeeRows += 1
+			}
 		}
 	}
 
@@ -188,6 +204,9 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 	for _, class := range classMap {
 		extractedClass := class.Class
 		extractedClass.StudentCount = class.BookedCountFromRoster
+		if extractedClass.StudentCount == 0 {
+			extractedClass.StudentCount = len(extractedClass.Roster)
+		}
 		extractedClass.WaitlistCount = class.WaitlistAttendeeRows
 		classesByBucket[extractedClass.SessionKey] = append(classesByBucket[extractedClass.SessionKey], extractedClass)
 	}
@@ -273,6 +292,61 @@ func ExtractClassesRows(rows []csvRow) (*ExtractedCSVResult, error) {
 		Sessions:         sessions,
 		ClassesBySession: classesBySession,
 	}, nil
+}
+
+func resolveExtractOptions(opts ...ExtractOptions) ExtractOptions {
+	if len(opts) == 0 {
+		return ExtractOptions{}
+	}
+	return opts[0]
+}
+
+func csvRowsToMaps(rows []csvRow) []map[string]interface{} {
+	out := make([]map[string]interface{}, 0, len(rows))
+	for _, row := range rows {
+		next := make(map[string]interface{}, len(row))
+		for key, value := range row {
+			next[key] = value
+		}
+		out = append(out, next)
+	}
+	return out
+}
+
+func normalizeExtractedStudentName(name string) string {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ""
+	}
+	if strings.Contains(name, ",") {
+		parts := strings.SplitN(name, ",", 2)
+		return strings.TrimSpace(parts[1]) + " " + strings.TrimSpace(parts[0])
+	}
+	return name
+}
+
+func NormalizeEventID(value string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return ""
+	}
+	for _, r := range trimmed {
+		if r < '0' || r > '9' {
+			return trimmed
+		}
+	}
+	normalized := strings.TrimLeft(trimmed, "0")
+	if normalized == "" {
+		return "0"
+	}
+	return normalized
+}
+
+func resolveExtractedInstructor(courseCode string, instructorMap map[string]string) string {
+	if len(instructorMap) == 0 {
+		return ""
+	}
+	return strings.TrimSpace(instructorMap[NormalizeEventID(courseCode)])
 }
 
 func BuildExtractedSessionKey(dayOfWeek, sessionSeason string, sessionYear int, location, sessionStartTime24, sessionEndTime24 string) string {
