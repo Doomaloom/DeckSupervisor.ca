@@ -1,7 +1,7 @@
 package httpapi
 
 import (
-	"net/http"
+	//"net/http"
 
 	"cob-aquatics/internal/http/handlers"
 	"github.com/gorilla/mux"
@@ -9,12 +9,16 @@ import (
 
 func NewRouter() *mux.Router {
 	r := mux.NewRouter()
+
+	// Auth and account
 	r.HandleFunc("/api/auth/sign-in", handlers.SignIn).Methods("POST")
 	r.HandleFunc("/api/auth/sign-up", handlers.SignUp).Methods("POST")
 	r.HandleFunc("/api/auth/session", handlers.Session).Methods("GET")
 	r.HandleFunc("/api/auth/sign-out", handlers.SignOut).Methods("POST")
 	r.HandleFunc("/api/account", handlers.AccountData).Methods("GET")
 	r.HandleFunc("/api/profile", handlers.UpdateProfile).Methods("PUT")
+
+	// Teams, memberships, and invites
 	r.HandleFunc("/api/teams/current", handlers.CurrentTeams).Methods("GET")
 	r.HandleFunc("/api/request-assignments", handlers.GetRequestAssignments).Methods("GET")
 	r.HandleFunc("/api/request-assignments", handlers.CreateRequestAssignment).Methods("POST")
@@ -32,6 +36,8 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/team-invites/{id}/accept", handlers.AcceptTeamInvite).Methods("POST")
 	r.HandleFunc("/api/team-invites/{id}/decline", handlers.DeclineTeamInvite).Methods("POST")
 	r.HandleFunc("/api/team-invites/{id}/revoke", handlers.RevokeTeamInvite).Methods("POST")
+
+	// Session sharing and session management
 	r.HandleFunc("/api/session-shares", handlers.CreateSessionShare).Methods("POST")
 	r.HandleFunc("/api/session-shares/today", handlers.SharedSessionsToday).Methods("GET")
 	r.HandleFunc("/api/sessions/mine", handlers.MySessions).Methods("GET")
@@ -40,32 +46,46 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/sessions/{id}", handlers.UpdateSession).Methods("PATCH")
 	r.HandleFunc("/api/sessions/{id}", handlers.DeleteSession).Methods("DELETE")
 	r.HandleFunc("/api/teams/{id}/sessions", handlers.TeamSessions).Methods("GET")
+
+	// Session notes
 	r.HandleFunc("/api/session-notes", handlers.SessionNotes).Methods("GET")
 	r.HandleFunc("/api/session-notes", handlers.CreateSessionNote).Methods("POST")
 	r.HandleFunc("/api/session-notes/{id}", handlers.UpdateSessionNote).Methods("PATCH")
 	r.HandleFunc("/api/session-notes/{id}", handlers.DeleteSessionNote).Methods("DELETE")
+
+	// Report cards and schematics
 	r.HandleFunc("/api/report-cards/totals", handlers.ReportCardTotals).Methods("GET")
 	r.HandleFunc("/api/report-cards/sync", handlers.SyncReportCards).Methods("POST")
 	r.HandleFunc("/api/schematics/{sessionId}", handlers.GetSchematic).Methods("GET")
 	r.HandleFunc("/api/schematics/{sessionId}", handlers.UpsertSchematic).Methods("PUT")
 	r.HandleFunc("/api/schematics", handlers.GetSchematics).Methods("GET")
+
+	// Roster edits
 	r.HandleFunc("/api/roster-edits", handlers.GetRosterEdits).Methods("GET")
 	r.HandleFunc("/api/roster-edits/level", handlers.UpsertRosterLevelEdit).Methods("POST")
 	r.HandleFunc("/api/roster-edits/student", handlers.UpsertRosterStudentLevelEdit).Methods("POST")
-	r.HandleFunc("/api/process-csv", handlers.ProcessCSV).Methods("POST")
-	r.HandleFunc("/api/extract-classes", handlers.ExtractClasses).Methods("POST")
-	r.HandleFunc("/api/csv/session-candidates", handlers.CSVSessionCandidates).Methods("POST")
-	r.HandleFunc("/api/masterlist", handlers.Masterlist).Methods("POST")
-	r.HandleFunc("/api/masterlist-rosters", handlers.MasterlistRosters).Methods("POST")
+
+	// CSV import and export flows
+	r.HandleFunc("api/analyzeCSV", handlers.AnalyzeCSV).Methods("POST")
+	//	r.HandleFunc("/api/process-csv", handlers.ProcessCSV).Methods("POST")
+	//	r.HandleFunc("/api/extract-classes", handlers.ExtractClasses).Methods("POST")
+	//	r.HandleFunc("/api/csv/session-candidates", handlers.CSVSessionCandidates).Methods("POST")
+	//	r.HandleFunc("/api/masterlist-rosters", handlers.MasterlistRosters).Methods("POST")
+
+	// PDF generation and document exports
 	r.HandleFunc("/api/attendance-pdf", handlers.AttendancePDF).Methods("POST")
 	r.HandleFunc("/api/concat-pdfs", handlers.ConcatPDF).Methods("POST")
 	r.HandleFunc("/api/blank-pdf", handlers.BlankPDF).Methods("POST")
 	r.HandleFunc("/api/schematic-maker", handlers.SchematicMaker).Methods("POST")
 	r.HandleFunc("/api/schematic-pdf", handlers.SchematicPDF).Methods("POST")
 	r.HandleFunc("/api/session-report-pdf", handlers.SessionReportPDF).Methods("POST")
+
+	// Custom rosters
 	r.HandleFunc("/api/custom-rosters", handlers.SaveCustomRoster).Methods("POST")
 	r.HandleFunc("/api/custom-rosters/resolve", handlers.ResolveCustomRosters).Methods("POST")
 	r.HandleFunc("/api/custom-rosters/{id}", handlers.DeleteCustomRoster).Methods("DELETE")
+
+	// Planner sharing
 	r.HandleFunc("/api/planner-shares", handlers.CreatePlannerShare).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}", handlers.GetPlannerShare).Methods("GET")
 	r.HandleFunc("/api/planner-shares/{code}/join", handlers.JoinPlannerShare).Methods("POST")
@@ -79,7 +99,9 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/planner-shares/{code}/call-record", handlers.UpdatePlannerShareCallRecord).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}/details", handlers.UpdatePlannerShareDetails).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}/save-state", handlers.ApplyPlannerShareSaveState).Methods("POST")
-	r.HandleFunc("/api/health", handlers.Health).Methods("GET")
-	r.NotFoundHandler = http.NotFoundHandler()
+
+	// Health
+	//r.HandleFunc("/api/health", handlers.Health).Methods("GET")
+	//r.NotFoundHandler = http.NotFoundHandler()
 	return r
 }
