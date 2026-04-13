@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { CustomRoster, Student } from '../../types/app'
 import {
   buildAttendanceRosterStudents,
+  buildAttendancePrintItems,
   buildCustomRosterGroups,
   buildRosterGroups,
   filterRosterItems,
@@ -161,6 +162,66 @@ describe('roster utils', () => {
       { name: 'Ben' },
       { name: 'Alice' },
       { name: 'Cara' },
+    ])
+  })
+
+  it('splits attendance print items by edited student level within a roster', () => {
+    const mixedLevelRoster = {
+      code: '1001',
+      serviceName: 'Splash 2A',
+      level: 'Splash 2A',
+      time: '09:00-09:30',
+      instructor: 'Coach Amy',
+      location: 'Pool A',
+      schedule: 'Morning',
+      students: [
+        {
+          ...students[0],
+          name: 'Student One',
+          level: 'Splash 1',
+        },
+        {
+          ...students[1],
+          id: '2b',
+          name: 'Student Two',
+          level: 'Splash 2A',
+        },
+        {
+          ...students[1],
+          id: '2c',
+          name: 'Student Three',
+          level: 'Splash 1',
+        },
+      ],
+    }
+
+    expect(buildAttendancePrintItems(mixedLevelRoster)).toEqual([
+      {
+        template: 'Splash1',
+        roster: {
+          code: '1001',
+          level: 'Splash 1',
+          serviceName: 'Splash 1',
+          time: '09:00-09:30',
+          instructor: 'Coach Amy',
+          location: 'Pool A',
+          schedule: 'Morning',
+          students: [{ name: 'Student One' }, { name: 'Student Three' }],
+        },
+      },
+      {
+        template: 'Splash2A',
+        roster: {
+          code: '1001',
+          level: 'Splash 2A',
+          serviceName: 'Splash 2A',
+          time: '09:00-09:30',
+          instructor: 'Coach Amy',
+          location: 'Pool A',
+          schedule: 'Morning',
+          students: [{ name: 'Student Two' }],
+        },
+      },
     ])
   })
 })

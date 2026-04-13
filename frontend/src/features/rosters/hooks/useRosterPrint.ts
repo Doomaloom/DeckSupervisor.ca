@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { openPdfPrintDialog, openPrintWindow } from '../../../lib/browserPrint'
-import { buildAttendanceRosterStudents, sanitizeLevel } from '../utils'
+import { buildAttendancePrintItems } from '../utils'
 import { useCurrentSession } from '../../../app/useCurrentSession'
 import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
 import type { RosterGroup } from '../types'
@@ -29,7 +29,7 @@ export function useRosterPrint() {
 
     const handlePrintRoster = async (roster: RosterGroup) => {
         setBlockedPrintJob(null)
-        const template = sanitizeLevel(roster.level)
+        const rosters = buildAttendancePrintItems(roster)
         const sessionName = formatSessionDisplayName({
             sessionDay: currentSession?.session_day,
             includeDay: false,
@@ -49,18 +49,8 @@ export function useRosterPrint() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    template,
                     session: sessionName,
-                    roster: {
-                        code: roster.code,
-                        level: roster.level,
-                        serviceName: roster.serviceName,
-                        time: roster.time,
-                        instructor: roster.instructor,
-                        location: roster.location,
-                        schedule: roster.schedule,
-                        students: buildAttendanceRosterStudents(roster.students),
-                    },
+                    rosters,
                     title: `Attendance - ${roster.serviceName || roster.code || 'Roster'}`,
                 }),
             })
