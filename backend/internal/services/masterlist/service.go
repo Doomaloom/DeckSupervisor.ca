@@ -23,12 +23,26 @@ type Options struct {
 	BoldTime          bool `json:"bold_time"`
 	CenterCourse      bool `json:"center_course"`
 	BoldCourse        bool `json:"bold_course"`
+	FontSize          int  `json:"font_size"`
 }
 
 var (
 	ErrBuildRows = errors.New("unable to build master list")
 	ErrRenderPDF = errors.New("unable to render master list pdf")
 )
+
+const (
+	defaultFontSizePx         = 14
+	minFontSizePx             = 8
+	maxFontSizePx             = 18
+	masterlistTitleFontSizePx = 14
+	masterlistCellPaddingY    = 3
+	masterlistCellPaddingX    = 6
+)
+
+// Editable width weights in column order:
+// EventID, EventTime, Instructor, ServiceName, AttendeeName, Age, AttendeePhone.
+var masterlistColumnWidthWeights = []float64{11, 22, 14, 18, 24, 10, 20}
 
 type RowKind int
 
@@ -172,6 +186,7 @@ func buildHTML(rows []row, options Options, title string) string {
 	if options.Borders {
 		borderClass = "with-borders"
 	}
+	fontSizePx := normalizeFontSize(options.FontSize)
 
 	var buf bytes.Buffer
 	buf.WriteString("<!doctype html><html><head><meta charset=\"utf-8\"/>")
@@ -180,10 +195,10 @@ func buildHTML(rows []row, options Options, title string) string {
 	buf.WriteString(`@page { size: Letter; margin: 0.35in; }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: "Arial", sans-serif; color: #111; }
-.masterlist-title { font-size: 14px; font-weight: 700; text-align: center; margin: 0 0 8px; }
+.masterlist-title { font-size: ` + fmt.Sprintf("%dpx", masterlistTitleFontSizePx) + `; font-weight: 700; text-align: center; margin: 0 0 8px; }
 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 thead { display: table-header-group; }
-th, td { padding: 3px 6px; font-size: 11px; line-height: 1.2; vertical-align: top; word-break: break-word; }
+th, td { padding: ` + fmt.Sprintf("%dpx %dpx", masterlistCellPaddingY, masterlistCellPaddingX) + `; font-size: ` + fmt.Sprintf("%dpx", fontSizePx) + `; line-height: 1.2; vertical-align: top; word-break: break-word; }
 .` + borderClass + ` th, .` + borderClass + ` td { border: 1px solid #000; }
 .no-borders th, .no-borders td { border: none; }
 .header-row td { background: #f4f4f4; }
@@ -198,7 +213,7 @@ tr { page-break-inside: avoid; }`)
 	}
 	buf.WriteString("<table id=\"" + tableID + "\" class=\"" + borderClass + "\">")
 	buf.WriteString("<colgroup>")
-	for _, width := range buildColumnWidths(rows, headers) {
+	for _, width := range resolveColumnWidths(len(headers)) {
 		buf.WriteString(fmt.Sprintf("<col style=\"width:%.2f%%\"/>", width))
 	}
 	buf.WriteString("</colgroup>")
@@ -272,52 +287,52 @@ func buildHeaderClass(kind RowKind, options Options) string {
 	return strings.Join(classes, " ")
 }
 
-func buildColumnWidths(rows []row, headers []string) []float64 {
-	maxLengths := make([]int, len(headers))
-	for i, header := range headers {
-		maxLengths[i] = len([]rune(header))
+func normalizeFontSize(value int) int {
+	if value <= 0 {
+		return defaultFontSizePx
+	}
+	if value < minFontSizePx {
+		return minFontSizePx
+	}
+	if value > maxFontSizePx {
+		return maxFontSizePx
+	}
+	return value
+}
+
+func resolveColumnWidths(columnCount int) []float64 {
+	widths := make([]float64, columnCount)
+	if columnCount == 0 {
+		return widths
 	}
 
-	for _, row := range rows {
-		if row.kind != rowData {
-			continue
-		}
-		for i, cell := range row.cells {
-			if i >= len(maxLengths) {
-				break
-			}
-			length := len([]rune(cell))
-			if length > maxLengths[i] {
-				maxLengths[i] = length
-			}
-		}
-	}
-
-	const paddingChars = 2
-	weighted := make([]int, len(maxLengths))
-	total := 0
-	for i, length := range maxLengths {
-		if length < 1 {
-			length = 1
-		}
-		weighted[i] = length + paddingChars
-		total += weighted[i]
-	}
-	if total == 0 {
-		widths := make([]float64, len(headers))
-		if len(headers) == 0 {
-			return widths
-		}
-		width := 100.0 / float64(len(headers))
+	if len(masterlistColumnWidthWeights) != columnCount {
+		width := 100.0 / float64(columnCount)
 		for i := range widths {
 			widths[i] = width
 		}
 		return widths
 	}
 
-	widths := make([]float64, len(headers))
-	for i, length := range weighted {
-		widths[i] = (float64(length) / float64(total)) * 100
+	total := 0.0
+	for _, weight := range masterlistColumnWidthWeights {
+		if weight > 0 {
+			total += weight
+		}
+	}
+	if total <= 0 {
+		width := 100.0 / float64(columnCount)
+		for i := range widths {
+			widths[i] = width
+		}
+		return widths
+	}
+
+	for i, weight := range masterlistColumnWidthWeights {
+		if weight <= 0 {
+			continue
+		}
+		widths[i] = (weight / total) * 100
 	}
 	return widths
 }

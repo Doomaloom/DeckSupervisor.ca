@@ -22,7 +22,7 @@ import {
 } from '../../lib/instructorPdfCache'
 import { buildCustomRosterGroups, buildRosterGroups } from '../rosters/utils'
 import { printOptions } from './constants'
-import type { FormatOptions } from '../../types/app'
+import type { BooleanFormatOptionKey, FormatOptions } from '../../types/app'
 import type { PrintOptionKey } from './types'
 import { openPdfPrintDialog, openPrintWindow } from '../../lib/browserPrint'
 import { useSessionInstructors } from './hooks/useSessionInstructors'
@@ -47,6 +47,8 @@ import {
 } from './utils/printPayloads'
 
 const INSTRUCTOR_PDF_CONCURRENCY = 2
+const MASTERLIST_FONT_SIZE_MIN = 8
+const MASTERLIST_FONT_SIZE_MAX = 18
 
 const mapWithConcurrency = async <T, R>(
   items: T[],
@@ -87,6 +89,9 @@ const buildPdfFilename = (...parts: Array<string | null | undefined>) => {
   const filtered = parts.map(part => (part ? toFileToken(part) : '')).filter(Boolean)
   return `${filtered.join('-') || 'print'}.pdf`
 }
+
+const clampMasterlistFontSize = (value: number) =>
+  Math.min(MASTERLIST_FONT_SIZE_MAX, Math.max(MASTERLIST_FONT_SIZE_MIN, Math.round(value)))
 
 type BlockedPrintJob = {
   jobLabel: string
@@ -332,11 +337,27 @@ function PrintPage() {
     }))
   }
 
-  const handleToggleMasterlistOption = (key: keyof FormatOptions) => {
+  const handleToggleMasterlistOption = (key: BooleanFormatOptionKey) => {
     setMasterlistFormatOptions(current => {
       const next = {
         ...current,
         [key]: !current[key],
+      }
+      setMasterlistDraftOptions(next)
+      return next
+    })
+  }
+
+  const handleChangeMasterlistFontSize = (value: string) => {
+    const parsed = Number(value)
+    const nextFontSize = Number.isFinite(parsed)
+      ? clampMasterlistFontSize(parsed)
+      : MASTERLIST_FONT_SIZE_MIN
+
+    setMasterlistFormatOptions(current => {
+      const next = {
+        ...current,
+        font_size: nextFontSize,
       }
       setMasterlistDraftOptions(next)
       return next
@@ -1252,6 +1273,7 @@ function PrintPage() {
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleDay1Option}
         onToggleFormat={handleToggleMasterlistOption}
+        onChangeFontSize={handleChangeMasterlistFontSize}
         onPrint={handlePrint}
       />
       <InstructorOptionsModal
@@ -1293,6 +1315,7 @@ function PrintPage() {
         isPreviewLoading={isMasterlistPreviewLoading}
         previewError={masterlistPreviewError}
         onToggleFormat={handleToggleMasterlistOption}
+        onChangeFontSize={handleChangeMasterlistFontSize}
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleMasterlistExtra}
         onSelectCoverOrientation={setCoverOrientation}

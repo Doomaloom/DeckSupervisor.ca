@@ -1,9 +1,11 @@
-import type { FormatOptions, InstructorEntry } from '../../types/app'
+import type { BooleanFormatOptionKey, InstructorEntry } from '../../types/app'
 
 export const emptyInstructor: InstructorEntry = { name: '', codes: '' }
+export const masterlistFontSizeMin = 8
+export const masterlistFontSizeMax = 18
 
 export type FormatOptionItem = {
-  key: keyof FormatOptions
+  key: BooleanFormatOptionKey
   label: string
 }
 

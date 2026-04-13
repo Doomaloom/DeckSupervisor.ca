@@ -7,7 +7,10 @@ export type FormatOptions = {
     bold_time: boolean
     center_course: boolean
     bold_course: boolean
+    font_size: number
 }
+
+export type BooleanFormatOptionKey = Exclude<keyof FormatOptions, 'font_size'>
 
 export type InstructorEntry = {
     name: string

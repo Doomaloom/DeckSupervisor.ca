@@ -1,8 +1,10 @@
 import React from 'react'
-import type { FormatOptions } from '../../../types/app'
+import type { BooleanFormatOptionKey, FormatOptions } from '../../../types/app'
 import {
   courseHeaderStyleOptions,
   formatOptionItems,
+  masterlistFontSizeMax,
+  masterlistFontSizeMin,
   timeHeaderStyleOptions,
 } from '../../masterlist/constants'
 import PrintModalShell from './PrintModalShell'
@@ -20,7 +22,8 @@ type MasterlistOptionsModalProps = {
   previewHtml: string | null
   isPreviewLoading: boolean
   previewError: string | null
-  onToggleFormat: (key: keyof FormatOptions) => void
+  onToggleFormat: (key: BooleanFormatOptionKey) => void
+  onChangeFontSize: (value: string) => void
   onClose: () => void
   onToggle: (key: keyof MasterlistExtras) => void
   onSelectCoverOrientation: (value: 'portrait' | 'landscape') => void
@@ -37,6 +40,7 @@ function MasterlistOptionsModal({
   isPreviewLoading,
   previewError,
   onToggleFormat,
+  onChangeFontSize,
   onClose,
   onToggle,
   onSelectCoverOrientation,
@@ -98,6 +102,18 @@ function MasterlistOptionsModal({
                 {option.label}
               </label>
             ))}
+            <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
+              Font Size
+              <input
+                type="number"
+                min={masterlistFontSizeMin}
+                max={masterlistFontSizeMax}
+                step={1}
+                className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
+                value={formatOptions.font_size}
+                onChange={event => onChangeFontSize(event.target.value)}
+              />
+            </label>
           </fieldset>
 
           <div className="flex flex-col gap-3">

@@ -23,6 +23,7 @@ const defaultFormatOptions: FormatOptions = {
   bold_time: false,
   center_course: false,
   bold_course: false,
+  font_size: 11,
 }
 
 const session = {

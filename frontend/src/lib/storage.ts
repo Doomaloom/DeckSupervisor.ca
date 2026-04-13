@@ -34,6 +34,22 @@ const defaultFormatOptions: FormatOptions = {
   bold_time: false,
   center_course: false,
   bold_course: false,
+  font_size: 11,
+}
+
+function clampFormatFontSize(value: unknown): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return defaultFormatOptions.font_size
+  }
+  return Math.min(18, Math.max(8, Math.round(value)))
+}
+
+function normalizeFormatOptions(value: Partial<FormatOptions> | null | undefined): FormatOptions {
+  return {
+    ...defaultFormatOptions,
+    ...(value ?? {}),
+    font_size: clampFormatFontSize(value?.font_size),
+  }
 }
 
 function loadJson<T>(key: string, fallback: T): T {
@@ -75,7 +91,7 @@ export function setSelectedDay(day: string) {
 }
 
 export function getFormatOptions(): FormatOptions {
-  return loadJson(formatOptionsKey(), defaultFormatOptions)
+  return normalizeFormatOptions(loadJson<Partial<FormatOptions>>(formatOptionsKey(), defaultFormatOptions))
 }
 
 export function setFormatOptions(options: FormatOptions) {
@@ -83,7 +99,9 @@ export function setFormatOptions(options: FormatOptions) {
 }
 
 export function getMasterlistDraftOptions(): FormatOptions {
-  return loadJson(masterlistDraftOptionsKey(), getFormatOptions())
+  return normalizeFormatOptions(
+    loadJson<Partial<FormatOptions>>(masterlistDraftOptionsKey(), getFormatOptions()),
+  )
 }
 
 export function setMasterlistDraftOptions(options: FormatOptions) {
