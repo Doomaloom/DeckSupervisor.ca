@@ -2,6 +2,24 @@ import { extractStartTime } from '../../lib/time'
 import type { CustomRoster, Student } from '../../types/app'
 import type { RosterGroup, RosterListItem } from './types'
 
+type AttendanceRosterPayload = {
+    code: string
+    level: string
+    serviceName: string
+    time: string
+    instructor: string
+    location: string
+    schedule: string
+    students: Array<{
+        name: string
+    }>
+}
+
+export type AttendancePrintItem = {
+    template: string
+    roster: AttendanceRosterPayload
+}
+
 export function sanitizeLevel(level: string): string {
     if (!level) {
         return 'SplashFitness'
@@ -97,6 +115,54 @@ export function buildAttendanceRosterStudents(students: Student[]) {
     return getVisibleRosterStudents(students).map(student => ({
         name: student.name,
     }))
+}
+
+export function buildAttendancePrintItems(roster: RosterGroup): AttendancePrintItem[] {
+    const grouped = new Map<string, Student[]>()
+
+    getVisibleRosterStudents(roster.students).forEach(student => {
+        const level = student.level?.trim() || roster.level
+        const existing = grouped.get(level)
+        if (existing) {
+            existing.push(student)
+            return
+        }
+        grouped.set(level, [student])
+    })
+
+    const items = Array.from(grouped.entries()).map(([level, students]) => ({
+        template: sanitizeLevel(level),
+        roster: {
+            code: roster.code,
+            level,
+            serviceName: level,
+            time: roster.time,
+            instructor: roster.instructor,
+            location: roster.location,
+            schedule: roster.schedule,
+            students: buildAttendanceRosterStudents(students),
+        },
+    }))
+
+    if (items.length > 0) {
+        return items
+    }
+
+    return [
+        {
+            template: sanitizeLevel(roster.level),
+            roster: {
+                code: roster.code,
+                level: roster.level,
+                serviceName: roster.serviceName,
+                time: roster.time,
+                instructor: roster.instructor,
+                location: roster.location,
+                schedule: roster.schedule,
+                students: [],
+            },
+        },
+    ]
 }
 
 export function buildCustomRosterGroups(

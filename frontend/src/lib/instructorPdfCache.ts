@@ -2,10 +2,9 @@ import { getCustomRosterDayKey, getCustomRostersForDay, getStudentsForDay } from
 import { getCurrentSessionId as getStoredCurrentSessionId } from './sessionStorage'
 import { getStorageScope } from './storageScope'
 import {
-  buildAttendanceRosterStudents,
+  buildAttendancePrintItems,
   buildCustomRosterGroups,
   buildRosterGroups,
-  sanitizeLevel,
 } from '../features/rosters/utils'
 import type { RosterGroup } from '../features/rosters/types'
 
@@ -182,19 +181,7 @@ function buildPdfRequestBody(sessionName: string, instructor: string, rosters: R
     session: sessionName,
     filename: instructor,
     title: `Instructor - ${instructor}`,
-    rosters: rosters.map(roster => ({
-      template: sanitizeLevel(roster.level),
-      roster: {
-        code: roster.code,
-        level: roster.level,
-        serviceName: roster.serviceName,
-        time: roster.time,
-        instructor: roster.instructor,
-        location: roster.location,
-        schedule: roster.schedule,
-        students: buildAttendanceRosterStudents(roster.students),
-      },
-    })),
+    rosters: rosters.flatMap(roster => buildAttendancePrintItems(roster)),
   }
 }
 
