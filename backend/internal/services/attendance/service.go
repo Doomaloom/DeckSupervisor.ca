@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	stdhtml "html"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,7 +19,6 @@ import (
 	"cob-aquatics/internal/services/pdf"
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
-	xhtml "golang.org/x/net/html"
 )
 
 const (
@@ -481,6 +479,15 @@ func buildCombinedTemplateHTML(sections []templateSections) (string, error) {
     page-break-after: auto !important;
   }
 
+  .combined-document br {
+    display: block;
+    content: "";
+  }
+
+  .combined-document .rotate-cell br {
+    display: block;
+  }
+
   .combined-page .combined-slot + .combined-slot {
     margin-top: 1.25rem;
   }
@@ -507,168 +514,229 @@ func buildCombinedSlot(pageAttrs string, rosterIndex int, innerHTML string) stri
 }
 
 func extractTemplateSections(htmlContent string) (templateSections, error) {
-	root, err := xhtml.Parse(strings.NewReader(htmlContent))
+	lower := strings.ToLower(htmlContent)
+
+	headInner, err := rawTagInner(htmlContent, lower, "head")
 	if err != nil {
 		return templateSections{}, err
 	}
 
-	headNode := findElement(root, "head")
-	bodyNode := findElement(root, "body")
-	documentNode := findNodeByID(root, "document")
-	if headNode == nil || bodyNode == nil || documentNode == nil {
-		return templateSections{}, errors.New("attendance template missing head/body/document structure")
+	bodyAttrs, _, _, err := rawTagByName(htmlContent, lower, "body")
+	if err != nil {
+		return templateSections{}, err
 	}
 
-	pageNode := findFirstClassNode(documentNode, "templatePage")
-	if pageNode == nil {
-		return templateSections{}, errors.New("attendance template missing templatePage section")
+	documentAttrs, _, documentInner, err := rawTagContaining(htmlContent, lower, `id="document"`)
+	if err != nil {
+		return templateSections{}, err
 	}
 
-	breakNode := findFirstDirectChildWithClass(pageNode, "break-before-page")
-	if breakNode == nil {
-		return templateSections{}, errors.New("attendance template missing break-before-page marker")
+	pageAttrs, _, pageInner, err := rawTagContaining(documentInner, strings.ToLower(documentInner), "templatepage")
+	if err != nil {
+		return templateSections{}, err
+	}
+
+	breakStart, breakEnd, err := rawTagBoundsContaining(pageInner, strings.ToLower(pageInner), "break-before-page")
+	if err != nil {
+		return templateSections{}, err
 	}
 
 	return templateSections{
-		HeadInnerHTML:  renderChildren(headNode),
-		BodyAttrsHTML:  renderAttrs(bodyNode.Attr),
-		DocumentAttrs:  renderAttrs(documentNode.Attr),
-		PageAttrs:      renderAttrs(pageNode.Attr),
-		FrontInnerHTML: renderSiblingsUntil(pageNode.FirstChild, breakNode),
-		BackInnerHTML:  renderSiblingsFrom(breakNode.NextSibling),
+		HeadInnerHTML:  headInner,
+		BodyAttrsHTML:  bodyAttrs,
+		DocumentAttrs:  documentAttrs,
+		PageAttrs:      pageAttrs,
+		FrontInnerHTML: pageInner[:breakStart],
+		BackInnerHTML:  pageInner[breakEnd:],
 	}, nil
 }
 
-func findElement(root *xhtml.Node, tag string) *xhtml.Node {
-	var found *xhtml.Node
-	var walk func(*xhtml.Node)
-	walk = func(node *xhtml.Node) {
-		if found != nil || node == nil {
-			return
-		}
-		if node.Type == xhtml.ElementNode && node.Data == tag {
-			found = node
-			return
-		}
-		for child := node.FirstChild; child != nil; child = child.NextSibling {
-			walk(child)
-		}
+func rawTagInner(htmlContent, lower, tagName string) (string, error) {
+	_, _, inner, err := rawTagByName(htmlContent, lower, tagName)
+	if err != nil {
+		return "", err
 	}
-	walk(root)
-	return found
+	return inner, nil
 }
 
-func findNodeByID(root *xhtml.Node, id string) *xhtml.Node {
-	var found *xhtml.Node
-	var walk func(*xhtml.Node)
-	walk = func(node *xhtml.Node) {
-		if found != nil || node == nil {
-			return
-		}
-		if node.Type == xhtml.ElementNode && attrValue(node, "id") == id {
-			found = node
-			return
-		}
-		for child := node.FirstChild; child != nil; child = child.NextSibling {
-			walk(child)
-		}
+func rawTagByName(htmlContent, lower, tagName string) (string, string, string, error) {
+	openStart, openEnd, err := rawOpeningTagBounds(lower, tagName, 0)
+	if err != nil {
+		return "", "", "", err
 	}
-	walk(root)
-	return found
-}
 
-func findFirstClassNode(root *xhtml.Node, className string) *xhtml.Node {
-	var found *xhtml.Node
-	var walk func(*xhtml.Node)
-	walk = func(node *xhtml.Node) {
-		if found != nil || node == nil {
-			return
-		}
-		if node.Type == xhtml.ElementNode && hasClass(node, className) {
-			found = node
-			return
-		}
-		for child := node.FirstChild; child != nil; child = child.NextSibling {
-			walk(child)
-		}
+	attrs := rawTagAttrs(htmlContent[openStart:openEnd+1], tagName)
+	closeStart, closeEnd, err := rawMatchingCloseBounds(lower, tagName, openStart, openEnd)
+	if err != nil {
+		return "", "", "", err
 	}
-	walk(root)
-	return found
+
+	return normalizeRawAttrs(attrs), htmlContent[openStart : closeEnd+1], htmlContent[openEnd+1 : closeStart], nil
 }
 
-func findFirstDirectChildWithClass(root *xhtml.Node, className string) *xhtml.Node {
-	for child := root.FirstChild; child != nil; child = child.NextSibling {
-		if child.Type == xhtml.ElementNode && hasClass(child, className) {
-			return child
+func rawTagContaining(htmlContent, lower, needle string) (string, string, string, error) {
+	openStart, openEnd, tagName, err := rawOpeningTagContaining(lower, needle)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	attrs := rawTagAttrs(htmlContent[openStart:openEnd+1], tagName)
+	closeStart, closeEnd, err := rawMatchingCloseBounds(lower, tagName, openStart, openEnd)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	return normalizeRawAttrs(attrs), htmlContent[openStart : closeEnd+1], htmlContent[openEnd+1 : closeStart], nil
+}
+
+func rawTagBoundsContaining(htmlContent, lower, needle string) (int, int, error) {
+	openStart, openEnd, tagName, err := rawOpeningTagContaining(lower, needle)
+	if err != nil {
+		return 0, 0, err
+	}
+	_, closeEnd, err := rawMatchingCloseBounds(lower, tagName, openStart, openEnd)
+	if err != nil {
+		return 0, 0, err
+	}
+	return openStart, closeEnd + 1, nil
+}
+
+func rawOpeningTagContaining(lower, needle string) (int, int, string, error) {
+	match := strings.Index(lower, needle)
+	if match < 0 {
+		return 0, 0, "", fmt.Errorf("attendance template missing %s marker", needle)
+	}
+
+	openStart := strings.LastIndex(lower[:match], "<")
+	if openStart < 0 {
+		return 0, 0, "", fmt.Errorf("attendance template missing opening tag for %s", needle)
+	}
+
+	openEnd := strings.Index(lower[match:], ">")
+	if openEnd < 0 {
+		return 0, 0, "", fmt.Errorf("attendance template has unterminated opening tag for %s", needle)
+	}
+	openEnd += match
+
+	tagName := rawTagName(lower[openStart : openEnd+1])
+	if tagName == "" {
+		return 0, 0, "", fmt.Errorf("attendance template has invalid opening tag for %s", needle)
+	}
+
+	return openStart, openEnd, tagName, nil
+}
+
+func rawOpeningTagBounds(lower, tagName string, start int) (int, int, error) {
+	token := "<" + tagName
+	for offset := start; offset < len(lower); {
+		index := strings.Index(lower[offset:], token)
+		if index < 0 {
+			return 0, 0, fmt.Errorf("attendance template missing %s tag", tagName)
 		}
-	}
-	return nil
-}
-
-func hasClass(node *xhtml.Node, className string) bool {
-	classes := strings.Fields(attrValue(node, "class"))
-	for _, class := range classes {
-		if class == className {
-			return true
+		openStart := offset + index
+		nameEnd := openStart + len(token)
+		if nameEnd < len(lower) && !isTagBoundary(lower[nameEnd]) {
+			offset = nameEnd
+			continue
 		}
-	}
-	return false
-}
-
-func attrValue(node *xhtml.Node, key string) string {
-	for _, attr := range node.Attr {
-		if attr.Key == key {
-			return attr.Val
+		openEndRel := strings.Index(lower[nameEnd:], ">")
+		if openEndRel < 0 {
+			return 0, 0, fmt.Errorf("attendance template has unterminated %s tag", tagName)
 		}
+		return openStart, nameEnd + openEndRel, nil
 	}
-	return ""
+	return 0, 0, fmt.Errorf("attendance template missing %s tag", tagName)
 }
 
-func renderChildren(node *xhtml.Node) string {
-	return renderSiblingsFrom(node.FirstChild)
-}
+func rawMatchingCloseBounds(lower, tagName string, openStart, openEnd int) (int, int, error) {
+	depth := 1
+	searchFrom := openEnd + 1
+	openToken := "<" + tagName
+	closeToken := "</" + tagName
 
-func renderSiblingsUntil(start, end *xhtml.Node) string {
-	var builder strings.Builder
-	for node := start; node != nil && node != end; node = node.NextSibling {
-		builder.WriteString(renderNode(node))
+	for searchFrom < len(lower) {
+		nextOpen := strings.Index(lower[searchFrom:], openToken)
+		if nextOpen >= 0 {
+			nextOpen += searchFrom
+		}
+		nextClose := strings.Index(lower[searchFrom:], closeToken)
+		if nextClose >= 0 {
+			nextClose += searchFrom
+		}
+
+		if nextClose < 0 {
+			return 0, 0, fmt.Errorf("attendance template missing closing %s tag", tagName)
+		}
+
+		if nextOpen >= 0 && nextOpen < nextClose {
+			nameEnd := nextOpen + len(openToken)
+			if nameEnd < len(lower) && !isTagBoundary(lower[nameEnd]) {
+				searchFrom = nameEnd
+				continue
+			}
+			depth += 1
+			searchFrom = nameEnd
+			continue
+		}
+
+		nameEnd := nextClose + len(closeToken)
+		if nameEnd < len(lower) && !isTagBoundary(lower[nameEnd]) {
+			searchFrom = nameEnd
+			continue
+		}
+
+		depth -= 1
+		closeEndRel := strings.Index(lower[nameEnd:], ">")
+		if closeEndRel < 0 {
+			return 0, 0, fmt.Errorf("attendance template has unterminated closing %s tag", tagName)
+		}
+		closeEnd := nameEnd + closeEndRel
+		if depth == 0 {
+			return nextClose, closeEnd, nil
+		}
+		searchFrom = closeEnd + 1
 	}
-	return builder.String()
+
+	return 0, 0, fmt.Errorf("attendance template missing closing %s tag", tagName)
 }
 
-func renderSiblingsFrom(start *xhtml.Node) string {
-	var builder strings.Builder
-	for node := start; node != nil; node = node.NextSibling {
-		builder.WriteString(renderNode(node))
-	}
-	return builder.String()
-}
-
-func renderNode(node *xhtml.Node) string {
-	var builder strings.Builder
-	if err := xhtml.Render(&builder, node); err != nil {
+func rawTagName(openTag string) string {
+	trimmed := strings.TrimSpace(openTag)
+	if !strings.HasPrefix(trimmed, "<") {
 		return ""
 	}
-	return builder.String()
+	trimmed = trimmed[1:]
+	end := 0
+	for end < len(trimmed) && !isTagBoundary(trimmed[end]) {
+		end += 1
+	}
+	return strings.TrimSpace(trimmed[:end])
 }
 
-func renderAttrs(attrs []xhtml.Attribute) string {
-	if len(attrs) == 0 {
+func rawTagAttrs(openTag, tagName string) string {
+	trimmed := strings.TrimSpace(openTag)
+	if strings.HasSuffix(trimmed, ">") {
+		trimmed = trimmed[:len(trimmed)-1]
+	}
+	trimmed = strings.TrimPrefix(trimmed, "<"+tagName)
+	return trimmed
+}
+
+func normalizeRawAttrs(attrs string) string {
+	trimmed := strings.TrimSpace(attrs)
+	if trimmed == "" {
 		return ""
 	}
-	var builder strings.Builder
-	for _, attr := range attrs {
-		builder.WriteString(" ")
-		if attr.Namespace != "" {
-			builder.WriteString(attr.Namespace)
-			builder.WriteString(":")
-		}
-		builder.WriteString(attr.Key)
-		builder.WriteString(`="`)
-		builder.WriteString(stdhtml.EscapeString(attr.Val))
-		builder.WriteString(`"`)
+	return " " + trimmed
+}
+
+func isTagBoundary(char byte) bool {
+	switch char {
+	case ' ', '\n', '\r', '\t', '>', '/':
+		return true
+	default:
+		return false
 	}
-	return builder.String()
 }
 
 func renderSequential(ctx context.Context, session string, items []Item) ([][]byte, error) {
