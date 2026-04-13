@@ -4,6 +4,7 @@ import {
   buildAttendanceRosterStudents,
   buildCustomRosterGroups,
   buildRosterGroups,
+  filterRosterItems,
   getEmptyMessage,
   getVisibleRosterStudents,
   sanitizeLevel,
@@ -97,6 +98,39 @@ describe('roster utils', () => {
     expect(customGroups[0].students.map(student => student.name)).toEqual(['Alice', 'Ben'])
     expect(getEmptyMessage(0)).toBe('No rosters loaded. Upload a CSV file to see rosters.')
     expect(getEmptyMessage(3)).toBe('No rosters match the current filters.')
+  })
+
+  it('filters rosters by service name instead of edited level', () => {
+    const rosterItems = [
+      {
+        roster: {
+          code: '1001',
+          serviceName: 'Splash 2A',
+          level: 'Splash 3',
+          time: '09:00-09:30',
+          instructor: 'Coach Amy',
+          location: 'Pool A',
+          schedule: 'Morning',
+          students: students.slice(0, 2),
+        },
+      },
+      {
+        roster: {
+          code: '1002',
+          serviceName: 'Little Splash 1',
+          level: 'Little Splash 1',
+          time: '10:00-10:30',
+          instructor: '',
+          location: 'Pool B',
+          schedule: 'Morning',
+          students: [students[2]],
+        },
+      },
+    ]
+
+    expect(filterRosterItems(rosterItems, '', 'Splash 2A', '')).toHaveLength(1)
+    expect(filterRosterItems(rosterItems, '', 'Splash 2A', '')[0]?.roster.code).toBe('1001')
+    expect(filterRosterItems(rosterItems, '', 'Splash 3', '')).toHaveLength(0)
   })
 
   it('excludes waitlisted students from visible roster and attendance payloads', () => {

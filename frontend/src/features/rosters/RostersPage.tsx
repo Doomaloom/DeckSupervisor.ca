@@ -189,8 +189,8 @@ function RostersPage() {
     const levelOptions = useMemo(() => {
         const levels = new Set<string>()
         rosterItems.forEach(item => {
-            if (item.roster.level) {
-                levels.add(item.roster.level)
+            if (item.roster.serviceName) {
+                levels.add(item.roster.serviceName)
             }
         })
         return Array.from(levels).sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
@@ -288,8 +288,8 @@ function RostersPage() {
     const fullTimeRosterLevelOptions = useMemo(() => {
         const levels = new Set<string>()
         fullTimeRosterItems.forEach(item => {
-            if (item.roster.level) {
-                levels.add(item.roster.level)
+            if (item.roster.serviceName) {
+                levels.add(item.roster.serviceName)
             }
         })
         return Array.from(levels).sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' }))
@@ -308,7 +308,7 @@ function RostersPage() {
             if (fullTimeDayFilter && item.day !== fullTimeDayFilter) {
                 return false
             }
-            if (fullTimeLevelFilter && item.roster.level !== fullTimeLevelFilter) {
+            if (fullTimeLevelFilter && item.roster.serviceName !== fullTimeLevelFilter) {
                 return false
             }
             if (!normalizedQuery) {

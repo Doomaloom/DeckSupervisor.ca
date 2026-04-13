@@ -69,7 +69,7 @@ function FullTimeRostersPanel({
                         ))}
                     </select>
                     <select className={selectClass} value={levelFilter} onChange={event => onLevelFilterChange(event.target.value)}>
-                        <option value="">All Levels</option>
+                        <option value="">All Service Names</option>
                         {levelOptions.map(level => (
                             <option key={level} value={level}>
                                 {level}

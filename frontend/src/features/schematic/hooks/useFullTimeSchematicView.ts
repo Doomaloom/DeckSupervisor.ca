@@ -545,8 +545,8 @@ export function useFullTimeSchematicView(enabled: boolean) {
     const fullTimeRosterLevelOptions = useMemo(() => {
         const levels = new Set<string>()
         fullTimeRosterItems.forEach(item => {
-            if (item.roster.level) {
-                levels.add(item.roster.level)
+            if (item.roster.serviceName) {
+                levels.add(item.roster.serviceName)
             }
         })
         return Array.from(levels).sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' }))
