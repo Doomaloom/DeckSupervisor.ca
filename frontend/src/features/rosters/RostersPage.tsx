@@ -3,7 +3,6 @@ import { useCsvImportFlow } from '../../app/CsvImportFlowContext'
 import { useDay } from '../../app/DayContext'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
-import { processCsvWithoutStore } from '../../lib/api'
 import { getStoredItem, setStoredItem } from '../../lib/browserStorage'
 import { extractStartTime } from '../../lib/time'
 import { flushDirtyInstructorPdfs, invalidateInstructorPdfs } from '../../lib/instructorPdfCache'
@@ -53,6 +52,7 @@ import type {
 } from './types'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
+import { fetchCsvAnalyze } from '../../lib/serverApi'
 
 type FullTimeRosterItem = {
     day: string
@@ -448,8 +448,16 @@ function RostersPage() {
         setFullTimeUploadError('')
         setFullTimeUploading(true)
         try {
-            const response = await processCsvWithoutStore(file, '')
-            const classes = (response.classes ?? []).map(roster => ({
+            const analyzed = await fetchCsvAnalyze(file, currentTerm
+                ? {
+                    teamId: currentTeamId,
+                    termSeason: currentTerm.season,
+                    termYear: currentTerm.year,
+                }
+                : {
+                    teamId: currentTeamId,
+                })
+            const classes = (analyzed.rosters ?? []).map(roster => ({
                 ...roster,
                 instructor: '',
                 students: roster.students.map(student => ({

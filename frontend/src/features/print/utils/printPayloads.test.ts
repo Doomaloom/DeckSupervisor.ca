@@ -89,7 +89,7 @@ describe('printPayloads', () => {
     expect(payload?.sessionName).toBe('Spring 2026')
     expect(payload?.rosters).toEqual([
       {
-        code: 'C1',
+        courseCode: 'C1',
         serviceName: 'Splash 1',
         day: 'Mo',
         time: '9:00 AM - 9:30 AM',
@@ -106,7 +106,7 @@ describe('printPayloads', () => {
         ],
       },
       {
-        code: 'C2',
+        courseCode: 'C2',
         serviceName: 'Splash 1',
         day: 'Mo',
         time: '9:00 AM - 9:30 AM',
@@ -123,7 +123,7 @@ describe('printPayloads', () => {
         ],
       },
       {
-        code: 'C1',
+        courseCode: 'C1',
         serviceName: 'Merged Group',
         day: 'Mo',
         time: '9:00 AM - 9:30 AM',
@@ -140,7 +140,7 @@ describe('printPayloads', () => {
         ],
       },
       {
-        code: 'C2',
+        courseCode: 'C2',
         serviceName: 'Merged Group',
         day: 'Mo',
         time: '9:00 AM - 9:30 AM',

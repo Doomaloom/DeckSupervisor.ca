@@ -51,12 +51,14 @@ export type ScheduleConfig = {
 export type RosterStudent = {
     name: string
     phone: string
+    age?: string
     instructor: string
     level: string
     waitlist?: boolean
 }
 
 export type ClassRoster = {
+    sessionKey?: string
     code: string
     serviceName: string
     day: string
@@ -64,6 +66,8 @@ export type ClassRoster = {
     location: string
     schedule: string
     instructor: string
+    studentCount?: number
+    waitlistCount?: number
     students: RosterStudent[]
 }
 

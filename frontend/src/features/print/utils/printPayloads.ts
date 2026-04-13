@@ -30,7 +30,7 @@ type MasterlistStudentPayload = {
 }
 
 type MasterlistRosterPayload = {
-  code: string
+  courseCode: string
   serviceName: string
   day: string
   time: string
@@ -249,7 +249,7 @@ function buildMasterlistRosterPayloads(day: string, sessionId?: string, customRo
     if (!roster.code.startsWith('custom-')) {
       return [
         {
-          code: roster.code,
+          courseCode: roster.code,
           serviceName: roster.serviceName,
           day,
           time: roster.time,
@@ -282,7 +282,7 @@ function buildMasterlistRosterPayloads(day: string, sessionId?: string, customRo
     })
 
     return Array.from(studentsByOriginalCode.entries()).map(([code, students]) => ({
-      code,
+      courseCode: code,
       serviceName: roster.serviceName,
       day,
       time: roster.time,

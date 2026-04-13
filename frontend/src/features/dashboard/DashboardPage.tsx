@@ -17,7 +17,13 @@ import {
 } from '../../shared/session/sessionTimeInference'
 import { getTorontoDate } from '../../lib/torontoDate'
 import { suppressNextPrefetchForSession } from '../../lib/instructorPdfCache'
-import { createSession, fetchMySessions, fetchSharedSessionsToday, fetchTeamSessions } from '../../lib/serverApi'
+import {
+  createSession,
+  fetchCsvAnalyze,
+  fetchMySessions,
+  fetchSharedSessionsToday,
+  fetchTeamSessions,
+} from '../../lib/serverApi'
 import {
   clearCurrentSessionId,
   getCurrentSessionId,
@@ -196,7 +202,20 @@ function Dashboard() {
     setIsInspectingRosterFile(true)
     setNewSessionTimeMessage('')
     try {
-      const extracted = await extractClassesFromCsv(file)
+      const extracted = isGuest
+        ? await extractClassesFromCsv(file)
+        : (
+            await fetchCsvAnalyze(
+              file,
+              accountType === 'full_time' && currentTeamId
+                ? {
+                    teamId: currentTeamId,
+                    termSeason: currentTerm?.season,
+                    termYear: currentTerm?.year,
+                  }
+                : undefined,
+            )
+          ).extracted
       const sessions = extracted.sessions ?? []
       setNewSessionExtractedSessions(sessions)
       if (sessions.length === 0) {

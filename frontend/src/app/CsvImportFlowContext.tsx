@@ -4,10 +4,10 @@ import { useAuth } from './AuthContext'
 import { useDay } from './DayContext'
 import { useCurrentTeam } from './useCurrentTeam'
 import { useCurrentTerm } from './useCurrentTerm'
-import { extractClassesFromCsv, processCsvAndStore } from '../lib/api'
+import { extractClassesFromCsv, processCsvAndStore, storeProcessedRosters } from '../lib/api'
 import { setExtractedClassesForScope, setExtractedClassesForSession } from '../lib/extractedClassesStorage'
 import { getSessionTermLabel, syncReportCardsForDay } from '../lib/reportCardSync'
-import { createSession, fetchCsvSessionCandidates } from '../lib/serverApi'
+import { createSession, fetchCsvAnalyze } from '../lib/serverApi'
 import { suppressNextPrefetchForSession } from '../lib/instructorPdfCache'
 import { formatSessionDisplayName } from '../shared/session/sessionLabels'
 import { normalizeSessionLocations } from '../shared/session/sourceLocations'
@@ -21,7 +21,7 @@ import {
   setCurrentSessionId,
   type StoredSessionEntry,
 } from '../lib/sessionStorage'
-import type { CsvMatchedSession, CsvSessionCandidate, ExtractedClass, InstructorEntry } from '../types/app'
+import type { ClassRoster, CsvMatchedSession, CsvSessionCandidate, ExtractedClass, InstructorEntry } from '../types/app'
 import CsvSessionImportModal from '../components/CsvSessionImportModal'
 
 type CsvImportFlowContextValue = {
@@ -38,6 +38,7 @@ type ModalState = {
   file: File | null
   candidates: CsvSessionCandidate[]
   classesBySession: Record<string, ExtractedClass[]>
+  rostersByCandidate: Record<string, ClassRoster[]>
 }
 
 const CsvImportFlowContext = createContext<CsvImportFlowContextValue | undefined>(undefined)
@@ -50,6 +51,7 @@ const emptyState: ModalState = {
   file: null,
   candidates: [],
   classesBySession: {},
+  rostersByCandidate: {},
 }
 
 function createLocalId() {
@@ -169,6 +171,7 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       file,
       candidates: [],
       classesBySession: {},
+      rostersByCandidate: {},
     })
 
     try {
@@ -192,11 +195,13 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
         return
       }
 
-      const response = await fetchCsvSessionCandidates(
+      const response = await fetchCsvAnalyze(
         file,
         accountType === 'full_time' && currentTeamId
           ? {
               teamId: currentTeamId,
+              termSeason: currentTerm?.season,
+              termYear: currentTerm?.year,
             }
           : undefined,
       )
@@ -210,17 +215,18 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
                 termKey: currentTerm?.key ?? null,
               }
             : 'part_time',
-        sessions: response.sessions ?? [],
-        classesBySession: response.classesBySession ?? {},
+        sessions: response.candidates ?? [],
+        classesBySession: response.extracted.classesBySession ?? {},
       })
 
       setState(current => ({
         ...current,
         loading: false,
-        candidates: response.sessions ?? [],
-        classesBySession: response.classesBySession ?? {},
+        candidates: response.candidates ?? [],
+        classesBySession: response.extracted.classesBySession ?? {},
+        rostersByCandidate: response.rostersByCandidateKey ?? {},
         error:
-          (response.sessions ?? []).length === 0
+          (response.candidates ?? []).length === 0
             ? 'No session candidates were found in this CSV.'
             : '',
       }))
@@ -354,12 +360,20 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       setCurrentSessionId(targetSession.id)
       setSelectedDay(candidate.dayOfWeek)
 
-      const uploadInstructors = buildInstructorUploadConfig(candidate.dayOfWeek)
       const extractedClassesForCandidate = getCandidateExtractedClasses(state.classesBySession, candidate)
-      await processCsvAndStore(state.file, candidate.dayOfWeek, uploadInstructors, {
-        courseCodes: extractedClassesForCandidate.map(classEntry => classEntry.courseCode),
-        rawLocations: candidate.rawLocations,
-      })
+      if (isGuest) {
+        const uploadInstructors = buildInstructorUploadConfig(candidate.dayOfWeek)
+        await processCsvAndStore(state.file, candidate.dayOfWeek, uploadInstructors, {
+          courseCodes: extractedClassesForCandidate.map(classEntry => classEntry.courseCode),
+          rawLocations: candidate.rawLocations,
+        })
+      } else {
+        const candidateRosters = state.rostersByCandidate[candidate.sessionKey] ?? []
+        if (candidateRosters.length === 0) {
+          throw new Error('No roster data was returned for the selected CSV session.')
+        }
+        storeProcessedRosters(candidateRosters)
+      }
       const dayStudents = getStudentsForDay(candidate.dayOfWeek)
       console.log('[csv-import] selected day students', {
         day: candidate.dayOfWeek,

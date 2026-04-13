@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { extractClassesFromCsv, processCsvWithoutStore } from '../../lib/api'
 import {
   createRequestAssignment,
   deleteRequestAssignment,
+  fetchCsvAnalyze,
   fetchRequestAssignments,
   updateRequestAssignment,
 } from '../../lib/serverApi'
@@ -167,11 +167,9 @@ function RequestsPage() {
     setIsLoading(true)
 
     try {
-      const [rosterResponse, extracted] = await Promise.all([
-        processCsvWithoutStore(file),
-        extractClassesFromCsv(file),
-      ])
-      const classes = rosterResponse.classes ?? []
+      const analyzed = await fetchCsvAnalyze(file)
+      const classes = analyzed.rosters ?? []
+      const extracted = analyzed.extracted
       const classTerms: Record<string, string> = {}
       const termSet = new Set<string>()
 
