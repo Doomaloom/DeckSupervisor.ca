@@ -42,7 +42,7 @@ const (
 
 // Editable width weights in column order:
 // EventID, EventTime, Instructor, ServiceName, AttendeeName, Age, AttendeePhone.
-var masterlistColumnWidthWeights = []float64{11, 22, 14, 18, 24, 10, 20}
+var masterlistColumnWidthWeights = []float64{11, 22, 14, 18, 24, 8, 20}
 
 type RowKind int
 
@@ -201,6 +201,7 @@ thead { display: table-header-group; }
 th, td { padding: ` + fmt.Sprintf("%dpx %dpx", masterlistCellPaddingY, masterlistCellPaddingX) + `; font-size: ` + fmt.Sprintf("%dpx", fontSizePx) + `; line-height: 1.2; vertical-align: top; word-break: break-word; }
 .` + borderClass + ` th, .` + borderClass + ` td { border: 1px solid #000; }
 .no-borders th, .no-borders td { border: none; }
+th:nth-child(6), td:nth-child(6) { text-align: center; }
 .header-row td { background: #f4f4f4; }
 .header-row.bold td { font-weight: 700; }
 .header-row.center td { text-align: center; }
