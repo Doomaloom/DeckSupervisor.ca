@@ -1,51 +1,33 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { getSessionTermLabel, syncReportCardsForDay } from '../../lib/reportCardSync'
+import {
+  applyPersistedLevelEdits,
+  fetchRosterLevelEdits,
+  fetchRosterStudentEdits,
+  hashStudentNames,
+} from '../../lib/rosterEditsApi'
 import { fetchReportCardTotals } from '../../lib/serverApi'
 import { useDay } from '../../app/DayContext'
-import { getStudentsForDay, onStudentsUpdated } from '../../lib/storage'
+import { getStudentsForDay, onStudentsUpdated, setStudentsForDay } from '../../lib/storage'
 import type { Student } from '../../types/app'
 import { dayNames } from '../schematic/constants'
-
-type LevelCount = {
-  level: string
-  count: number
-}
-
-type InstructorSummary = {
-  name: string
-  total: number
-  levels: LevelCount[]
-}
-
-type EmployeeReportCardTotal = {
-  name: string
-  total: number
-}
-
-const normalizeLevel = (student: Student) => {
-  const value = (student.service_name || student.level || '').trim()
-  return value || 'Unknown'
-}
-
-const normalizeInstructor = (student: Student) => {
-  const value = (student.instructor || '').trim()
-  return value || 'Unassigned'
-}
+import { buildEmployeeReportCardSummaries, buildStudentReportCardSummary } from './utils'
 
 function ReportCardsPage() {
   const { selectedDay } = useDay()
   const { accountType, isGuest, user } = useAuth()
-  const { access, session: currentSession } = useCurrentSession()
+  const { access, session: currentSession, sessionId } = useCurrentSession()
   const { currentTeam, currentTeamId } = useCurrentTeam()
   const { currentTerm } = useCurrentTerm()
   const [students, setStudents] = useState<Student[]>([])
-  const [employeeTotals, setEmployeeTotals] = useState<EmployeeReportCardTotal[]>([])
+  const [employeeTotals, setEmployeeTotals] = useState<ReturnType<typeof buildEmployeeReportCardSummaries>>([])
   const [employeeTotalsLoading, setEmployeeTotalsLoading] = useState(false)
   const [syncWarning, setSyncWarning] = useState('')
+  const appliedEditsKey = useRef('')
 
   useEffect(() => {
     if (accountType === 'full_time') {
@@ -67,6 +49,55 @@ function ReportCardsPage() {
   }, [accountType, selectedDay])
 
   useEffect(() => {
+    if (accountType === 'full_time' || !sessionId || isGuest || students.length === 0) {
+      return
+    }
+
+    let active = true
+    const applyEdits = async () => {
+      const [rosterEdits, studentEdits] = await Promise.all([
+        fetchRosterLevelEdits(sessionId),
+        fetchRosterStudentEdits(sessionId),
+      ])
+      if (!active) {
+        return
+      }
+
+      const editsKey = JSON.stringify({
+        sessionId,
+        rosterEdits,
+        studentEdits,
+        studentCount: students.length,
+      })
+      if (editsKey === appliedEditsKey.current) {
+        return
+      }
+      appliedEditsKey.current = editsKey
+
+      const nameHashMap = await hashStudentNames(students.map(student => student.name))
+      if (!active) {
+        return
+      }
+
+      const next = applyPersistedLevelEdits(students, rosterEdits, studentEdits, nameHashMap)
+      if (next === students) {
+        return
+      }
+
+      setStudents(next)
+      setStudentsForDay(selectedDay, next)
+    }
+
+    void applyEdits().catch(error => {
+      console.error('Failed to apply roster level edits to report cards', error)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [accountType, isGuest, selectedDay, sessionId, students])
+
+  useEffect(() => {
     if (accountType !== 'full_time') {
       setEmployeeTotals([])
       setEmployeeTotalsLoading(false)
@@ -86,26 +117,7 @@ function ReportCardsPage() {
         if (!active) {
           return
         }
-        const data = response.totals ?? []
-        const collator = new Intl.Collator('en', { sensitivity: 'base' })
-        const totalsByEmployee = new Map<string, number>()
-
-        ;(data ?? []).forEach(row => {
-          const name = (row.instructor ?? '').trim() || 'Unassigned'
-          const count = Math.max(0, row.number_of_report_cards ?? 0)
-          totalsByEmployee.set(name, (totalsByEmployee.get(name) ?? 0) + count)
-        })
-
-        const totals = Array.from(totalsByEmployee.entries())
-          .map(([name, total]) => ({ name, total }))
-          .sort((a, b) => {
-            if (a.total !== b.total) {
-              return b.total - a.total
-            }
-            return collator.compare(a.name, b.name)
-          })
-
-        setEmployeeTotals(totals)
+        setEmployeeTotals(buildEmployeeReportCardSummaries(response.totals ?? []))
       } catch (error) {
         console.error('Failed to load full-time report card totals', error)
         setEmployeeTotals([])
@@ -119,44 +131,10 @@ function ReportCardsPage() {
     }
   }, [accountType, currentTeamId, currentTerm?.label])
 
-  const { instructorSummaries, lessonBlockTotals, totalStudents } = useMemo(() => {
-    const instructorMap = new Map<string, Map<string, number>>()
-    const totalMap = new Map<string, number>()
-    let total = 0
-
-    students.forEach(student => {
-      const instructor = normalizeInstructor(student)
-      const level = normalizeLevel(student)
-
-      const instructorLevels = instructorMap.get(instructor) ?? new Map<string, number>()
-      instructorLevels.set(level, (instructorLevels.get(level) ?? 0) + 1)
-      instructorMap.set(instructor, instructorLevels)
-
-      totalMap.set(level, (totalMap.get(level) ?? 0) + 1)
-      total += 1
-    })
-
-    const collator = new Intl.Collator('en', { sensitivity: 'base' })
-    const summaries: InstructorSummary[] = Array.from(instructorMap.entries())
-      .map(([name, levels]) => {
-        const levelCounts = Array.from(levels.entries())
-          .map(([level, count]) => ({ level, count }))
-          .sort((a, b) => collator.compare(a.level, b.level))
-        const sum = levelCounts.reduce((acc, entry) => acc + entry.count, 0)
-        return { name, total: sum, levels: levelCounts }
-      })
-      .sort((a, b) => collator.compare(a.name, b.name))
-
-    const totals = Array.from(totalMap.entries())
-      .map(([level, count]) => ({ level, count }))
-      .sort((a, b) => collator.compare(a.level, b.level))
-
-    return {
-      instructorSummaries: summaries,
-      lessonBlockTotals: totals,
-      totalStudents: total,
-    }
-  }, [students])
+  const { instructorSummaries, lessonBlockTotals, totalStudents } = useMemo(
+    () => buildStudentReportCardSummary(students),
+    [students],
+  )
 
   const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
   const totalEmployeeReportCards = useMemo(
@@ -279,10 +257,17 @@ function ReportCardsPage() {
                 {employeeTotals.map(employee => (
                   <div
                     key={`employee-total-${employee.name}`}
-                    className="flex items-center justify-between rounded-2xl border border-secondary/20 bg-bg px-4 py-3"
+                    className="rounded-2xl border border-secondary/20 bg-bg px-4 py-3"
                   >
-                    <span className="text-sm font-semibold text-secondary">{employee.name}</span>
-                    <span className="text-sm font-semibold text-secondary">{employee.total}</span>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-semibold text-secondary">{employee.name}</span>
+                      <span className="text-sm font-semibold text-secondary">{employee.total}</span>
+                    </div>
+                    {employee.levels.length > 0 ? (
+                      <p className="mt-2 text-xs text-secondary/70">
+                        {employee.levels.map(level => `${level.level} (${level.count})`).join(' • ')}
+                      </p>
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -307,18 +292,18 @@ function ReportCardsPage() {
           <section className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <h3 className="text-lg font-semibold">Lesson Block Overview</h3>
-              <span className="text-sm font-semibold text-secondary/80">
-                Total students: {totalStudents}
-              </span>
+              <span className="text-sm font-semibold text-secondary/80">Total students: {totalStudents}</span>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {lessonBlockTotals.map(entry => (
                 <div
                   key={`total-${entry.level}`}
-                  className="flex items-center justify-between rounded-2xl border border-secondary/20 bg-bg px-4 py-3"
+                  className="rounded-2xl border border-secondary/20 bg-bg px-4 py-3"
                 >
-                  <span className="text-sm font-semibold text-secondary">{entry.level}</span>
-                  <span className="text-sm font-semibold text-secondary">{entry.count}</span>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-secondary">{entry.level}</span>
+                    <span className="text-sm font-semibold text-secondary">{entry.count}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -342,10 +327,12 @@ function ReportCardsPage() {
                     {summary.levels.map(level => (
                       <div
                         key={`${summary.name}-${level.level}`}
-                        className="flex items-center justify-between rounded-2xl border border-secondary/20 bg-bg px-4 py-2"
+                        className="rounded-2xl border border-secondary/20 bg-bg px-4 py-2"
                       >
-                        <span className="text-sm font-semibold text-secondary">{level.level}</span>
-                        <span className="text-sm font-semibold text-secondary">{level.count}</span>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-semibold text-secondary">{level.level}</span>
+                          <span className="text-sm font-semibold text-secondary">{level.count}</span>
+                        </div>
                       </div>
                     ))}
                   </div>
