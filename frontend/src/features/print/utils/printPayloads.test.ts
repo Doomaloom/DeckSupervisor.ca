@@ -51,6 +51,7 @@ function makeStudent(overrides: Partial<Student>): Student {
     schedule: overrides.schedule ?? 'Weekly',
     name: overrides.name ?? 'Alice',
     phone: overrides.phone ?? '555-1111',
+    age: overrides.age ?? '6',
     instructor: overrides.instructor ?? 'Coach A',
     level: overrides.level ?? 'Splash 1',
     waitlist: overrides.waitlist ?? false,
@@ -100,6 +101,7 @@ describe('printPayloads', () => {
           {
             name: 'Alice',
             phone: '555-1111',
+            age: '6',
             instructor: 'Coach A',
             level: 'Splash 1',
           },
@@ -117,6 +119,7 @@ describe('printPayloads', () => {
           {
             name: 'Bob',
             phone: '555-1111',
+            age: '6',
             instructor: 'Coach B',
             level: 'Splash 1',
           },
@@ -134,6 +137,7 @@ describe('printPayloads', () => {
           {
             name: 'Alice',
             phone: '555-1111',
+            age: '6',
             instructor: 'Coach A',
             level: 'Splash 1',
           },
@@ -151,6 +155,7 @@ describe('printPayloads', () => {
           {
             name: 'Bob',
             phone: '555-1111',
+            age: '6',
             instructor: 'Coach B',
             level: 'Splash 1',
           },

@@ -25,6 +25,7 @@ type HighlightOptions = {
 type MasterlistStudentPayload = {
   name: string
   phone: string
+  age?: string
   instructor: string
   level: string
 }
@@ -241,6 +242,7 @@ function buildMasterlistRosterPayloads(day: string, sessionId?: string, customRo
     const mappedStudents = roster.students.map(student => ({
       name: student.name,
       phone: student.phone,
+      age: student.age,
       instructor: student.instructor,
       level: student.level,
       code: student.code,
@@ -271,6 +273,7 @@ function buildMasterlistRosterPayloads(day: string, sessionId?: string, customRo
       const studentPayload = {
         name: student.name,
         phone: student.phone,
+        age: student.age,
         instructor: student.instructor,
         level: student.level,
       }

@@ -6,16 +6,24 @@ type PrintModalShellProps = {
   notice?: React.ReactNode
   onClose: () => void
   children: React.ReactNode
+  panelClassName?: string
 }
 
-function PrintModalShell({ title, description, notice, onClose, children }: PrintModalShellProps) {
+function PrintModalShell({
+  title,
+  description,
+  notice,
+  onClose,
+  children,
+  panelClassName,
+}: PrintModalShellProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-4xl rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-xl"
+        className={`relative w-full max-w-4xl rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-xl ${panelClassName ?? ''}`}
         onClick={event => event.stopPropagation()}
       >
         <button

@@ -45,17 +45,11 @@ type row struct {
 }
 
 func BuildPDF(ctx context.Context, rosters []tasks.ClassRoster, options Options, sessionName, generatedDate string, sessionWeek int) ([]byte, string, error) {
-	if len(rosters) == 0 {
-		return nil, "", errors.New("missing rosters")
-	}
-
-	rows, err := buildRows(rosters, options)
+	htmlContent, err := BuildHTMLPreview(rosters, options, sessionName, generatedDate, sessionWeek)
 	if err != nil {
-		return nil, "", fmt.Errorf("%w: %v", ErrBuildRows, err)
+		return nil, "", err
 	}
 
-	title := buildTitle(sessionName, sessionWeek, generatedDate)
-	htmlContent := buildHTML(rows, options, title)
 	pdfBytes, err := renderPDF(ctx, htmlContent)
 	if err != nil {
 		return nil, "", fmt.Errorf("%w: %v", ErrRenderPDF, err)
@@ -63,6 +57,20 @@ func BuildPDF(ctx context.Context, rosters []tasks.ClassRoster, options Options,
 
 	filename := buildFilename()
 	return pdfBytes, filename, nil
+}
+
+func BuildHTMLPreview(rosters []tasks.ClassRoster, options Options, sessionName, generatedDate string, sessionWeek int) (string, error) {
+	if len(rosters) == 0 {
+		return "", errors.New("missing rosters")
+	}
+
+	rows, err := buildRows(rosters, options)
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", ErrBuildRows, err)
+	}
+
+	title := buildTitle(sessionName, sessionWeek, generatedDate)
+	return buildHTML(rows, options, title), nil
 }
 
 func buildRows(rosters []tasks.ClassRoster, options Options) ([]row, error) {
@@ -133,6 +141,7 @@ func buildRows(rosters []tasks.ClassRoster, options Options) ([]row, error) {
 					instructor,
 					serviceName,
 					name,
+					strings.TrimSpace(student.Age),
 					strings.TrimSpace(student.Phone),
 				},
 			})
@@ -155,6 +164,7 @@ func buildHTML(rows []row, options Options, title string) string {
 		"Instructor",
 		"ServiceName",
 		"AttendeeName",
+		"Age",
 		"AttendeePhone",
 	}
 
@@ -217,7 +227,7 @@ tr { page-break-inside: avoid; }`)
 				buf.WriteString(" ")
 				buf.WriteString(className)
 			}
-			buf.WriteString("\"><td colspan=\"6\">")
+			buf.WriteString("\"><td colspan=\"7\">")
 			buf.WriteString(html.EscapeString(row.label))
 			buf.WriteString("</td></tr>")
 		}

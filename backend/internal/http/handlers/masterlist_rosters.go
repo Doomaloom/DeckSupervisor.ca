@@ -10,6 +10,8 @@ import (
 	"cob-aquatics/tasks"
 )
 
+var errMissingMasterlistRosters = errors.New("missing rosters")
+
 type masterlistRostersRequest struct {
 	Rosters       []tasks.ClassRoster `json:"rosters"`
 	Options       masterlist.Options  `json:"options"`
@@ -18,15 +20,26 @@ type masterlistRostersRequest struct {
 	SessionWeek   int                 `json:"sessionWeek"`
 }
 
-func MasterlistRosters(w http.ResponseWriter, r *http.Request) {
+func decodeMasterlistRostersRequest(r *http.Request) (masterlistRostersRequest, error) {
 	var req masterlistRostersRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
+		return masterlistRostersRequest{}, err
 	}
 
 	if len(req.Rosters) == 0 {
-		http.Error(w, "Missing rosters", http.StatusBadRequest)
+		return masterlistRostersRequest{}, errMissingMasterlistRosters
+	}
+	return req, nil
+}
+
+func MasterlistRosters(w http.ResponseWriter, r *http.Request) {
+	req, err := decodeMasterlistRostersRequest(r)
+	if err != nil {
+		if errors.Is(err, errMissingMasterlistRosters) {
+			http.Error(w, "Missing rosters", http.StatusBadRequest)
+			return
+		}
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -54,4 +67,31 @@ func MasterlistRosters(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "inline; filename=\""+filename+"\"")
 	w.Write(pdfBytes)
+}
+
+func MasterlistPreview(w http.ResponseWriter, r *http.Request) {
+	req, err := decodeMasterlistRostersRequest(r)
+	if err != nil {
+		if errors.Is(err, errMissingMasterlistRosters) {
+			http.Error(w, "Missing rosters", http.StatusBadRequest)
+			return
+		}
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	htmlContent, err := masterlist.BuildHTMLPreview(
+		req.Rosters,
+		req.Options,
+		req.SessionName,
+		req.GeneratedDate,
+		req.SessionWeek,
+	)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(htmlContent))
 }

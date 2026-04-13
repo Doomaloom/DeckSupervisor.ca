@@ -33,7 +33,12 @@ import PrintOptionButton from './components/PrintOptionButton'
 import SchematicOptionsModal from './components/SchematicOptionsModal'
 import { useSchematicSchedule } from '../schematic/hooks/useSchematicSchedule'
 import { getCapacity } from '../schematic/utils/capacity'
-import { fetchBlankPdf, fetchMasterlistPdf, fetchSchematicPdf } from './utils/printApi'
+import {
+  fetchBlankPdf,
+  fetchMasterlistPdf,
+  fetchMasterlistPreviewHtml,
+  fetchSchematicPdf,
+} from './utils/printApi'
 import {
   buildMasterlistRequestBody,
   buildDateRangeLabel,
@@ -130,6 +135,9 @@ function PrintPage() {
   const [masterlistFormatOptions, setMasterlistFormatOptions] = useState<FormatOptions>(() =>
     getMasterlistDraftOptions(),
   )
+  const [masterlistPreviewHtml, setMasterlistPreviewHtml] = useState<string | null>(null)
+  const [isMasterlistPreviewLoading, setIsMasterlistPreviewLoading] = useState(false)
+  const [masterlistPreviewError, setMasterlistPreviewError] = useState<string | null>(null)
   const [blockedPrintJob, setBlockedPrintJob] = useState<BlockedPrintJob | null>(null)
   const [schematicOptions, setSchematicOptions] = useState<{
     highlightInstructor: boolean
@@ -169,6 +177,75 @@ function PrintPage() {
     }
     setMasterlistFormatOptions(getMasterlistDraftOptions())
   }, [activeModal])
+
+  useEffect(() => {
+    if (activeModal !== 'masterlist') {
+      setIsMasterlistPreviewLoading(false)
+      setMasterlistPreviewError(null)
+      return
+    }
+
+    if (!selectedDay) {
+      setMasterlistPreviewHtml(null)
+      setMasterlistPreviewError('Select a day to preview the masterlist.')
+      setIsMasterlistPreviewLoading(false)
+      return
+    }
+
+    const body = buildMasterlistRequestBody({
+      day: selectedDay,
+      sessionId: getCurrentSessionId(),
+      session: currentSession,
+      term: currentTerm,
+      options: masterlistFormatOptions,
+    })
+
+    if (!body) {
+      setMasterlistPreviewHtml(null)
+      setMasterlistPreviewError('No roster data found for the selected day.')
+      setIsMasterlistPreviewLoading(false)
+      return
+    }
+
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => {
+      setIsMasterlistPreviewLoading(true)
+      setMasterlistPreviewError(null)
+
+      fetchMasterlistPreviewHtml(body, controller.signal)
+        .then(html => {
+          setMasterlistPreviewHtml(html)
+          setMasterlistPreviewError(null)
+        })
+        .catch(error => {
+          if (controller.signal.aborted) {
+            return
+          }
+          console.error(error)
+          const message =
+            error instanceof Error && error.message
+              ? error.message
+              : 'Unable to load the masterlist preview.'
+          setMasterlistPreviewError(message)
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setIsMasterlistPreviewLoading(false)
+          }
+        })
+    }, 250)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timeoutId)
+    }
+  }, [
+    activeModal,
+    currentSession,
+    currentTerm,
+    masterlistFormatOptions,
+    selectedDay,
+  ])
 
   useEffect(() => {
     if (!schematicOptions.highlightInstructor) {
@@ -1212,6 +1289,9 @@ function PrintPage() {
         coverOrientation={coverOrientation}
         formatOptions={masterlistFormatOptions}
         notice={activeModal === 'masterlist' ? blockedPrintNotice : null}
+        previewHtml={masterlistPreviewHtml}
+        isPreviewLoading={isMasterlistPreviewLoading}
+        previewError={masterlistPreviewError}
         onToggleFormat={handleToggleMasterlistOption}
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleMasterlistExtra}

@@ -71,6 +71,7 @@ func NewRouter() *mux.Router {
 	//	r.HandleFunc("/api/extract-classes", handlers.ExtractClasses).Methods("POST")
 	//	r.HandleFunc("/api/csv/session-candidates", handlers.CSVSessionCandidates).Methods("POST")
 	r.HandleFunc("/api/masterlist-rosters", handlers.MasterlistRosters).Methods("POST")
+	r.HandleFunc("/api/masterlist-preview", handlers.MasterlistPreview).Methods("POST")
 
 	// PDF generation and document exports
 	r.HandleFunc("/api/attendance-pdf", handlers.AttendancePDF).Methods("POST")
