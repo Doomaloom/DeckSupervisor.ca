@@ -41,7 +41,7 @@ function RosterFiltersBar({
                 value={levelFilter}
                 onChange={event => onLevelFilterChange(event.target.value)}
             >
-                <option value="">Filter Classes by Level</option>
+                <option value="">Filter Classes by Service Name</option>
                 {levelOptions.map(level => (
                     <option key={level} value={level}>
                         {level}

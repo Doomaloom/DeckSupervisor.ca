@@ -777,7 +777,9 @@ func UpsertRosterLevelEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	payload["created_by"] = client.User.ID
 	payload["updated_at"] = time.Now().UTC().Format(time.RFC3339)
-	if err := client.Post(r.Context(), "/rest/v1/roster_level_edits", nil, payload, "resolution=merge-duplicates", nil); err != nil {
+	query := url.Values{}
+	query.Set("on_conflict", "session_id,code")
+	if err := client.Post(r.Context(), "/rest/v1/roster_level_edits", query, payload, "resolution=merge-duplicates", nil); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -797,7 +799,9 @@ func UpsertRosterStudentLevelEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	payload["created_by"] = client.User.ID
 	payload["updated_at"] = time.Now().UTC().Format(time.RFC3339)
-	if err := client.Post(r.Context(), "/rest/v1/roster_student_level_edits", nil, payload, "resolution=merge-duplicates", nil); err != nil {
+	query := url.Values{}
+	query.Set("on_conflict", "session_id,code,student_name_hash")
+	if err := client.Post(r.Context(), "/rest/v1/roster_student_level_edits", query, payload, "resolution=merge-duplicates", nil); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

@@ -138,7 +138,7 @@ export function filterRosterItems(
         if (instructorFilter && roster.instructor !== instructorFilter) {
             return false
         }
-        if (levelFilter && roster.level !== levelFilter) {
+        if (levelFilter && roster.serviceName !== levelFilter) {
             return false
         }
         if (normalizedQuery) {
