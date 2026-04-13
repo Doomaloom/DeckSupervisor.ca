@@ -16,7 +16,8 @@ func readCSVDataFrame(csvReader io.Reader) (dataframe.DataFrame, error) {
 	if df.Err != nil {
 		return df, fmt.Errorf("failed to read csv: %w", df.Err)
 	}
-	dfKeep := df.Select(KEEP_COLUMNS)
+	dfKeep := df
+	fmt.Printf("Read CSV with %d rows, keeping %d rows\n", df.Nrow(), dfKeep.Nrow())
 
 	return dfKeep, nil
 }

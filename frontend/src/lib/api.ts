@@ -74,6 +74,22 @@ function rosterToStudents(rosters: ClassRoster[]): Student[] {
   return students
 }
 
+export function storeProcessedRosters(classes: ClassRoster[]) {
+  if (classes.length === 0) {
+    return
+  }
+
+  const students = rosterToStudents(classes)
+  const grouped = students.reduce<Record<string, Student[]>>((acc, student) => {
+    acc[student.day] = acc[student.day] || []
+    acc[student.day].push(student)
+    return acc
+  }, {})
+  Object.entries(grouped).forEach(([key, list]) => {
+    setStudentsForDay(key, list)
+  })
+}
+
 export async function processCsvAndStore(
   file: File,
   day: string,
@@ -103,17 +119,7 @@ export async function processCsvAndStore(
         })
       : (data.classes ?? [])
 
-  if (classes.length) {
-    const students = rosterToStudents(classes)
-    const grouped = students.reduce<Record<string, Student[]>>((acc, student) => {
-      acc[student.day] = acc[student.day] || []
-      acc[student.day].push(student)
-      return acc
-    }, {})
-    Object.entries(grouped).forEach(([key, list]) => {
-      setStudentsForDay(key, list)
-    })
-  }
+  storeProcessedRosters(classes)
   return {
     ...data,
     classes,

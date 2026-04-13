@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"fmt"
 	"io"
 	"sort"
 	"strconv"
@@ -99,13 +100,13 @@ func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*Extr
 	classMap := map[string]*extractedClassAccumulator{}
 
 	for i := 0; i < df.Nrow(); i++ {
-		row := df.Subset(i)
-		courseCode := NormalizeEventID(strings.TrimSpace(row.Col("EventID").Str()))
-		serviceName := strings.TrimSpace(row.Col("ServiceName").Str())
-		location := strings.TrimSpace(row.Col("Facility").Str())
-		dayValue := row.Col("DayOfTheWeek").Str()
-		eventSchedule := strings.TrimSpace(row.Col("EventSchedule").Str())
-		timeRange := strings.TrimSpace(row.Col("EventTime").Str())
+		row := df.Subset([]int{i, i})
+		courseCode := NormalizeEventID(strings.TrimSpace(row.Col("EventID").Elem(0).String()))
+		serviceName := strings.TrimSpace(row.Col("ServiceName").Elem(0).String())
+		location := strings.TrimSpace(row.Col("Facility").Elem(0).String())
+		dayValue := row.Col("DayOfTheWeek").Elem(0).String()
+		eventSchedule := strings.TrimSpace(row.Col("EventSchedule").Elem(0).String())
+		timeRange := strings.TrimSpace(row.Col("EventTime").Elem(0).String())
 		if courseCode == "" {
 			continue
 		}
@@ -115,6 +116,8 @@ func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*Extr
 		if dayValue == "" {
 			continue
 		}
+
+		fmt.Printf("Processing row %d: courseCode=%s, dayValue=%s, timeRange=%s\n", i, courseCode, dayValue, timeRange)
 
 		start, end := splitTimeRange(timeRange)
 
@@ -136,14 +139,14 @@ func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*Extr
 
 		sessionSeason, sessionYear := getSeasonAndYear(eventSchedule, startDate, endDate)
 		sessionBucketKey := buildExtractedSessionBucketKey(dayValue, sessionSeason, sessionYear, location)
-		bookedCountFromRoster := parsePositiveInt(strings.TrimSpace(row.Col("Booked").Str()))
+		bookedCountFromRoster := parsePositiveInt(strings.TrimSpace(row.Col("Booked").Elem(0).String()))
 
-		statusValue := strings.TrimSpace(row.Col("AttendeeStatus").Str())
+		statusValue := strings.TrimSpace(row.Col("AttendeeStatus").Elem(0).String())
 		isWaitlist := isWaitingStatus(statusValue)
 
-		phone := strings.TrimSpace(row.Col("AttendeePhone").Str())
-		name := normalizeExtractedStudentName(strings.TrimSpace(row.Col("AttendeeName").Str()))
-		age := strings.TrimSpace(row.Col("Age").Str())
+		phone := strings.TrimSpace(row.Col("AttendeePhone").Elem(0).String())
+		name := normalizeExtractedStudentName(strings.TrimSpace(row.Col("AttendeeName").Elem(0).String()))
+		age := strings.TrimSpace(row.Col("Age").Elem(0).String())
 		hasAttendee := name != ""
 		instructor := resolveExtractedInstructor(courseCode, opts.InstructorMap)
 

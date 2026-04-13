@@ -66,11 +66,11 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/roster-edits/student", handlers.UpsertRosterStudentLevelEdit).Methods("POST")
 
 	// CSV import and export flows
-	r.HandleFunc("api/analyzeCSV", handlers.AnalyzeCSV).Methods("POST")
+	r.HandleFunc("/api/analyzeCSV", handlers.AnalyzeCSV).Methods("POST")
 	//	r.HandleFunc("/api/process-csv", handlers.ProcessCSV).Methods("POST")
 	//	r.HandleFunc("/api/extract-classes", handlers.ExtractClasses).Methods("POST")
 	//	r.HandleFunc("/api/csv/session-candidates", handlers.CSVSessionCandidates).Methods("POST")
-	//	r.HandleFunc("/api/masterlist-rosters", handlers.MasterlistRosters).Methods("POST")
+	r.HandleFunc("/api/masterlist-rosters", handlers.MasterlistRosters).Methods("POST")
 
 	// PDF generation and document exports
 	r.HandleFunc("/api/attendance-pdf", handlers.AttendancePDF).Methods("POST")

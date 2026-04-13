@@ -1,6 +1,8 @@
 import type {
+  ClassRoster,
   CsvSessionCandidate,
   ExtractedClass,
+  ExtractedSession,
   PlannerCallRecordUpdate,
   PlannerClassMoveType,
   PlannerClassStatus,
@@ -8,6 +10,7 @@ import type {
   RequestAssignment,
   PlannerShareJoinResponse,
   PlannerShareSession,
+  RosterStudent,
 } from '../types/app'
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
@@ -179,6 +182,131 @@ export async function fetchCsvSessionCandidates(
   file: File,
   scope?: { teamId?: string; termSeason?: string; termYear?: number }
 ) {
+  const analyzed = await fetchCsvAnalyze(file, scope)
+  return {
+    sessions: analyzed.candidates,
+    classesBySession: analyzed.extracted.classesBySession,
+  }
+}
+
+type AnalyzeCsvApiRosterStudent = {
+  name: string
+  phone: string
+  age?: string
+  instructor: string
+  level: string
+  waitlist?: boolean
+}
+
+type AnalyzeCsvApiRoster = {
+  sessionKey?: string
+  code?: string
+  courseCode?: string
+  serviceName: string
+  location: string
+  time: string
+  instructor: string
+  studentCount?: number
+  waitlistCount?: number
+  students?: AnalyzeCsvApiRosterStudent[]
+  Students?: AnalyzeCsvApiRosterStudent[]
+}
+
+type AnalyzeCsvApiCandidate = {
+  candidateKey: string
+  extractedSessionKeys: string[]
+  rawLocations: string[]
+  dayOfWeek: string
+  sessionSeason: string
+  sessionYear: number
+  startDate: string
+  endDate: string
+  location: string
+  sessionStartTime24: string
+  sessionEndTime24: string
+  classCount: number
+  studentCount: number
+  waitlistCount: number
+  courseCodes: string[]
+  matchedSession: CsvSessionCandidate['matchedSession']
+}
+
+type AnalyzeCsvApiResponse = {
+  success: boolean
+  meta?: {
+    warnings?: string[]
+  }
+  rosters: AnalyzeCsvApiRoster[]
+  totalStudents: number
+  extracted: {
+    totalSessions: number
+    totalClasses: number
+    sessions: ExtractedSession[]
+    classesBySession: Record<string, ExtractedClass[]>
+  }
+  candidates: AnalyzeCsvApiCandidate[]
+  rostersByCandidateKey: Record<string, AnalyzeCsvApiRoster[]>
+}
+
+function hydrateAnalyzeRosterStudent(student: AnalyzeCsvApiRosterStudent): RosterStudent {
+  return {
+    name: student.name,
+    phone: student.phone,
+    age: student.age,
+    instructor: student.instructor ?? '',
+    level: student.level ?? '',
+    waitlist: Boolean(student.waitlist),
+  }
+}
+
+function hydrateAnalyzeRoster(
+  roster: AnalyzeCsvApiRoster,
+  sessionsByKey: Map<string, ExtractedSession>,
+): ClassRoster {
+  const session = roster.sessionKey ? sessionsByKey.get(roster.sessionKey) : undefined
+  const day = session?.dayOfWeek ?? ''
+  const students = roster.students ?? roster.Students ?? []
+  return {
+    sessionKey: roster.sessionKey,
+    code: roster.code ?? roster.courseCode ?? '',
+    serviceName: roster.serviceName,
+    day,
+    time: roster.time,
+    location: roster.location,
+    schedule: day,
+    instructor: roster.instructor ?? '',
+    studentCount: roster.studentCount ?? students.length,
+    waitlistCount:
+      roster.waitlistCount ?? students.filter(student => Boolean(student.waitlist)).length,
+    students: students.map(hydrateAnalyzeRosterStudent),
+  }
+}
+
+function mapAnalyzeCandidate(candidate: AnalyzeCsvApiCandidate): CsvSessionCandidate {
+  return {
+    sessionKey: candidate.candidateKey,
+    sourceSessionKeys: candidate.extractedSessionKeys ?? [],
+    rawLocations: candidate.rawLocations ?? [],
+    dayOfWeek: candidate.dayOfWeek,
+    sessionSeason: candidate.sessionSeason,
+    sessionYear: candidate.sessionYear,
+    startDate: candidate.startDate,
+    endDate: candidate.endDate,
+    location: candidate.location,
+    sessionStartTime24: candidate.sessionStartTime24,
+    sessionEndTime24: candidate.sessionEndTime24,
+    classCount: candidate.classCount,
+    studentCount: candidate.studentCount,
+    waitlistCount: candidate.waitlistCount,
+    courseCodes: candidate.courseCodes ?? [],
+    matchedSession: candidate.matchedSession,
+  }
+}
+
+export async function fetchCsvAnalyze(
+  file: File,
+  scope?: { teamId?: string; termSeason?: string; termYear?: number; day?: string },
+) {
   const formData = new FormData()
   formData.append('csv_file', file)
   if (scope?.teamId) {
@@ -190,8 +318,11 @@ export async function fetchCsvSessionCandidates(
   if (scope?.termYear) {
     formData.append('termYear', String(scope.termYear))
   }
+  if (scope?.day) {
+    formData.append('day', scope.day)
+  }
 
-  const response = await fetch('/api/csv/session-candidates', {
+  const response = await fetch('/api/analyzeCSV', {
     method: 'POST',
     credentials: 'include',
     body: formData,
@@ -199,12 +330,31 @@ export async function fetchCsvSessionCandidates(
 
   if (!response.ok) {
     const message = await response.text()
-    throw new Error(message || 'Failed to inspect CSV')
+    throw new Error(message || 'Failed to analyze CSV')
   }
 
-  return (await response.json()) as {
-    sessions: CsvSessionCandidate[]
-    classesBySession: Record<string, ExtractedClass[]>
+  const payload = (await response.json()) as AnalyzeCsvApiResponse
+  const extracted = payload.extracted ?? {
+    totalSessions: 0,
+    totalClasses: 0,
+    sessions: [],
+    classesBySession: {},
+  }
+  const sessionsByKey = new Map((extracted.sessions ?? []).map(session => [session.sessionKey, session]))
+
+  return {
+    success: Boolean(payload.success),
+    warnings: payload.meta?.warnings ?? [],
+    rosters: (payload.rosters ?? []).map(roster => hydrateAnalyzeRoster(roster, sessionsByKey)),
+    totalStudents: payload.totalStudents ?? 0,
+    extracted,
+    candidates: (payload.candidates ?? []).map(mapAnalyzeCandidate),
+    rostersByCandidateKey: Object.fromEntries(
+      Object.entries(payload.rostersByCandidateKey ?? {}).map(([candidateKey, rosters]) => [
+        candidateKey,
+        (rosters ?? []).map(roster => hydrateAnalyzeRoster(roster, sessionsByKey)),
+      ]),
+    ) as Record<string, ClassRoster[]>,
   }
 }
 
