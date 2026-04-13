@@ -3,6 +3,7 @@ import {
   upsertRosterLevelEdit as upsertRosterLevelEditRequest,
   upsertRosterStudentLevelEdit as upsertRosterStudentLevelEditRequest,
 } from './serverApi'
+import type { Student } from '../types/app'
 
 export type RosterLevelEdit = {
   code: string
@@ -104,4 +105,38 @@ export async function hashStudentNames(names: string[]): Promise<Map<string, str
     }
   })
   return map
+}
+
+export function applyPersistedLevelEdits(
+  students: Student[],
+  rosterEdits: RosterLevelEdit[],
+  studentEdits: StudentLevelEdit[],
+  nameHashMap: Map<string, string>,
+): Student[] {
+  if (students.length === 0 || (rosterEdits.length === 0 && studentEdits.length === 0)) {
+    return students
+  }
+
+  const levelByCode = new Map(rosterEdits.map(edit => [edit.code, edit.level]))
+  const studentOverride = new Map(
+    studentEdits.map(edit => [`${edit.code}:${edit.student_name_hash}`, edit.level]),
+  )
+
+  let changed = false
+  const next = students.map(student => {
+    const rosterLevel = levelByCode.get(student.code)
+    const nameHash = nameHashMap.get(student.name)
+    const overrideKey = nameHash ? `${student.code}:${nameHash}` : ''
+    const studentLevel = overrideKey ? studentOverride.get(overrideKey) : undefined
+    const resolvedLevel = studentLevel ?? rosterLevel
+
+    if (!resolvedLevel || resolvedLevel === student.level) {
+      return student
+    }
+
+    changed = true
+    return { ...student, level: resolvedLevel }
+  })
+
+  return changed ? next : students
 }

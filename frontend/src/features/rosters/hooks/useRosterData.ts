@@ -6,7 +6,12 @@ import {
     setInstructorsForDay,
     setStudentsForDay,
 } from '../../../lib/storage'
-import { fetchRosterLevelEdits, fetchRosterStudentEdits, hashStudentNames } from '../../../lib/rosterEditsApi'
+import {
+    applyPersistedLevelEdits,
+    fetchRosterLevelEdits,
+    fetchRosterStudentEdits,
+    hashStudentNames,
+} from '../../../lib/rosterEditsApi'
 import { fetchSchematic } from '../../../lib/serverApi'
 import type { Student } from '../../../types/app'
 import { buildRosterGroups } from '../utils'
@@ -132,25 +137,8 @@ export function useRosterData(selectedDay: string, sessionId?: string, isGuest?:
             }
             appliedEditsKey.current = editsKey
 
-            const levelByCode = new Map(rosterEdits.map(edit => [edit.code, edit.level]))
-            const studentOverride = new Map(
-                studentEdits.map(edit => [`${edit.code}:${edit.student_name_hash}`, edit.level]),
-            )
-
             const nameHashMap = await hashStudentNames(students.map(student => student.name))
-            const next = students.map(student => {
-                const rosterLevel = levelByCode.get(student.code)
-                const nameHash = nameHashMap.get(student.name)
-                const overrideKey = nameHash ? `${student.code}:${nameHash}` : ''
-                const studentLevel = overrideKey ? studentOverride.get(overrideKey) : undefined
-                if (studentLevel) {
-                    return { ...student, level: studentLevel }
-                }
-                if (rosterLevel) {
-                    return { ...student, level: rosterLevel }
-                }
-                return student
-            })
+            const next = applyPersistedLevelEdits(students, rosterEdits, studentEdits, nameHashMap)
 
             setStudents(next)
             setStudentsForDay(selectedDay, next)
