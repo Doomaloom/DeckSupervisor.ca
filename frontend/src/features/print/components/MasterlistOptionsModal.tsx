@@ -17,6 +17,9 @@ type MasterlistOptionsModalProps = {
   coverOrientation: 'portrait' | 'landscape'
   formatOptions: FormatOptions
   notice?: React.ReactNode
+  previewHtml: string | null
+  isPreviewLoading: boolean
+  previewError: string | null
   onToggleFormat: (key: keyof FormatOptions) => void
   onClose: () => void
   onToggle: (key: keyof MasterlistExtras) => void
@@ -30,6 +33,9 @@ function MasterlistOptionsModal({
   coverOrientation,
   formatOptions,
   notice,
+  previewHtml,
+  isPreviewLoading,
+  previewError,
   onToggleFormat,
   onClose,
   onToggle,
@@ -46,54 +52,40 @@ function MasterlistOptionsModal({
       description="Choose formatting options and add a schematic coverpage to the masterlist."
       notice={notice}
       onClose={onClose}
+      panelClassName="max-w-7xl"
     >
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
-          <legend className="px-2 text-xs font-semibold">Format Options</legend>
-          <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
-            <input
-              type="checkbox"
-              checked={extras.schematicCoverPage}
-              onChange={() => onToggle('schematicCoverPage')}
-            />
-            Schematic Coverpage
-          </label>
-          {extras.schematicCoverPage && (
-            <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
-              Cover Orientation
-              <select
-                className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
-                value={coverOrientation}
-                onChange={event =>
-                  onSelectCoverOrientation(
-                    event.target.value === 'landscape' ? 'landscape' : 'portrait',
-                  )
-                }
-              >
-                <option value="portrait">Portrait</option>
-                <option value="landscape">Landscape</option>
-              </select>
-            </label>
-          )}
-          {formatOptionItems.map(option => (
-            <label
-              key={option.key}
-              className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-            >
+      <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+          <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+            <legend className="px-2 text-xs font-semibold">Format Options</legend>
+            <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
               <input
                 type="checkbox"
-                checked={formatOptions[option.key]}
-                onChange={() => onToggleFormat(option.key)}
+                checked={extras.schematicCoverPage}
+                onChange={() => onToggle('schematicCoverPage')}
               />
-              {option.label}
+              Schematic Coverpage
             </label>
-          ))}
-        </fieldset>
-
-        <div className="flex flex-col gap-3">
-          <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
-            <legend className="px-2 text-xs font-semibold">Time Header Style</legend>
-            {timeHeaderStyleOptions.map(option => (
+            {extras.schematicCoverPage && (
+              <label
+                className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+              >
+                Cover Orientation
+                <select
+                  className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
+                  value={coverOrientation}
+                  onChange={event =>
+                    onSelectCoverOrientation(
+                      event.target.value === 'landscape' ? 'landscape' : 'portrait',
+                    )
+                  }
+                >
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </label>
+            )}
+            {formatOptionItems.map(option => (
               <label
                 key={option.key}
                 className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
@@ -108,23 +100,76 @@ function MasterlistOptionsModal({
             ))}
           </fieldset>
 
-          <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
-            <legend className="px-2 text-xs font-semibold">Course Header Style</legend>
-            {courseHeaderStyleOptions.map(option => (
-              <label
-                key={option.key}
-                className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-              >
-                <input
-                  type="checkbox"
-                  checked={formatOptions[option.key]}
-                  onChange={() => onToggleFormat(option.key)}
-                />
-                {option.label}
-              </label>
-            ))}
-          </fieldset>
+          <div className="flex flex-col gap-3">
+            <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+              <legend className="px-2 text-xs font-semibold">Time Header Style</legend>
+              {timeHeaderStyleOptions.map(option => (
+                <label
+                  key={option.key}
+                  className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+                >
+                  <input
+                    type="checkbox"
+                    checked={formatOptions[option.key]}
+                    onChange={() => onToggleFormat(option.key)}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </fieldset>
+
+            <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+              <legend className="px-2 text-xs font-semibold">Course Header Style</legend>
+              {courseHeaderStyleOptions.map(option => (
+                <label
+                  key={option.key}
+                  className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+                >
+                  <input
+                    type="checkbox"
+                    checked={formatOptions[option.key]}
+                    onChange={() => onToggleFormat(option.key)}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </fieldset>
+          </div>
         </div>
+
+        <section className="flex min-h-[24rem] flex-col rounded-2xl border-2 border-secondary p-3">
+          <div className="flex items-center justify-between gap-3 px-1 pb-3">
+            <div>
+              <h4 className="text-sm font-semibold">Live Preview</h4>
+              <p className="text-xs text-secondary/70">
+                Updates automatically as you change formatting.
+              </p>
+            </div>
+            {isPreviewLoading ? (
+              <span className="text-xs font-semibold text-secondary/70">Refreshing...</span>
+            ) : null}
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-secondary/20 bg-bg">
+            {previewError ? (
+              <div className="flex h-full items-center justify-center p-6 text-center text-sm text-secondary/80">
+                {previewError}
+              </div>
+            ) : previewHtml ? (
+              <iframe
+                title="Masterlist preview"
+                className="h-full w-full bg-white"
+                srcDoc={previewHtml}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center p-6 text-center text-sm text-secondary/80">
+                {isPreviewLoading
+                  ? 'Loading preview...'
+                  : 'Select a day with roster data to preview the masterlist.'}
+              </div>
+            )}
+          </div>
+        </section>
       </div>
       <div className="mt-8 flex flex-wrap justify-end gap-3">
         <button

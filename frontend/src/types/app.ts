@@ -38,6 +38,7 @@ export type Student = {
     schedule: string
     name: string
     phone: string
+    age?: string
     instructor: string
     level: string
     waitlist: boolean

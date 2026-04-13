@@ -35,6 +35,27 @@ export async function fetchMasterlistPdf(body: MasterlistPayload): Promise<Blob>
   return response.blob()
 }
 
+export async function fetchMasterlistPreviewHtml(
+  body: MasterlistPayload,
+  signal?: AbortSignal,
+): Promise<string> {
+  const response = await fetch('/api/masterlist-preview', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+    signal,
+  })
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(message || 'Failed to generate masterlist preview.')
+  }
+
+  return response.text()
+}
+
 export async function fetchBlankPdf(payload: { orientation: 'portrait' | 'landscape'; rotateCounterClockwise90?: boolean }): Promise<Blob> {
   const response = await fetch('/api/blank-pdf', {
     method: 'POST',
