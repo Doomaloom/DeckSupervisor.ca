@@ -9,11 +9,26 @@
   <body>
     <main class="popup">
       <p class="eyebrow">CSV Getter Helper</p>
-      <h1>Run CSV Preset</h1>
+      <h1>Run CSV Helper</h1>
       <p class="copy">
-        Open the CSV getter page first, then choose the location preset to fill filters and click
-        Preview.
+        Open the CSV getter page first, choose the location, then run the helper to fill filters
+        and click Preview.
       </p>
+      <label class="field">
+        <span>Location</span>
+        <div class="location-row">
+          <select id="location-select" class="select-input">
+            <option value="">Select a location</option>
+          </select>
+          <button id="favorite-toggle" class="secondary-button favorite-toggle" type="button">
+            Add Favorite
+          </button>
+        </div>
+      </label>
+      <section id="favorite-section" class="favorite-section hidden" aria-label="Favorite locations">
+        <p class="section-label">Favorites</p>
+        <div id="favorite-actions" class="favorite-actions"></div>
+      </section>
       <label class="field">
         <span>First Day Of Session</span>
         <button id="session-date-button" class="date-button" type="button" aria-haspopup="dialog">
@@ -58,8 +73,7 @@
         <div id="calendar-grid" class="calendar-grid"></div>
       </section>
       <div class="actions">
-        <button type="button" data-preset="jim_archdekin">Jim Archdekin</button>
-        <button type="button" data-preset="paul_palleschi">Paul Palleschi</button>
+        <button id="run-preset" type="button">Run Helper</button>
       </div>
       <p id="status" class="status" role="status"></p>
     </main>

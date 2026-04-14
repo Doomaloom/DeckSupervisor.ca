@@ -40,6 +40,13 @@ h1 {
   margin-top: 16px;
 }
 
+.location-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
 .mode-field {
   display: grid;
   gap: 8px;
@@ -85,6 +92,25 @@ h1 {
   color: #1f2a2e;
   font: inherit;
   padding: 10px 12px;
+}
+
+.select-input {
+  width: 100%;
+  border: 1px solid #cdd5d8;
+  border-radius: 10px;
+  background: #fff;
+  color: #1f2a2e;
+  font: inherit;
+  padding: 10px 12px;
+}
+
+.section-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #5c6b70;
 }
 
 .date-button,
@@ -189,6 +215,16 @@ h1 {
   margin-top: 16px;
 }
 
+.favorite-section {
+  margin-top: 16px;
+}
+
+.favorite-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 button {
   border: 0;
   border-radius: 12px;
@@ -202,6 +238,22 @@ button {
 
 button:hover {
   background: #0b5f59;
+}
+
+.secondary-button {
+  border: 1px solid #cdd5d8;
+  background: #fff;
+  color: #1f2a2e;
+}
+
+.secondary-button:hover {
+  background: #eef3f2;
+}
+
+.favorite-toggle.is-favorite {
+  border-color: #0f766e;
+  background: #e7f5f2;
+  color: #0f766e;
 }
 
 button:disabled {

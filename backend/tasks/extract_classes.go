@@ -685,6 +685,8 @@ func daySortKey(day string) int {
 		return 6
 	case "Su":
 		return 7
+	case "Mo,Tu,We,Th,Fr":
+		return 8
 	default:
 		return 99
 	}

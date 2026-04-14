@@ -11,13 +11,14 @@ import {
   fetchOwnedTeams,
   fetchTeamDetails,
   fetchTeamMembers,
+  leaveTeam,
   removeTeamMember,
   revokeTeamInvite,
   searchInvitableProfiles,
   updateTeam,
 } from '../../lib/serverApi'
 import { getTorontoDate } from '../../lib/torontoDate'
-import { clearCurrentTeamId, setCurrentTeamId } from '../../lib/teamStorage'
+import { clearCurrentTeamId, getCurrentTeamId, setCurrentTeamId } from '../../lib/teamStorage'
 
 type TeamEntry = {
   id: string
@@ -153,7 +154,11 @@ function TeamPage() {
 
   const memberIds = useMemo(() => new Set(members.map(member => member.user_id)), [members])
   const invitedIds = useMemo(() => new Set(invites.map(invite => invite.invitee_id)), [invites])
-  const shareableSessions = useMemo(() => userSessions.filter(session => Boolean(session.team_id)), [userSessions])
+  const memberTeamIds = useMemo(() => new Set(memberTeams.map(team => team.id)), [memberTeams])
+  const shareableSessions = useMemo(
+    () => userSessions.filter(session => Boolean(session.team_id) && memberTeamIds.has(session.team_id ?? '')),
+    [memberTeamIds, userSessions],
+  )
 
   useEffect(() => {
     if (!user || accountType === 'full_time' || !shareSessionId) {
@@ -312,6 +317,27 @@ function TeamPage() {
     }
   }
 
+  const handleLeaveMemberTeam = async (team: TeamEntry) => {
+    setLoading(true)
+    setMessage('')
+    try {
+      await leaveTeam(team.id)
+      setMemberTeams(current => current.filter(item => item.id !== team.id))
+      if (shareableSessions.some(session => session.id === shareSessionId && session.team_id === team.id)) {
+        setShareSessionId('')
+        setShareMemberId('')
+      }
+      setMessage(`Left ${team.name}.`)
+      if (getCurrentTeamId() === team.id) {
+        clearCurrentTeamId()
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Failed to leave team')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (isGuest) {
     return (
       <div id="team-page" data-component="team-page" className="mx-auto flex w-full max-w-xl flex-col gap-6">
@@ -341,6 +367,7 @@ function TeamPage() {
 
         <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
           <h3 className="text-lg font-semibold">Teams</h3>
+          {message ? <p className="mt-3 text-sm font-semibold text-secondary">{message}</p> : null}
           {memberTeams.length === 0 ? (
             <p className="mt-3 text-sm text-secondary/70">No team memberships found.</p>
           ) : (
@@ -353,6 +380,14 @@ function TeamPage() {
                       Locations: {team.available_locations.join(', ')}
                     </p>
                   ) : null}
+                  <button
+                    type="button"
+                    className="mt-3 rounded-lg border border-danger/60 px-3 py-1 text-sm font-semibold text-danger transition hover:-translate-y-0.5 hover:bg-danger hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => void handleLeaveMemberTeam(team)}
+                    disabled={loading}
+                  >
+                    Leave Team
+                  </button>
                 </div>
               ))}
             </div>

@@ -149,7 +149,7 @@ function RostersPage() {
     const [fullTimeUploading, setFullTimeUploading] = useState(false)
     const fullTimeUploadInputRef = useRef<HTMLInputElement | null>(null)
     const fullTimeTermKey = currentTerm?.key ?? 'no-term'
-    const { students, setStudents, rosters, instructorOptions } = useRosterData(
+    const { students, setStudents, rosters, instructorOptions, persistedStudentLevelEditMap } = useRosterData(
         selectedDay ?? '',
         sessionId ?? undefined,
         isGuest,
@@ -229,6 +229,11 @@ function RostersPage() {
             [code]: !current[code],
         }))
     }
+
+    useEffect(() => {
+        setStudentLevelEditMap(persistedStudentLevelEditMap)
+    }, [persistedStudentLevelEditMap])
+
     useEffect(() => {
         return () => {
             if (canManageInstructorPdfCache && selectedDay && sessionId) {

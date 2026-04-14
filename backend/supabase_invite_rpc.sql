@@ -102,6 +102,46 @@ $$;
 grant execute on function revoke_team_invite(uuid) to authenticated;
 revoke execute on function revoke_team_invite(uuid) from anon;
 
+create or replace function leave_team(p_team_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+set row_security = off
+as $$
+declare
+  v_owner_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'Unauthorized';
+  end if;
+
+  select owner_id
+    into v_owner_id
+  from teams
+  where id = p_team_id;
+
+  if v_owner_id is null then
+    raise exception 'Team not found';
+  end if;
+
+  if v_owner_id = auth.uid() then
+    raise exception 'Team owners cannot leave their own team';
+  end if;
+
+  delete from team_members
+  where team_id = p_team_id
+    and user_id = auth.uid();
+
+  if not found then
+    raise exception 'Membership not found';
+  end if;
+end;
+$$;
+
+grant execute on function leave_team(uuid) to authenticated;
+revoke execute on function leave_team(uuid) from anon;
+
 create or replace function search_invitable_part_time_profiles(
   p_team_id uuid,
   p_query text,

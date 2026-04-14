@@ -410,6 +410,10 @@ export function removeTeamMember(teamId: string, userId: string) {
   return request<void>(`/api/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(userId)}`, { method: 'DELETE' })
 }
 
+export function leaveTeam(teamId: string) {
+  return request<void>(`/api/teams/${encodeURIComponent(teamId)}/leave`, { method: 'POST' })
+}
+
 export function createSessionShare(body: Record<string, unknown>) {
   return request<void>('/api/session-shares', { method: 'POST', body })
 }

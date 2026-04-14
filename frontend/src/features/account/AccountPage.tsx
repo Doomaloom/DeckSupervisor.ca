@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
-import { acceptTeamInvite, declineTeamInvite, fetchAccountData } from '../../lib/serverApi'
+import { acceptTeamInvite, declineTeamInvite, fetchAccountData, leaveTeam } from '../../lib/serverApi'
+import { clearCurrentTeamId, getCurrentTeamId } from '../../lib/teamStorage'
 
 type InviteEntry = {
   id: string
@@ -24,6 +25,8 @@ function AccountPage() {
   const [saveMessage, setSaveMessage] = useState('')
   const [saveError, setSaveError] = useState('')
   const [inviteError, setInviteError] = useState('')
+  const [teamMessage, setTeamMessage] = useState('')
+  const [teamError, setTeamError] = useState('')
   const [invites, setInvites] = useState<InviteEntry[]>([])
   const [memberships, setMemberships] = useState<MembershipEntry[]>([])
   const [loading, setLoading] = useState(false)
@@ -90,6 +93,24 @@ function AccountPage() {
       setInvites(current => current.filter(item => item.id !== invite.id))
     } catch (error) {
       setInviteError(error instanceof Error ? error.message : 'Failed to decline invite')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLeaveTeam = async (membership: MembershipEntry) => {
+    setTeamMessage('')
+    setTeamError('')
+    setLoading(true)
+    try {
+      await leaveTeam(membership.team_id)
+      setMemberships(current => current.filter(item => item.team_id !== membership.team_id))
+      if (getCurrentTeamId() === membership.team_id) {
+        clearCurrentTeamId()
+      }
+      setTeamMessage(`Left ${membership.teams?.name ?? 'team'}.`)
+    } catch (error) {
+      setTeamError(error instanceof Error ? error.message : 'Failed to leave team')
     } finally {
       setLoading(false)
     }
@@ -198,6 +219,8 @@ function AccountPage() {
 
       <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
         <h3 className="text-lg font-semibold">My Teams</h3>
+        {teamMessage ? <p className="mt-3 text-sm font-semibold text-secondary">{teamMessage}</p> : null}
+        {teamError ? <p className="mt-3 text-sm font-semibold text-danger">{teamError}</p> : null}
         {memberships.length === 0 ? (
           <p className="mt-3 text-sm text-secondary/70">No teams joined yet.</p>
         ) : (
@@ -206,6 +229,14 @@ function AccountPage() {
               <div key={member.team_id} className="rounded-2xl border border-secondary/20 bg-bg p-4">
                 <p className="font-semibold text-secondary">{member.teams?.name ?? 'Team'}</p>
                 <p className="text-xs uppercase tracking-wide text-secondary/70">{member.role}</p>
+                <button
+                  type="button"
+                  className="mt-3 rounded-lg border border-danger/60 px-3 py-1 text-sm font-semibold text-danger transition hover:-translate-y-0.5 hover:bg-danger hover:text-accent disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => void handleLeaveTeam(member)}
+                  disabled={loading || member.role.toLowerCase() === 'owner'}
+                >
+                  {member.role.toLowerCase() === 'owner' ? 'Owner' : 'Leave Team'}
+                </button>
               </div>
             ))}
           </div>

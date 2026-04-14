@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Student } from '../types/app'
-import { applyPersistedLevelEdits } from './rosterEditsApi'
+import { applyPersistedLevelEdits, buildPersistedStudentLevelEditMap } from './rosterEditsApi'
 
 const students: Student[] = [
   {
@@ -34,6 +34,19 @@ const students: Student[] = [
 ]
 
 describe('rosterEditsApi', () => {
+  it('builds a roster toggle map from persisted student edits', () => {
+    expect(
+      buildPersistedStudentLevelEditMap([
+        { code: '1001', student_name_hash: 'hash-one', level: 'Splash 3' },
+        { code: '1001', student_name_hash: 'hash-two', level: 'Splash 4' },
+        { code: '1002', student_name_hash: 'hash-three', level: 'Splash 1' },
+      ]),
+    ).toEqual({
+      '1001': true,
+      '1002': true,
+    })
+  })
+
   it('applies roster-level edits when present', () => {
     const nameHashMap = new Map([
       ['Student One', 'hash-one'],

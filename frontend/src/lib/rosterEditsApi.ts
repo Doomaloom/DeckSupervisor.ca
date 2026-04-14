@@ -107,6 +107,17 @@ export async function hashStudentNames(names: string[]): Promise<Map<string, str
   return map
 }
 
+export function buildPersistedStudentLevelEditMap(
+  studentEdits: StudentLevelEdit[],
+): Record<string, boolean> {
+  return studentEdits.reduce<Record<string, boolean>>((result, edit) => {
+    if (edit.code) {
+      result[edit.code] = true
+    }
+    return result
+  }, {})
+}
+
 export function applyPersistedLevelEdits(
   students: Student[],
   rosterEdits: RosterLevelEdit[],

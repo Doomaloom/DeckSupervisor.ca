@@ -39,7 +39,7 @@ function RosterCard({
         <div className={containerClass} id={roster.code} data-component="roster-card">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold text-secondary">
-                    {roster.serviceName} : {roster.time}
+                    {roster.serviceName} - {roster.code} : {roster.time}
                 </h2>
                 <div className="flex items-center gap-2">
                     <button

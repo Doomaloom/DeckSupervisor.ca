@@ -8,6 +8,7 @@ import {
 } from '../../../lib/storage'
 import {
     applyPersistedLevelEdits,
+    buildPersistedStudentLevelEditMap,
     fetchRosterLevelEdits,
     fetchRosterStudentEdits,
     hashStudentNames,
@@ -59,6 +60,7 @@ function applyInstructorAssignments(students: Student[], byCode: Map<string, str
 
 export function useRosterData(selectedDay: string, sessionId?: string, isGuest?: boolean) {
     const [students, setStudents] = useState<Student[]>([])
+    const [persistedStudentLevelEditMap, setPersistedStudentLevelEditMap] = useState<Record<string, boolean>>({})
     const [remoteSchematic, setRemoteSchematic] = useState<RemoteSchematicData | null>(null)
     const appliedEditsKey = useRef('')
 
@@ -115,6 +117,8 @@ export function useRosterData(selectedDay: string, sessionId?: string, isGuest?:
 
     useEffect(() => {
         if (!sessionId || isGuest || students.length === 0) {
+            appliedEditsKey.current = ''
+            setPersistedStudentLevelEditMap({})
             return
         }
         let active = true
@@ -140,6 +144,7 @@ export function useRosterData(selectedDay: string, sessionId?: string, isGuest?:
             const nameHashMap = await hashStudentNames(students.map(student => student.name))
             const next = applyPersistedLevelEdits(students, rosterEdits, studentEdits, nameHashMap)
 
+            setPersistedStudentLevelEditMap(buildPersistedStudentLevelEditMap(studentEdits))
             setStudents(next)
             setStudentsForDay(selectedDay, next)
         }
@@ -159,5 +164,6 @@ export function useRosterData(selectedDay: string, sessionId?: string, isGuest?:
         setStudents,
         rosters,
         instructorOptions,
+        persistedStudentLevelEditMap,
     }
 }

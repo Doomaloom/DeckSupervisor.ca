@@ -31,6 +31,7 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/teams/{id}/details", handlers.TeamDetails).Methods("GET")
 	r.HandleFunc("/api/teams/{id}/members", handlers.TeamMembers).Methods("GET")
 	r.HandleFunc("/api/teams/{id}/members/{userId}", handlers.RemoveTeamMember).Methods("DELETE")
+	r.HandleFunc("/api/teams/{id}/leave", handlers.LeaveTeam).Methods("POST")
 	r.HandleFunc("/api/teams/{id}/invitable-profiles", handlers.SearchInvitableProfiles).Methods("GET")
 	r.HandleFunc("/api/teams/{id}/invites", handlers.CreateTeamInvite).Methods("POST")
 	r.HandleFunc("/api/team-invites/{id}/accept", handlers.AcceptTeamInvite).Methods("POST")

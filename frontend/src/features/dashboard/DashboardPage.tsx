@@ -91,6 +91,7 @@ type SharedSessionEntry = {
   sessions?: DbSessionEntry | null
 }
 const NO_TEAM_VALUE = '__no_team__'
+const fullTimeSeasonOptions = ['Summer', 'Fall', 'Spring', 'Winter']
 
 const seasonRank: Record<string, number> = {
   winter: 0,
@@ -177,6 +178,7 @@ function Dashboard() {
   const [dbSessions, setDbSessions] = useState<DbSessionEntry[]>([])
   const [teamTermSessions, setTeamTermSessions] = useState<TeamTermSessionRow[]>([])
   const [teamTermSessionsLoading, setTeamTermSessionsLoading] = useState(false)
+  const [selectedFullTimeYear, setSelectedFullTimeYear] = useState<number | null>(null)
   const [sharedSessions, setSharedSessions] = useState<SharedSessionEntry[]>([])
   const [currentSessionId, setCurrentSessionIdState] = useState(() => getCurrentSessionId())
   const [selectMessage, setSelectMessage] = useState('')
@@ -184,7 +186,7 @@ function Dashboard() {
   const didManuallyEditSessionTimesRef = useRef(false)
   const didAutofillSessionTimesRef = useRef(false)
 
-  const seasonOptions = ['Winter', 'Spring', 'Summer', 'Fall']
+  const seasonOptions = fullTimeSeasonOptions
 
   const addInstructor = () => {
     setInstructors(current => [...current, { name: '' }])
@@ -364,6 +366,8 @@ function Dashboard() {
 
   const handleSelectFullTimeTeam = (teamId: string) => {
     setCurrentTeamId(teamId)
+    setSelectedFullTimeYear(null)
+    setTeamTermSessions([])
     clearCurrentTerm()
     resetCurrentSessionScope()
   }
@@ -426,22 +430,23 @@ function Dashboard() {
   }, [teamTermSessions])
 
   const fullTimeTermYears = useMemo(() => {
-    const years = new Set<number>()
-    fullTimeSessionTerms.forEach(term => years.add(term.year))
-    return Array.from(years).sort((a, b) => b - a)
-  }, [fullTimeSessionTerms])
-
-  const selectedFullTimeTermYear = currentTerm?.year ?? null
-
-  const fullTimeTermsForSelectedYear = useMemo(() => {
-    if (!selectedFullTimeTermYear) {
+    const currentYear = Number.parseInt(getTorontoDate().slice(0, 4), 10)
+    if (!Number.isFinite(currentYear) || currentYear <= 0) {
       return []
     }
-    return fullTimeSessionTerms.filter(term => term.year === selectedFullTimeTermYear)
-  }, [fullTimeSessionTerms, selectedFullTimeTermYear])
+    return Array.from({ length: 5 }, (_, index) => currentYear - index)
+  }, [])
+
+  const fullTimeTermsForSelectedYear = useMemo(() => {
+    if (!selectedFullTimeYear) {
+      return []
+    }
+    return fullTimeSessionTerms.filter(term => term.year === selectedFullTimeYear)
+  }, [fullTimeSessionTerms, selectedFullTimeYear])
 
   const handleSelectFullTimeYear = (yearInput: string) => {
     if (!yearInput) {
+      setSelectedFullTimeYear(null)
       clearCurrentTerm()
       resetCurrentSessionScope()
       return
@@ -450,6 +455,7 @@ function Dashboard() {
     if (!Number.isFinite(parsedYear) || parsedYear <= 0) {
       return
     }
+    setSelectedFullTimeYear(parsedYear)
     const nextTerm = fullTimeSessionTerms.find(term => term.year === parsedYear)
     if (!nextTerm) {
       clearCurrentTerm()
@@ -466,7 +472,7 @@ function Dashboard() {
       resetCurrentSessionScope()
       return
     }
-    const year = selectedFullTimeTermYear
+    const year = selectedFullTimeYear
     if (!year) {
       return
     }
@@ -607,7 +613,12 @@ function Dashboard() {
     if (accountType !== 'full_time') {
       return
     }
+    if (currentTerm?.year) {
+      setSelectedFullTimeYear(currentTerm.year)
+      return
+    }
     if (!currentTeamId || fullTimeSessionTerms.length === 0) {
+      setSelectedFullTimeYear(null)
       clearCurrentTerm()
       return
     }
@@ -619,6 +630,7 @@ function Dashboard() {
     accountType,
     clearCurrentTerm,
     currentTeamId,
+    currentTerm?.year,
     currentTermKey,
     fullTimeSessionTerms,
     setCurrentTermKey,
@@ -716,9 +728,9 @@ function Dashboard() {
                     Select Year
                     <select
                       className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                      value={selectedFullTimeTermYear ? String(selectedFullTimeTermYear) : ''}
+                      value={selectedFullTimeYear ? String(selectedFullTimeYear) : ''}
                       onChange={event => handleSelectFullTimeYear(event.target.value)}
-                      disabled={!currentTeamId || teamTermSessionsLoading || fullTimeTermYears.length === 0}
+                      disabled={!currentTeamId || teamTermSessionsLoading}
                     >
                       <option value="">Select a year</option>
                       {fullTimeTermYears.map(year => (
@@ -734,7 +746,7 @@ function Dashboard() {
                       className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
                       value={currentTerm?.season ?? ''}
                       onChange={event => handleSelectFullTimeSeason(event.target.value)}
-                      disabled={!currentTeamId || teamTermSessionsLoading || fullTimeTermsForSelectedYear.length === 0}
+                      disabled={!currentTeamId || teamTermSessionsLoading || !selectedFullTimeYear}
                     >
                       <option value="">Select a season</option>
                       {seasonOptions.map(season => {

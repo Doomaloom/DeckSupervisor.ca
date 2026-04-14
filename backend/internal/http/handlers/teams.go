@@ -242,6 +242,21 @@ func RemoveTeamMember(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func LeaveTeam(w http.ResponseWriter, r *http.Request) {
+	client, err := supabasesvc.NewClientFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	teamID := mux.Vars(r)["id"]
+	var out any
+	if err := client.RPC(r.Context(), "leave_team", map[string]any{"p_team_id": teamID}, &out); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func CreateSessionShare(w http.ResponseWriter, r *http.Request) {
 	client, err := supabasesvc.NewClientFromRequest(r)
 	if err != nil {
