@@ -28,6 +28,7 @@ type Request struct {
 	Title                    string     `json:"title"`
 	DateRange                string     `json:"dateRange"`
 	WeeksLabel               string     `json:"weeksLabel"`
+	DeckSupervisorName       string     `json:"deckSupervisorName"`
 	Highlight                bool       `json:"highlightInstructor"`
 	Selected                 string     `json:"selectedInstructor"`
 	Instructors              []string   `json:"instructors"`
@@ -338,7 +339,11 @@ th, td { border: 1px solid #000; text-align: center; vertical-align: middle; pad
 	leftSpan := 1 + (columnCount / 2)
 	rightSpan := columnCount + 2 - leftSpan
 	buf.WriteString("<tr>")
-	buf.WriteString("<th class=\"meta\" colspan=\"" + fmt.Sprintf("%d", leftSpan) + "\">Deck Supervisor:</th>")
+	buf.WriteString("<th class=\"meta\" colspan=\"" + fmt.Sprintf("%d", leftSpan) + "\">Deck Supervisor:")
+	if name := strings.TrimSpace(req.DeckSupervisorName); name != "" {
+		buf.WriteString(" " + html.EscapeString(name))
+	}
+	buf.WriteString("</th>")
 	buf.WriteString("<th class=\"meta\" colspan=\"" + fmt.Sprintf("%d", rightSpan) + "\">Cancelled Dates:")
 	if strings.TrimSpace(req.WeeksLabel) != "" {
 		buf.WriteString("<div class=\"meta-sub\">" + html.EscapeString(req.WeeksLabel) + "</div>")

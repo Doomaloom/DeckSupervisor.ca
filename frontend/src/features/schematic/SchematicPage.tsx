@@ -4,6 +4,7 @@ import { useDay } from '../../app/DayContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
+import { formatMiniSessionTitle } from '../../shared/session/sessionLabels'
 import { dayNames } from './constants'
 import SchematicBoard from './components/SchematicBoard'
 import { useFullTimeSchematicView } from './hooks/useFullTimeSchematicView'
@@ -50,7 +51,8 @@ function SchematicPage() {
     const dayLabel = selectedDay ? (dayNames[selectedDay] ?? selectedDay) : 'Select Day'
     const seasonLabel = session?.session_season?.trim() ?? ''
     const yearLabel = session?.start_date ? new Date(session.start_date).getFullYear() : NaN
-    const sessionLabel = [dayLabel, seasonLabel, Number.isFinite(yearLabel) ? String(yearLabel) : '']
+    const miniSessionLabel = formatMiniSessionTitle(selectedDay, session?.session_year ?? null, session?.start_date ?? null)
+    const sessionLabel = miniSessionLabel || [dayLabel, seasonLabel, Number.isFinite(yearLabel) ? String(yearLabel) : '']
         .filter(Boolean)
         .join(' ')
     const isReadOnly = access.mode === 'shared'

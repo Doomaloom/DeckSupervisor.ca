@@ -1,3 +1,5 @@
+import { SESSION_DAY_LABELS } from '../../shared/session/sessionDays'
+
 export const SLOT_MINUTES = 15
 export const SLOT_HEIGHT_REM = 2.5
 export const HEADER_HEIGHT_REM = 4.95
@@ -29,12 +31,4 @@ export const classCapacities: Record<string, number> = {
     'Private Lesson': 1,
 }
 
-export const dayNames: Record<string, string> = {
-    Mo: 'Monday',
-    Tu: 'Tuesday',
-    We: 'Wednesday',
-    Th: 'Thursday',
-    Fr: 'Friday',
-    Sa: 'Saturday',
-    Su: 'Sunday',
-}
+export const dayNames = SESSION_DAY_LABELS

@@ -13,7 +13,9 @@ import { getCapacity } from '../../schematic/utils/capacity'
 import { buildCourses } from '../../schematic/utils/courses'
 import { createRequestAwareLayout, type StoredCourseLayout } from '../../schematic/utils/layout'
 import { buildCustomRosterGroups, buildRosterGroups } from '../../rosters/utils'
-import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
+import { getTorontoDate } from '../../../lib/torontoDate'
+import { isMiniSessionDay } from '../../../shared/session/sessionDays'
+import { formatMiniSessionTitle, formatSessionDisplayName } from '../../../shared/session/sessionLabels'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
@@ -46,6 +48,7 @@ export type SchematicPdfPayload = {
   title: string
   dateRange: string
   weeksLabel: string
+  deckSupervisorName?: string
   highlightInstructor: boolean
   selectedInstructor: string
   instructors: string[]
@@ -68,6 +71,7 @@ export type MasterlistPdfPayload = {
   sessionName: string
   generatedDate: string
   sessionWeek: number
+  sessionProgressLabel?: string
 }
 
 export type SchematicPrefetchPayload = {
@@ -166,6 +170,14 @@ export function buildSessionTitle(
   selectedDay: string | null,
   term?: CurrentTerm | null,
 ) {
+  const miniSessionTitle = formatMiniSessionTitle(
+    selectedDay || session?.session_day,
+    session?.session_year,
+    session?.start_date,
+  )
+  if (miniSessionTitle) {
+    return miniSessionTitle
+  }
   return formatSessionDisplayName({
     sessionDay: session?.session_day,
     dayOverride: selectedDay,
@@ -207,6 +219,103 @@ export function buildWeeksLabel(session: SessionRecord | null) {
   const days = Math.floor((endDate.getTime() - startDate.getTime()) / MS_PER_DAY) + 1
   const weeks = Math.floor((days + 6) / 7)
   return `# of weeks ${weeks} classes`
+}
+
+function parseDateOnly(value: string) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) {
+    return null
+  }
+  const year = Number.parseInt(match[1], 10)
+  const month = Number.parseInt(match[2], 10)
+  const day = Number.parseInt(match[3], 10)
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null
+  }
+  return new Date(Date.UTC(year, month - 1, day))
+}
+
+function formatDateOnly(value: Date) {
+  return value.toISOString().slice(0, 10)
+}
+
+function observedCanadaDay(year: number) {
+  const canadaDay = new Date(Date.UTC(year, 6, 1))
+  const weekday = canadaDay.getUTCDay()
+  if (weekday === 6) {
+    return new Date(Date.UTC(year, 6, 3))
+  }
+  if (weekday === 0) {
+    return new Date(Date.UTC(year, 6, 2))
+  }
+  return canadaDay
+}
+
+function firstMondayOfAugust(year: number) {
+  const augustFirst = new Date(Date.UTC(year, 7, 1))
+  const weekday = augustFirst.getUTCDay()
+  const offset = weekday === 0 ? 1 : weekday === 1 ? 0 : 8 - weekday
+  return new Date(Date.UTC(year, 7, 1 + offset))
+}
+
+function isMiniSessionHoliday(value: Date) {
+  const year = value.getUTCFullYear()
+  const iso = formatDateOnly(value)
+  return iso === formatDateOnly(observedCanadaDay(year)) || iso === formatDateOnly(firstMondayOfAugust(year))
+}
+
+export function getMiniSessionLessonDay(
+  startDate: string,
+  now = new Date(),
+  endDate?: string | null,
+) {
+  const start = parseDateOnly(startDate)
+  const current = parseDateOnly(getTorontoDate(now))
+  const end = endDate ? parseDateOnly(endDate) : null
+  if (!start || !current) {
+    return null
+  }
+
+  let effectiveEnd = current
+  if (end && end.getTime() < effectiveEnd.getTime()) {
+    effectiveEnd = end
+  }
+  if (effectiveEnd.getTime() < start.getTime()) {
+    return 1
+  }
+
+  let lessonDay = 0
+  for (let cursor = new Date(start); cursor.getTime() <= effectiveEnd.getTime(); cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+    const weekday = cursor.getUTCDay()
+    if (weekday === 0 || weekday === 6) {
+      continue
+    }
+    if (isMiniSessionHoliday(cursor)) {
+      continue
+    }
+    lessonDay += 1
+  }
+
+  return lessonDay > 0 ? lessonDay : 1
+}
+
+export function buildMasterlistProgressLabel(
+  session: SessionRecord | null,
+  selectedDay: string | null,
+  now = new Date(),
+) {
+  const day = selectedDay || session?.session_day || ''
+  if (!isMiniSessionDay(day)) {
+    return ''
+  }
+  if (!session?.start_date) {
+    return ''
+  }
+  const lessonDay = getMiniSessionLessonDay(session.start_date, now, session.end_date)
+  if (!lessonDay) {
+    return ''
+  }
+  return `Lesson Day ${lessonDay}`
 }
 
 export function buildRosterGroupsForPrint(
@@ -316,6 +425,7 @@ export function buildMasterlistRequestBody(args: {
     sessionName: buildSessionTitle(args.session, args.day, args.term),
     generatedDate: formatGeneratedDate(new Date()),
     sessionWeek: getSessionWeek(args.session?.start_date ?? '') ?? 1,
+    sessionProgressLabel: buildMasterlistProgressLabel(args.session, args.day),
   }
 }
 

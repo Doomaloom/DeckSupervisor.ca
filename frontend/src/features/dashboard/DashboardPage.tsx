@@ -11,6 +11,7 @@ import {
   getYearFromDate,
   resolveSessionYear,
 } from '../../shared/session/sessionLabels'
+import { MANUAL_SESSION_DAY_OPTIONS } from '../../shared/session/sessionDays'
 import {
   findSingleMatchingExtractedSession,
   type SessionIdentityCriteria,
@@ -829,13 +830,11 @@ function Dashboard() {
                       onChange={event => setSessionDay(event.target.value)}
                     >
                       <option value="">Select a day</option>
-                      <option value="Mo">Monday</option>
-                      <option value="Tu">Tuesday</option>
-                      <option value="We">Wednesday</option>
-                      <option value="Th">Thursday</option>
-                      <option value="Fr">Friday</option>
-                      <option value="Sa">Saturday</option>
-                      <option value="Su">Sunday</option>
+                      {MANUAL_SESSION_DAY_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </label>
                   <label className="flex flex-col gap-2 font-semibold text-secondary">

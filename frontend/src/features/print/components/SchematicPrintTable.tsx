@@ -8,6 +8,7 @@ type SchematicPrintTableProps = {
   title: string
   dateRange: string
   weeksLabel: string
+  deckSupervisorName?: string
 }
 
 type Cell = {
@@ -47,6 +48,7 @@ function SchematicPrintTable({
   title,
   dateRange,
   weeksLabel,
+  deckSupervisorName,
 }: SchematicPrintTableProps) {
   const allCourses = useMemo(() => columns.flat(), [columns])
   const slots = useMemo(() => buildSlots(allCourses, 30), [allCourses])
@@ -100,7 +102,7 @@ function SchematicPrintTable({
         </tr>
         <tr>
           <th colSpan={leftSpan} className="schematic-meta">
-            Deck Supervisor:
+            Deck Supervisor:{deckSupervisorName ? ` ${deckSupervisorName}` : ''}
           </th>
           <th colSpan={rightSpan} className="schematic-meta">
             Cancelled Dates:
