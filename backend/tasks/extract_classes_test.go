@@ -1,6 +1,9 @@
 package tasks
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestNormalizeEventIDTreatsLeadingZerosAsEquivalent(t *testing.T) {
 	t.Parallel()
@@ -198,6 +201,122 @@ func TestExtractHelpers(t *testing.T) {
 	}
 	if got := daySortKey("Fr"); got != 5 {
 		t.Fatalf("daySortKey returned %d", got)
+	}
+	if got := daySortKey("Mini Session 3"); got != 11 {
+		t.Fatalf("daySortKey returned %d for mini session", got)
+	}
+}
+
+func TestNormalizeExtractedSessionDayAssignsMiniSessionsFromJulyWindows(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		startDate   string
+		want        string
+		schedule    string
+		season      string
+		dayValue    string
+		sessionYear int
+	}{
+		{
+			name:        "first window monday start",
+			startDate:   "2026-06-29",
+			want:        "Mini Session 1",
+			schedule:    "From 2026-06-29 to 2026-07-10",
+			season:      "Summer",
+			dayValue:    "Mo,Tu,We,Th,Fr",
+			sessionYear: 2026,
+		},
+		{
+			name:        "first window tuesday start",
+			startDate:   "2026-06-30",
+			want:        "Mini Session 1",
+			schedule:    "From 2026-06-30 to 2026-07-10",
+			season:      "Summer",
+			dayValue:    "Mo,Tu,We,Th,Fr",
+			sessionYear: 2026,
+		},
+		{
+			name:        "second window",
+			startDate:   "2026-07-13",
+			want:        "Mini Session 2",
+			schedule:    "From 2026-07-13 to 2026-07-24",
+			season:      "Summer",
+			dayValue:    "Mo,Tu,We,Th,Fr",
+			sessionYear: 2026,
+		},
+		{
+			name:        "third window",
+			startDate:   "2026-07-28",
+			want:        "Mini Session 3",
+			schedule:    "From 2026-07-28 to 2026-08-07",
+			season:      "Summer",
+			dayValue:    "Mo,Tu,We,Th,Fr",
+			sessionYear: 2026,
+		},
+		{
+			name:        "fourth window",
+			startDate:   "2026-08-10",
+			want:        "Mini Session 4",
+			schedule:    "From 2026-08-10 to 2026-08-21",
+			season:      "Summer",
+			dayValue:    "Mo,Tu,We,Th,Fr",
+			sessionYear: 2026,
+		},
+		{
+			name:        "non summer remains unchanged",
+			startDate:   "2026-07-13",
+			want:        "Mo,Tu,We,Th,Fr",
+			schedule:    "From 2026-07-13 to 2026-07-24",
+			season:      "Spring",
+			dayValue:    "Mo,Tu,We,Th,Fr",
+			sessionYear: 2026,
+		},
+		{
+			name:        "non weekday range remains unchanged",
+			startDate:   "2026-07-13",
+			want:        "Mo",
+			schedule:    "From 2026-07-13 to 2026-07-24",
+			season:      "Summer",
+			dayValue:    "Mo",
+			sessionYear: 2026,
+		},
+		{
+			name:        "out of window remains unchanged",
+			startDate:   "2026-08-24",
+			want:        "Mo,Tu,We,Th,Fr",
+			schedule:    "From 2026-08-24 to 2026-09-04",
+			season:      "Summer",
+			dayValue:    "Mo,Tu,We,Th,Fr",
+			sessionYear: 2026,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			scheduleStart, _ := extractScheduleDateRange(tt.schedule)
+			startDate, err := time.Parse("2006-01-02", tt.startDate)
+			if err != nil {
+				t.Fatalf("time.Parse returned error: %v", err)
+			}
+
+			got := normalizeExtractedSessionDay(tt.dayValue, tt.season, tt.sessionYear, scheduleStart, startDate)
+			if got != tt.want {
+				t.Fatalf("normalizeExtractedSessionDay returned %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNormalizeExtractedSessionDayKeepsOriginalWhenNoDateIsAvailable(t *testing.T) {
+	t.Parallel()
+
+	got := normalizeExtractedSessionDay("Mo,Tu,We,Th,Fr", "Summer", 2026, time.Time{}, time.Time{})
+	if got != "Mo,Tu,We,Th,Fr" {
+		t.Fatalf("normalizeExtractedSessionDay returned %q", got)
 	}
 }
 

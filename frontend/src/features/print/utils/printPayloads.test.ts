@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setExtractedClassesForSession } from '../../../lib/extractedClassesStorage'
 import {
   getCustomRosterDayKey,
@@ -10,8 +10,11 @@ import { setStorageScope } from '../../../lib/storageScope'
 import type { FormatOptions, Student } from '../../../types/app'
 import {
   buildBaseSchematicPayload,
+  buildMasterlistProgressLabel,
   buildMasterlistRequestBody,
   buildSchematicPrefetchPayloads,
+  buildSessionTitle,
+  getMiniSessionLessonDay,
 } from './printPayloads'
 
 const defaultFormatOptions: FormatOptions = {
@@ -63,6 +66,10 @@ describe('printPayloads', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
     setStorageScope('guest')
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('builds masterlist payloads for custom rosters using original class codes', () => {
@@ -182,6 +189,67 @@ describe('printPayloads', () => {
     })
 
     expect(payload?.sessionName).toBe('Spring 2026')
+  })
+
+  it('uses mini session year-based titles instead of season labels', () => {
+    expect(
+      buildSessionTitle(
+        {
+          ...session,
+          session_day: 'Mini Session 2',
+          session_season: 'Summer',
+          session_year: 2026,
+          start_date: '2026-07-13',
+          end_date: '2026-07-24',
+        },
+        'Mini Session 2',
+        null,
+      ),
+    ).toBe('Mini Session 2 2026')
+  })
+
+  it('counts mini session lesson days using weekdays minus holidays', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-05T12:00:00Z'))
+
+    expect(getMiniSessionLessonDay('2026-07-27', new Date(), '2026-08-07')).toBe(7)
+    expect(
+      buildMasterlistProgressLabel(
+        {
+          ...session,
+          session_day: 'Mini Session 3',
+          session_season: 'Summer',
+          session_year: 2026,
+          start_date: '2026-07-27',
+          end_date: '2026-08-07',
+        },
+        'Mini Session 3',
+        new Date(),
+      ),
+    ).toBe('Lesson Day 7')
+  })
+
+  it('includes the lesson day label in mini session masterlist payloads', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-02T12:00:00Z'))
+    setStudentsForDay('Mini Session 1', [makeStudent({ id: 'student-1', code: 'C1', name: 'Alice', day: 'Mini Session 1' })])
+
+    const payload = buildMasterlistRequestBody({
+      day: 'Mini Session 1',
+      sessionId: 'session-1',
+      session: {
+        ...session,
+        session_day: 'Mini Session 1',
+        session_season: 'Summer',
+        session_year: 2026,
+        start_date: '2026-06-29',
+        end_date: '2026-07-10',
+      },
+      options: defaultFormatOptions,
+    })
+
+    expect(payload?.sessionName).toBe('Mini Session 1 2026')
+    expect(payload?.sessionProgressLabel).toBe('Lesson Day 3')
   })
 
   it('builds the base schematic payload from the saved layout and extracted counts', () => {

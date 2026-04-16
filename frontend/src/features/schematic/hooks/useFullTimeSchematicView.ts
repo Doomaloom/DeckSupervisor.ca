@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useCurrentTeam } from '../../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../../app/useCurrentTerm'
-import { getYearFromDate } from '../../../shared/session/sessionLabels'
+import { compareSessionDays, sortSessionDays } from '../../../shared/session/sessionDays'
+import { formatMiniSessionTitle, getYearFromDate } from '../../../shared/session/sessionLabels'
 import { getEffectiveSourceLocations, normalizeSessionLocationKey } from '../../../shared/session/sourceLocations'
 import {
     getExtractedClassesForScope,
@@ -19,8 +20,6 @@ import { normalizeCourseCodeForCompare } from '../utils/courseCode'
 import { buildTimeLabels, timeToMinutes } from '../utils/time'
 
 const NO_LOCATION_KEY = '__no_location__'
-
-const dayOrder = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const
 
 type TeamSessionRow = {
     id: string
@@ -171,19 +170,20 @@ export function useFullTimeSchematicView(enabled: boolean) {
             return
         }
 
-        const firstAvailableDay = dayOrder.find(day => availableDays.has(day)) ?? ''
+        const firstAvailableDay = sortSessionDays(Array.from(availableDays))[0] ?? ''
         setSelectedDay(firstAvailableDay)
     }, [enabled, selectedDay, termSessions])
 
-    const days = useMemo(
-        () =>
-            dayOrder.map(day => ({
-                key: day,
-                label: dayNames[day] ?? day,
-                count: termSessions.filter(session => session.session_day === day).length,
-            })),
-        [termSessions],
-    )
+    const days = useMemo(() => {
+        const availableDays = sortSessionDays(
+            Array.from(new Set(termSessions.map(session => session.session_day).filter(Boolean))),
+        )
+        return availableDays.map(day => ({
+            key: day,
+            label: dayNames[day] ?? day,
+            count: termSessions.filter(session => session.session_day === day).length,
+        }))
+    }, [termSessions])
 
     const locationOptions = useMemo(() => {
         if (!selectedDay) {
@@ -499,10 +499,16 @@ export function useFullTimeSchematicView(enabled: boolean) {
     const scheduleHeightRem = Math.max(timeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
 
     const schematicSessionLabel = useMemo(() => {
+        const miniSessionLabel = formatMiniSessionTitle(
+            selectedDay,
+            selectedSession?.session_year ?? null,
+            selectedSession?.start_date ?? null,
+        )
         const dayLabel = selectedDay ? dayNames[selectedDay] ?? selectedDay : ''
         const locationLabel = locationOptions.find(option => option.key === selectedLocationKey)?.label ?? ''
-        return [dayLabel, currentTerm?.label ?? '', locationLabel].filter(Boolean).join(' | ')
-    }, [currentTerm?.label, locationOptions, selectedDay, selectedLocationKey])
+        const sessionLabel = miniSessionLabel || [dayLabel, currentTerm?.label ?? ''].filter(Boolean).join(' ')
+        return [sessionLabel, locationLabel].filter(Boolean).join(' | ')
+    }, [currentTerm?.label, locationOptions, selectedDay, selectedLocationKey, selectedSession?.session_year, selectedSession?.start_date])
 
     const fullTimeRosterItems = useMemo<FullTimeRosterItem[]>(() => {
         const allowedDays = new Set(termSessions.map(session => session.session_day).filter(Boolean))
@@ -524,7 +530,7 @@ export function useFullTimeSchematicView(enabled: boolean) {
 
         return next.sort((left, right) => {
             if (left.day !== right.day) {
-                return dayOrder.indexOf(left.day as (typeof dayOrder)[number]) - dayOrder.indexOf(right.day as (typeof dayOrder)[number])
+                return compareSessionDays(left.day, right.day)
             }
             const leftTime = extractStartTime(left.roster.time)
             const rightTime = extractStartTime(right.roster.time)
@@ -536,10 +542,7 @@ export function useFullTimeSchematicView(enabled: boolean) {
     }, [studentsByDay, termSessions])
 
     const fullTimeRosterDayOptions = useMemo(() => {
-        return Array.from(new Set(fullTimeRosterItems.map(item => item.day))).sort(
-            (left, right) =>
-                dayOrder.indexOf(left as (typeof dayOrder)[number]) - dayOrder.indexOf(right as (typeof dayOrder)[number]),
-        )
+        return sortSessionDays(Array.from(new Set(fullTimeRosterItems.map(item => item.day))))
     }, [fullTimeRosterItems])
 
     const fullTimeRosterLevelOptions = useMemo(() => {

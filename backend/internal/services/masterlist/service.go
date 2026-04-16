@@ -58,8 +58,8 @@ type row struct {
 	cells []string
 }
 
-func BuildPDF(ctx context.Context, rosters []tasks.ClassRoster, options Options, sessionName, generatedDate string, sessionWeek int) ([]byte, string, error) {
-	htmlContent, err := BuildHTMLPreview(rosters, options, sessionName, generatedDate, sessionWeek)
+func BuildPDF(ctx context.Context, rosters []tasks.ClassRoster, options Options, sessionName, generatedDate string, sessionWeek int, sessionProgressLabel string) ([]byte, string, error) {
+	htmlContent, err := BuildHTMLPreview(rosters, options, sessionName, generatedDate, sessionWeek, sessionProgressLabel)
 	if err != nil {
 		return nil, "", err
 	}
@@ -73,7 +73,7 @@ func BuildPDF(ctx context.Context, rosters []tasks.ClassRoster, options Options,
 	return pdfBytes, filename, nil
 }
 
-func BuildHTMLPreview(rosters []tasks.ClassRoster, options Options, sessionName, generatedDate string, sessionWeek int) (string, error) {
+func BuildHTMLPreview(rosters []tasks.ClassRoster, options Options, sessionName, generatedDate string, sessionWeek int, sessionProgressLabel string) (string, error) {
 	if len(rosters) == 0 {
 		return "", errors.New("missing rosters")
 	}
@@ -83,7 +83,7 @@ func BuildHTMLPreview(rosters []tasks.ClassRoster, options Options, sessionName,
 		return "", fmt.Errorf("%w: %v", ErrBuildRows, err)
 	}
 
-	title := buildTitle(sessionName, sessionWeek, generatedDate)
+	title := buildTitle(sessionName, sessionWeek, sessionProgressLabel, generatedDate)
 	return buildHTML(rows, options, title), nil
 }
 
@@ -253,12 +253,14 @@ tr { page-break-inside: avoid; }`)
 	return buf.String()
 }
 
-func buildTitle(sessionName string, sessionWeek int, generatedDate string) string {
+func buildTitle(sessionName string, sessionWeek int, sessionProgressLabel string, generatedDate string) string {
 	parts := make([]string, 0, 3)
 	if strings.TrimSpace(sessionName) != "" {
 		parts = append(parts, strings.TrimSpace(sessionName))
 	}
-	if sessionWeek > 0 {
+	if strings.TrimSpace(sessionProgressLabel) != "" {
+		parts = append(parts, strings.TrimSpace(sessionProgressLabel))
+	} else if sessionWeek > 0 {
 		parts = append(parts, fmt.Sprintf("Week %d", sessionWeek))
 	}
 	if strings.TrimSpace(generatedDate) != "" {

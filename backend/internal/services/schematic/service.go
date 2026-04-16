@@ -389,6 +389,16 @@ func daySortKey(day string) int {
 		return 5
 	case "Su", "Sun", "Sunday":
 		return 6
+	case "Mo,Tu,We,Th,Fr":
+		return 7
+	case "Mini Session 1":
+		return 8
+	case "Mini Session 2":
+		return 9
+	case "Mini Session 3":
+		return 10
+	case "Mini Session 4":
+		return 11
 	default:
 		return 99
 	}

@@ -563,6 +563,16 @@ func csvCandidateDaySortKey(day string) int {
 		return 6
 	case "Su":
 		return 7
+	case "Mo,Tu,We,Th,Fr":
+		return 8
+	case "Mini Session 1":
+		return 9
+	case "Mini Session 2":
+		return 10
+	case "Mini Session 3":
+		return 11
+	case "Mini Session 4":
+		return 12
 	default:
 		return 99
 	}

@@ -17,7 +17,7 @@ import { useCurrentSession } from '../../../app/useCurrentSession'
 import { invalidateCachedSchematicPdfs } from '../../../lib/printPdfCache'
 import { fetchSchematic, upsertSchematic } from '../../../lib/serverApi'
 import { invalidateInstructorPdfs, prefetchInstructorPacket } from '../../../lib/instructorPdfCache'
-import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
+import { formatMiniSessionTitle, formatSessionDisplayName } from '../../../shared/session/sessionLabels'
 import type { ExtractedClass, Student } from '../../../types/app'
 import { prefetchSchematicPdfs } from '../../print/utils/printCachePrefetch'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
@@ -69,16 +69,18 @@ export function useSchematicSchedule(selectedDay: string | null) {
     const [students, setStudents] = useState<Student[]>([])
     const [extractedClasses, setExtractedClasses] = useState<ExtractedClass[]>([])
     const [remoteSchedule, setRemoteSchedule] = useState<StoredCourseLayout | null>(null)
-    const sessionTitle = formatSessionDisplayName({
-        sessionDay: currentSession?.session_day,
-        dayOverride: selectedDay,
-        includeDay: false,
-        sessionSeason: currentSession?.session_season,
-        sessionYear: currentSession?.session_year,
-        startDate: currentSession?.start_date,
-        includeTimeRange: false,
-        fallback: 'Session',
-    })
+    const sessionTitle =
+        formatMiniSessionTitle(selectedDay ?? currentSession?.session_day, currentSession?.session_year, currentSession?.start_date) ||
+        formatSessionDisplayName({
+            sessionDay: currentSession?.session_day,
+            dayOverride: selectedDay,
+            includeDay: false,
+            sessionSeason: currentSession?.session_season,
+            sessionYear: currentSession?.session_year,
+            startDate: currentSession?.start_date,
+            includeTimeRange: false,
+            fallback: 'Session',
+        })
 
     useEffect(() => {
         setStudents(getStudentsForDay(selectedDay ?? ''))

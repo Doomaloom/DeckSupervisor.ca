@@ -138,6 +138,7 @@ func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*Extr
 		}
 
 		sessionSeason, sessionYear := getSeasonAndYear(eventSchedule, startDate, endDate)
+		dayValue = normalizeExtractedSessionDay(dayValue, sessionSeason, sessionYear, scheduleStartDate, startDate)
 		sessionBucketKey := buildExtractedSessionBucketKey(dayValue, sessionSeason, sessionYear, location)
 		bookedCountFromRoster := parsePositiveInt(strings.TrimSpace(row.Col("Booked").Elem(0).String()))
 
@@ -669,6 +670,62 @@ func parsePositiveInt(value string) int {
 	return parsed
 }
 
+func normalizeExtractedSessionDay(dayValue, sessionSeason string, sessionYear int, scheduleStartDate, startDate time.Time) string {
+	normalizedDay := strings.TrimSpace(dayValue)
+	if normalizedDay != "Mo,Tu,We,Th,Fr" {
+		return normalizedDay
+	}
+	if strings.ToLower(strings.TrimSpace(sessionSeason)) != "summer" || sessionYear <= 0 {
+		return normalizedDay
+	}
+
+	sourceDate := scheduleStartDate
+	if sourceDate.IsZero() {
+		sourceDate = startDate
+	}
+	if sourceDate.IsZero() {
+		return normalizedDay
+	}
+
+	miniSession := summerMiniSessionLabel(sourceDate)
+	if miniSession == "" {
+		return normalizedDay
+	}
+	return miniSession
+}
+
+func summerMiniSessionLabel(startDate time.Time) string {
+	date := dateOnly(startDate)
+	if date.IsZero() {
+		return ""
+	}
+
+	anchor := mondayOfWeekContainingJulyFirst(date.Year())
+	daysFromAnchor := int(date.Sub(anchor).Hours() / 24)
+	if daysFromAnchor < 0 || daysFromAnchor >= 56 {
+		return ""
+	}
+
+	index := daysFromAnchor/14 + 1
+	if index < 1 || index > 4 {
+		return ""
+	}
+	return fmt.Sprintf("Mini Session %d", index)
+}
+
+func mondayOfWeekContainingJulyFirst(year int) time.Time {
+	julyFirst := time.Date(year, time.July, 1, 0, 0, 0, 0, time.UTC)
+	offset := (int(julyFirst.Weekday()) + 6) % 7
+	return julyFirst.AddDate(0, 0, -offset)
+}
+
+func dateOnly(value time.Time) time.Time {
+	if value.IsZero() {
+		return time.Time{}
+	}
+	return time.Date(value.Year(), value.Month(), value.Day(), 0, 0, 0, 0, time.UTC)
+}
+
 func daySortKey(day string) int {
 	switch strings.TrimSpace(day) {
 	case "Mo":
@@ -685,6 +742,16 @@ func daySortKey(day string) int {
 		return 6
 	case "Su":
 		return 7
+	case "Mo,Tu,We,Th,Fr":
+		return 8
+	case "Mini Session 1":
+		return 9
+	case "Mini Session 2":
+		return 10
+	case "Mini Session 3":
+		return 11
+	case "Mini Session 4":
+		return 12
 	default:
 		return 99
 	}

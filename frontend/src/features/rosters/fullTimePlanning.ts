@@ -5,6 +5,7 @@ import {
     hasAnyCsvHeader,
     parseCsvText,
 } from '../../shared/csv/csvUtils'
+import { sortSessionDays } from '../../shared/session/sessionDays'
 import { buildCourses } from '../schematic/utils/courses'
 import { createRequestAwareLayout } from '../schematic/utils/layout'
 import type {
@@ -15,8 +16,6 @@ import type {
     FullTimeRequestMatchSource,
     FullTimeRequestReason,
 } from './types'
-
-const dayOrder = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const
 
 export const fullTimeRequestReasonOptions: Array<{
     value: Exclude<FullTimeRequestReason, ''>
@@ -492,7 +491,7 @@ export function syncFullTimeRostersWithRequests(
 }
 
 export function sortDayKeys(days: string[]) {
-    return [...days].sort((left, right) => dayOrder.indexOf(left as (typeof dayOrder)[number]) - dayOrder.indexOf(right as (typeof dayOrder)[number]))
+    return sortSessionDays(days)
 }
 
 export function buildStudentsForDay(rosters: ClassRoster[], day: string): Student[] {

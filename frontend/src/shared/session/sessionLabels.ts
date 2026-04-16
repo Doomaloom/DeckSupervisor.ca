@@ -1,12 +1,5 @@
-const dayNames: Record<string, string> = {
-  Mo: 'Monday',
-  Tu: 'Tuesday',
-  We: 'Wednesday',
-  Th: 'Thursday',
-  Fr: 'Friday',
-  Sa: 'Saturday',
-  Su: 'Sunday',
-}
+import { SESSION_DAY_LABELS } from './sessionDays'
+import { isMiniSessionDay } from './sessionDays'
 
 type SessionDisplayInput = {
   sessionDay?: string | null
@@ -28,7 +21,7 @@ export function getDayLabel(day: string | null | undefined) {
   if (!trimmed) {
     return ''
   }
-  return dayNames[trimmed] ?? trimmed
+  return SESSION_DAY_LABELS[trimmed] ?? trimmed
 }
 
 export function getYearFromDate(value: string | null | undefined) {
@@ -133,4 +126,20 @@ export function formatSessionDisplayName({
     return fallback
   }
   return timeRange || fallback
+}
+
+export function formatMiniSessionTitle(
+  day: string | null | undefined,
+  sessionYear: number | null | undefined,
+  startDate: string | null | undefined,
+) {
+  const trimmedDay = (day ?? '').trim()
+  if (!isMiniSessionDay(trimmedDay)) {
+    return ''
+  }
+  const year = sessionYear ?? getYearFromDate(startDate)
+  if (!year) {
+    return trimmedDay
+  }
+  return `${trimmedDay} ${year}`
 }

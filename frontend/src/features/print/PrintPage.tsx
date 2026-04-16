@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from '../../app/AuthContext'
 import { useDay } from '../../app/DayContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
@@ -101,6 +102,7 @@ type BlockedPrintJob = {
 }
 
 function PrintPage() {
+  const { profile } = useAuth()
   const { selectedDay } = useDay()
   const { session: currentSession } = useCurrentSession()
   const { currentTerm } = useCurrentTerm()
@@ -158,6 +160,7 @@ function PrintPage() {
   const sessionTitle = buildSessionTitle(sessionInfo, selectedDay, currentTerm)
   const dateRange = buildDateRangeLabel(sessionInfo)
   const weeksLabel = buildWeeksLabel(sessionInfo)
+  const deckSupervisorName = profile?.first_name?.trim() ?? ''
 
   useEffect(() => {
     if (!activeModal) {
@@ -400,6 +403,7 @@ function PrintPage() {
     title: sessionTitle,
     dateRange,
     weeksLabel,
+    deckSupervisorName,
     highlightInstructor: highlightOptions.highlightInstructor,
     selectedInstructor: highlightOptions.selectedInstructor,
     instructors: instructorsOverride ?? schematicPreview.instructors,

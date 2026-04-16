@@ -1,21 +1,14 @@
 import type { PlannerClass, PlannerClassStatus } from '../../../types/app'
 import { getPlannerClassCapacityBand } from '../../../lib/sessionPlanner'
 import { extractEndTime, extractStartTime, getRunningMinutes } from '../../../lib/time'
+import { SESSION_DAY_LABELS, SESSION_DAY_ORDER } from '../../../shared/session/sessionDays'
 import { timeToMinutes } from '../../schematic/utils/time'
 
 export const PLANNER_SLOT_HEIGHT_REM = 3.4
 
-export const dayNames: Record<string, string> = {
-  Mo: 'Monday',
-  Tu: 'Tuesday',
-  We: 'Wednesday',
-  Th: 'Thursday',
-  Fr: 'Friday',
-  Sa: 'Saturday',
-  Su: 'Sunday',
-}
+export const dayNames = SESSION_DAY_LABELS
 
-export const dayOrder = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const
+export const dayOrder = SESSION_DAY_ORDER
 
 export function statusClasses(status: PlannerClassStatus) {
   switch (status) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatMiniSessionTitle,
   formatSessionDisplayName,
   formatSessionTermLabel,
   formatSessionTimeLabel,
@@ -12,6 +13,7 @@ import {
 describe('sessionLabels', () => {
   it('returns a readable day label and preserves unknown day tokens', () => {
     expect(getDayLabel('Mo')).toBe('Monday')
+    expect(getDayLabel('Mini Session 1')).toBe('Mini Session 1')
     expect(getDayLabel(' Custom ')).toBe('Custom')
     expect(getDayLabel('')).toBe('')
   })
@@ -66,5 +68,10 @@ describe('sessionLabels', () => {
       }),
     ).toBe('Monday')
     expect(formatSessionDisplayName({ fallback: 'My Session' })).toBe('My Session')
+  })
+
+  it('formats mini session titles without the season label', () => {
+    expect(formatMiniSessionTitle('Mini Session 2', 2026, null)).toBe('Mini Session 2 2026')
+    expect(formatMiniSessionTitle('Mo', 2026, '2026-07-01')).toBe('')
   })
 })

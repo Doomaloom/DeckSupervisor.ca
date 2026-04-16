@@ -13,11 +13,12 @@ import (
 var errMissingMasterlistRosters = errors.New("missing rosters")
 
 type masterlistRostersRequest struct {
-	Rosters       []tasks.ClassRoster `json:"rosters"`
-	Options       masterlist.Options  `json:"options"`
-	SessionName   string              `json:"sessionName"`
-	GeneratedDate string              `json:"generatedDate"`
-	SessionWeek   int                 `json:"sessionWeek"`
+	Rosters              []tasks.ClassRoster `json:"rosters"`
+	Options              masterlist.Options  `json:"options"`
+	SessionName          string              `json:"sessionName"`
+	GeneratedDate        string              `json:"generatedDate"`
+	SessionWeek          int                 `json:"sessionWeek"`
+	SessionProgressLabel string              `json:"sessionProgressLabel"`
 }
 
 func decodeMasterlistRostersRequest(r *http.Request) (masterlistRostersRequest, error) {
@@ -50,6 +51,7 @@ func MasterlistRosters(w http.ResponseWriter, r *http.Request) {
 		req.SessionName,
 		req.GeneratedDate,
 		req.SessionWeek,
+		req.SessionProgressLabel,
 	)
 	if err != nil {
 		if errors.Is(err, masterlist.ErrRenderPDF) {
@@ -86,6 +88,7 @@ func MasterlistPreview(w http.ResponseWriter, r *http.Request) {
 		req.SessionName,
 		req.GeneratedDate,
 		req.SessionWeek,
+		req.SessionProgressLabel,
 	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

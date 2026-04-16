@@ -246,6 +246,117 @@ func TestBuildCSVSessionCandidatesGroupsRawSessionsByMatchedCombinedSession(t *t
 	}
 }
 
+func TestMatchCSVSessionCandidateMatchesMiniSessionDay(t *testing.T) {
+	t.Parallel()
+
+	summer := "Summer"
+	location := "Pool"
+
+	match := matchCSVSessionCandidate(&csvCandidateBucket{
+		dayOfWeek:     "Mini Session 2",
+		sessionSeason: "Summer",
+		sessionYear:   2026,
+		location:      "Pool",
+		startTime24:   "09:00",
+		endTime24:     "11:00",
+	}, []sessionRow{
+		{
+			ID:                 "mini-2",
+			CreatedBy:          "user-1",
+			SessionDay:         "Mini Session 2",
+			SessionSeason:      &summer,
+			SessionYear:        intPtr(2026),
+			Location:           &location,
+			SourceLocations:    []string{"Pool"},
+			SessionStartTime24: strPtr("09:00"),
+			SessionEndTime24:   strPtr("11:00"),
+		},
+	}, "user-1")
+
+	if match == nil {
+		t.Fatalf("expected mini session match")
+	}
+	if match.ID != "mini-2" {
+		t.Fatalf("expected mini session match id mini-2, got %q", match.ID)
+	}
+}
+
+func TestMatchCSVSessionCandidateDoesNotMatchDifferentMiniSessionDay(t *testing.T) {
+	t.Parallel()
+
+	summer := "Summer"
+	location := "Pool"
+
+	match := matchCSVSessionCandidate(&csvCandidateBucket{
+		dayOfWeek:     "Mini Session 2",
+		sessionSeason: "Summer",
+		sessionYear:   2026,
+		location:      "Pool",
+		startTime24:   "09:00",
+		endTime24:     "11:00",
+	}, []sessionRow{
+		{
+			ID:                 "mini-1",
+			CreatedBy:          "user-1",
+			SessionDay:         "Mini Session 1",
+			SessionSeason:      &summer,
+			SessionYear:        intPtr(2026),
+			Location:           &location,
+			SourceLocations:    []string{"Pool"},
+			SessionStartTime24: strPtr("09:00"),
+			SessionEndTime24:   strPtr("11:00"),
+		},
+	}, "user-1")
+
+	if match != nil {
+		t.Fatalf("expected no match, got %q", match.ID)
+	}
+}
+
+func TestBuildCSVSessionCandidatesSortsMiniSessionsAfterWeekdayRange(t *testing.T) {
+	t.Parallel()
+
+	candidates := buildCSVSessionCandidates([]tasks.ExtractedSession{
+		{
+			SessionKey:         "mini-2",
+			DayOfWeek:          "Mini Session 2",
+			SessionSeason:      "Summer",
+			SessionYear:        2026,
+			Location:           "Pool",
+			SessionStartTime24: "09:00",
+			SessionEndTime24:   "10:00",
+		},
+		{
+			SessionKey:         "weekday-range",
+			DayOfWeek:          "Mo,Tu,We,Th,Fr",
+			SessionSeason:      "Summer",
+			SessionYear:        2026,
+			Location:           "Pool",
+			SessionStartTime24: "09:00",
+			SessionEndTime24:   "10:00",
+		},
+		{
+			SessionKey:         "mini-1",
+			DayOfWeek:          "Mini Session 1",
+			SessionSeason:      "Summer",
+			SessionYear:        2026,
+			Location:           "Pool",
+			SessionStartTime24: "09:00",
+			SessionEndTime24:   "10:00",
+		},
+	}, nil, "user-1")
+
+	if len(candidates) != 3 {
+		t.Fatalf("expected 3 candidates, got %d", len(candidates))
+	}
+	if candidates[0].DayOfWeek != "Mo,Tu,We,Th,Fr" {
+		t.Fatalf("expected weekday range first, got %q", candidates[0].DayOfWeek)
+	}
+	if candidates[1].DayOfWeek != "Mini Session 1" || candidates[2].DayOfWeek != "Mini Session 2" {
+		t.Fatalf("unexpected mini session order: %q, %q", candidates[1].DayOfWeek, candidates[2].DayOfWeek)
+	}
+}
+
 func intPtr(value int) *int {
 	return &value
 }
