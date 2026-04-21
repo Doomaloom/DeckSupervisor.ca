@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
     CalendarDaysIcon,
     ClipboardDocumentListIcon,
@@ -43,6 +43,8 @@ type LayoutProps = {
 
 const attemptedPrintPrefetches = new Set<string>()
 
+
+
 function Layout({ children }: LayoutProps) {
     const location = useLocation()
     const { selectedDay } = useDay()
@@ -57,7 +59,7 @@ function Layout({ children }: LayoutProps) {
     const [profileLastName, setProfileLastName] = useState('')
     const [profileError, setProfileError] = useState('')
     const isPlannerPopout = location.pathname === '/session-planning' && new URLSearchParams(location.search).get('popout') === '1'
-
+    const navigate = useNavigate()
     const isCurrentPage = (path: string) => location.pathname === path
     const pageTitle = getPageTitle(location.pathname)
     const currentSessionName = useMemo(() => {
@@ -383,7 +385,7 @@ function Layout({ children }: LayoutProps) {
                                     <button
                                         type="button"
                                         className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
-                                        onClick={() => void signOut()}
+                                        onClick={async () => { await signOut(); navigate('/sign-in') }}
                                     >
                                         Sign Out
                                     </button>
@@ -499,7 +501,7 @@ function Layout({ children }: LayoutProps) {
                             <button
                                 type="button"
                                 className="rounded-2xl border border-secondary/40 px-3 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
-                                onClick={() => void signOut()}
+                                onClick={async () => { await signOut(); navigate('/sign-in') }}
                             >
                                 Sign Out
                             </button>
@@ -556,7 +558,7 @@ function Layout({ children }: LayoutProps) {
                                 <button
                                     type="button"
                                     className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
-                                    onClick={() => void signOut()}
+                                    onClick={async () => { await signOut(); navigate('/sign-in') }}
                                 >
                                     Sign Out
                                 </button>
