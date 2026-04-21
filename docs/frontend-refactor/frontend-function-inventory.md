@@ -162,6 +162,132 @@ This file maps what each app/page/component/hook module currently defines and wh
   - extract profile modal state/UI
   - extract page/session title helpers
 
+## Session Management Feature
+
+### `features/session-management/types.ts`
+- Exports:
+  - `InstructorEntry`
+  - `LocalSessionEntry`
+  - `DbSessionEntry`
+  - `SharedSessionEntry`
+  - `TeamTermSessionRow`
+  - `SessionTermOption`
+  - `SessionListItem`
+  - `SessionIdentityInput`
+  - `NO_TEAM_VALUE`
+  - `SESSION_SEASON_OPTIONS`
+- Uses:
+  - shared internal session-management shapes for dashboard/manage flows
+- Reuse note: internal source of truth for the session-management feature.
+
+### `features/session-management/utils/sessionIdentity.ts`
+- Exports:
+  - `buildSessionIdentityCriteria`
+  - `hasIdentityCriteria`
+  - `resolveDisplayAndSourceLocations`
+  - `sortLocalSessionsByStartDateDesc`
+  - `sortDbSessionsByStartDateDesc`
+  - `getSessionSourceLocations`
+- Uses:
+  - `shared/session/sessionTimeInference`
+  - `shared/session/sourceLocations`
+- Reuse note: pure session identity/sorting helpers shared by dashboard and manage sessions.
+
+### `features/session-management/utils/sessionCollections.ts`
+- Exports:
+  - `buildFullTimeSessionTerms`
+  - `buildFullTimeTermYears`
+  - `filterTermsForYear`
+  - `findDefaultTermForYear`
+  - `getSessionListDisplayMeta`
+- Uses:
+  - current-term helpers
+  - session label helpers
+  - source-location helpers
+- Reuse note: pure collection/display derivation for session selection UIs.
+
+### `features/session-management/hooks/useCurrentSessionScopeSync.ts`
+- Local functions:
+  - `useCurrentSessionScopeSync`
+  - `refreshScope`
+  - `resetCurrentSessionScope`
+  - `selectSessionAndSyncDay`
+- Uses:
+  - day context
+  - session storage
+  - storage-scope updates
+- Reuse note: shared current-session scope sync for dashboard and manage sessions.
+
+### `features/session-management/hooks/useDashboardScope.ts`
+- Local functions:
+  - `useDashboardScope`
+  - `handleSelectFullTimeTeam`
+  - `handleSelectFullTimeYear`
+  - `handleSelectFullTimeSeason`
+  - `loadTeamSessions`
+- Uses:
+  - current term/team state
+  - `fetchTeamSessions`
+  - session collection helpers
+- Reuse note: owns full-time team/year/season orchestration for the dashboard.
+
+### `features/session-management/hooks/useSessionSelectionData.ts`
+- Local functions:
+  - `useSessionSelectionData`
+  - `loadSessionsFromDb`
+  - `loadShared`
+- Uses:
+  - session storage
+  - `fetchMySessions`
+  - `fetchSharedSessionsToday`
+  - sorting helpers
+- Reuse note: owns dashboard session-list loading for guest and signed-in flows.
+
+### `features/session-management/hooks/useNewSessionForm.ts`
+- Local functions:
+  - `useNewSessionForm`
+  - `inspectNewSessionRosterFile`
+  - `addInstructor`
+  - `updateInstructor`
+  - `handleRosterFileChange`
+  - `handleSaveSession`
+- Uses:
+  - auth/team/term state
+  - CSV inspect APIs
+  - session storage and session create API
+  - session identity/location helpers
+- Reuse note: owns dashboard session-creation state and submission behavior.
+
+### `features/session-management/hooks/useManageSessionForm.ts`
+- Local functions:
+  - `useManageSessionForm`
+  - `addEditInstructor`
+  - `removeEditInstructor`
+  - `updateEditInstructor`
+  - `loadTeam`
+  - `handleUpdateSession`
+  - `handleDeleteSession`
+- Uses:
+  - auth/current-session/current-team hooks
+  - extracted-classes storage
+  - session storage and session APIs
+  - session identity/location helpers
+- Reuse note: owns current-session edit/delete orchestration and overlap/inference behavior.
+
+### `features/session-management/components/*`
+- Modules:
+  - `FullTimeScopePanel.tsx`
+  - `InstructorListEditor.tsx`
+  - `NewSessionPanel.tsx`
+  - `SessionFormFields.tsx`
+  - `SessionListCard.tsx`
+  - `SessionSelectionPanel.tsx`
+  - `SessionSummaryCard.tsx`
+- Uses:
+  - shared session-management hooks/utils/types
+  - `SourceLocationsInput`
+- Reuse note: presentational layer shared by dashboard and manage sessions.
+
 ## Pages
 
 ### `features/account/AccountPage.tsx`
@@ -187,33 +313,15 @@ This file maps what each app/page/component/hook module currently defines and wh
 
 ### `features/dashboard/DashboardPage.tsx`
 - Local functions:
-  - `getSessionName`
-  - `getDbSessionName`
-  - `Dashboard`
-  - `addInstructor`
-  - `updateInstructor`
-  - `handleSaveSession`
+  - `DashboardPage`
   - `handleSelectLocalSession`
   - `handleSelectDbSession`
   - `handleOpenSharedSession`
-  - `resetCurrentSessionScope`
-  - `handleSelectFullTimeTeam`
-  - `handleSelectFullTimeYear`
-  - `handleSelectFullTimeSeason`
-  - `loadTeamSessions`
-  - `loadSessionsFromDb`
-  - `loadShared`
 - Uses:
-  - day/auth/team/term contexts
-  - `formatSessionDisplayName`
-  - `getYearFromDate`
-  - `resolveSessionYear`
-  - session/team/server APIs
-  - storage-scope updates
-- Reuse note: high-priority split target.
-  - move session-form logic into a hook
-  - move team-term derivation into a feature utility
-  - move guest/full-time panels into separate subcomponents
+  - auth/CSV-import/team/term contexts
+  - shared session-management hooks
+  - shared session-management panels
+- Reuse note: now a thin orchestration page for entry actions and session selection.
 
 ### `features/full-timer-tools/FullTimerToolsPage.tsx`
 - Local functions:
@@ -348,24 +456,12 @@ This file maps what each app/page/component/hook module currently defines and wh
 
 ### `features/sessions/ManageSessionsPage.tsx`
 - Local functions:
-  - `getSessionName`
-  - `getDbSessionName`
   - `ManageSessionsPage`
-  - `addEditInstructor`
-  - `removeEditInstructor`
-  - `updateEditInstructor`
-  - `loadTeam`
-  - `handleUpdateSession`
-  - `handleDeleteSession`
 - Uses:
-  - day/auth/team/current-session hooks
-  - `formatSessionDisplayName`
-  - `formatSessionTermLabel`
-  - `getYearFromDate`
-  - `resolveSessionYear`
-  - session APIs
-  - storage-scope updates
-- Reuse note: refactor together with dashboard.
+  - auth context
+  - shared session-management scope hook
+  - shared session-management edit hook/components
+- Reuse note: now a thin orchestration page for current-session summary and editing.
 
 ### `features/staff-notes/StaffNotesPage.tsx`
 - Local functions:
@@ -513,13 +609,6 @@ This file maps what each app/page/component/hook module currently defines and wh
   - PDF/window lifecycle helpers
   - instructor packet refresh helpers
   - print payload builders
-- `features/dashboard/DashboardPage.tsx`
-  - form-state helpers
-  - full-time term/team selection logic
-  - shared session selection panels
-- `features/sessions/ManageSessionsPage.tsx`
-  - edit form sections
-  - team-location loading hook
 - `features/rosters/RostersPage.tsx`
   - full-time roster upload flow
   - preview-column building
