@@ -1,23 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
-import { formatSessionDisplayName } from '../../shared/session/sessionLabels'
 import {
-  createSessionShare,
   createTeam,
   createTeamInvite,
   fetchMemberTeams,
-  fetchMySessions,
   fetchOwnedTeams,
   fetchTeamDetails,
-  fetchTeamMembers,
   leaveTeam,
   removeTeamMember,
   revokeTeamInvite,
   searchInvitableProfiles,
   updateTeam,
 } from '../../lib/serverApi'
-import { getTorontoDate } from '../../lib/torontoDate'
 import { clearCurrentTeamId, getCurrentTeamId, setCurrentTeamId } from '../../lib/teamStorage'
 
 type TeamEntry = {
@@ -46,29 +41,6 @@ type MemberEntry = {
   profiles?: { first_name: string; last_name: string; email: string } | null
 }
 
-type SessionEntry = {
-  id: string
-  team_id: string | null
-  session_day: string
-  session_season: string | null
-  session_year: number | null
-  start_date: string | null
-  end_date: string | null
-  session_start_time24: string | null
-  session_end_time24: string | null
-}
-
-function getSessionLabel(session: SessionEntry) {
-  return formatSessionDisplayName({
-    sessionDay: session.session_day,
-    sessionSeason: session.session_season,
-    sessionYear: session.session_year,
-    startDate: session.start_date,
-    sessionStartTime24: session.session_start_time24,
-    sessionEndTime24: session.session_end_time24,
-  })
-}
-
 function TeamPage() {
   const { accountType, isGuest, user } = useAuth()
   const [teams, setTeams] = useState<TeamEntry[]>([])
@@ -82,13 +54,6 @@ function TeamPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [memberTeams, setMemberTeams] = useState<TeamEntry[]>([])
-  const [userSessions, setUserSessions] = useState<SessionEntry[]>([])
-  const [shareSessionId, setShareSessionId] = useState('')
-  const [shareDate, setShareDate] = useState(() => getTorontoDate())
-  const [shareMemberId, setShareMemberId] = useState('')
-  const [shareAllowEdits, setShareAllowEdits] = useState(false)
-  const [shareMembers, setShareMembers] = useState<MemberEntry[]>([])
-  const [shareMessage, setShareMessage] = useState('')
 
   useEffect(() => {
     if (!user || accountType !== 'full_time') {
@@ -124,12 +89,7 @@ function TeamPage() {
       const nextTeams = rows.map(row => row.teams).filter(Boolean) as TeamEntry[]
       setMemberTeams(nextTeams)
     }
-    const loadSessions = async () => {
-      const response = await fetchMySessions()
-      setUserSessions((response.sessions ?? []) as SessionEntry[])
-    }
     void loadMemberTeams()
-    void loadSessions()
   }, [accountType, user])
 
   useEffect(() => {
@@ -154,29 +114,6 @@ function TeamPage() {
 
   const memberIds = useMemo(() => new Set(members.map(member => member.user_id)), [members])
   const invitedIds = useMemo(() => new Set(invites.map(invite => invite.invitee_id)), [invites])
-  const memberTeamIds = useMemo(() => new Set(memberTeams.map(team => team.id)), [memberTeams])
-  const shareableSessions = useMemo(
-    () => userSessions.filter(session => Boolean(session.team_id) && memberTeamIds.has(session.team_id ?? '')),
-    [memberTeamIds, userSessions],
-  )
-
-  useEffect(() => {
-    if (!user || accountType === 'full_time' || !shareSessionId) {
-      setShareMembers([])
-      return
-    }
-    const session = shareableSessions.find(item => item.id === shareSessionId)
-    if (!session || !session.team_id) {
-      setShareMembers([])
-      return
-    }
-    const loadMembers = async () => {
-      const response = await fetchTeamMembers(session.team_id)
-      const rows = (response.members ?? []) as MemberEntry[]
-      setShareMembers(rows.filter(member => member.user_id !== user.id))
-    }
-    void loadMembers()
-  }, [accountType, shareSessionId, shareableSessions, user])
 
   const handleCreateTeam = async () => {
     if (!user || !teamName.trim()) {
@@ -281,29 +218,6 @@ function TeamPage() {
     }
   }
 
-  const handleShareSession = async () => {
-    if (!user || !shareSessionId || !shareMemberId || !shareDate) {
-      setShareMessage('Select a session, teammate, and date.')
-      return
-    }
-    setLoading(true)
-    setShareMessage('')
-    try {
-      await createSessionShare({
-        session_id: shareSessionId,
-        share_date: shareDate,
-        shared_with: shareMemberId,
-        allow_roster_edits: shareAllowEdits,
-      })
-      setShareMessage('Session shared.')
-      setShareMemberId('')
-    } catch (error) {
-      setShareMessage(error instanceof Error ? error.message : 'Failed to share session')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleRemoveMember = async (member: MemberEntry) => {
     if (!activeTeamId) {
       return
@@ -323,10 +237,6 @@ function TeamPage() {
     try {
       await leaveTeam(team.id)
       setMemberTeams(current => current.filter(item => item.id !== team.id))
-      if (shareableSessions.some(session => session.id === shareSessionId && session.team_id === team.id)) {
-        setShareSessionId('')
-        setShareMemberId('')
-      }
       setMessage(`Left ${team.name}.`)
       if (getCurrentTeamId() === team.id) {
         clearCurrentTeamId()
@@ -393,72 +303,17 @@ function TeamPage() {
             </div>
           )}
         </div>
-
         <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
-          <h3 className="text-lg font-semibold">Share a session</h3>
+          <h3 className="text-lg font-semibold">Share Sessions</h3>
           <p className="mt-2 text-sm text-secondary/70">
-            Share a session for a specific date with a teammate covering your shift.
+            Open the dedicated sharing workflow to schedule coverage, review exact dates, and revoke active shares.
           </p>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
-              Session
-              <select
-                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                value={shareSessionId}
-                onChange={event => setShareSessionId(event.target.value)}
-              >
-                <option value="">Select a session</option>
-                {shareableSessions.map(session => (
-                  <option key={session.id} value={session.id}>
-                    {getSessionLabel(session)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
-              Teammate
-              <select
-                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                value={shareMemberId}
-                onChange={event => setShareMemberId(event.target.value)}
-              >
-                <option value="">Select a teammate</option>
-                {shareMembers.map(member => (
-                  <option key={member.user_id} value={member.user_id}>
-                    {member.profiles?.first_name} {member.profiles?.last_name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
-              Share Date
-              <input
-                className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                type="date"
-                value={shareDate}
-                onChange={event => setShareDate(event.target.value)}
-              />
-            </label>
-            <label className="flex items-center gap-2 text-sm font-semibold text-secondary">
-              <input
-                type="checkbox"
-                checked={shareAllowEdits}
-                onChange={event => setShareAllowEdits(event.target.checked)}
-              />
-              Allow roster edits
-            </label>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              className="rounded-2xl bg-secondary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
-              onClick={handleShareSession}
-              disabled={loading}
-            >
-              Share Session
-            </button>
-            {shareMessage ? <span className="text-sm font-semibold text-secondary">{shareMessage}</span> : null}
-          </div>
+          <Link
+            to="/share-sessions"
+            className="mt-4 inline-flex rounded-2xl bg-secondary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-primary"
+          >
+            Open Share Sessions
+          </Link>
         </div>
       </div>
     )

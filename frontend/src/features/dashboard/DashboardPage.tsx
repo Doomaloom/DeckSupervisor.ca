@@ -140,6 +140,15 @@ function DashboardPage() {
                 >
                   Select Existing Session
                 </button>
+                {!isGuest ? (
+                  <button
+                    type="button"
+                    className="w-80 rounded-card border-2 border-secondary/20 bg-accent px-8 py-10 text-center text-xl font-semibold text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary"
+                    onClick={() => navigate('/share-sessions')}
+                  >
+                    Share Sessions
+                  </button>
+                ) : null}
               </>
             ) : null}
           </>

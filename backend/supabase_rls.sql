@@ -108,6 +108,7 @@ alter table request_assignments enable row level security;
 
 drop policy if exists "Profiles insert by owner" on profiles;
 drop policy if exists "Profiles read by owner" on profiles;
+drop policy if exists "Profiles read by authenticated users" on profiles;
 drop policy if exists "Profiles read by full-time" on profiles;
 drop policy if exists "Profiles read by related teams" on profiles;
 drop policy if exists "Profiles update by owner" on profiles;
@@ -122,6 +123,10 @@ create policy "Profiles insert by owner"
 create policy "Profiles read by owner"
   on profiles for select
   using (id = auth.uid());
+
+create policy "Profiles read by authenticated users"
+  on profiles for select
+  using (auth.role() = 'authenticated');
 
 create policy "Profiles read by related teams"
   on profiles for select

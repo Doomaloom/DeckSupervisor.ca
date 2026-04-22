@@ -40,6 +40,7 @@ type Session struct {
 type SignUpResult struct {
 	Session *Session `json:"session,omitempty"`
 	Message string   `json:"message,omitempty"`
+	User    *User    `json:"-"`
 }
 
 type authResponse struct {
@@ -92,11 +93,13 @@ func (s *Service) SignUp(ctx context.Context, email, password string) (*SignUpRe
 	if payload.AccessToken != "" {
 		session := payload.toSession()
 		result.Session = &session
+		result.User = &payload.User
 		return result, payload.RefreshToken, nil
 	}
 	result.Message = "Check your email for a confirmation link."
 	if payload.User.ID != "" {
 		result.Session = nil
+		result.User = &payload.User
 	}
 	return result, "", nil
 }

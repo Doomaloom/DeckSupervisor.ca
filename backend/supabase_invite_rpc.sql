@@ -199,3 +199,48 @@ $$;
 
 grant execute on function search_invitable_part_time_profiles(uuid, text, integer) to authenticated;
 revoke execute on function search_invitable_part_time_profiles(uuid, text, integer) from anon;
+
+create or replace function search_shareable_part_time_profiles(
+  p_query text,
+  p_limit integer default 25
+)
+returns table (
+  id uuid,
+  first_name text,
+  last_name text,
+  email text
+)
+language sql
+stable
+security definer
+set search_path = public
+set row_security = off
+as $$
+  with args as (
+    select
+      auth.uid() as requester_id,
+      nullif(trim(coalesce(p_query, '')), '') as query,
+      greatest(1, least(coalesce(p_limit, 25), 50)) as row_limit
+  )
+  select
+    p.id,
+    p.first_name,
+    p.last_name,
+    p.email
+  from profiles p
+  cross join args
+  where args.requester_id is not null
+    and p.account_type = 'part_time'
+    and p.id <> args.requester_id
+    and (
+      args.query is null
+      or p.first_name ilike '%' || args.query || '%'
+      or p.last_name ilike '%' || args.query || '%'
+      or p.email ilike '%' || args.query || '%'
+    )
+  order by p.first_name, p.last_name, p.email
+  limit (select row_limit from args);
+$$;
+
+grant execute on function search_shareable_part_time_profiles(text, integer) to authenticated;
+revoke execute on function search_shareable_part_time_profiles(text, integer) from anon;

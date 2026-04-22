@@ -12,6 +12,11 @@ import type {
   PlannerShareSession,
   RosterStudent,
 } from '../types/app'
+import type {
+  OwnedSessionShareEntry,
+  ShareRecipient,
+  SessionShareCreateRequest,
+} from '../features/session-sharing/types'
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown
@@ -416,6 +421,28 @@ export function leaveTeam(teamId: string) {
 
 export function createSessionShare(body: Record<string, unknown>) {
   return request<void>('/api/session-shares', { method: 'POST', body })
+}
+
+export function createSessionShares(body: SessionShareCreateRequest) {
+  return request<void>('/api/session-shares', {
+    method: 'POST',
+    body,
+  })
+}
+
+export function fetchOwnedSessionShares() {
+  return request<{ shares: OwnedSessionShareEntry[] }>('/api/session-shares/owned')
+}
+
+export function revokeSessionShare(shareId: string) {
+  return request<void>(`/api/session-shares/${encodeURIComponent(shareId)}/revoke`, {
+    method: 'POST',
+  })
+}
+
+export function searchSessionShareRecipients(query: string) {
+  const params = new URLSearchParams({ q: query })
+  return request<{ results: ShareRecipient[] }>(`/api/session-share-recipients?${params.toString()}`)
 }
 
 export function fetchSessionNotes(sessionId: string) {

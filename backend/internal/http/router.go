@@ -39,7 +39,10 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/team-invites/{id}/revoke", handlers.RevokeTeamInvite).Methods("POST")
 
 	// Session sharing and session management
+	r.HandleFunc("/api/session-share-recipients", handlers.SearchSessionShareRecipients).Methods("GET")
 	r.HandleFunc("/api/session-shares", handlers.CreateSessionShare).Methods("POST")
+	r.HandleFunc("/api/session-shares/owned", handlers.OwnedSessionShares).Methods("GET")
+	r.HandleFunc("/api/session-shares/{id}/revoke", handlers.RevokeSessionShare).Methods("POST")
 	r.HandleFunc("/api/session-shares/today", handlers.SharedSessionsToday).Methods("GET")
 	r.HandleFunc("/api/sessions/mine", handlers.MySessions).Methods("GET")
 	r.HandleFunc("/api/sessions", handlers.CreateSession).Methods("POST")

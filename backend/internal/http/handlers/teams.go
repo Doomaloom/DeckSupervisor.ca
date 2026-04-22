@@ -256,22 +256,3 @@ func LeaveTeam(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
-
-func CreateSessionShare(w http.ResponseWriter, r *http.Request) {
-	client, err := supabasesvc.NewClientFromRequest(r)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	payload["shared_by"] = client.User.ID
-	if err := client.Post(r.Context(), "/rest/v1/session_shares", nil, payload, "", nil); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
-}

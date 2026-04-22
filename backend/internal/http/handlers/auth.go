@@ -3,8 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 
 	authsvc "cob-aquatics/internal/services/auth"
+	supabasesvc "cob-aquatics/internal/services/supabase"
 )
 
 type authCredentialsRequest struct {
@@ -60,6 +62,9 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+	if result.User != nil {
+		_ = ensureProfileExistsAtSignUp(r, result.User.ID, result.User.Email)
 	}
 
 	if result.Session != nil {
@@ -122,4 +127,21 @@ func toBrowserSession(session *authsvc.Session) *browserSessionResponse {
 		ExpiresAt: session.ExpiresAt,
 		User:      session.User,
 	}
+}
+
+func ensureProfileExistsAtSignUp(r *http.Request, userID string, email string) error {
+	if userID == "" {
+		return nil
+	}
+	serviceClient, err := supabasesvc.NewServiceClientFromEnv()
+	if err != nil {
+		return err
+	}
+	query := url.Values{}
+	query.Set("on_conflict", "id")
+	body := map[string]any{
+		"id":    userID,
+		"email": email,
+	}
+	return serviceClient.Post(r.Context(), "/rest/v1/profiles", query, body, "resolution=merge-duplicates", nil)
 }

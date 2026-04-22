@@ -1,7 +1,7 @@
 import React from 'react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { customRender, screen } from '../../test/render'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, customRender, screen } from '../../test/render'
 import DashboardPage from './DashboardPage'
 
 const mocks = vi.hoisted(() => ({
@@ -34,6 +34,8 @@ vi.mock('../../app/useCurrentTeam', () => ({
 
 vi.mock('../../app/useCurrentTerm', () => ({
   useCurrentTerm: mocks.useCurrentTerm,
+  formatTermLabel: (season: string, year: number) =>
+    `${season.slice(0, 1).toUpperCase()}${season.slice(1).toLowerCase()} ${year}`,
 }))
 
 vi.mock('../session-management/hooks/useCurrentSessionScopeSync', () => ({
@@ -53,6 +55,10 @@ vi.mock('../session-management/hooks/useSessionSelectionData', () => ({
 }))
 
 describe('DashboardPage', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
   beforeEach(() => {
     mocks.useNavigate.mockReset()
     mocks.useAuth.mockReset()
@@ -145,6 +151,25 @@ describe('DashboardPage', () => {
 
     expect(selectSessionAndSyncDay).toHaveBeenCalledWith('local-1', 'Monday')
     expect(navigate).toHaveBeenCalledWith('/manage-sessions')
+    expect(screen.queryByRole('button', { name: 'Share Sessions' })).not.toBeInTheDocument()
+  })
+
+  it('renders the share sessions button for signed-in part-time users and navigates to the share page', async () => {
+    const user = userEvent.setup()
+    const navigate = vi.fn()
+
+    mocks.useNavigate.mockReturnValue(navigate)
+    mocks.useAuth.mockReturnValue({
+      accountType: 'part_time',
+      isGuest: false,
+      user: { id: 'user-1' },
+    })
+
+    customRender(<DashboardPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Share Sessions' }))
+
+    expect(navigate).toHaveBeenCalledWith('/share-sessions')
   })
 
   it('renders the full-time scope panel and forwards upload requests', async () => {
@@ -188,6 +213,7 @@ describe('DashboardPage', () => {
     customRender(<DashboardPage />)
 
     expect(screen.getByText('Current term: Winter 2026')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Share Sessions' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Upload CSV and Choose Session' }))
     expect(requestCsvFile).toHaveBeenCalledTimes(1)
   })

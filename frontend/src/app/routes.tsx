@@ -12,6 +12,7 @@ import SignInPage from '../features/auth/SignInPage'
 import AccountPage from '../features/account/AccountPage'
 import TeamPage from '../features/teams/TeamPage'
 import SessionPlanningPage from '../features/session-planning/SessionPlanningPage'
+import ShareSessionsPage from '../features/session-sharing/ShareSessionsPage'
 import { useAuth } from './AuthContext'
 
 function RequireFullTime({ children }: { children: JSX.Element }) {
@@ -41,6 +42,7 @@ function AppRoutes() {
       <Route path="/sign-in" element={<SignInPage />} />
       <Route path="/account" element={<AccountPage />} />
       <Route path="/team" element={<TeamPage />} />
+      <Route path="/share-sessions" element={<ShareSessionsPage />} />
       <Route path="/" element={<DashboardPage />} />
       <Route path="/manage-sessions" element={<ManageSessionsPage />} />
       <Route path="/print" element={<PrintPage />} />

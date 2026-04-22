@@ -6,6 +6,7 @@ import {
     DocumentTextIcon,
     HomeIcon,
     AdjustmentsHorizontalIcon,
+    ShareIcon,
     UsersIcon,
     PrinterIcon,
     ClockIcon,
@@ -242,6 +243,11 @@ function Layout({ children }: LayoutProps) {
             to: '/manage-sessions',
             label: 'Manage Session',
             icon: <AdjustmentsHorizontalIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/share-sessions',
+            label: 'Share Sessions',
+            icon: <ShareIcon className="h-5 w-5" />,
         },
         {
             to: '/schematic',
