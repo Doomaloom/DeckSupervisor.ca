@@ -7,13 +7,24 @@ import { useCurrentTeam } from '../../../app/useCurrentTeam'
 import {
   getExtractedClassesForScope,
   getExtractedClassesForSession,
+  setExtractedClassesForSession,
 } from '../../../lib/extractedClassesStorage'
+import { storeProcessedRosters } from '../../../lib/api'
+import { getCsvImportDatasetForSession } from '../../../lib/csvImportDatasetStorage'
+import { deriveCsvDataForSession, type CsvReconcileTarget } from '../../../lib/csvImportReconcile'
 import {
   clearCurrentSessionId,
   loadSessions,
   saveSessions,
   setCurrentSessionId,
 } from '../../../lib/sessionStorage'
+import {
+  getCustomRosterDayKey,
+  getCustomRostersForDay,
+  getInstructorCoursesForDay,
+  getScheduleForDay,
+  setStudentsForDay,
+} from '../../../lib/storage'
 import {
   deleteSession,
   fetchCurrentTeams,
@@ -29,6 +40,7 @@ import {
 } from '../../../shared/session/sourceLocations'
 import { NO_TEAM_VALUE, SESSION_SEASON_OPTIONS, type InstructorEntry, type LocalSessionEntry } from '../types'
 import { buildSessionIdentityCriteria, resolveDisplayAndSourceLocations } from '../utils/sessionIdentity'
+import type { ClassRoster } from '../../../types/app'
 
 type TeamEntry = {
   id: string
@@ -47,6 +59,104 @@ type OwnedSessionRow = Array<{
   session_start_time24: string | null
   session_end_time24: string | null
 }>[number]
+
+function buildAssignedInstructorMap(day: string) {
+  const map = new Map<string, string>()
+  ;(getInstructorCoursesForDay(day)?.instructors ?? []).forEach(entry => {
+    const name = entry.name.trim()
+    if (!name) {
+      return
+    }
+    entry.codes.forEach(code => {
+      const trimmed = code.trim()
+      if (trimmed) {
+        map.set(trimmed, name)
+      }
+    })
+  })
+  return map
+}
+
+function applyAssignedInstructorsToRosters(day: string, rosters: ClassRoster[]) {
+  const assignedByCode = buildAssignedInstructorMap(day)
+  return rosters.map(roster => {
+    const assignedInstructor = assignedByCode.get(roster.code.trim()) ?? roster.instructor ?? ''
+    return {
+      ...roster,
+      instructor: assignedInstructor,
+      students: roster.students.map(student => ({
+        ...student,
+        instructor: assignedInstructor || student.instructor || '',
+      })),
+    }
+  })
+}
+
+function getRemovedCodeDependencyMessage(
+  day: string,
+  sessionId: string,
+  isGuest: boolean,
+  removedCodes: string[],
+) {
+  if (removedCodes.length === 0) {
+    return ''
+  }
+
+  const removedSet = new Set(removedCodes.map(code => code.trim()).filter(Boolean))
+
+  const scheduledCodes = (getScheduleForDay(day)?.codes ?? [])
+    .flatMap(column => column.split(','))
+    .map(code => code.trim())
+    .filter(Boolean)
+
+  if (scheduledCodes.some(code => removedSet.has(code))) {
+    return 'Cannot remove that raw location because some of its classes are already placed in the schematic. Clear those assignments first.'
+  }
+
+  const assignedCodes = (getInstructorCoursesForDay(day)?.instructors ?? [])
+    .flatMap(entry => entry.codes.map(code => code.trim()))
+    .filter(Boolean)
+
+  if (assignedCodes.some(code => removedSet.has(code))) {
+    return 'Cannot remove that raw location because classes from it already have instructor assignments. Clear those assignments first.'
+  }
+
+  const customRosterKey = getCustomRosterDayKey(day, sessionId, isGuest)
+  const customRosters = getCustomRostersForDay(customRosterKey)
+  if (customRosters.some(roster => roster.sourceCodes.some(code => removedSet.has(code.trim())))) {
+    return 'Cannot remove that raw location because custom rosters depend on classes from it. Remove those custom rosters first.'
+  }
+
+  return ''
+}
+
+function refreshImportedSessionDataForSession(
+  sessionId: string,
+  target: CsvReconcileTarget,
+) {
+  if (!sessionId || !target.sessionDay.trim()) {
+    return false
+  }
+
+  const dataset = getCsvImportDatasetForSession(sessionId)
+  if (!dataset) {
+    return false
+  }
+
+  const derived = deriveCsvDataForSession(target, dataset)
+  setExtractedClassesForSession(sessionId, derived.classes)
+
+  const hasRosterData = Object.keys(dataset.rostersByCandidate ?? {}).length > 0
+  if (hasRosterData) {
+    if (derived.rosters.length > 0) {
+      storeProcessedRosters(applyAssignedInstructorsToRosters(target.sessionDay, derived.rosters))
+    } else {
+      setStudentsForDay(target.sessionDay, [])
+    }
+  }
+
+  return true
+}
 
 type UseManageSessionFormParams = {
   currentSessionId: string
@@ -344,6 +454,89 @@ export function useManageSessionForm({
       setEditMessage(resolvedLocations.validationMessage)
       return
     }
+    const sessionYearValue = resolveSessionYear(editSessionYear, editStartDate, editEndDate)
+
+    const nextImportTarget: CsvReconcileTarget = {
+      sessionDay: editSessionDay,
+      sessionSeason: editSessionSeason || null,
+      sessionYear: sessionYearValue,
+      sourceLocations: resolvedLocations.sourceLocations,
+      sessionStartTime24: editSessionStartTime24 || null,
+      sessionEndTime24: editSessionEndTime24 || null,
+    }
+
+    const sessionImportDataset = getCsvImportDatasetForSession(currentSessionId)
+
+    const previousSourceLocations = isGuest
+      ? normalizeSessionLocations(
+          (currentSession as LocalSessionEntry | null)?.sourceLocations ?? [
+            (currentSession as LocalSessionEntry | null)?.location ?? '',
+          ],
+        )
+      : getEffectiveSourceLocations(currentSessionRecord)
+
+    const removedLocationKeys = new Set(
+      previousSourceLocations
+        .filter(
+          previousLocation =>
+            !resolvedLocations.sourceLocations.some(
+              nextLocation =>
+                normalizeSessionLocationKey(nextLocation) ===
+                normalizeSessionLocationKey(previousLocation),
+            ),
+        )
+        .map(location => normalizeSessionLocationKey(location)),
+    )
+
+    if (sessionImportDataset && removedLocationKeys.size > 0) {
+      const currentImportTarget: CsvReconcileTarget | null = isGuest
+        ? currentSession
+          ? {
+              sessionDay: (currentSession as LocalSessionEntry).sessionDay,
+              sessionSeason: (currentSession as LocalSessionEntry).sessionSeason || null,
+              sessionYear: (currentSession as LocalSessionEntry).sessionYear ?? null,
+              sourceLocations: normalizeSessionLocations(
+                (currentSession as LocalSessionEntry).sourceLocations ?? [
+                  (currentSession as LocalSessionEntry).location ?? '',
+                ],
+              ),
+              sessionStartTime24: (currentSession as LocalSessionEntry).sessionStartTime24 ?? null,
+              sessionEndTime24: (currentSession as LocalSessionEntry).sessionEndTime24 ?? null,
+            }
+          : null
+        : currentSessionRecord
+          ? {
+              sessionDay: currentSessionRecord.session_day,
+              sessionSeason: currentSessionRecord.session_season ?? null,
+              sessionYear: currentSessionRecord.session_year ?? null,
+              sourceLocations: getEffectiveSourceLocations(currentSessionRecord),
+              sessionStartTime24: currentSessionRecord.session_start_time24 ?? null,
+              sessionEndTime24: currentSessionRecord.session_end_time24 ?? null,
+            }
+          : null
+
+      if (currentImportTarget) {
+        const currentDerived = deriveCsvDataForSession(currentImportTarget, sessionImportDataset)
+        const nextDerived = deriveCsvDataForSession(nextImportTarget, sessionImportDataset)
+
+        const removedCodes = currentDerived.courseCodes.filter(
+          code => !nextDerived.courseCodes.includes(code),
+        )
+
+        const dependencyMessage = getRemovedCodeDependencyMessage(
+          nextImportTarget.sessionDay,
+          currentSessionId,
+          isGuest,
+          removedCodes,
+        )
+
+        if (dependencyMessage) {
+          setEditMessageTone('error')
+          setEditMessage(dependencyMessage)
+          return
+        }
+      }
+    }
     setIsSaving(true)
     if (isGuest) {
       const updatedSessions = loadSessions().map(session => {
@@ -366,6 +559,7 @@ export function useManageSessionForm({
         }
       })
       saveSessions(updatedSessions)
+      refreshImportedSessionDataForSession(currentSessionId, nextImportTarget)
       setEditMessageTone('success')
       setEditMessage('Session updated.')
       refreshScope()
@@ -395,7 +589,6 @@ export function useManageSessionForm({
       currentSessionRecord.start_date,
     )
 
-    const sessionYearValue = resolveSessionYear(editSessionYear, editStartDate, editEndDate)
     const nextTeamId = editTeamId && editTeamId !== NO_TEAM_VALUE ? editTeamId : null
     const nextSessionDay = editSessionDay
     const nextSessionLabel = formatSessionTermLabel(
@@ -443,6 +636,7 @@ export function useManageSessionForm({
       return
     }
 
+    refreshImportedSessionDataForSession(currentSessionId, nextImportTarget)
     setEditMessageTone('success')
     setEditMessage('Session updated.')
     selectSessionAndSyncDay(currentSessionId, editSessionDay)
