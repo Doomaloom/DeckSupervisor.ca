@@ -54,6 +54,7 @@ function ManageSessionsPage() {
                 showTeamSelect={!isGuest}
                 location={form.editLocation}
                 sourceLocations={form.editSourceLocations}
+                sourceLocationOptions={form.sourceLocationOptions}
                 availableLocations={form.availableLocations}
                 rosterFileLabel={
                   form.editRosterFile

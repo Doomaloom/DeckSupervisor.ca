@@ -21,6 +21,7 @@ type NewSessionPanelProps = {
     availableLocations: string[]
     location: string
     sourceLocations: string[]
+    sourceLocationOptions: string[]
     setSessionDay: (value: string) => void
     setSessionSeason: (value: string) => void
     setSessionYear: (value: string) => void
@@ -64,6 +65,7 @@ function NewSessionPanel({ form, isGuest, teams }: NewSessionPanelProps) {
               showTeamSelect={!isGuest}
               location={form.location}
               sourceLocations={form.sourceLocations}
+              sourceLocationOptions={form.sourceLocationOptions}
               availableLocations={form.availableLocations}
               rosterFileLabel={form.rosterFile ? form.rosterFile.name : 'Click or drop a .csv file'}
               locationListId="dashboard-session-location-options"

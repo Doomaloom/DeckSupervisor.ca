@@ -70,6 +70,20 @@ export function useNewSessionForm({
     return teams.find(team => team.id === selectedTeamId)?.available_locations ?? []
   }, [selectedTeamId, teams])
 
+  const sourceLocationOptions = useMemo(() => {
+    const locations = Array.from(
+      new Set(
+        newSessionExtractedSessions
+          .map(session => session.location.trim())
+          .filter(Boolean),
+      ),
+    ).sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' }))
+
+    return locations.filter(
+      option => !sourceLocations.some(selected => selected.trim().toLowerCase() === option.toLowerCase()),
+    )
+  }, [newSessionExtractedSessions, sourceLocations])
+
   const inspectNewSessionRosterFile = async (file: File) => {
     setIsInspectingRosterFile(true)
     setNewSessionTimeMessage('')
@@ -318,6 +332,7 @@ export function useNewSessionForm({
     availableLocations,
     location,
     sourceLocations,
+    sourceLocationOptions,
     setSessionDay,
     setSessionSeason,
     setSessionYear,
