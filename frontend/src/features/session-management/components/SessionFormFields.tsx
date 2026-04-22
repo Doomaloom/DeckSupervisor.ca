@@ -14,6 +14,7 @@ type SessionFormFieldsProps = {
     sessionEndTime24: string
     location: string
     sourceLocations: string[]
+    sourceLocationOptions?: string[]
     availableLocations: string[]
     rosterFileLabel: string
     timeMessage?: string
@@ -49,6 +50,7 @@ function SessionFormFields({
     sessionEndTime24,
     location,
     sourceLocations,
+    sourceLocationOptions = [],
     availableLocations,
     timeMessage = '',
     isInspectingRosterFile = false,
@@ -197,8 +199,7 @@ function SessionFormFields({
             </label>
             <SourceLocationsInput
                 values={sourceLocations}
-                suggestions={availableLocations}
-                inputId={sourceLocationsInputId}
+                options={sourceLocationOptions}
                 helperText="These raw CSV locations will be treated as one session."
                 onChange={onSourceLocationsChange}
             />

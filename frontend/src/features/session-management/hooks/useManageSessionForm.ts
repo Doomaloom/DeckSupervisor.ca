@@ -758,6 +758,29 @@ export function useManageSessionForm({
     editStartDate,
   ])
 
+  const sourceLocationOptions = useMemo(() => {
+    const dataset = getCsvImportDatasetForSession(currentSessionId)
+    if (!dataset) {
+      return [] as string[]
+    }
+
+    const options = Array.from(
+      new Set(
+        Object.values(dataset.classesBySession ?? {})
+          .flat()
+          .map(classEntry => classEntry.location.trim())
+          .filter(Boolean),
+      ),
+    ).sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' }))
+
+    return options.filter(
+      option =>
+        !editSourceLocations.some(
+          selected => normalizeSessionLocationKey(selected) === normalizeSessionLocationKey(option),
+        ),
+    )
+  }, [currentSessionId, editSourceLocations])
+
   return {
     seasonOptions: SESSION_SEASON_OPTIONS,
     currentSession,
@@ -767,6 +790,7 @@ export function useManageSessionForm({
     teamsLoading,
     teamName,
     availableLocations,
+    sourceLocationOptions,
     editSessionDay,
     editSessionSeason,
     editSessionYear,

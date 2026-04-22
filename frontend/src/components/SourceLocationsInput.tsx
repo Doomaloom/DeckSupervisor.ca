@@ -4,8 +4,7 @@ import { normalizeSessionLocations } from '../shared/session/sourceLocations'
 type SourceLocationsInputProps = {
   label?: string
   values: string[]
-  suggestions?: string[]
-  inputId?: string
+  options?: string[]
   helperText?: string
   onChange: (values: string[]) => void
 }
@@ -13,20 +12,21 @@ type SourceLocationsInputProps = {
 function SourceLocationsInput({
   label = 'Included Raw Locations',
   values,
-  suggestions = [],
-  inputId,
+  options = [],
   helperText,
   onChange,
 }: SourceLocationsInputProps) {
-  const [draft, setDraft] = useState('')
+  const [selectedOption, setSelectedOption] = useState('')
+
+  const availableOptions = options.filter(option => !values.includes(option))
 
   const addDraft = () => {
-    const next = normalizeSessionLocations([...values, draft])
+    const next = normalizeSessionLocations([...values, selectedOption])
     if (next.length === values.length) {
       return
     }
     onChange(next)
-    setDraft('')
+    setSelectedOption('')
   }
 
   const removeValue = (value: string) => {
@@ -37,35 +37,29 @@ function SourceLocationsInput({
     <div className="flex flex-col gap-2">
       <span className="font-semibold text-secondary">{label}</span>
       <div className="flex gap-2">
-        <input
+        <select
           className="flex-1 rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
-          type="text"
-          value={draft}
-          onChange={event => setDraft(event.target.value)}
-          onKeyDown={event => {
-            if (event.key === 'Enter') {
-              event.preventDefault()
-              addDraft()
-            }
-          }}
-          list={suggestions.length > 0 && inputId ? inputId : undefined}
-          placeholder="Add raw CSV location"
-        />
+          value={selectedOption}
+          onChange={event => setSelectedOption(event.target.value)}
+        >
+          <option value="">
+            {availableOptions.length > 0 ? 'Select raw CSV location' : 'No more raw CSV locations available'}
+          </option>
+          {availableOptions.map(option => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
         <button
           type="button"
           className="rounded-2xl bg-secondary px-4 py-2 text-accent transition hover:-translate-y-0.5 hover:bg-primary"
           onClick={addDraft}
+          disabled={!selectedOption}
         >
           Add
         </button>
       </div>
-      {suggestions.length > 0 && inputId ? (
-        <datalist id={inputId}>
-          {suggestions.map(option => (
-            <option key={option} value={option} />
-          ))}
-        </datalist>
-      ) : null}
       {values.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {values.map(value => (
