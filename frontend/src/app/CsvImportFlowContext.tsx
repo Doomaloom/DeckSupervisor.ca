@@ -4,7 +4,8 @@ import { useAuth } from './AuthContext'
 import { useDay } from './DayContext'
 import { useCurrentTeam } from './useCurrentTeam'
 import { useCurrentTerm } from './useCurrentTerm'
-import { extractClassesFromCsv, processCsvAndStore, storeProcessedRosters } from '../lib/api'
+import { processCsvAndStore, storeProcessedRosters } from '../lib/api'
+import { setCsvImportDatasetForSession } from '../lib/csvImportDatasetStorage'
 import { setExtractedClassesForScope, setExtractedClassesForSession } from '../lib/extractedClassesStorage'
 import { getSessionTermLabel, syncReportCardsForDay } from '../lib/reportCardSync'
 import { createSession, fetchCsvAnalyze } from '../lib/serverApi'
@@ -118,31 +119,6 @@ function getCandidateExtractedClasses(
   return merged
 }
 
-function toGuestCandidates(classesResponse: {
-  sessions: Array<{
-    sessionKey: string
-    dayOfWeek: string
-    sessionSeason: string
-    sessionYear: number
-    startDate: string
-    endDate: string
-    location: string
-    sessionStartTime24: string
-    sessionEndTime24: string
-    classCount: number
-    studentCount: number
-    waitlistCount: number
-    courseCodes: string[]
-  }>
-}): CsvSessionCandidate[] {
-  return (classesResponse.sessions ?? []).map(session => ({
-    ...session,
-    sourceSessionKeys: [session.sessionKey],
-    rawLocations: session.location ? [session.location] : [],
-    matchedSession: null,
-  }))
-}
-
 export function CsvImportFlowProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const { accountType, isGuest, user } = useAuth()
@@ -175,26 +151,6 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
     })
 
     try {
-      if (isGuest) {
-        const extracted = await extractClassesFromCsv(file)
-        const candidates = toGuestCandidates(extracted)
-        console.log('[csv-import] inferred session candidates', {
-          fileName: file.name,
-          accountType,
-          scope: 'guest',
-          sessions: candidates,
-          classesBySession: extracted.classesBySession,
-        })
-        setState(current => ({
-          ...current,
-          loading: false,
-          candidates,
-          classesBySession: extracted.classesBySession ?? {},
-          error: candidates.length === 0 ? 'No session candidates were found in this CSV.' : '',
-        }))
-        return
-      }
-
       const response = await fetchCsvAnalyze(
         file,
         accountType === 'full_time' && currentTeamId
@@ -209,7 +165,9 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
         fileName: file.name,
         accountType,
         scope:
-          accountType === 'full_time'
+          isGuest
+            ? 'guest'
+            : accountType === 'full_time'
             ? {
                 teamId: currentTeamId,
                 termKey: currentTerm?.key ?? null,
@@ -359,6 +317,15 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
       }
       setCurrentSessionId(targetSession.id)
       setSelectedDay(candidate.dayOfWeek)
+      if (accountType !== 'full_time') {
+        setCsvImportDatasetForSession(targetSession.id, {
+          fileName: state.file.name,
+          importedAt: new Date().toISOString(),
+          candidates: state.candidates,
+          classesBySession: state.classesBySession,
+          rostersByCandidate: state.rostersByCandidate,
+        })
+      }
 
       const extractedClassesForCandidate = getCandidateExtractedClasses(state.classesBySession, candidate)
       if (isGuest) {

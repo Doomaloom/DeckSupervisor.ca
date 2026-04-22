@@ -85,15 +85,15 @@ type CSVMatchedSessionData struct {
 
 func AnalyzeCSV(w http.ResponseWriter, r *http.Request) {
 	client, err := supabasesvc.NewClientFromRequest(r)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+	isGuest := err != nil
 
-	profile, err := loadOrCreateProfile(r, client)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	var profile *profileRow
+	if !isGuest {
+		profile, err = loadOrCreateProfile(r, client)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 
 	file, header, err := r.FormFile("csv_file")
@@ -113,7 +113,12 @@ func AnalyzeCSV(w http.ResponseWriter, r *http.Request) {
 	}
 	teamID := strings.TrimSpace(r.FormValue("teamId"))
 
-	if profile.AccountType == "full_time" && teamID == "" {
+	accountScope := "guest"
+	if profile != nil && strings.TrimSpace(profile.AccountType) != "" {
+		accountScope = strings.TrimSpace(profile.AccountType)
+	}
+
+	if accountScope == "full_time" && teamID == "" {
 		http.Error(w, "Missing team id", http.StatusBadRequest)
 		return
 	}
@@ -125,14 +130,18 @@ func AnalyzeCSV(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to analyze CSV: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	if profile.AccountType == "full_time" && termSeason != "" && termYear > 0 {
+	if accountScope == "full_time" && termSeason != "" && termYear > 0 {
 		initialExtracted = filterExtractedClassesByTerm(initialExtracted, termSeason, termYear)
 	}
 
-	instructorMap, warnings, err := loadCSVAnalyzeInstructorMap(r, client, initialExtracted)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	instructorMap := map[string]string{}
+	warnings := []string(nil)
+	if !isGuest {
+		instructorMap, warnings, err = loadCSVAnalyzeInstructorMap(r, client, initialExtracted)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
@@ -148,22 +157,27 @@ func AnalyzeCSV(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to analyze CSV: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	if profile.AccountType == "full_time" && termSeason != "" && termYear > 0 {
+	if accountScope == "full_time" && termSeason != "" && termYear > 0 {
 		extractedData = filterExtractedClassesByTerm(extractedData, termSeason, termYear)
 	}
 
-	scopeSessions, err := loadCSVMatchScopeSessions(r, client, profile)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	scopeSessions := []sessionRow(nil)
+	userID := ""
+	if !isGuest {
+		scopeSessions, err = loadCSVMatchScopeSessions(r, client, profile)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		userID = profile.ID
 	}
 
-	rawCandidates := buildCSVSessionCandidates(extractedData.Sessions, scopeSessions, profile.ID)
+	rawCandidates := buildCSVSessionCandidates(extractedData.Sessions, scopeSessions, userID)
 	rosters := buildCSVAnalyzeRosters(extractedData.ClassesBySession)
 
 	response := CSVAnalyzeResponse{
 		Success:       true,
-		Meta:          buildCSVAnalyzeMeta(header.Filename, profile.AccountType, requestedDay, termSeason, termYear, teamID, warnings),
+		Meta:          buildCSVAnalyzeMeta(header.Filename, accountScope, requestedDay, termSeason, termYear, teamID, warnings),
 		Rosters:       rosters,
 		TotalStudents: sumRosterStudentCounts(rosters),
 		Extracted: CSVAnalyzeExtracted{
