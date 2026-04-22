@@ -207,6 +207,7 @@ function SchematicPage() {
                 <div className="flex flex-wrap justify-center gap-3">
                     <button
                         type="button"
+                        data-help-anchor="schematic-add-column"
                         className="rounded-2xl border border-secondary/30 bg-bg px-5 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
                         onClick={addTemporaryColumn}
                     >
@@ -214,6 +215,7 @@ function SchematicPage() {
                     </button>
                     <button
                         type="button"
+                        data-help-anchor="schematic-remove-empty-columns"
                         className="rounded-2xl border border-secondary/30 bg-bg px-5 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
                         onClick={removeEmptyColumns}
                     >
@@ -222,26 +224,39 @@ function SchematicPage() {
                 </div>
             ) : null}
 
-            <SchematicBoard
-                columns={columns}
-                instructors={instructors}
-                lockedInstructors={lockedInstructors}
-                selectedCourseCodes={selectedCourseCodes}
-                timeLabels={timeLabels}
-                scheduleHeightRem={scheduleHeightRem}
-                scheduleStartMinutes={scheduleStartMinutes}
-                instructorOptions={instructorOptions}
-                sessionLabel={sessionLabel}
-                readOnly={isReadOnly}
-                onInstructorChange={isReadOnly ? () => {} : setInstructorAt}
-                onCourseSelect={isReadOnly ? () => {} : toggleCourseSelection}
-                onColumnDrop={isReadOnly ? () => {} : handleDrop}
-                onCourseDrop={isReadOnly ? () => {} : handleDropOnCourse}
-                onCourseDragStart={isReadOnly ? () => {} : handleDragStart}
-            />
+            <div className="relative">
+                <div
+                    aria-hidden="true"
+                    data-help-anchor="schematic-single-move"
+                    className="pointer-events-none absolute left-[14%] top-24 z-0 h-[40%] w-[16%] opacity-0"
+                />
+                <div
+                    aria-hidden="true"
+                    data-help-anchor="schematic-multi-move"
+                    className="pointer-events-none absolute right-[16%] top-24 z-0 h-[40%] w-[16%] opacity-0"
+                />
+                <SchematicBoard
+                    columns={columns}
+                    instructors={instructors}
+                    lockedInstructors={lockedInstructors}
+                    selectedCourseCodes={selectedCourseCodes}
+                    timeLabels={timeLabels}
+                    scheduleHeightRem={scheduleHeightRem}
+                    scheduleStartMinutes={scheduleStartMinutes}
+                    instructorOptions={instructorOptions}
+                    sessionLabel={sessionLabel}
+                    readOnly={isReadOnly}
+                    onInstructorChange={isReadOnly ? () => {} : setInstructorAt}
+                    onCourseSelect={isReadOnly ? () => {} : toggleCourseSelection}
+                    onColumnDrop={isReadOnly ? () => {} : handleDrop}
+                    onCourseDrop={isReadOnly ? () => {} : handleDropOnCourse}
+                    onCourseDragStart={isReadOnly ? () => {} : handleDragStart}
+                />
+            </div>
 
             <div className="flex justify-center">
                 <button
+                    data-help-anchor="schematic-save-schedule"
                     className="rounded-2xl bg-primary px-6 py-3 text-white transition hover:-translate-y-0.5 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={handleSaveSchedule}
                     disabled={isReadOnly}

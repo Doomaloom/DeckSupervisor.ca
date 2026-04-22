@@ -18,7 +18,7 @@ function InstructorListEditor({
   const showRemove = typeof onRemoveInstructor === 'function'
 
   return (
-    <div className="flex flex-col gap-3">
+    <div data-help-anchor="manage-session-instructors" className="flex flex-col gap-3">
       <p className="font-semibold text-secondary">
         {showRemove ? 'Instructors' : 'Instructors on Shift'}
       </p>

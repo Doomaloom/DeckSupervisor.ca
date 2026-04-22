@@ -73,7 +73,7 @@ function SessionFormFields({
     onSourceLocationsChange,
 }: SessionFormFieldsProps) {
     return (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div data-help-anchor="manage-session-fields" className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-2 font-semibold text-secondary">
                 Session Day
                 <select
@@ -178,31 +178,33 @@ function SessionFormFields({
                     </select>
                 </label>
             ) : null}
-            <label className="flex flex-col gap-2 font-semibold text-secondary">
-                Display Location
-                <input
-                    className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
-                    type="text"
-                    value={location}
-                    onChange={event => onLocationChange(event.target.value)}
-                    list={availableLocations.length > 0 ? locationListId : undefined}
-                    placeholder="Shown across the app"
-                    disabled={disabled}
+            <div data-help-anchor="manage-session-location-mapping" className="grid grid-cols-1 gap-4 md:col-span-2 md:grid-cols-2">
+                <label className="flex flex-col gap-2 font-semibold text-secondary">
+                    Display Location
+                    <input
+                        className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                        type="text"
+                        value={location}
+                        onChange={event => onLocationChange(event.target.value)}
+                        list={availableLocations.length > 0 ? locationListId : undefined}
+                        placeholder="Shown across the app"
+                        disabled={disabled}
+                    />
+                    {availableLocations.length > 0 ? (
+                        <datalist id={locationListId}>
+                            {availableLocations.map(option => (
+                                <option key={option} value={option} />
+                            ))}
+                        </datalist>
+                    ) : null}
+                </label>
+                <SourceLocationsInput
+                    values={sourceLocations}
+                    options={sourceLocationOptions}
+                    helperText="These raw CSV locations will be treated as one session."
+                    onChange={onSourceLocationsChange}
                 />
-                {availableLocations.length > 0 ? (
-                    <datalist id={locationListId}>
-                        {availableLocations.map(option => (
-                            <option key={option} value={option} />
-                        ))}
-                    </datalist>
-                ) : null}
-            </label>
-            <SourceLocationsInput
-                values={sourceLocations}
-                options={sourceLocationOptions}
-                helperText="These raw CSV locations will be treated as one session."
-                onChange={onSourceLocationsChange}
-            />
+            </div>
             {availableLocations.length > 0 ? (
                 <span className="text-xs font-medium text-secondary/70">
                     Team locations are suggestions only. The display location and raw locations are saved independently.

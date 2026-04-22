@@ -28,13 +28,18 @@ function ManageSessionsPage() {
         </p>
       ) : (
         <div className="rounded-card border-2 border-secondary/20 bg-accent p-5 text-secondary shadow-md">
-          <SessionSummaryCard
-            isGuest={isGuest}
-            currentSession={form.currentSession}
-            teamName={form.teamName}
-          />
+          <div data-help-anchor="manage-session-summary">
+            <SessionSummaryCard
+              isGuest={isGuest}
+              currentSession={form.currentSession}
+              teamName={form.teamName}
+            />
+          </div>
           {!isGuest && form.access.mode !== 'owner' ? (
-            <div className="rounded-2xl border border-secondary/20 bg-bg p-4 text-sm text-secondary">
+            <div
+              data-help-anchor="manage-session-shared-notice"
+              className="rounded-2xl border border-secondary/20 bg-bg p-4 text-sm text-secondary"
+            >
               You are viewing a shared session. Editing is disabled.
             </div>
           ) : (
@@ -82,9 +87,15 @@ function ManageSessionsPage() {
                 onUpdateInstructor={form.updateEditInstructor}
                 onRemoveInstructor={form.removeEditInstructor}
               />
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div
+                data-help-anchor="manage-session-actions"
+                className="flex flex-wrap items-center justify-between gap-3"
+              >
                 {form.overlapWarning ? (
-                  <div className="w-full rounded-2xl border border-secondary/20 bg-bg px-4 py-3 text-sm text-secondary">
+                  <div
+                    data-help-anchor="manage-session-overlap-warning"
+                    className="w-full rounded-2xl border border-secondary/20 bg-bg px-4 py-3 text-sm text-secondary"
+                  >
                     {form.overlapWarning}
                   </div>
                 ) : null}

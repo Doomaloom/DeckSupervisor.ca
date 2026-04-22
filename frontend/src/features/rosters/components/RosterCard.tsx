@@ -7,6 +7,11 @@ import StudentRow from './StudentRow'
 type RosterCardProps = {
     roster: RosterGroup
     isCustom?: boolean
+    helpAnchors?: {
+        container?: string
+        levelMode?: string
+        printButton?: string
+    }
     onPrint: (roster: RosterGroup) => void
     onRosterLevelChange: (code: string, level: string) => void
     onCustomRosterLevelChange?: (id: string, level: string) => void
@@ -18,6 +23,7 @@ type RosterCardProps = {
 function RosterCard({
     roster,
     isCustom = false,
+    helpAnchors,
     onPrint,
     onRosterLevelChange,
     onCustomRosterLevelChange,
@@ -36,7 +42,12 @@ function RosterCard({
     const toggleButtonClass = `${actionButtonClass} ${allowStudentLevelEdits ? 'ring-2 ring-accent/70' : ''}`
 
     return (
-        <div className={containerClass} id={roster.code} data-component="roster-card">
+        <div
+            className={containerClass}
+            id={roster.code}
+            data-component="roster-card"
+            data-help-anchor={helpAnchors?.container}
+        >
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold text-secondary">
                     {roster.serviceName} - {roster.code} : {roster.time}
@@ -44,6 +55,7 @@ function RosterCard({
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
+                        data-help-anchor={helpAnchors?.levelMode}
                         className={toggleButtonClass}
                         onClick={onToggleStudentLevelEdits}
                         aria-pressed={allowStudentLevelEdits}
@@ -52,6 +64,7 @@ function RosterCard({
                     </button>
                     <button
                         type="button"
+                        data-help-anchor={helpAnchors?.printButton}
                         className={actionButtonClass}
                         onClick={() => onPrint(roster)}
                     >

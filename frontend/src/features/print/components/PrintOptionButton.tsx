@@ -3,6 +3,7 @@ import type { PrintOption } from '../types'
 
 type PrintOptionButtonProps = {
   option: PrintOption
+  helpAnchor?: string
   isInfoOpen: boolean
   onOpen: () => void
   onToggleInfo: () => void
@@ -11,6 +12,7 @@ type PrintOptionButtonProps = {
 
 function PrintOptionButton({
   option,
+  helpAnchor,
   isInfoOpen,
   onOpen,
   onToggleInfo,
@@ -19,7 +21,10 @@ function PrintOptionButton({
   const Icon = option.icon
 
   return (
-    <div className="group relative flex h-full flex-col justify-between rounded-card border-2 border-secondary/20 bg-accent p-6 text-left text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary">
+    <div
+      data-help-anchor={helpAnchor}
+      className="group relative flex h-full flex-col justify-between rounded-card border-2 border-secondary/20 bg-accent p-6 text-left text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary"
+    >
       <button
         type="button"
         className="flex h-full w-full items-center gap-4 rounded-2xl border-2 border-transparent p-2 text-left transition hover:border-secondary/40 focus-visible:border-secondary"

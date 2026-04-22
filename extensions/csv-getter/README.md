@@ -37,5 +37,5 @@ What it does:
 Notes:
 
 - The extension now uses Manifest V3 so it can be loaded unpacked in Chrome.
-- It uses `activeTab`, so it only runs on the tab you click from.
+- It uses `activeTab` and `scripting`, so it only runs on the tab you click from and does not request the broader `tabs` permission.
 - If the CSV getter page markup changes, the automation may need selector updates in [automation.js](/Users/frankkocun/Documents/DeckSupervisor.ca/extensions/csv-getter/automation.js).

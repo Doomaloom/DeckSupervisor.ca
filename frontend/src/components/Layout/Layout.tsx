@@ -14,6 +14,7 @@ import {
     UserGroupIcon,
     UserPlusIcon,
     ArrowsRightLeftIcon,
+    QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline'
 import { useDay } from '../../app/DayContext'
 import { useAuth } from '../../app/AuthContext'
@@ -22,6 +23,7 @@ import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { formatSessionDisplayName } from '../../shared/session/sessionLabels'
+import { useTutorials } from '../../features/tutorials/TutorialContext'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
 import {
     consumeSuppressedPrefetchForSession,
@@ -51,6 +53,7 @@ function Layout({ children }: LayoutProps) {
     const { selectedDay } = useDay()
     const { accountType, completeProfile, isGuest, needsProfile, profile, signOut, user } = useAuth()
     const { requestCsvFile } = useCsvImportFlow()
+    const { togglePageHelpForPath } = useTutorials()
     const { access, loading: currentSessionLoading, session: currentSession } = useCurrentSession()
     const { currentTeam, currentTeamId, loading: teamLoading } = useCurrentTeam()
     const { currentTerm } = useCurrentTerm()
@@ -340,6 +343,7 @@ function Layout({ children }: LayoutProps) {
     ]
 
     const navItems = accountType === 'full_time' ? fullTimeNavItems : standardNavItems
+    const helpButtonClassName = `${navBaseClasses} ${navCollapsedClasses} ${navHoverClasses}`
 
     if (isPlannerPopout) {
         return (
@@ -486,6 +490,24 @@ function Layout({ children }: LayoutProps) {
                             )}
                         </Link>
                     ))}
+                    <button
+                        type="button"
+                        className={helpButtonClassName}
+                        aria-label="Help"
+                        onClick={() => togglePageHelpForPath(location.pathname)}
+                    >
+                        {isSidebarCollapsed ? (
+                            <>
+                                <QuestionMarkCircleIcon className="h-5 w-5" />
+                                <span className="sr-only">Help</span>
+                            </>
+                        ) : (
+                            <span className="flex items-center gap-2">
+                                <QuestionMarkCircleIcon className="h-5 w-5" />
+                                Help
+                            </span>
+                        )}
+                    </button>
                 </nav>
 
 

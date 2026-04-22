@@ -1244,7 +1244,10 @@ function PrintPage() {
 
   return (
     <div id="print-page" data-component="print-page" className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-      <div className="relative overflow-hidden rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
+      <div
+        data-help-anchor="print-page-header"
+        className="relative overflow-hidden rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md"
+      >
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-secondary/15" />
         <div className="absolute -bottom-12 left-10 h-24 w-24 rounded-full bg-secondary/10" />
         <div className="relative">
@@ -1256,11 +1259,12 @@ function PrintPage() {
         </div>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div data-help-anchor="print-options-grid" className="grid gap-5 md:grid-cols-2">
         {printOptions.map(option => (
           <PrintOptionButton
             key={option.key}
             option={option}
+            helpAnchor={`print-${option.key}`}
             isInfoOpen={activeInfo === option.key}
             onOpen={() => setActiveModal(option.key)}
             onToggleInfo={() => handleToggleInfo(option.key)}

@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   useDashboardScope: vi.fn(),
   useNewSessionForm: vi.fn(),
   useSessionSelectionData: vi.fn(),
+  useTutorials: vi.fn(),
 }))
 
 vi.mock('react-router-dom', () => ({
@@ -54,6 +55,10 @@ vi.mock('../session-management/hooks/useSessionSelectionData', () => ({
   useSessionSelectionData: mocks.useSessionSelectionData,
 }))
 
+vi.mock('../tutorials/TutorialContext', () => ({
+  useTutorials: mocks.useTutorials,
+}))
+
 describe('DashboardPage', () => {
   afterEach(() => {
     cleanup()
@@ -69,6 +74,7 @@ describe('DashboardPage', () => {
     mocks.useDashboardScope.mockReset()
     mocks.useNewSessionForm.mockReset()
     mocks.useSessionSelectionData.mockReset()
+    mocks.useTutorials.mockReset()
 
     mocks.useNavigate.mockReturnValue(vi.fn())
     mocks.useCsvImportFlow.mockReturnValue({ requestCsvFile: vi.fn() })
@@ -106,6 +112,9 @@ describe('DashboardPage', () => {
     mocks.useSessionSelectionData.mockReturnValue({
       sessions: [],
       sharedSessions: [],
+    })
+    mocks.useTutorials.mockReturnValue({
+      openTutorial: vi.fn(),
     })
   })
 
@@ -170,6 +179,24 @@ describe('DashboardPage', () => {
     await user.click(screen.getByRole('button', { name: 'Share Sessions' }))
 
     expect(navigate).toHaveBeenCalledWith('/share-sessions')
+  })
+
+  it('opens the prep workflow from the dashboard help card', async () => {
+    const user = userEvent.setup()
+    const openTutorial = vi.fn()
+
+    mocks.useAuth.mockReturnValue({
+      accountType: 'part_time',
+      isGuest: false,
+      user: { id: 'user-1' },
+    })
+    mocks.useTutorials.mockReturnValue({ openTutorial })
+
+    customRender(<DashboardPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Help / Tutorials' }))
+
+    expect(openTutorial).toHaveBeenCalledWith('prep-workflow')
   })
 
   it('renders the full-time scope panel and forwards upload requests', async () => {

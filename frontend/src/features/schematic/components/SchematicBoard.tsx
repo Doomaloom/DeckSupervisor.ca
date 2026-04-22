@@ -40,7 +40,7 @@ function SchematicBoard({
     onCourseDragStart,
 }: SchematicBoardProps) {
     return (
-        <div className="flex w-full flex-col gap-4">
+        <div data-help-anchor="schematic-board" className="flex w-full flex-col gap-4">
             <div className="flex flex-wrap gap-3">
                 <span className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-accent">
                     Schematic

@@ -32,6 +32,15 @@ function RosterList({
                         key={item.roster.code}
                         roster={item.roster}
                         isCustom={item.isCustom}
+                        helpAnchors={
+                            !item.isCustom && item.roster.code === rosters.find(entry => !entry.isCustom)?.roster.code
+                                ? {
+                                    container: 'roster-card-overview',
+                                    levelMode: 'roster-level-mode',
+                                    printButton: 'roster-print-button',
+                                }
+                                : undefined
+                        }
                         onPrint={onPrintRoster}
                         onRosterLevelChange={onRosterLevelChange}
                         onCustomRosterLevelChange={onCustomRosterLevelChange}
