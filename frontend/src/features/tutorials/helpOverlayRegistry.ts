@@ -1,9 +1,64 @@
-import type { HelpOverlayDefinition } from './helpOverlayTypes'
+import type { HelpOverlayDefinition, HelpOverlayId } from './helpOverlayTypes'
 
 const defaultUnsupportedMessage =
   'Quick tips are not available on this page yet. Use Help / Tutorials on Home for the full prep walkthrough.'
 
-export const helpOverlayRegistry: Record<HelpOverlayDefinition['id'], HelpOverlayDefinition> = {
+export const helpOverlayRegistry: Record<HelpOverlayId, HelpOverlayDefinition> = {
+  dashboard: {
+    id: 'dashboard',
+    routePaths: ['/'],
+    title: 'Dashboard Overview',
+    introTitle: 'Welcome to the Part-time Workflow',
+    introBody: [
+      'The dashboard is the central starting point for preparing your swim session rosters and schedules.',
+      'Click a numbered area to see how the main prep steps flow from here.',
+    ],
+    unsupportedMessage: defaultUnsupportedMessage,
+    tips: [
+      {
+        id: 'upload',
+        title: 'Upload CSV and Choose Session',
+        body: [
+          'This is where most prep starts. Upload the roster CSV export from your registration system.',
+          'The app will automatically extract session candidates and help you load or create the right session context.',
+        ],
+        selector: '[data-help-anchor="dashboard-upload"]',
+        order: 1,
+        placement: 'bottom-left',
+      },
+      {
+        id: 'existing',
+        title: 'Select Existing Session',
+        body: [
+          'If you have already imported the CSV and just need to resume work, use this button to pick a saved session.',
+        ],
+        selector: '[data-help-anchor="dashboard-existing"]',
+        order: 2,
+        placement: 'bottom-left',
+      },
+      {
+        id: 'share',
+        title: 'Share Sessions',
+        body: [
+          'Use this when you need a teammate to cover your shift. You can share access for specific dates and decide if they can edit rosters.',
+        ],
+        selector: '[data-help-anchor="dashboard-share"]',
+        order: 3,
+        placement: 'bottom-left',
+        optional: true,
+      },
+      {
+        id: 'tutorial-notice',
+        title: 'Help / Tutorials',
+        body: [
+          'You are using it right now! Click this any time you want a walkthrough of the current page.',
+        ],
+        selector: '[data-help-anchor="dashboard-help"]',
+        order: 4,
+        placement: 'bottom-left',
+      },
+    ],
+  },
   'manage-session': {
     id: 'manage-session',
     routePaths: ['/manage-sessions'],

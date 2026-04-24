@@ -106,40 +106,50 @@ function TutorialModal({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 sm:p-6"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 sm:p-6"
       onClick={onClose}
     >
       <div
         ref={panelRef}
-        className="relative flex max-h-[92vh] w-full max-w-7xl flex-col overflow-hidden rounded-[2rem] border-2 border-secondary/20 bg-[#f7f4ed] text-secondary shadow-[0_32px_120px_rgba(0,0,0,0.25)]"
+        className="relative flex max-h-[95vh] w-full max-w-6xl flex-col overflow-hidden rounded-[2.5rem] border-2 border-secondary/20 bg-bg text-secondary shadow-[0_32px_120px_rgba(0,0,0,0.3)]"
         onClick={event => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="tutorial-modal-title"
       >
-        <div className="relative overflow-hidden border-b border-secondary/10 bg-gradient-to-br from-accent via-[#f7f4ed] to-[#e8f0f0] px-6 py-6 sm:px-8">
+        {/* Header */}
+        <div className={`relative overflow-hidden border-b border-secondary/10 bg-gradient-to-br from-accent via-bg to-accent px-6 sm:px-10 transition-all duration-500 ${tutorialId ? 'py-5' : 'py-8'}`}>
           <div className="absolute -right-14 -top-12 h-40 w-40 rounded-full bg-secondary/10" />
           <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
-          <button
-            type="button"
-            className="absolute right-6 top-6 inline-flex h-10 w-10 items-center justify-center rounded-full border border-secondary/20 bg-bg text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-secondary"
-            onClick={onClose}
-            aria-label="Close tutorials"
-          >
-            X
-          </button>
-          <p className="relative text-xs font-semibold uppercase tracking-[0.22em] text-secondary/60">
-            Help / Tutorials
-          </p>
-          <h3 id="tutorial-modal-title" className="relative mt-2 text-3xl font-semibold">
-            {modalTitle}
-          </h3>
-          <p className="relative mt-2 max-w-3xl text-sm leading-6 text-secondary/80">
-            {modalSummary}
-          </p>
+          
+          <div className="flex items-center justify-between">
+            <div className="relative">
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.25em] text-secondary/50">
+                Help / Tutorials
+              </p>
+              <h3 id="tutorial-modal-title" className={`mt-1 font-bold transition-all ${tutorialId ? 'text-xl' : 'text-3xl'}`}>
+                {modalTitle}
+              </h3>
+            </div>
+            <button
+              type="button"
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-secondary/20 bg-accent text-sm font-bold text-secondary transition hover:-translate-y-0.5 hover:border-secondary hover:bg-bg shadow-sm"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+          
+          {!tutorialId && (
+            <p className="relative mt-4 max-w-2xl text-sm leading-relaxed text-secondary/70">
+              {modalSummary}
+            </p>
+          )}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
+        {/* Content Area */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-10">
           {tutorialId ? (
             <TutorialViewer
               tutorialId={tutorialId}

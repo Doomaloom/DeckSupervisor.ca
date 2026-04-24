@@ -33,7 +33,7 @@ function PageHelpUnavailableNotice({
       role="status"
       aria-live="polite"
       data-component="page-help-unavailable-notice"
-      className="fixed bottom-5 right-5 z-[95] flex max-w-sm items-start justify-between gap-3 rounded-2xl border border-secondary/20 bg-[#f7f4ed] px-4 py-3 text-sm text-secondary shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
+      className="fixed bottom-5 right-5 z-[95] flex max-w-sm items-start justify-between gap-3 rounded-2xl border border-secondary/20 bg-bg px-4 py-3 text-sm text-secondary shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
     >
       <p>{message}</p>
       <button

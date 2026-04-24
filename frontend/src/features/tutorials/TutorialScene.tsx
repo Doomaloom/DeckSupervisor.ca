@@ -21,7 +21,7 @@ function TutorialScene({ sceneId, annotations }: TutorialSceneProps) {
   return (
     <div>
       <div
-        className="relative overflow-hidden rounded-[2rem] border border-secondary/15 bg-[#f7f4ed] p-4"
+        className="relative overflow-hidden rounded-[2rem] border border-secondary/15 bg-bg p-4"
         role="img"
         aria-label={scene.ariaLabel}
       >

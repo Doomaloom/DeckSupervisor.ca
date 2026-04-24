@@ -1,4 +1,5 @@
 export type HelpOverlayId =
+  | 'dashboard'
   | 'manage-session'
   | 'schematic'
   | 'rosters'

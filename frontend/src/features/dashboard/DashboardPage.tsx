@@ -22,7 +22,7 @@ function DashboardPage() {
     const navigate = useNavigate()
     const { accountType, isGuest, user } = useAuth()
     const { requestCsvFile } = useCsvImportFlow()
-    const { openTutorial } = useTutorials()
+    const { openTutorial, togglePageHelpForPath } = useTutorials()
     const { teams, currentTeamId, setCurrentTeamId, loading: teamsLoading } = useCurrentTeam()
     const { currentTerm, currentTermKey, setCurrentTermKey, clearCurrentTerm } = useCurrentTerm()
     const [activePanel, setActivePanel] = useState<'options' | 'new-session' | 'select-session'>(
@@ -123,6 +123,7 @@ function DashboardPage() {
                             <>
                                 <button
                                     type="button"
+                                    data-help-anchor="dashboard-upload"
                                     className="w-80 rounded-card border-2 border-secondary bg-secondary px-8 py-10 text-center text-xl font-semibold text-accent shadow-md transition hover:-translate-y-0.5 hover:bg-primary"
                                     onClick={() => requestCsvFile()}
                                 >
@@ -130,6 +131,7 @@ function DashboardPage() {
                                 </button>
                                 <button
                                     type="button"
+                                    data-help-anchor="dashboard-help"
                                     className="w-80 rounded-card border-2 border-secondary/20 bg-accent px-8 py-10 text-center text-xl font-semibold text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary"
                                     onClick={() => openTutorial('prep-workflow')}
                                 >
@@ -137,6 +139,7 @@ function DashboardPage() {
                                 </button>
                                 <button
                                     type="button"
+                                    data-help-anchor="dashboard-existing"
                                     className="w-80 rounded-card border-2 border-secondary/20 bg-accent px-8 py-10 text-center text-xl font-semibold text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary"
                                     onClick={() => setActivePanel('select-session')}
                                 >
@@ -145,6 +148,7 @@ function DashboardPage() {
                                 {!isGuest ? (
                                     <button
                                         type="button"
+                                        data-help-anchor="dashboard-share"
                                         className="w-80 rounded-card border-2 border-secondary/20 bg-accent px-8 py-10 text-center text-xl font-semibold text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary"
                                         onClick={() => navigate('/share-sessions')}
                                     >

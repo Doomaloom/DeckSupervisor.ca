@@ -74,7 +74,7 @@ function PageHelpPopover({
   return (
     <div
       ref={popoverRef}
-      className="fixed z-[100] flex w-80 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 pointer-events-auto transition-all duration-300 ease-in-out"
+      className="fixed z-[100] flex w-80 flex-col overflow-hidden rounded-2xl bg-accent shadow-2xl ring-1 ring-secondary/5 pointer-events-auto transition-all duration-300 ease-in-out"
       style={{
         ...style,
         ...(Object.keys(style).length === 0 ? { opacity: 0 } : { opacity: 1 }),
@@ -82,19 +82,19 @@ function PageHelpPopover({
       role="dialog"
       aria-labelledby="help-popover-title"
     >
-      <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100">
+      <div className="flex items-start justify-between px-5 py-4 border-b border-secondary/10">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
             Tip {currentIndex + 1} of {totalTips}
           </p>
-          <h3 id="help-popover-title" className="mt-1 text-lg font-bold text-gray-900">
+          <h3 id="help-popover-title" className="mt-1 text-lg font-bold text-secondary">
             {tip.title}
           </h3>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex items-center justify-center rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 transition-colors"
+          className="inline-flex items-center justify-center rounded-full p-1 text-secondary/40 hover:bg-bg hover:text-secondary transition-colors"
           aria-label="Close help"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,7 +103,7 @@ function PageHelpPopover({
         </button>
       </div>
 
-      <div className="px-5 py-4 text-sm leading-relaxed text-gray-600">
+      <div className="px-5 py-4 text-sm leading-relaxed text-secondary/70">
         {tip.body.map((paragraph, i) => (
           <p key={paragraph} className={i > 0 ? 'mt-3' : ''}>
             {paragraph}
@@ -111,13 +111,13 @@ function PageHelpPopover({
         ))}
       </div>
 
-      <div className="flex items-center justify-between bg-gray-50/80 px-5 py-4 border-t border-gray-100">
+      <div className="flex items-center justify-between bg-bg/80 px-5 py-4 border-t border-secondary/10">
         <button
           type="button"
           onClick={onPrevious}
           disabled={currentIndex === 0}
           className={`text-sm font-medium transition-colors ${
-            currentIndex === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
+            currentIndex === 0 ? 'text-secondary/20 cursor-not-allowed' : 'text-secondary/60 hover:text-secondary'
           }`}
         >
           Previous
@@ -126,7 +126,7 @@ function PageHelpPopover({
         <button
           type="button"
           onClick={onNext}
-          className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-accent transition hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           {currentIndex === totalTips - 1 ? 'Got it' : 'Next'}
         </button>

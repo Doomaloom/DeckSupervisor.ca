@@ -15,7 +15,6 @@ function TutorialViewer({
   tutorialId,
   activeStepIndex,
   onOpenTutorial,
-  onSetStep,
   onNext,
   onPrevious,
 }: TutorialViewerProps) {
@@ -25,87 +24,84 @@ function TutorialViewer({
   const isLastStep = activeStepIndex === tutorial.steps.length - 1
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[17rem,1fr]">
-      <aside className="space-y-4">
-        {tutorial.prerequisites?.length ? (
-          <div className="rounded-card border border-secondary/15 bg-bg p-4">
-            <p className="text-sm font-semibold text-secondary">Before you start</p>
-            <ul className="mt-2 grid gap-2">
-              {tutorial.prerequisites.map(item => (
-                <li key={item} className="text-sm text-secondary/75">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        <div className="space-y-2">
-          {tutorial.steps.map((item, index) => {
-            const isActive = index === activeStepIndex
-            return (
-              <button
-                key={`${tutorial.id}-step-${index + 1}`}
-                type="button"
-                className={`flex w-full items-start gap-3 rounded-2xl border px-4 py-3 text-left transition ${
-                  isActive
-                    ? 'border-secondary bg-secondary text-accent'
-                    : 'border-secondary/15 bg-bg text-secondary hover:border-secondary'
-                }`}
-                onClick={() => onSetStep(index)}
-              >
-                <span
-                  className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    isActive ? 'bg-accent text-secondary' : 'bg-secondary/10 text-secondary'
-                  }`}
-                >
-                  {index + 1}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold">{item.title}</span>
-                  <span className={`mt-1 block text-xs ${isActive ? 'text-accent/80' : 'text-secondary/60'}`}>
-                    {item.kind.replace('-', ' ')}
-                  </span>
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </aside>
-
-      <section className="space-y-6">
-        <div
-          className="rounded-card border border-secondary/15 bg-accent p-6 shadow-sm"
-          aria-live="polite"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/60">
+    <div className="mx-auto flex w-full flex-col gap-5">
+      {/* Header Info - Compact */}
+      <div className="flex items-end justify-between px-1">
+        <div className="flex flex-col">
+          <p className="text-[0.6rem] font-bold uppercase tracking-[0.2em] text-secondary/40">
             Step {activeStepIndex + 1} of {tutorial.steps.length}
           </p>
-          <h4 className="mt-2 text-2xl font-semibold text-secondary">{step.title}</h4>
-          <div className="mt-5">
-            <TutorialStepRenderer step={step} onOpenTutorial={onOpenTutorial} />
+          <h4 className="mt-0.5 text-xl font-bold text-secondary">{step.title}</h4>
+        </div>
+        <div className="mb-1 flex gap-1">
+          {tutorial.steps.map((_, index) => (
+            <div
+              key={`dot-${index}`}
+              className={`h-1 w-3 rounded-full transition-colors ${
+                index === activeStepIndex ? 'bg-secondary' : 'bg-secondary/10'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content Area - Reduced Padding and Gaps */}
+      <section className="flex flex-col gap-5">
+        {/* Graphic Area - Better use of space */}
+        <div
+          className="relative aspect-[16/9] w-full overflow-hidden rounded-[2rem] border border-secondary/10 bg-bg shadow-sm flex items-center justify-center"
+          aria-live="polite"
+        >
+          <div className="w-full h-full transform-gpu transition-transform duration-500">
+             <TutorialStepRenderer step={step} onOpenTutorial={onOpenTutorial} />
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            className="rounded-2xl border border-secondary/20 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-secondary disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={onPrevious}
-            disabled={isFirstStep}
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            className="rounded-2xl bg-secondary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={onNext}
-            disabled={isLastStep}
-          >
-            {isLastStep ? 'End of Tutorial' : 'Next'}
-          </button>
+        {/* Text Content - More compact layout */}
+        <div className="px-1">
+          <div className="text-sm leading-relaxed text-secondary/70">
+            {step.kind === 'scene' || step.kind === 'intro' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                {step.body.map((paragraph, i) => (
+                  <p key={`p-${i}`} className={i === 0 ? "font-medium text-secondary/80" : ""}>{paragraph}</p>
+                ))}
+              </div>
+            ) : (
+              <div className="max-w-2xl mx-auto">
+                <TutorialStepRenderer step={step} onOpenTutorial={onOpenTutorial} />
+              </div>
+            )}
+          </div>
         </div>
       </section>
+
+      {/* Navigation Footer - Tighter */}
+      <div className="mt-1 flex items-center justify-between border-t border-secondary/10 pt-5">
+        <button
+          type="button"
+          className="rounded-xl border border-secondary/20 bg-accent px-5 py-2 text-sm font-bold text-secondary transition hover:-translate-y-0.5 hover:border-secondary disabled:cursor-not-allowed disabled:opacity-30"
+          onClick={onPrevious}
+          disabled={isFirstStep}
+        >
+          Previous
+        </button>
+        
+        <div className="hidden flex-1 justify-center sm:flex px-4">
+           {tutorial.prerequisites?.length && isFirstStep ? (
+             <p className="text-center text-[0.6rem] font-semibold text-secondary/40">
+               Prerequisite: {tutorial.prerequisites[0]}
+             </p>
+           ) : null}
+        </div>
+
+        <button
+          type="button"
+          className="rounded-xl bg-secondary px-8 py-2 text-sm font-bold text-accent transition hover:-translate-y-0.5 hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60 min-w-[120px]"
+          onClick={onNext}
+        >
+          {isLastStep ? 'Finish' : 'Next Step'}
+        </button>
+      </div>
     </div>
   )
 }

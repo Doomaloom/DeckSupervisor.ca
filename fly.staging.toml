@@ -1,0 +1,31 @@
+# fly.toml app configuration file for the develop/staging backend.
+#
+# Keep this in sync with fly.toml except for the app name.
+#
+
+app = 'decksupervisor-develop'
+primary_region = 'yyz'
+
+[build]
+  dockerfile = 'backend/Dockerfile'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+[http_service.concurrency]
+  type = 'requests'
+  soft_limit = 8
+  hard_limit = 12
+
+[env]
+  ATTENDANCE_PDF_CONCURRENCY = '2'
+
+[[vm]]
+  memory = '2gb'
+  cpus = 2
+  memory_mb = 2048

@@ -1,8 +1,29 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://decksupervisor.fly.dev/api/$1"
+      "source": "/api/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "test.decksupervisor.ca"
+        }
+      ],
+      "destination": "https://decksupervisor-develop.fly.dev/api/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "deck-supervisor-ca-git-develop-franks-projects-ff1c4b38.vercel.app"
+        }
+      ],
+      "destination": "https://decksupervisor-develop.fly.dev/api/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://decksupervisor.fly.dev/api/:path*"
     },
     {
       "source": "/(.*)",

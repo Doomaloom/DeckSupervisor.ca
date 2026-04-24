@@ -103,7 +103,7 @@ func buildRows(rosters []tasks.ClassRoster, options Options) ([]row, error) {
 		}
 
 		if options.CourseHeaders {
-			label := strings.TrimSpace(roster.ServiceName)
+			label := strings.TrimSpace(SanitizeEventName(roster.ServiceName))
 			if label == "" {
 				label = strings.TrimSpace(roster.Code)
 			}
@@ -137,9 +137,9 @@ func buildRows(rosters []tasks.ClassRoster, options Options) ([]row, error) {
 				continue
 			}
 
-			serviceName := strings.TrimSpace(roster.ServiceName)
+			serviceName := strings.TrimSpace(SanitizeEventName(roster.ServiceName))
 			if serviceName == "" {
-				serviceName = strings.TrimSpace(student.Level)
+				serviceName = strings.TrimSpace(SanitizeEventName(student.Level))
 			}
 
 			instructor := strings.TrimSpace(roster.Instructor)
@@ -357,4 +357,29 @@ func renderPDF(ctx context.Context, htmlContent string) ([]byte, error) {
 func buildFilename() string {
 	now := time.Now()
 	return fmt.Sprintf("MasterList_%d_%d_%d.pdf", now.Month(), now.Day(), now.Year())
+}
+
+func SanitizeEventName(name string) string {
+	if strings.Contains(name, "7") {
+		return "Splash 7"
+	}
+	if strings.Contains(name, "8") {
+		return "Splash 8"
+	}
+	if strings.Contains(name, "9") {
+		return "Splash 9"
+	}
+	if strings.Contains(name, "10") {
+		return "Splash 10"
+	}
+	if strings.Contains(name, "Adult 1") {
+		return "Splash Adult 1"
+	}
+	if strings.Contains(name, "Adult 2") {
+		return "Splash Adult 2"
+	}
+	if strings.Contains(name, "Adult 3") {
+		return "Splash Adult 3"
+	}
+	return name
 }

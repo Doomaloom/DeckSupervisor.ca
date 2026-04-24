@@ -1,140 +1,109 @@
 import React from 'react'
 
-type TutorialPageFrameProps = {
-  title: string
-  toolbarLabel?: string
+type MockBrowserFrameProps = {
   children: React.ReactNode
-}
-
-type TutorialCardMockProps = {
   title: string
-  subtitle?: string
-  accent?: 'primary' | 'soft'
-  children?: React.ReactNode
+  activePath?: string
+  sessionName?: string
 }
 
-type TutorialToolbarMockProps = {
-  items: string[]
-}
+export function MockBrowserFrame({ children, title, activePath = '/', sessionName }: MockBrowserFrameProps) {
+  const navItems = [
+    { label: 'Home', path: '/' },
+    { label: 'Manage Session', path: '/manage-sessions' },
+    { label: 'Schematic', path: '/schematic' },
+    { label: 'Rosters', path: '/rosters' },
+    { label: 'Print', path: '/print' },
+  ]
 
-type TutorialSidebarMockProps = {
-  items: string[]
-}
-
-type TutorialBoardMockProps = {
-  columns: Array<{
-    title: string
-    cards: string[]
-  }>
-}
-
-const cardAccentClass: Record<NonNullable<TutorialCardMockProps['accent']>, string> = {
-  primary: 'border-secondary bg-secondary text-accent',
-  soft: 'border-secondary/20 bg-bg text-secondary',
-}
-
-export function TutorialPageFrame({ title, toolbarLabel, children }: TutorialPageFrameProps) {
   return (
-    <div className="rounded-[2rem] border border-secondary/20 bg-white shadow-[0_32px_80px_rgba(14,68,79,0.12)]">
-      <div className="flex items-center justify-between border-b border-secondary/10 px-6 py-4">
-        <div>
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-secondary/50">
-            DeckSupervisor
-          </p>
-          <h4 className="mt-1 text-lg font-semibold text-secondary">{title}</h4>
-        </div>
-        {toolbarLabel ? (
-          <span className="rounded-full border border-secondary/20 bg-bg px-3 py-1 text-xs font-semibold text-secondary/70">
-            {toolbarLabel}
-          </span>
-        ) : null}
-      </div>
-      <div className="p-6">{children}</div>
-    </div>
-  )
-}
-
-export function TutorialToolbarMock({ items }: TutorialToolbarMockProps) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {items.map(item => (
-        <span
-          key={item}
-          className="rounded-full border border-secondary/20 bg-bg px-3 py-1 text-xs font-semibold text-secondary/70"
-        >
-          {item}
-        </span>
-      ))}
-    </div>
-  )
-}
-
-export function TutorialSidebarMock({ items }: TutorialSidebarMockProps) {
-  return (
-    <div className="flex w-40 shrink-0 flex-col gap-2 rounded-[1.5rem] bg-primary p-4 text-accent">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent/70">Menu</p>
-      {items.map(item => (
-        <div
-          key={item}
-          className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm font-semibold"
-        >
-          {item}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-export function TutorialCardMock({
-  title,
-  subtitle,
-  accent = 'soft',
-  children,
-}: TutorialCardMockProps) {
-  return (
-    <div className={`rounded-[1.5rem] border p-4 ${cardAccentClass[accent]}`}>
-      <p className="text-sm font-semibold">{title}</p>
-      {subtitle ? <p className="mt-1 text-xs opacity-75">{subtitle}</p> : null}
-      {children ? <div className="mt-3">{children}</div> : null}
-    </div>
-  )
-}
-
-export function TutorialBoardMock({ columns }: TutorialBoardMockProps) {
-  return (
-    <div className="grid grid-cols-3 gap-4">
-      {columns.map(column => (
-        <div
-          key={column.title}
-          className="rounded-[1.5rem] border border-secondary/20 bg-bg p-4"
-        >
-          <h5 className="text-sm font-semibold text-secondary">{column.title}</h5>
-          <div className="mt-3 flex flex-col gap-2">
-            {column.cards.map(card => (
-              <div
-                key={card}
-                className="rounded-xl border border-secondary/15 bg-accent px-3 py-2 text-xs font-semibold text-secondary shadow-sm"
-              >
-                {card}
-              </div>
-            ))}
+    <div className="flex h-full w-full overflow-hidden rounded-[2rem] border border-secondary/20 bg-white shadow-2xl">
+      {/* Sidebar */}
+      <aside className="flex w-40 flex-col gap-4 bg-primary p-4 text-accent">
+        <h1 className="text-[0.8rem] font-bold">DeckSupervisor.ca</h1>
+        <div className="flex flex-col gap-1">
+          <p className="text-[0.55rem] font-semibold opacity-70">Current Session</p>
+          <div className="rounded-xl border border-secondary/30 bg-accent px-2 py-1 text-[0.6rem] text-secondary line-clamp-1">
+            {sessionName || 'No session selected'}
           </div>
         </div>
-      ))}
+        <nav className="mt-2 flex flex-col gap-1.5">
+          {navItems.map(item => (
+            <div
+              key={item.path}
+              className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[0.65rem] font-semibold ${
+                activePath === item.path ? 'bg-accent text-secondary' : 'opacity-80'
+              }`}
+            >
+              {item.label}
+            </div>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex flex-1 flex-col overflow-hidden bg-bg">
+        <header className="flex h-10 items-center border-b border-secondary/10 bg-accent px-5">
+          <h2 className="text-[0.7rem] font-bold text-secondary">{title}</h2>
+        </header>
+        <div className="flex-1 overflow-y-auto p-5">{children}</div>
+      </main>
     </div>
   )
 }
 
-type TutorialCalloutPinProps = {
-  index: number
-  x: number
-  y: number
+export function MockButton({
+  children,
+  variant = 'secondary',
+  className = '',
+}: {
+  children: React.ReactNode
+  variant?: 'primary' | 'secondary' | 'accent' | 'danger'
+  className?: string
+}) {
+  const variants = {
+    primary: 'bg-primary text-white hover:bg-secondary',
+    secondary: 'bg-secondary text-accent hover:bg-primary',
+    accent: 'border-2 border-secondary/20 bg-accent text-secondary hover:border-secondary',
+    danger: 'bg-danger text-accent',
+  }
+
+  return (
+    <div
+      className={`rounded-xl px-3 py-1.5 text-center text-[0.65rem] font-semibold shadow-sm transition ${variants[variant]} ${className}`}
+    >
+      {children}
+    </div>
+  )
 }
 
-export function TutorialCalloutPin({ index, x, y }: TutorialCalloutPinProps) {
+export function MockInput({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-[0.55rem] font-bold text-secondary/70 uppercase tracking-wide">{label}</label>
+      <div className="rounded-lg border-2 border-secondary/10 bg-accent px-2 py-1.5 text-[0.65rem] text-secondary">
+        {value}
+      </div>
+    </div>
+  )
+}
+
+export function MockSelect({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-[0.55rem] font-bold text-secondary/70 uppercase tracking-wide">{label}</label>
+      <div className="flex items-center justify-between rounded-lg border-2 border-secondary bg-bg px-2 py-1.5 text-[0.65rem] text-secondary">
+        {value}
+        <span className="text-[0.5rem]">▼</span>
+      </div>
+    </div>
+  )
+}
+
+export function TutorialCalloutPin({ index, x, y }: { index: number; x: number; y: number }) {
   return (
     <span
-      className="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-secondary text-xs font-bold text-accent shadow-md"
+      className="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white bg-secondary text-xs font-bold text-accent shadow-md z-[60]"
       style={{ left: `${x}%`, top: `${y}%` }}
       aria-hidden="true"
     >
@@ -143,17 +112,10 @@ export function TutorialCalloutPin({ index, x, y }: TutorialCalloutPinProps) {
   )
 }
 
-type TutorialHighlightBoxProps = {
-  x: number
-  y: number
-  width: number
-  height: number
-}
-
-export function TutorialHighlightBox({ x, y, width, height }: TutorialHighlightBoxProps) {
+export function TutorialHighlightBox({ x, y, width, height }: { x: number; y: number; width: number; height: number }) {
   return (
     <span
-      className="pointer-events-none absolute rounded-2xl border-2 border-dashed border-secondary/80 bg-secondary/10"
+      className="pointer-events-none absolute rounded-2xl border-2 border-dashed border-secondary/80 bg-secondary/10 z-[50]"
       style={{
         left: `${x}%`,
         top: `${y}%`,
