@@ -50,6 +50,9 @@ import {
 const INSTRUCTOR_PDF_CONCURRENCY = 2
 const MASTERLIST_FONT_SIZE_MIN = 8
 const MASTERLIST_FONT_SIZE_MAX = 18
+const SCHEMATIC_SCALE_MIN = 60
+const SCHEMATIC_SCALE_MAX = 120
+const SCHEMATIC_SCALE_STEP = 5
 
 const mapWithConcurrency = async <T, R>(
   items: T[],
@@ -93,6 +96,14 @@ const buildPdfFilename = (...parts: Array<string | null | undefined>) => {
 
 const clampMasterlistFontSize = (value: number) =>
   Math.min(MASTERLIST_FONT_SIZE_MAX, Math.max(MASTERLIST_FONT_SIZE_MIN, Math.round(value)))
+
+const clampSchematicScalePercent = (value: number) => {
+  if (!Number.isFinite(value)) {
+    return 100
+  }
+  const stepped = Math.round(value / SCHEMATIC_SCALE_STEP) * SCHEMATIC_SCALE_STEP
+  return Math.min(SCHEMATIC_SCALE_MAX, Math.max(SCHEMATIC_SCALE_MIN, stepped))
+}
 
 type BlockedPrintJob = {
   jobLabel: string
@@ -155,6 +166,10 @@ function PrintPage() {
     selectedInstructor: 'none',
     orientation: 'portrait',
   })
+  const [schematicScalePercent, setSchematicScalePercent] = useState(100)
+  const [schematicPreviewUrl, setSchematicPreviewUrl] = useState<string | null>(null)
+  const [isSchematicPreviewLoading, setIsSchematicPreviewLoading] = useState(false)
+  const [schematicPreviewError, setSchematicPreviewError] = useState<string | null>(null)
   const schematicPreview = useSchematicSchedule(selectedDay ?? null)
   const sessionInfo = currentSession
   const sessionTitle = buildSessionTitle(sessionInfo, selectedDay, currentTerm)
@@ -367,6 +382,14 @@ function PrintPage() {
     })
   }
 
+  const handleChangeSchematicScale = (value: number) => {
+    setSchematicScalePercent(clampSchematicScalePercent(value))
+  }
+
+  const handleResetSchematicScale = () => {
+    setSchematicScalePercent(100)
+  }
+
   const handleToggleSchematicHighlight = () => {
     setSchematicOptions(current => {
       const nextHighlight = !current.highlightInstructor
@@ -400,6 +423,7 @@ function PrintPage() {
     instructorsOverride?: string[],
   ) => ({
     orientation,
+    scalePercent: schematicScalePercent,
     title: sessionTitle,
     dateRange,
     weeksLabel,
@@ -432,6 +456,112 @@ function PrintPage() {
     const requestKey = JSON.stringify(payload)
     return ensureCachedSchematicPdf(sessionId, selectedDay, requestKey, () => fetchSchematicPdf(payload))
   }
+
+  useEffect(() => {
+    if (activeModal !== 'schematic') {
+      setIsSchematicPreviewLoading(false)
+      setSchematicPreviewError(null)
+      setSchematicPreviewUrl(current => {
+        if (current) {
+          URL.revokeObjectURL(current)
+        }
+        return null
+      })
+      return
+    }
+
+    setSchematicPreviewUrl(current => {
+      if (current) {
+        URL.revokeObjectURL(current)
+      }
+      return null
+    })
+
+    if (!selectedDay) {
+      setSchematicPreviewError('Select a day to preview the schematic.')
+      setIsSchematicPreviewLoading(false)
+      return
+    }
+
+    if (schematicPreview.columns.length === 0) {
+      setSchematicPreviewError('No schematic data found for the selected day.')
+      setIsSchematicPreviewLoading(false)
+      return
+    }
+
+    let active = true
+    let objectUrl: string | null = null
+    const timeoutId = window.setTimeout(() => {
+      setIsSchematicPreviewLoading(true)
+      setSchematicPreviewError(null)
+
+      const highlightOptions =
+        schematicOptions.highlightInstructor && schematicOptions.selectedInstructor !== 'one-each'
+          ? {
+              highlightInstructor: true,
+              selectedInstructor: schematicOptions.selectedInstructor,
+            }
+          : {
+              highlightInstructor: false,
+              selectedInstructor: 'none',
+            }
+
+      const payload = buildSchematicPayload(schematicOptions.orientation, highlightOptions)
+
+      getCachedSchematicPdf(payload)
+        .then(blob => {
+          objectUrl = URL.createObjectURL(blob)
+          if (!active) {
+            URL.revokeObjectURL(objectUrl)
+            return
+          }
+          setSchematicPreviewUrl(current => {
+            if (current) {
+              URL.revokeObjectURL(current)
+            }
+            return objectUrl
+          })
+          setSchematicPreviewError(null)
+        })
+        .catch(error => {
+          if (!active) {
+            return
+          }
+          console.error(error)
+          const message =
+            error instanceof Error && error.message
+              ? error.message
+              : 'Unable to load the schematic preview.'
+          setSchematicPreviewError(message)
+        })
+        .finally(() => {
+          if (active) {
+            setIsSchematicPreviewLoading(false)
+          }
+        })
+    }, 300)
+
+    return () => {
+      active = false
+      window.clearTimeout(timeoutId)
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+  }, [
+    activeModal,
+    dateRange,
+    deckSupervisorName,
+    schematicOptions.highlightInstructor,
+    schematicOptions.orientation,
+    schematicOptions.selectedInstructor,
+    schematicPreview.columns,
+    schematicPreview.instructors,
+    schematicScalePercent,
+    selectedDay,
+    sessionTitle,
+    weeksLabel,
+  ])
 
   const fetchSchematicCoverWithBlank = async (
     orientation: 'portrait' | 'landscape',
@@ -1277,11 +1407,17 @@ function PrintPage() {
         open={activeModal === 'day1'}
         options={day1Options}
         formatOptions={masterlistFormatOptions}
+        schematicScalePercent={schematicScalePercent}
+        scaleMin={SCHEMATIC_SCALE_MIN}
+        scaleMax={SCHEMATIC_SCALE_MAX}
+        scaleStep={SCHEMATIC_SCALE_STEP}
         notice={activeModal === 'day1' ? blockedPrintNotice : null}
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleDay1Option}
         onToggleFormat={handleToggleMasterlistOption}
         onChangeFontSize={handleChangeMasterlistFontSize}
+        onChangeSchematicScale={handleChangeSchematicScale}
+        onResetSchematicScale={handleResetSchematicScale}
         onPrint={handlePrint}
       />
       <InstructorOptionsModal
@@ -1305,6 +1441,10 @@ function PrintPage() {
         notice={activeModal === 'instructors' ? blockedPrintNotice : null}
         extras={instructorExtras}
         coverOrientation={instructorCoverOrientation}
+        schematicScalePercent={schematicScalePercent}
+        scaleMin={SCHEMATIC_SCALE_MIN}
+        scaleMax={SCHEMATIC_SCALE_MAX}
+        scaleStep={SCHEMATIC_SCALE_STEP}
         onClose={() => setActiveModal(null)}
         onRefresh={handleRefreshInstructorPdfs}
         onPrintAll={handlePrintAllInstructorSheets}
@@ -1312,11 +1452,17 @@ function PrintPage() {
         onToggleCover={handleToggleInstructorCover}
         onToggleCoverHighlight={handleToggleInstructorCoverHighlight}
         onSelectCoverOrientation={setInstructorCoverOrientation}
+        onChangeSchematicScale={handleChangeSchematicScale}
+        onResetSchematicScale={handleResetSchematicScale}
       />
       <MasterlistOptionsModal
         open={activeModal === 'masterlist'}
         extras={masterlistExtras}
         coverOrientation={coverOrientation}
+        schematicScalePercent={schematicScalePercent}
+        scaleMin={SCHEMATIC_SCALE_MIN}
+        scaleMax={SCHEMATIC_SCALE_MAX}
+        scaleStep={SCHEMATIC_SCALE_STEP}
         formatOptions={masterlistFormatOptions}
         notice={activeModal === 'masterlist' ? blockedPrintNotice : null}
         previewHtml={masterlistPreviewHtml}
@@ -1327,13 +1473,22 @@ function PrintPage() {
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleMasterlistExtra}
         onSelectCoverOrientation={setCoverOrientation}
+        onChangeSchematicScale={handleChangeSchematicScale}
+        onResetSchematicScale={handleResetSchematicScale}
         onPrint={handlePrintMasterlist}
       />
       <SchematicOptionsModal
         open={activeModal === 'schematic'}
         options={schematicOptions}
         instructorNames={instructorNames}
+        scalePercent={schematicScalePercent}
+        scaleMin={SCHEMATIC_SCALE_MIN}
+        scaleMax={SCHEMATIC_SCALE_MAX}
+        scaleStep={SCHEMATIC_SCALE_STEP}
         notice={activeModal === 'schematic' ? blockedPrintNotice : null}
+        previewUrl={schematicPreviewUrl}
+        isPreviewLoading={isSchematicPreviewLoading}
+        previewError={schematicPreviewError}
         onClose={() => setActiveModal(null)}
         onToggleHighlight={handleToggleSchematicHighlight}
         onSelectOrientation={handleSelectSchematicOrientation}
@@ -1343,6 +1498,8 @@ function PrintPage() {
             selectedInstructor: value,
           }))
         }
+        onChangeScale={handleChangeSchematicScale}
+        onResetScale={handleResetSchematicScale}
         onPrint={handlePrint}
       />
 

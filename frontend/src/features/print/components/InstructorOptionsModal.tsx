@@ -1,5 +1,6 @@
 import React from 'react'
 import PrintModalShell from './PrintModalShell'
+import SchematicScaleControl from './SchematicScaleControl'
 
 type InstructorOptionsModalProps = {
   open: boolean
@@ -15,6 +16,10 @@ type InstructorOptionsModalProps = {
     highlightCoverInstructor: boolean
   }
   coverOrientation: 'portrait' | 'landscape'
+  schematicScalePercent: number
+  scaleMin: number
+  scaleMax: number
+  scaleStep: number
   onClose: () => void
   onRefresh: () => void
   onPrintAll: () => void
@@ -22,6 +27,8 @@ type InstructorOptionsModalProps = {
   onToggleCover: () => void
   onToggleCoverHighlight: () => void
   onSelectCoverOrientation: (value: 'portrait' | 'landscape') => void
+  onChangeSchematicScale: (value: number) => void
+  onResetSchematicScale: () => void
 }
 
 function InstructorOptionsModal({
@@ -35,6 +42,10 @@ function InstructorOptionsModal({
   notice,
   extras,
   coverOrientation,
+  schematicScalePercent,
+  scaleMin,
+  scaleMax,
+  scaleStep,
   onClose,
   onRefresh,
   onPrintAll,
@@ -42,6 +53,8 @@ function InstructorOptionsModal({
   onToggleCover,
   onToggleCoverHighlight,
   onSelectCoverOrientation,
+  onChangeSchematicScale,
+  onResetSchematicScale,
 }: InstructorOptionsModalProps) {
   if (!open) {
     return null
@@ -111,6 +124,15 @@ function InstructorOptionsModal({
               />
               Highlight Instructor on Cover
             </label>
+            <SchematicScaleControl
+              value={schematicScalePercent}
+              min={scaleMin}
+              max={scaleMax}
+              step={scaleStep}
+              onChange={onChangeSchematicScale}
+              onReset={onResetSchematicScale}
+              compact
+            />
           </>
         )}
       </div>
