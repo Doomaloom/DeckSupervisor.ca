@@ -8,6 +8,7 @@ import {
   timeHeaderStyleOptions,
 } from '../../masterlist/constants'
 import PrintModalShell from './PrintModalShell'
+import SchematicScaleControl from './SchematicScaleControl'
 
 type Day1Options = {
   schematicCoverPage: boolean
@@ -19,11 +20,17 @@ type Day1OptionsModalProps = {
   open: boolean
   options: Day1Options
   formatOptions: FormatOptions
+  schematicScalePercent: number
+  scaleMin: number
+  scaleMax: number
+  scaleStep: number
   notice?: React.ReactNode
   onClose: () => void
   onToggle: (key: keyof Day1Options) => void
   onToggleFormat: (key: BooleanFormatOptionKey) => void
   onChangeFontSize: (value: string) => void
+  onChangeSchematicScale: (value: number) => void
+  onResetSchematicScale: () => void
   onPrint: () => void
 }
 
@@ -31,11 +38,17 @@ function Day1OptionsModal({
   open,
   options,
   formatOptions,
+  schematicScalePercent,
+  scaleMin,
+  scaleMax,
+  scaleStep,
   notice,
   onClose,
   onToggle,
   onToggleFormat,
   onChangeFontSize,
+  onChangeSchematicScale,
+  onResetSchematicScale,
   onPrint,
 }: Day1OptionsModalProps) {
   if (!open) {
@@ -60,14 +73,25 @@ function Day1OptionsModal({
         </label>
 
         {options.schematicCoverPage ? (
-          <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-4 py-3 text-sm font-semibold text-secondary">
-            <input
-              type="checkbox"
-              checked={options.highlightInstructorName}
-              onChange={() => onToggle('highlightInstructorName')}
+          <>
+            <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-4 py-3 text-sm font-semibold text-secondary">
+              <input
+                type="checkbox"
+                checked={options.highlightInstructorName}
+                onChange={() => onToggle('highlightInstructorName')}
+              />
+              Highlight Instructor Name
+            </label>
+            <SchematicScaleControl
+              value={schematicScalePercent}
+              min={scaleMin}
+              max={scaleMax}
+              step={scaleStep}
+              onChange={onChangeSchematicScale}
+              onReset={onResetSchematicScale}
+              compact
             />
-            Highlight Instructor Name
-          </label>
+          </>
         ) : null}
 
         <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-4 py-3 text-sm font-semibold text-secondary">

@@ -8,6 +8,7 @@ import {
   timeHeaderStyleOptions,
 } from '../../masterlist/constants'
 import PrintModalShell from './PrintModalShell'
+import SchematicScaleControl from './SchematicScaleControl'
 
 type MasterlistExtras = {
   schematicCoverPage: boolean
@@ -17,6 +18,10 @@ type MasterlistOptionsModalProps = {
   open: boolean
   extras: MasterlistExtras
   coverOrientation: 'portrait' | 'landscape'
+  schematicScalePercent: number
+  scaleMin: number
+  scaleMax: number
+  scaleStep: number
   formatOptions: FormatOptions
   notice?: React.ReactNode
   previewHtml: string | null
@@ -27,6 +32,8 @@ type MasterlistOptionsModalProps = {
   onClose: () => void
   onToggle: (key: keyof MasterlistExtras) => void
   onSelectCoverOrientation: (value: 'portrait' | 'landscape') => void
+  onChangeSchematicScale: (value: number) => void
+  onResetSchematicScale: () => void
   onPrint: () => void
 }
 
@@ -34,6 +41,10 @@ function MasterlistOptionsModal({
   open,
   extras,
   coverOrientation,
+  schematicScalePercent,
+  scaleMin,
+  scaleMax,
+  scaleStep,
   formatOptions,
   notice,
   previewHtml,
@@ -44,6 +55,8 @@ function MasterlistOptionsModal({
   onClose,
   onToggle,
   onSelectCoverOrientation,
+  onChangeSchematicScale,
+  onResetSchematicScale,
   onPrint,
 }: MasterlistOptionsModalProps) {
   if (!open) {
@@ -71,23 +84,34 @@ function MasterlistOptionsModal({
               Schematic Coverpage
             </label>
             {extras.schematicCoverPage && (
-              <label
-                className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-              >
-                Cover Orientation
-                <select
-                  className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
-                  value={coverOrientation}
-                  onChange={event =>
-                    onSelectCoverOrientation(
-                      event.target.value === 'landscape' ? 'landscape' : 'portrait',
-                    )
-                  }
+              <>
+                <label
+                  className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
                 >
-                  <option value="portrait">Portrait</option>
-                  <option value="landscape">Landscape</option>
-                </select>
-              </label>
+                  Cover Orientation
+                  <select
+                    className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
+                    value={coverOrientation}
+                    onChange={event =>
+                      onSelectCoverOrientation(
+                        event.target.value === 'landscape' ? 'landscape' : 'portrait',
+                      )
+                    }
+                  >
+                    <option value="portrait">Portrait</option>
+                    <option value="landscape">Landscape</option>
+                  </select>
+                </label>
+                <SchematicScaleControl
+                  value={schematicScalePercent}
+                  min={scaleMin}
+                  max={scaleMax}
+                  step={scaleStep}
+                  onChange={onChangeSchematicScale}
+                  onReset={onResetSchematicScale}
+                  compact
+                />
+              </>
             )}
             {formatOptionItems.map(option => (
               <label

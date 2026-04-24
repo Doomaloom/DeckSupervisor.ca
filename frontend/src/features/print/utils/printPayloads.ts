@@ -45,6 +45,7 @@ type MasterlistRosterPayload = {
 
 export type SchematicPdfPayload = {
   orientation: 'portrait' | 'landscape'
+  scalePercent?: number
   title: string
   dateRange: string
   weeksLabel: string
@@ -459,9 +460,11 @@ export function buildSchematicPayload(
     selectedInstructor: 'none',
   },
   instructorsOverride?: string[],
+  scalePercent = 100,
 ): SchematicPdfPayload {
   return {
     orientation,
+    scalePercent,
     title: context.title,
     dateRange: context.dateRange,
     weeksLabel: context.weeksLabel,
@@ -535,20 +538,32 @@ export function buildSchematicPrefetchPayloads(args: {
   const orientations: Array<'portrait' | 'landscape'> = ['portrait', 'landscape']
 
   orientations.forEach(orientation => {
-    const basePayload = buildSchematicPayload(context, orientation, {
-      highlightInstructor: false,
-      selectedInstructor: 'none',
-    })
+    const basePayload = buildSchematicPayload(
+      context,
+      orientation,
+      {
+        highlightInstructor: false,
+        selectedInstructor: 'none',
+      },
+      undefined,
+      100,
+    )
     payloads.push({
       requestKey: JSON.stringify(basePayload),
       payload: basePayload,
     })
 
     instructorNames.forEach(name => {
-      const highlightedPayload = buildSchematicPayload(context, orientation, {
-        highlightInstructor: true,
-        selectedInstructor: name,
-      })
+      const highlightedPayload = buildSchematicPayload(
+        context,
+        orientation,
+        {
+          highlightInstructor: true,
+          selectedInstructor: name,
+        },
+        undefined,
+        100,
+      )
       payloads.push({
         requestKey: JSON.stringify(highlightedPayload),
         payload: highlightedPayload,

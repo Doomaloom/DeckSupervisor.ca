@@ -33,6 +33,7 @@ type Request struct {
 	Selected                 string     `json:"selectedInstructor"`
 	Instructors              []string   `json:"instructors"`
 	Columns                  [][]Course `json:"columns"`
+	ScalePercent             float64    `json:"scalePercent"`
 	RotateCounterClockwise90 bool       `json:"rotateCounterClockwise90"`
 }
 
@@ -79,7 +80,7 @@ func BuildPDF(ctx context.Context, req Request) (Output, error) {
 
 	highlightCols := resolveHighlightColumns(req, columnCount)
 	htmlContent := buildHTML(req, columnCount, totalRows, timeLabels, cells, orientation, highlightCols)
-	scale := computeScale(orientation, totalRows)
+	scale := effectiveScale(computeScale(orientation, totalRows), req.ScalePercent)
 	pdfBytes, err := renderPDF(ctx, htmlContent, scale)
 	if err != nil {
 		return Output{}, err
@@ -499,4 +500,21 @@ func computeScale(orientation string, totalRows int) float64 {
 		return 1
 	}
 	return scale
+}
+
+func normalizeScalePercent(value float64) float64 {
+	if value <= 0 {
+		return 100
+	}
+	if value < 60 {
+		return 60
+	}
+	if value > 120 {
+		return 120
+	}
+	return value
+}
+
+func effectiveScale(autoScale float64, scalePercent float64) float64 {
+	return autoScale * normalizeScalePercent(scalePercent) / 100
 }

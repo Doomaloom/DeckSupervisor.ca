@@ -13,6 +13,8 @@ import {
   buildMasterlistProgressLabel,
   buildMasterlistRequestBody,
   buildSchematicPrefetchPayloads,
+  buildSchematicPayload,
+  buildSchematicPrintContext,
   buildSessionTitle,
   getMiniSessionLessonDay,
 } from './printPayloads'
@@ -300,9 +302,36 @@ describe('printPayloads', () => {
 
     expect(payload).not.toBeNull()
     expect(payload?.orientation).toBe('portrait')
+    expect(payload?.scalePercent).toBe(100)
     expect(payload?.instructors).toEqual(['Coach B', 'Coach A'])
     expect(payload?.columns.map(column => column.map(course => course.code))).toEqual([['C2'], ['C1']])
     expect(payload?.columns[1][0]?.studentCount).toBe(8)
+  })
+
+  it('includes scale percent in schematic payloads and separates cache keys by scale', () => {
+    setStudentsForDay('Mo', [
+      makeStudent({ id: 'student-1', code: 'C1', instructor: 'Coach A' }),
+    ])
+
+    const context = buildSchematicPrintContext({
+      day: 'Mo',
+      sessionId: 'session-1',
+      session,
+    })
+
+    expect(context).not.toBeNull()
+    const defaultPayload = buildSchematicPayload(context!, 'portrait')
+    const scaledPayload = buildSchematicPayload(
+      context!,
+      'portrait',
+      { highlightInstructor: false, selectedInstructor: 'none' },
+      undefined,
+      85,
+    )
+
+    expect(defaultPayload.scalePercent).toBe(100)
+    expect(scaledPayload.scalePercent).toBe(85)
+    expect(JSON.stringify(defaultPayload)).not.toBe(JSON.stringify(scaledPayload))
   })
 
   it('builds portrait and landscape prefetch payloads for the base schematic and each printable instructor', () => {
@@ -329,6 +358,7 @@ describe('printPayloads', () => {
 
     expect(payloads).toHaveLength(8)
     expect(payloads.filter(entry => !entry.payload.highlightInstructor)).toHaveLength(2)
+    expect(payloads.every(entry => entry.payload.scalePercent === 100)).toBe(true)
     expect(payloads.filter(entry => entry.payload.orientation === 'portrait')).toHaveLength(4)
     expect(payloads.filter(entry => entry.payload.orientation === 'landscape')).toHaveLength(4)
     expect(
