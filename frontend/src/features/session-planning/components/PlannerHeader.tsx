@@ -1,8 +1,17 @@
+import { useEffect, useRef, useState } from 'react'
 import { ArrowsPointingOutIcon } from '@heroicons/react/24/outline'
-import type { PlannerDataset, PlannerShareSession } from '../../../types/app'
+import type { PlannerCallScriptKey, PlannerDataset, PlannerShareSession } from '../../../types/app'
+import {
+  DEFAULT_PLANNER_CALL_SCRIPTS,
+  normalizePlannerCallScripts,
+  PLANNER_CALL_SCRIPT_KEYS,
+  PLANNER_CALL_SCRIPT_LABELS,
+  PLANNER_CALL_SCRIPT_TOKENS,
+} from '../../../lib/sessionPlanner'
 
 type PlannerHeaderProps = {
   dataset: PlannerDataset | null
+  callScripts: Record<PlannerCallScriptKey, string> | undefined
   error: string
   isPopout: boolean
   isSharedMode: boolean
@@ -30,13 +39,143 @@ type PlannerHeaderProps = {
   onSetShareLocationOverride: (facility: string, value: string) => void
   onSetSharePhoneNumber: (value: string) => void
   onSetShareCcEmail: (value: string) => void
+  onSetCallScripts: (value: Record<PlannerCallScriptKey, string>) => void | Promise<void>
   onSaveSharedDetails: () => void | Promise<void>
   onStartSharing: () => void | Promise<void>
   onStopSharing: () => void | Promise<void>
 }
 
+type CallScriptLibraryModalProps = {
+  callScripts: Record<PlannerCallScriptKey, string>
+  isBusy: boolean
+  onClose: () => void
+  onSave: (value: Record<PlannerCallScriptKey, string>) => void | Promise<void>
+}
+
+function CallScriptLibraryModal({ callScripts, isBusy, onClose, onSave }: CallScriptLibraryModalProps) {
+  const [activeKey, setActiveKey] = useState<PlannerCallScriptKey>('cancellation_live')
+  const [drafts, setDrafts] = useState(callScripts)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const activeValue = drafts[activeKey] ?? ''
+
+  useEffect(() => {
+    setDrafts(callScripts)
+  }, [callScripts])
+
+  const insertToken = (token: string) => {
+    const textarea = textareaRef.current
+    if (!textarea) {
+      setDrafts(current => ({
+        ...current,
+        [activeKey]: `${current[activeKey] ?? ''}${current[activeKey] ? ' ' : ''}${token}`,
+      }))
+      return
+    }
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const next = `${activeValue.slice(0, start)}${token}${activeValue.slice(end)}`
+    setDrafts(current => ({
+      ...current,
+      [activeKey]: next,
+    }))
+    window.requestAnimationFrame(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + token.length, start + token.length)
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-card border-2 border-secondary/20 bg-accent p-7 text-secondary shadow-lg">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
+              Call Scripts
+            </p>
+            <h3 className="mt-2 text-2xl font-semibold">Script Library</h3>
+          </div>
+          <button
+            type="button"
+            className="rounded-full border border-secondary/30 px-3 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <div className="flex flex-col gap-2">
+            {PLANNER_CALL_SCRIPT_KEYS.map(scriptKey => (
+              <button
+                key={scriptKey}
+                type="button"
+                className={`rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${activeKey === scriptKey ? 'bg-primary text-accent' : 'border border-secondary/20 bg-bg text-secondary hover:bg-primary/10'}`}
+                onClick={() => setActiveKey(scriptKey)}
+              >
+                {PLANNER_CALL_SCRIPT_LABELS[scriptKey]}
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-secondary/20 bg-bg p-4">
+            <p className="text-sm font-semibold text-secondary">
+              {PLANNER_CALL_SCRIPT_LABELS[activeKey]}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {PLANNER_CALL_SCRIPT_TOKENS.map(token => (
+                <button
+                  key={token}
+                  type="button"
+                  className="rounded-full border border-secondary/20 bg-accent px-3 py-1 text-xs font-semibold text-secondary transition hover:bg-primary/10"
+                  onClick={() => insertToken(token)}
+                >
+                  {token}
+                </button>
+              ))}
+            </div>
+            <textarea
+              ref={textareaRef}
+              className="mt-3 min-h-72 w-full rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
+              value={activeValue}
+              onChange={event =>
+                setDrafts(current => ({
+                  ...current,
+                  [activeKey]: event.target.value,
+                }))
+              }
+              placeholder={DEFAULT_PLANNER_CALL_SCRIPTS[activeKey]}
+            />
+            <p className="mt-2 text-xs text-secondary/70">
+              Leave blank to use the built-in default for this script.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
+          <button
+            type="button"
+            className="rounded-2xl border border-secondary/30 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="rounded-2xl bg-primary px-5 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => void onSave(normalizePlannerCallScripts(drafts))}
+            disabled={isBusy}
+          >
+            {isBusy ? 'Saving...' : 'Save Scripts'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PlannerHeader({
   dataset,
+  callScripts,
   error,
   isPopout,
   isSharedMode,
@@ -64,10 +203,13 @@ function PlannerHeader({
   onSetShareLocationOverride,
   onSetSharePhoneNumber,
   onSetShareCcEmail,
+  onSetCallScripts,
   onSaveSharedDetails,
   onStartSharing,
   onStopSharing,
 }: PlannerHeaderProps) {
+  const [isScriptLibraryOpen, setIsScriptLibraryOpen] = useState(false)
+  const normalizedCallScripts = normalizePlannerCallScripts(callScripts)
   const facilities = dataset
     ? Array.from(new Set(dataset.sessions.map(session => session.facility))).sort((left, right) =>
         left.localeCompare(right),
@@ -111,6 +253,15 @@ function PlannerHeader({
               onClick={onOpenPlannedChanges}
             >
               Planned Changes
+            </button>
+          ) : null}
+          {dataset ? (
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10"
+              onClick={() => setIsScriptLibraryOpen(true)}
+            >
+              Call Scripts
             </button>
           ) : null}
           {!isPopout ? (
@@ -393,6 +544,17 @@ function PlannerHeader({
             )}
           </div>
         </div>
+      ) : null}
+      {isScriptLibraryOpen ? (
+        <CallScriptLibraryModal
+          callScripts={normalizedCallScripts}
+          isBusy={isSharingBusy}
+          onClose={() => setIsScriptLibraryOpen(false)}
+          onSave={async nextScripts => {
+            await onSetCallScripts(nextScripts)
+            setIsScriptLibraryOpen(false)
+          }}
+        />
       ) : null}
       {statusMessage ? <p className="mt-4 text-sm font-semibold text-primary">{statusMessage}</p> : null}
       {error ? <p className="mt-4 text-sm font-semibold text-danger">{error}</p> : null}

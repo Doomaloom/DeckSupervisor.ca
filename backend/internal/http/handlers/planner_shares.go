@@ -36,28 +36,33 @@ type updatePlannerClassStatusRequest struct {
 }
 
 type updatePlannerClassLanesRequest struct {
-	ParticipantID     string         `json:"participantId"`
-	ClassLaneIndexes  map[string]int `json:"classLaneIndexes"`
+	ParticipantID    string         `json:"participantId"`
+	ClassLaneIndexes map[string]int `json:"classLaneIndexes"`
 }
 
 type updatePlannerClassMoveRequest struct {
-	ParticipantID          string `json:"participantId"`
-	ClassKey               string `json:"classKey"`
-	PlannedMoveType        string `json:"plannedMoveType"`
-	PlannedMoveTime        string `json:"plannedMoveTime"`
-	PlannedMoveTargetKey   string `json:"plannedMoveTargetClassKey"`
+	ParticipantID        string `json:"participantId"`
+	ClassKey             string `json:"classKey"`
+	PlannedMoveType      string `json:"plannedMoveType"`
+	PlannedMoveTime      string `json:"plannedMoveTime"`
+	PlannedMoveTargetKey string `json:"plannedMoveTargetClassKey"`
 }
 
 type updatePlannerClassMetadataRequest struct {
-	ParticipantID       string `json:"participantId"`
-	ClassKey            string `json:"classKey"`
-	BarcodeCancelledAt  string `json:"barcodeCancelledAt"`
+	ParticipantID      string `json:"participantId"`
+	ClassKey           string `json:"classKey"`
+	BarcodeCancelledAt string `json:"barcodeCancelledAt"`
 }
 
 type updatePlannerCallRecordRequest struct {
 	ParticipantID       string                               `json:"participantId"`
 	ParticipantRecordID string                               `json:"participantRecordId"`
 	Update              plannershare.PlannerCallRecordUpdate `json:"update"`
+}
+
+type updatePlannerCallScriptsRequest struct {
+	ParticipantID string            `json:"participantId"`
+	CallScripts   map[string]string `json:"callScripts"`
 }
 
 type updatePlannerShareDetailsRequest struct {
@@ -68,14 +73,15 @@ type updatePlannerShareDetailsRequest struct {
 }
 
 type applyPlannerShareSaveStateRequest struct {
-	ParticipantID       string                                          `json:"participantId"`
-	ClassStatuses       map[string]string                               `json:"classStatuses"`
-	ClassLaneIndexes    map[string]int                                  `json:"classLaneIndexes"`
-	ClassMoves          map[string]plannershare.PlannerClassMoveUpdate  `json:"classMoves"`
-	ClassBarcodeCancelledAt map[string]string                           `json:"classBarcodeCancelledAt"`
-	CallRecordUpdates   map[string]plannershare.PlannerCallRecordUpdate `json:"callRecords"`
-	LocationOverrides   map[string]string                               `json:"locationOverrides"`
-	CallbackPhoneNumber string                                          `json:"callbackPhoneNumber"`
+	ParticipantID           string                                          `json:"participantId"`
+	ClassStatuses           map[string]string                               `json:"classStatuses"`
+	ClassLaneIndexes        map[string]int                                  `json:"classLaneIndexes"`
+	ClassMoves              map[string]plannershare.PlannerClassMoveUpdate  `json:"classMoves"`
+	ClassBarcodeCancelledAt map[string]string                               `json:"classBarcodeCancelledAt"`
+	CallRecordUpdates       map[string]plannershare.PlannerCallRecordUpdate `json:"callRecords"`
+	LocationOverrides       map[string]string                               `json:"locationOverrides"`
+	CallbackPhoneNumber     string                                          `json:"callbackPhoneNumber"`
+	CallScripts             map[string]string                               `json:"callScripts"`
 }
 
 func CreatePlannerShare(w http.ResponseWriter, r *http.Request) {
@@ -273,6 +279,22 @@ func UpdatePlannerShareCallRecord(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]any{"session": session})
 }
 
+func UpdatePlannerShareCallScripts(w http.ResponseWriter, r *http.Request) {
+	var req updatePlannerCallScriptsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	code := mux.Vars(r)["code"]
+	session, err := plannerShareService.UpdateCallScripts(requestBaseURL(r), code, req.ParticipantID, req.CallScripts)
+	if err != nil {
+		writePlannerShareError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{"session": session})
+}
+
 func UpdatePlannerShareDetails(w http.ResponseWriter, r *http.Request) {
 	var req updatePlannerShareDetailsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -308,13 +330,14 @@ func ApplyPlannerShareSaveState(w http.ResponseWriter, r *http.Request) {
 		code,
 		req.ParticipantID,
 		plannershare.SavedStateApplyInput{
-		ClassStatuses:       req.ClassStatuses,
-		ClassLaneIndexes:    req.ClassLaneIndexes,
-		ClassMoves:          req.ClassMoves,
-		ClassBarcodeCancelledAt: req.ClassBarcodeCancelledAt,
-		CallRecords:         req.CallRecordUpdates,
-			LocationOverrides:   req.LocationOverrides,
-			CallbackPhoneNumber: req.CallbackPhoneNumber,
+			ClassStatuses:           req.ClassStatuses,
+			ClassLaneIndexes:        req.ClassLaneIndexes,
+			ClassMoves:              req.ClassMoves,
+			ClassBarcodeCancelledAt: req.ClassBarcodeCancelledAt,
+			CallRecords:             req.CallRecordUpdates,
+			LocationOverrides:       req.LocationOverrides,
+			CallbackPhoneNumber:     req.CallbackPhoneNumber,
+			CallScripts:             req.CallScripts,
 		},
 	)
 	if err != nil {

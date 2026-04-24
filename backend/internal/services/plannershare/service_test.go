@@ -69,6 +69,9 @@ func TestNormalizeHelpersAndCloneDataset(t *testing.T) {
 	if cloned.CallRecords == nil {
 		t.Fatal("expected cloneDataset to initialize call records map")
 	}
+	if cloned.CallScripts == nil {
+		t.Fatal("expected cloneDataset to initialize call scripts map")
+	}
 }
 
 func TestCleanupRoomLockedReassignsHostAndRemovesStaleParticipants(t *testing.T) {
@@ -95,6 +98,65 @@ func TestCleanupRoomLockedReassignsHostAndRemovesStaleParticipants(t *testing.T)
 	}
 	if !room.Participants["guest"].IsHost {
 		t.Fatal("expected reassigned host flag to be updated")
+	}
+}
+
+func TestUpdateCallScriptsAllowsCollaborator(t *testing.T) {
+	t.Parallel()
+
+	service := NewService()
+	dataset := PlannerDataset{
+		SourceFileName: "planner.csv",
+		Classes:        []PlannerClass{{ClassKey: "class-1", ParticipantIDs: []string{"participant-1"}}},
+		CallRecords:    map[string]PlannerParticipantCallRecord{},
+	}
+
+	_, session, err := service.Create("https://example.test", dataset, "Host", nil, "", "", false)
+	if err != nil {
+		t.Fatalf("Create returned error: %v", err)
+	}
+	guestID, _, err := service.Join("https://example.test", session.Code, "Guest", false)
+	if err != nil {
+		t.Fatalf("Join returned error: %v", err)
+	}
+
+	updated, err := service.UpdateCallScripts("https://example.test", session.Code, guestID, map[string]string{
+		"pool_closure": "Closure {studentName}",
+	})
+	if err != nil {
+		t.Fatalf("UpdateCallScripts returned error: %v", err)
+	}
+	if updated.Dataset.CallScripts["pool_closure"] != "Closure {studentName}" {
+		t.Fatalf("expected closure script to update, got %q", updated.Dataset.CallScripts["pool_closure"])
+	}
+}
+
+func TestApplySavedStatePreservesCallScripts(t *testing.T) {
+	t.Parallel()
+
+	service := NewService()
+	dataset := PlannerDataset{
+		SourceFileName: "planner.csv",
+		Classes:        []PlannerClass{{ClassKey: "class-1", PlanningStatus: "active"}},
+		CallRecords:    map[string]PlannerParticipantCallRecord{},
+	}
+	participantID, session, err := service.Create("https://example.test", dataset, "Host", nil, "", "", false)
+	if err != nil {
+		t.Fatalf("Create returned error: %v", err)
+	}
+
+	updated, err := service.ApplySavedState("https://example.test", session.Code, participantID, SavedStateApplyInput{
+		ClassStatuses: map[string]string{"class-1": "pending_closure_calls"},
+		CallScripts:   map[string]string{"pool_closure": "Pool closed {day}"},
+	})
+	if err != nil {
+		t.Fatalf("ApplySavedState returned error: %v", err)
+	}
+	if updated.Dataset.CallScripts["pool_closure"] != "Pool closed {day}" {
+		t.Fatalf("expected closure script to round trip, got %q", updated.Dataset.CallScripts["pool_closure"])
+	}
+	if updated.Dataset.Classes[0].PlanningStatus != "pending_closure_calls" {
+		t.Fatalf("expected closure status, got %q", updated.Dataset.Classes[0].PlanningStatus)
 	}
 }
 

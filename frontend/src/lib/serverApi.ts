@@ -4,6 +4,7 @@ import type {
   ExtractedClass,
   ExtractedSession,
   PlannerCallRecordUpdate,
+  PlannerCallScriptKey,
   PlannerClassMoveType,
   PlannerClassStatus,
   PlannerDataset,
@@ -559,6 +560,16 @@ export function updatePlannerShareCallRecord(
   })
 }
 
+export function updatePlannerShareCallScripts(
+  code: string,
+  body: { participantId: string; callScripts: Record<PlannerCallScriptKey, string> }
+) {
+  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/call-scripts`, {
+    method: 'POST',
+    body,
+  })
+}
+
 export function updatePlannerShareDetails(
   code: string,
   body: {
@@ -592,6 +603,7 @@ export function applyPlannerShareSaveState(
     callRecords: Record<string, PlannerCallRecordUpdate>
     locationOverrides: Record<string, string>
     callbackPhoneNumber: string
+    callScripts: Record<PlannerCallScriptKey, string>
   },
 ) {
   return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/save-state`, {

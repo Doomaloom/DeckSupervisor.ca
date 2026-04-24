@@ -167,9 +167,21 @@ export type RequestAssignment = {
 
 export type PlannerParticipantStatus = 'booked' | 'waiting'
 
-export type PlannerClassStatus = 'active' | 'pending_cancellation' | 'cancelled' | 'planned_move'
+export type PlannerClassStatus =
+    | 'active'
+    | 'pending_cancellation'
+    | 'pending_closure_calls'
+    | 'cancelled'
+    | 'planned_move'
 
 export type PlannerClassMoveType = '' | 'new_time' | 'target_class'
+
+export type PlannerCallScriptKey =
+    | 'cancellation_live'
+    | 'cancellation_voicemail'
+    | 'planned_move_live'
+    | 'planned_move_voicemail'
+    | 'pool_closure'
 
 export type PlannerCallStatus =
     | 'not_started'
@@ -242,6 +254,7 @@ export type PlannerParticipantCallRecord = {
 export type PlannerDataset = {
     sourceFileName: string
     importedAt: string
+    callScripts: Record<PlannerCallScriptKey, string>
     sessions: PlannerSession[]
     classes: PlannerClass[]
     participants: PlannerParticipant[]

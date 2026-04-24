@@ -1,5 +1,6 @@
 import type {
     PlannerCallStatus,
+    PlannerCallScriptKey,
     PlannerClass,
     PlannerClassMoveType,
     PlannerClassStatus,
@@ -16,6 +17,7 @@ import {
     hasAnyCsvHeader,
     parseCsvText,
 } from '../shared/csv/csvUtils'
+import { SESSION_DAY_LABELS } from '../shared/session/sessionDays'
 import { getStoredItem, setStoredItem } from './browserStorage'
 import { getScopedKey } from './storageScope'
 import { extractEndTime, extractStartTime } from './time'
@@ -27,6 +29,7 @@ export type PlannerSaveState = {
     version: number
     exportedAt: string
     shareDisplayName: string
+    callScripts: Record<PlannerCallScriptKey, string>
     locationOverrides: Record<string, string>
     callbackPhoneNumber: string
     selection: {
@@ -59,6 +62,101 @@ export type PlannerSaveStateApplyResult = {
 export type PlannerAlternativeGroups = {
     availableAlternatives: PlannerClass[]
     fullAlternatives: PlannerClass[]
+}
+
+export const PLANNER_CALL_SCRIPT_KEYS: PlannerCallScriptKey[] = [
+    'cancellation_live',
+    'cancellation_voicemail',
+    'planned_move_live',
+    'planned_move_voicemail',
+    'pool_closure',
+]
+
+export const PLANNER_CALL_SCRIPT_LABELS: Record<PlannerCallScriptKey, string> = {
+    cancellation_live: 'Cancellation - Live',
+    cancellation_voicemail: 'Cancellation - Voicemail',
+    planned_move_live: 'Planned Move - Live',
+    planned_move_voicemail: 'Planned Move - Voicemail',
+    pool_closure: 'Pool Closure',
+}
+
+export const PLANNER_CALL_SCRIPT_TOKENS = [
+    '{studentName}',
+    '{className}',
+    '{day}',
+    '{time}',
+    '{location}',
+    '{callerName}',
+    '{callbackPhone}',
+    '{facility}',
+    '{eventId}',
+    '{moveDestination}',
+] as const
+
+export const DEFAULT_PLANNER_CALL_SCRIPTS: Record<PlannerCallScriptKey, string> = {
+    cancellation_live: `Hello, am I speaking with the parent or guardian of {studentName}?
+
+Hi, this is {callerName} calling from {location} about {studentName}'s swimming lessons.
+
+I'm calling to let you know that unfortunately {className}, scheduled for {day}/{time}, has been cancelled due to low registration or staffing changes.
+
+We do have some alternative class options available at our centre that may work for your child. If you'd like, I can go over those options with you now.
+
+[Share alternatives.]
+
+If they accept an alternative: I'm glad we found a suitable alternative, you'll receive an email confirmation of the changes.
+
+If no alternative works: If none of those options work, we will refund the class and the amount will be added back to your account as account credit.
+
+Do you have any questions?`,
+    cancellation_voicemail: `Hello, this is {callerName} calling from {location} regarding {studentName}'s swimming lessons.
+
+I'm calling to let you know that unfortunately {className}, scheduled for {day}/{time}, has been cancelled.
+
+We may have alternative class options available at our centre. Please give us a call back at {callbackPhone} at your earliest convenience so we can review the available options with you.
+
+Again, this is {callerName} from {location}, and our number is {callbackPhone}. Thank you.`,
+    planned_move_live: `Hello, am I speaking with the parent or guardian of {studentName}?
+
+Hi, this is {callerName} calling from {location} about {studentName}'s swimming lessons.
+
+I'm calling to let you know that {className}, currently scheduled for {day}/{time}, is planned to move to {moveDestination}.
+
+We wanted to let you know about the updated class arrangement and confirm whether that move works for your child.
+
+[Confirm the new time or destination class.]
+
+If they accept the move: Perfect, we'll update the registration and you'll receive an email confirmation of the change.
+
+If the move does not work: If that option does not work, staff at the centre can help with the next steps for the registration.
+
+Do you have any questions?`,
+    planned_move_voicemail: `Hello, this is {callerName} calling from {location} regarding {studentName}'s swimming lessons.
+
+I'm calling to let you know that {className}, currently scheduled for {day}/{time}, is planned to move to {moveDestination}.
+
+Please give us a call back at {callbackPhone} at your earliest convenience so we can confirm whether that updated class works for your child.
+
+Again, this is {callerName} from {location}, and our number is {callbackPhone}. Thank you.`,
+    pool_closure: `Hello, this is {callerName} calling from {location} regarding {studentName}'s swimming lessons.
+
+I'm calling to let you know that the pool is closed for {day}, so {className} at {time} will not be running.
+
+If you have any questions, please call us back at {callbackPhone}. Thank you.`,
+}
+
+export function normalizePlannerCallScripts(input: unknown, legacyClosureCallScript = ''): Record<PlannerCallScriptKey, string> {
+    const source = input && typeof input === 'object' ? input as Record<string, unknown> : {}
+    return Object.fromEntries(
+        PLANNER_CALL_SCRIPT_KEYS.map(key => [
+            key,
+            typeof source[key] === 'string'
+                ? source[key] as string
+                : key === 'pool_closure'
+                    ? legacyClosureCallScript
+                    : '',
+        ]),
+    ) as Record<PlannerCallScriptKey, string>
 }
 
 type CsvParticipantRow = {
@@ -676,6 +774,7 @@ export function parseSessionPlannerCsv(text: string, sourceFileName: string): Pl
     return {
         sourceFileName,
         importedAt: new Date().toISOString(),
+        callScripts: normalizePlannerCallScripts(null),
         sessions,
         classes: normalizePlannerClassLanes(classes).sort(sortPlannerClasses),
         participants,
@@ -846,6 +945,7 @@ export function parseEmptyClassesPlannerCsv(text: string, sourceFileName: string
     return {
         sourceFileName,
         importedAt: new Date().toISOString(),
+        callScripts: normalizePlannerCallScripts(null),
         sessions,
         classes: normalizePlannerClassLanes(classes).sort(sortPlannerClasses),
         participants: [],
@@ -903,6 +1003,12 @@ function normalizePlannerDataset(dataset: PlannerDataset): PlannerDataset {
 
     return {
         ...dataset,
+        callScripts: normalizePlannerCallScripts(
+            dataset.callScripts,
+            typeof (dataset as { closureCallScript?: unknown }).closureCallScript === 'string'
+                ? (dataset as { closureCallScript?: string }).closureCallScript ?? ''
+                : '',
+        ),
         classes: normalizedClasses,
         callRecords: normalizedCallRecords,
     }
@@ -1040,6 +1146,11 @@ export function mergePlannerDatasets(current: PlannerDataset, incoming: PlannerD
     return {
         sourceFileName: mergeSourceFileNames(current.sourceFileName, incoming.sourceFileName),
         importedAt: new Date().toISOString(),
+        callScripts: normalizePlannerCallScripts(
+            current.callScripts,
+            (current as { closureCallScript?: string }).closureCallScript ??
+                (incoming as { closureCallScript?: string }).closureCallScript,
+        ),
         sessions: Array.from(sessionMap.values()).sort((left, right) => {
             if (left.dayOfWeek !== right.dayOfWeek) {
                 return left.dayOfWeek.localeCompare(right.dayOfWeek)
@@ -1061,6 +1172,42 @@ export function updatePlannerClassStatus(
         ...dataset,
         classes: dataset.classes.map(plannerClass =>
             plannerClass.classKey === classKey ? { ...plannerClass, planningStatus: status } : plannerClass,
+        ),
+    }
+}
+
+export function updatePlannerCallScripts(
+    dataset: PlannerDataset,
+    callScripts: Record<PlannerCallScriptKey, string>,
+): PlannerDataset {
+    return {
+        ...dataset,
+        callScripts: normalizePlannerCallScripts(callScripts),
+    }
+}
+
+export function markPlannerDayClosureCalls(
+    dataset: PlannerDataset,
+    selectedDay: string,
+    selectedLocation: string,
+): PlannerDataset {
+    const affectedClassKeys = new Set(
+        dataset.classes
+            .filter(plannerClass => plannerClass.dayOfWeek === selectedDay && plannerClass.facility === selectedLocation)
+            .filter(plannerClass => plannerClass.participantIds.length > 0)
+            .map(plannerClass => plannerClass.classKey),
+    )
+
+    if (affectedClassKeys.size === 0) {
+        return dataset
+    }
+
+    return {
+        ...dataset,
+        classes: dataset.classes.map(plannerClass =>
+            affectedClassKeys.has(plannerClass.classKey)
+                ? { ...plannerClass, planningStatus: 'pending_closure_calls' }
+                : plannerClass,
         ),
     }
 }
@@ -1168,6 +1315,7 @@ export function buildPlannerSaveState(args: {
         version: PLANNER_SAVE_STATE_VERSION,
         exportedAt: new Date().toISOString(),
         shareDisplayName: args.shareDisplayName.trim(),
+        callScripts: normalizePlannerCallScripts(args.dataset.callScripts),
         locationOverrides: normalizeLocationOverrides(args.locationOverrides),
         callbackPhoneNumber: args.callbackPhoneNumber.trim(),
         selection: {
@@ -1220,6 +1368,12 @@ export function parsePlannerSaveState(text: string): PlannerSaveState {
         version: state.version,
         exportedAt: typeof state.exportedAt === 'string' ? state.exportedAt : '',
         shareDisplayName: typeof state.shareDisplayName === 'string' ? state.shareDisplayName : '',
+        callScripts: normalizePlannerCallScripts(
+            state.callScripts,
+            typeof (state as { closureCallScript?: unknown }).closureCallScript === 'string'
+                ? (state as { closureCallScript?: string }).closureCallScript ?? ''
+                : '',
+        ),
         locationOverrides: normalizeLocationOverrides(state.locationOverrides),
         callbackPhoneNumber: typeof state.callbackPhoneNumber === 'string' ? state.callbackPhoneNumber : '',
         selection: {
@@ -1297,6 +1451,7 @@ export function applyPlannerSaveState(
     return {
         dataset: {
             ...dataset,
+            callScripts: normalizePlannerCallScripts(state.callScripts),
             classes: normalizePlannerClassLanes(nextClasses).sort(sortPlannerClasses),
             callRecords: nextCallRecords,
         },
@@ -1334,6 +1489,7 @@ export function plannerSaveStateToSharePayload(state: PlannerSaveState): {
     callRecords: Record<string, PlannerCallRecordUpdate>
     locationOverrides: Record<string, string>
     callbackPhoneNumber: string
+    callScripts: Record<PlannerCallScriptKey, string>
 } {
     return {
         classStatuses: state.classStatuses,
@@ -1359,6 +1515,7 @@ export function plannerSaveStateToSharePayload(state: PlannerSaveState): {
         ),
         locationOverrides: state.locationOverrides,
         callbackPhoneNumber: state.callbackPhoneNumber,
+        callScripts: normalizePlannerCallScripts(state.callScripts),
     }
 }
 
@@ -1380,7 +1537,11 @@ export function getPlannerAlternativeClasses(dataset: PlannerDataset, sourceClas
             if (plannerClass.classKey === sourceClass.classKey) {
                 return false
             }
-            if (plannerClass.planningStatus === 'cancelled' || plannerClass.planningStatus === 'pending_cancellation') {
+            if (
+                plannerClass.planningStatus === 'cancelled' ||
+                plannerClass.planningStatus === 'pending_cancellation' ||
+                plannerClass.planningStatus === 'pending_closure_calls'
+            ) {
                 return false
             }
             return plannerClass.serviceName.trim().toLowerCase() === normalizedServiceName
@@ -1465,6 +1626,42 @@ export function summarizePlannerCalls(dataset: PlannerDataset, classKey: string)
     }
 }
 
+export function getPlannerCallScriptKey(plannerClass: PlannerClass, mode: 'live' | 'voicemail'): PlannerCallScriptKey {
+    if (plannerClass.planningStatus === 'pending_closure_calls') {
+        return 'pool_closure'
+    }
+    if (plannerClass.planningStatus === 'planned_move') {
+        return mode === 'voicemail' ? 'planned_move_voicemail' : 'planned_move_live'
+    }
+    return mode === 'voicemail' ? 'cancellation_voicemail' : 'cancellation_live'
+}
+
+export function renderPlannerCallScript(args: {
+    callScripts: Record<PlannerCallScriptKey, string>
+    scriptKey: PlannerCallScriptKey
+    participant: PlannerParticipant
+    plannerClass: PlannerClass
+    callerName: string
+    locationName: string
+    callbackPhoneNumber: string
+    moveDestination: string
+}) {
+    const script = args.callScripts[args.scriptKey]?.trim() || DEFAULT_PLANNER_CALL_SCRIPTS[args.scriptKey]
+    const replacements: Record<string, string> = {
+        studentName: args.participant.name,
+        className: args.plannerClass.serviceName,
+        day: SESSION_DAY_LABELS[args.plannerClass.dayOfWeek] ?? args.plannerClass.dayOfWeek,
+        time: args.plannerClass.eventTime,
+        location: args.locationName,
+        callerName: args.callerName,
+        callbackPhone: args.callbackPhoneNumber,
+        facility: args.plannerClass.facility,
+        eventId: args.plannerClass.eventId,
+        moveDestination: args.moveDestination,
+    }
+    return script.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g, (token, key: string) => replacements[key] ?? token)
+}
+
 export const plannerCallStatusOptions: Array<{ key: PlannerCallStatus; label: string }> = [
     { key: 'not_started', label: 'Not started' },
     { key: 'called', label: 'Called' },
@@ -1492,7 +1689,11 @@ function normalizeClassStatuses(input: unknown): Record<string, PlannerClassStat
     return Object.fromEntries(
         Object.entries(input as Record<string, unknown>).filter((entry): entry is [string, PlannerClassStatus] =>
             entry[0].trim().length > 0 &&
-            (entry[1] === 'active' || entry[1] === 'pending_cancellation' || entry[1] === 'cancelled' || entry[1] === 'planned_move'),
+            (entry[1] === 'active' ||
+                entry[1] === 'pending_cancellation' ||
+                entry[1] === 'pending_closure_calls' ||
+                entry[1] === 'cancelled' ||
+                entry[1] === 'planned_move'),
         ),
     )
 }

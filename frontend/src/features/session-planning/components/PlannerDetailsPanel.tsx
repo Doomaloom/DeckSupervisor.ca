@@ -85,9 +85,11 @@ function PlannerDetailsPanel({
             ? 'Planned Move'
             : selectedClass?.planningStatus === 'pending_cancellation'
                 ? 'Pending Cancellation'
-                : selectedClass?.planningStatus === 'cancelled'
-                    ? 'Cancelled'
-                    : ''
+                : selectedClass?.planningStatus === 'pending_closure_calls'
+                    ? 'Pool Closure'
+                    : selectedClass?.planningStatus === 'cancelled'
+                        ? 'Cancelled'
+                        : ''
 
     return (
         <div id="planner-details-panel" data-component="planner-details-panel" className="flex min-h-[70vh] flex-col gap-4 rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
@@ -152,6 +154,13 @@ function PlannerDetailsPanel({
                                 onClick={() => void setClassStatus(selectedClass.classKey, 'pending_cancellation')}
                             >
                                 Pending Cancellation
+                            </button>
+                            <button
+                                type="button"
+                                className="rounded-full bg-cyan-100 px-3 py-2 text-sm font-semibold text-cyan-950 transition hover:-translate-y-0.5"
+                                onClick={() => void setClassStatus(selectedClass.classKey, 'pending_closure_calls')}
+                            >
+                                Pool Closure
                             </button>
                             <button
                                 type="button"
@@ -374,14 +383,16 @@ function PlannerDetailsPanel({
 
                     {selectedClass.planningStatus === 'active' ? (
                         <div className="rounded-2xl border border-secondary/20 bg-bg p-4 text-sm text-secondary/70">
-                            Mark this class as planned move, pending cancellation, or cancelled to start the call workflow.
+                            Mark this class as planned move, pending cancellation, pool closure, or cancelled to start the call workflow.
                         </div>
                     ) : (
                         <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-secondary/20 bg-bg p-4">
                             <h4 className="text-sm font-semibold uppercase tracking-[0.14em] text-secondary/70">
                                 {selectedClass.planningStatus === 'planned_move'
                                     ? 'Move Call Workflow'
-                                    : 'Cancellation Call Workflow'}
+                                    : selectedClass.planningStatus === 'pending_closure_calls'
+                                        ? 'Pool Closure Call Workflow'
+                                        : 'Cancellation Call Workflow'}
                             </h4>
                             <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
                                 {bookedParticipants.map(participant => {

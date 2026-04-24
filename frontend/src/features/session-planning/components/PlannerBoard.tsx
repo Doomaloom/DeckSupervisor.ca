@@ -20,6 +20,7 @@ type PlannerBoardProps = {
   selectedLocation: string
   setClassLanes: (laneIndexes: Record<string, number>) => void | Promise<void>
   setIsInfoPanelOpen: (value: boolean) => void
+  onMarkDayClosureCalls: () => void | Promise<void>
   setSelectedClassKey: (value: string) => void
   setSelectedDay: (value: string) => void
   setSelectedLocation: (value: string) => void
@@ -42,6 +43,7 @@ function PlannerBoard({
   selectedLocation,
   setClassLanes,
   setIsInfoPanelOpen,
+  onMarkDayClosureCalls,
   setSelectedClassKey,
   setSelectedDay,
   setSelectedLocation,
@@ -168,7 +170,8 @@ function PlannerBoard({
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
         {availableLocations.map(location => (
           <button
             key={location}
@@ -179,6 +182,15 @@ function PlannerBoard({
             {location}
           </button>
         ))}
+        </div>
+        <button
+          type="button"
+          className="rounded-2xl bg-cyan-100 px-4 py-2 text-sm font-semibold text-cyan-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => void onMarkDayClosureCalls()}
+          disabled={!selectedDay || !selectedLocation || visibleClasses.length === 0}
+        >
+          Mark Day As Closure Calls
+        </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto pr-1">
@@ -230,6 +242,8 @@ function PlannerBoard({
                               :
                             course.planningStatus === 'pending_cancellation'
                               ? 'Pending Cancellation'
+                              : course.planningStatus === 'pending_closure_calls'
+                                ? 'Pool Closure'
                               : course.planningStatus === 'cancelled'
                                 ? 'Cancelled'
                                 : ''

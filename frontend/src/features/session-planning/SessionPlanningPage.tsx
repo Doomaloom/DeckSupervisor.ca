@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type {
   PlannerCallRecordUpdate,
+  PlannerCallScriptKey,
   PlannerCallStatus,
   PlannerClass,
   PlannerClassStatus,
@@ -14,6 +15,7 @@ import {
   buildPlannerSaveState,
   getPlannerMoveTargetLabel,
   loadPlannerDataset,
+  markPlannerDayClosureCalls,
   mergePlannerDatasets,
   parseEmptyClassesPlannerCsv,
   parseSessionPlannerCsv,
@@ -21,6 +23,7 @@ import {
   plannerSaveStateToSharePayload,
   plannerSaveStateToText,
   savePlannerDataset,
+  updatePlannerCallScripts,
   updatePlannerCallRecord,
   updatePlannerClassMetadata,
   updatePlannerClassLanes,
@@ -30,6 +33,7 @@ import {
 import {
   applyPlannerShareSaveState,
   updatePlannerShareCallRecord,
+  updatePlannerShareCallScripts,
   updatePlannerShareClassMetadata,
   updatePlannerShareClassLanes,
   updatePlannerShareClassMove,
@@ -304,6 +308,70 @@ function SessionPlanningPage() {
     }
   }
 
+  const setCallScripts = async (callScripts: Record<PlannerCallScriptKey, string>) => {
+    if (!dataset) {
+      return
+    }
+    try {
+      if (shareCode && shareParticipantId) {
+        const response = await updatePlannerShareCallScripts(shareCode, {
+          participantId: shareParticipantId,
+          callScripts,
+        })
+        applySharedSession(response.session)
+      } else {
+        persistLocalDataset(updatePlannerCallScripts(dataset, callScripts))
+      }
+      setError('')
+      setStatusMessage('')
+    } catch (scriptError) {
+      setError(scriptError instanceof Error ? scriptError.message : 'Failed to update call scripts.')
+    }
+  }
+
+  const markSelectedDayClosureCalls = async () => {
+    if (!dataset || !selectedDay || !selectedLocation) {
+      return
+    }
+    const nextDataset = markPlannerDayClosureCalls(dataset, selectedDay, selectedLocation)
+    const affectedClassCount = nextDataset.classes.filter(
+      plannerClass =>
+        plannerClass.dayOfWeek === selectedDay &&
+        plannerClass.facility === selectedLocation &&
+        plannerClass.participantIds.length > 0 &&
+        plannerClass.planningStatus === 'pending_closure_calls',
+    ).length
+    if (nextDataset === dataset || affectedClassCount === 0) {
+      setStatusMessage('No booked participants found for the selected day and location.')
+      return
+    }
+
+    try {
+      if (shareCode && shareParticipantId) {
+        const state = buildPlannerSaveState({
+          dataset: nextDataset,
+          shareDisplayName,
+          locationOverrides: shareLocationOverrides,
+          callbackPhoneNumber: sharePhoneNumber,
+          selectedDay,
+          selectedLocation,
+          selectedClassKey,
+        })
+        const response = await applyPlannerShareSaveState(shareCode, {
+          participantId: shareParticipantId,
+          ...plannerSaveStateToSharePayload(state),
+        })
+        applySharedSession(response.session)
+      } else {
+        persistLocalDataset(nextDataset)
+      }
+      setError('')
+      setStatusMessage(`Marked ${affectedClassCount} class${affectedClassCount === 1 ? '' : 'es'} for closure calls.`)
+    } catch (closureError) {
+      setError(closureError instanceof Error ? closureError.message : 'Failed to mark closure calls.')
+    }
+  }
+
   const startCall = async (participantId: string) => {
     setCallScriptMode('live')
     setActiveCallParticipantId(participantId)
@@ -518,6 +586,7 @@ function SessionPlanningPage() {
     <div id="session-planning-page" data-component="session-planning-page" className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <PlannerHeader
         dataset={dataset}
+        callScripts={dataset?.callScripts}
         error={error}
         isPopout={isPopout}
         isSharedMode={isSharedMode}
@@ -550,6 +619,7 @@ function SessionPlanningPage() {
         }
         onSetSharePhoneNumber={setSharePhoneNumber}
         onSetShareCcEmail={setShareCcEmail}
+        onSetCallScripts={setCallScripts}
         onSaveSharedDetails={saveSharedDetails}
         onStartSharing={startSharing}
         onStopSharing={stopSharing}
@@ -578,6 +648,7 @@ function SessionPlanningPage() {
             selectedLocation={selectedLocation}
             setClassLanes={setClassLanes}
             setIsInfoPanelOpen={setIsInfoPanelOpen}
+            onMarkDayClosureCalls={markSelectedDayClosureCalls}
             setSelectedClassKey={setSelectedClassKey}
             setSelectedDay={setSelectedDay}
             setSelectedLocation={setSelectedLocation}
@@ -610,6 +681,7 @@ function SessionPlanningPage() {
         callerLocationName={callerLocationName}
         callerName={callerName}
         callerPhoneNumber={callerPhoneNumber}
+        callScripts={dataset?.callScripts}
         plannedMoveLabel={plannedMoveLabel}
         onClose={closeCallModal}
         onFinishCall={finishCall}

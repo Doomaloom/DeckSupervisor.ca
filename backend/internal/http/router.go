@@ -102,6 +102,7 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/planner-shares/{code}/class-move", handlers.UpdatePlannerShareClassMove).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}/class-metadata", handlers.UpdatePlannerShareClassMetadata).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}/call-record", handlers.UpdatePlannerShareCallRecord).Methods("POST")
+	r.HandleFunc("/api/planner-shares/{code}/call-scripts", handlers.UpdatePlannerShareCallScripts).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}/details", handlers.UpdatePlannerShareDetails).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}/save-state", handlers.ApplyPlannerShareSaveState).Methods("POST")
 

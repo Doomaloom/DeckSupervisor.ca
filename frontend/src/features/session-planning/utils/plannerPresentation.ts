@@ -16,6 +16,8 @@ export function statusClasses(status: PlannerClassStatus) {
       return 'border-sky-400 bg-sky-50 text-sky-900'
     case 'pending_cancellation':
       return 'border-amber-400 bg-amber-50 text-amber-900'
+    case 'pending_closure_calls':
+      return 'border-cyan-400 bg-cyan-50 text-cyan-950'
     case 'cancelled':
       return 'border-rose-400 bg-rose-50 text-rose-900'
     default:
@@ -122,6 +124,8 @@ export function getPlannerBoardStatusClasses(status: PlannerClassStatus, isSelec
       return `${selectedRing} border-sky-500 bg-sky-100 text-sky-950`
     case 'pending_cancellation':
       return `${selectedRing} border-amber-500 bg-amber-100 text-amber-950`
+    case 'pending_closure_calls':
+      return `${selectedRing} border-cyan-500 bg-cyan-100 text-cyan-950`
     case 'cancelled':
       return `${selectedRing} border-rose-500 bg-rose-100 text-rose-950`
     default:

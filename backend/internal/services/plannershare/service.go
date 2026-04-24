@@ -26,6 +26,7 @@ var (
 type PlannerDataset struct {
 	SourceFileName string                                  `json:"sourceFileName"`
 	ImportedAt     string                                  `json:"importedAt"`
+	CallScripts    map[string]string                       `json:"callScripts"`
 	Sessions       []PlannerSession                        `json:"sessions"`
 	Classes        []PlannerClass                          `json:"classes"`
 	Participants   []PlannerParticipant                    `json:"participants"`
@@ -78,30 +79,30 @@ type PlannerParticipant struct {
 }
 
 type PlannerParticipantCallRecord struct {
-	ParticipantID               string `json:"participantId"`
-	ClassKey                    string `json:"classKey"`
-	Status                      string `json:"status"`
-	Notes                       string `json:"notes"`
-	OfferedAlternativeClassKey  string `json:"offeredAlternativeClassKey"`
-	AcceptedAlternativeClassKey string `json:"acceptedAlternativeClassKey"`
-	CompletedAt                 string `json:"completedAt"`
-	EmailSentAt                 string `json:"emailSentAt"`
-	WithdrawRefundAt            string `json:"withdrawRefundAt"`
-	RefundReceiptSentAt         string `json:"refundReceiptSentAt"`
-	ReRegisteredAt              string `json:"reRegisteredAt"`
+	ParticipantID                  string `json:"participantId"`
+	ClassKey                       string `json:"classKey"`
+	Status                         string `json:"status"`
+	Notes                          string `json:"notes"`
+	OfferedAlternativeClassKey     string `json:"offeredAlternativeClassKey"`
+	AcceptedAlternativeClassKey    string `json:"acceptedAlternativeClassKey"`
+	CompletedAt                    string `json:"completedAt"`
+	EmailSentAt                    string `json:"emailSentAt"`
+	WithdrawRefundAt               string `json:"withdrawRefundAt"`
+	RefundReceiptSentAt            string `json:"refundReceiptSentAt"`
+	ReRegisteredAt                 string `json:"reRegisteredAt"`
 	RegistrationConfirmationSentAt string `json:"registrationConfirmationSentAt"`
 }
 
 type PlannerCallRecordUpdate struct {
-	Status                      *string `json:"status,omitempty"`
-	Notes                       *string `json:"notes,omitempty"`
-	OfferedAlternativeClassKey  *string `json:"offeredAlternativeClassKey,omitempty"`
-	AcceptedAlternativeClassKey *string `json:"acceptedAlternativeClassKey,omitempty"`
-	CompletedAt                 *string `json:"completedAt,omitempty"`
-	EmailSentAt                 *string `json:"emailSentAt,omitempty"`
-	WithdrawRefundAt            *string `json:"withdrawRefundAt,omitempty"`
-	RefundReceiptSentAt         *string `json:"refundReceiptSentAt,omitempty"`
-	ReRegisteredAt              *string `json:"reRegisteredAt,omitempty"`
+	Status                         *string `json:"status,omitempty"`
+	Notes                          *string `json:"notes,omitempty"`
+	OfferedAlternativeClassKey     *string `json:"offeredAlternativeClassKey,omitempty"`
+	AcceptedAlternativeClassKey    *string `json:"acceptedAlternativeClassKey,omitempty"`
+	CompletedAt                    *string `json:"completedAt,omitempty"`
+	EmailSentAt                    *string `json:"emailSentAt,omitempty"`
+	WithdrawRefundAt               *string `json:"withdrawRefundAt,omitempty"`
+	RefundReceiptSentAt            *string `json:"refundReceiptSentAt,omitempty"`
+	ReRegisteredAt                 *string `json:"reRegisteredAt,omitempty"`
 	RegistrationConfirmationSentAt *string `json:"registrationConfirmationSentAt,omitempty"`
 }
 
@@ -110,13 +111,14 @@ type PlannerClassMetadataUpdate struct {
 }
 
 type SavedStateApplyInput struct {
-	ClassStatuses       map[string]string                  `json:"classStatuses"`
-	ClassLaneIndexes    map[string]int                     `json:"classLaneIndexes"`
-	ClassMoves          map[string]PlannerClassMoveUpdate  `json:"classMoves"`
-	ClassBarcodeCancelledAt map[string]string              `json:"classBarcodeCancelledAt"`
-	CallRecords         map[string]PlannerCallRecordUpdate `json:"callRecords"`
-	LocationOverrides   map[string]string                  `json:"locationOverrides"`
-	CallbackPhoneNumber string                             `json:"callbackPhoneNumber"`
+	ClassStatuses           map[string]string                  `json:"classStatuses"`
+	ClassLaneIndexes        map[string]int                     `json:"classLaneIndexes"`
+	ClassMoves              map[string]PlannerClassMoveUpdate  `json:"classMoves"`
+	ClassBarcodeCancelledAt map[string]string                  `json:"classBarcodeCancelledAt"`
+	CallRecords             map[string]PlannerCallRecordUpdate `json:"callRecords"`
+	LocationOverrides       map[string]string                  `json:"locationOverrides"`
+	CallbackPhoneNumber     string                             `json:"callbackPhoneNumber"`
+	CallScripts             map[string]string                  `json:"callScripts"`
 }
 
 type PlannerClassMoveUpdate struct {
@@ -448,6 +450,19 @@ func (s *Service) UpdateCallRecord(baseURL, code, participantID, recordID string
 	return s.snapshotLocked(baseURL, room), nil
 }
 
+func (s *Service) UpdateCallScripts(baseURL, code, participantID string, callScripts map[string]string) (ShareSession, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	room, err := s.requireParticipantLocked(strings.ToUpper(strings.TrimSpace(code)), participantID)
+	if err != nil {
+		return ShareSession{}, err
+	}
+	room.Dataset.CallScripts = normalizeCallScripts(callScripts)
+	room.Version += 1
+	room.Participants[participantID].LastSeenAt = time.Now().UTC()
+	return s.snapshotLocked(baseURL, room), nil
+}
+
 func (s *Service) UpdateSessionDetails(baseURL, code, participantID string, locationOverrides map[string]string, callbackPhoneNumber string, ccEmail string) (ShareSession, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -530,6 +545,9 @@ func (s *Service) ApplySavedState(baseURL, code, participantID string, input Sav
 	if room.HostParticipantID == participantID {
 		room.LocationOverrides = normalizeLocationOverrides(input.LocationOverrides)
 		room.CallbackPhoneNumber = strings.TrimSpace(input.CallbackPhoneNumber)
+	}
+	if input.CallScripts != nil {
+		room.Dataset.CallScripts = normalizeCallScripts(input.CallScripts)
 	}
 
 	room.Version += 1
@@ -684,6 +702,21 @@ func cloneLocationOverrides(input map[string]string) map[string]string {
 	return cloned
 }
 
+func normalizeCallScripts(input map[string]string) map[string]string {
+	if len(input) == 0 {
+		return map[string]string{}
+	}
+	normalized := make(map[string]string, len(input))
+	for key, script := range input {
+		trimmedKey := strings.TrimSpace(key)
+		if trimmedKey == "" {
+			continue
+		}
+		normalized[trimmedKey] = script
+	}
+	return normalized
+}
+
 func cloneDataset(dataset PlannerDataset) PlannerDataset {
 	bytes, err := json.Marshal(dataset)
 	if err != nil {
@@ -696,5 +729,6 @@ func cloneDataset(dataset PlannerDataset) PlannerDataset {
 	if cloned.CallRecords == nil {
 		cloned.CallRecords = map[string]PlannerParticipantCallRecord{}
 	}
+	cloned.CallScripts = normalizeCallScripts(cloned.CallScripts)
 	return cloned
 }
