@@ -360,26 +360,41 @@ func buildFilename() string {
 }
 
 func SanitizeEventName(name string) string {
-	if strings.Contains(name, "7") {
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Splash7") {
 		return "Splash 7"
 	}
-	if strings.Contains(name, "8") {
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Splash8") {
 		return "Splash 8"
 	}
-	if strings.Contains(name, "9") {
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Splash9") {
 		return "Splash 9"
 	}
-	if strings.Contains(name, "10") {
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Splash10") {
 		return "Splash 10"
 	}
-	if strings.Contains(name, "Adult 1") {
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Adult1") {
 		return "Splash Adult 1"
 	}
-	if strings.Contains(name, "Adult 2") {
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Adult2") {
 		return "Splash Adult 2"
 	}
-	if strings.Contains(name, "Adult 3") {
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Adult3") {
 		return "Splash Adult 3"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Teen1") {
+		return "Splash Teen 1"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Teen2") {
+		return "Splash Teen 2"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Teen3") {
+		return "Splash Teen 3"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "GroupPrivate") {
+		return "Group Private"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Private") {
+		return "Private"
 	}
 	return name
 }
