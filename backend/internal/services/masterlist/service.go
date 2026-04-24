@@ -358,3 +358,42 @@ func buildFilename() string {
 	now := time.Now()
 	return fmt.Sprintf("MasterList_%d_%d_%d.pdf", now.Month(), now.Day(), now.Year())
 }
+func SanitizeEventName(name string) string {
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Splash7") {
+		return "Splash 7"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Splash8") {
+		return "Splash 8"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Splash9") {
+		return "Splash 9"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Splash10") {
+		return "Splash 10"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Adult1") {
+		return "Splash Adult 1"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Adult2") {
+		return "Splash Adult 2"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Adult3") {
+		return "Splash Adult 3"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Teen1") {
+		return "Splash Teen 1"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Teen2") {
+		return "Splash Teen 2"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Teen3") {
+		return "Splash Teen 3"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "GroupPrivate") {
+		return "Group Private"
+	}
+	if strings.Contains(strings.ReplaceAll(name, " ", ""), "Private") {
+		return "Private"
+	}
+	return name
+}
