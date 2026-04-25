@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useCsvImportFlow } from '../../app/CsvImportFlowContext'
 import { useDay } from '../../app/DayContext'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
@@ -76,11 +77,19 @@ type StoredFullTimeRosters = {
 
 type FullTimeRequestDraft = Pick<FullTimeRequestEntry, 'firstName' | 'lastName' | 'phone' | 'instructor'>
 
+const fullTimeViewTabs = ['rosters', 'schematic', 'instructors', 'requests'] as const
+
+type FullTimeViewTab = (typeof fullTimeViewTabs)[number]
+
 const emptyFullTimeRequestDraft: FullTimeRequestDraft = {
     firstName: '',
     lastName: '',
     phone: '',
     instructor: '',
+}
+
+function parseFullTimeViewTab(value: string | null): FullTimeViewTab {
+    return fullTimeViewTabs.includes(value as FullTimeViewTab) ? (value as FullTimeViewTab) : 'rosters'
 }
 
 function getFullTimeRostersStorageKey(teamId: string) {
@@ -134,12 +143,15 @@ function RostersPage() {
     const { access, sessionId } = useCurrentSession()
     const { currentTeam, currentTeamId } = useCurrentTeam()
     const { currentTerm } = useCurrentTerm()
+    const [searchParams, setSearchParams] = useSearchParams()
     const [activeTab, setActiveTab] = useState<'default' | 'custom'>('default')
     const [studentLevelEditMap, setStudentLevelEditMap] = useState<Record<string, boolean>>({})
     const [fullTimeDayFilter, setFullTimeDayFilter] = useState('')
     const [fullTimeLevelFilter, setFullTimeLevelFilter] = useState('')
     const [fullTimeSearchQuery, setFullTimeSearchQuery] = useState('')
-    const [fullTimeViewTab, setFullTimeViewTab] = useState<'rosters' | 'schematic' | 'instructors' | 'requests'>('rosters')
+    const [fullTimeViewTab, setFullTimeViewTab] = useState<FullTimeViewTab>(() =>
+        parseFullTimeViewTab(searchParams.get('view')),
+    )
     const [fullTimeRosterFileName, setFullTimeRosterFileName] = useState('')
     const [fullTimeRosterClasses, setFullTimeRosterClasses] = useState<ClassRoster[]>([])
     const [fullTimeInstructorAssignments, setFullTimeInstructorAssignments] = useState<FullTimeInstructorAssignments>({})
@@ -229,6 +241,19 @@ function RostersPage() {
             [code]: !current[code],
         }))
     }
+
+    const handleFullTimeViewTabChange = (tab: FullTimeViewTab) => {
+        setFullTimeViewTab(tab)
+        setSearchParams(current => {
+            const next = new URLSearchParams(current)
+            next.set('view', tab)
+            return next
+        })
+    }
+
+    useEffect(() => {
+        setFullTimeViewTab(parseFullTimeViewTab(searchParams.get('view')))
+    }, [searchParams])
 
     useEffect(() => {
         setStudentLevelEditMap(persistedStudentLevelEditMap)
@@ -818,7 +843,7 @@ function RostersPage() {
                                     ? 'border-secondary bg-secondary text-accent'
                                     : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
                                 }`}
-                            onClick={() => setFullTimeViewTab('rosters')}
+                            onClick={() => handleFullTimeViewTabChange('rosters')}
                         >
                             Roster View
                         </button>
@@ -828,7 +853,7 @@ function RostersPage() {
                                     ? 'border-secondary bg-secondary text-accent'
                                     : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
                                 }`}
-                            onClick={() => setFullTimeViewTab('schematic')}
+                            onClick={() => handleFullTimeViewTabChange('schematic')}
                         >
                             Schematic View
                         </button>
@@ -838,7 +863,7 @@ function RostersPage() {
                                     ? 'border-secondary bg-secondary text-accent'
                                     : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
                                 }`}
-                            onClick={() => setFullTimeViewTab('instructors')}
+                            onClick={() => handleFullTimeViewTabChange('instructors')}
                         >
                             Instructors
                         </button>
@@ -848,9 +873,9 @@ function RostersPage() {
                                     ? 'border-secondary bg-secondary text-accent'
                                     : 'border-secondary/30 bg-bg text-secondary hover:bg-accent'
                                 }`}
-                            onClick={() => setFullTimeViewTab('requests')}
+                            onClick={() => handleFullTimeViewTabChange('requests')}
                         >
-                            Request List
+                            Requests
                         </button>
                     </div>
                 </div>

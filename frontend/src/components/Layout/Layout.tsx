@@ -12,7 +12,6 @@ import {
     ClockIcon,
     UserCircleIcon,
     UserGroupIcon,
-    UserPlusIcon,
     ArrowsRightLeftIcon,
     QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline'
@@ -296,18 +295,13 @@ function Layout({ children }: LayoutProps) {
             icon: <HomeIcon className="h-5 w-5" />,
         },
         {
-            to: '/requests',
-            label: 'Requests',
-            icon: <UserPlusIcon className="h-5 w-5" />,
-        },
-        {
             to: '/schematic',
             label: 'Schematic',
             icon: <CalendarDaysIcon className="h-5 w-5" />,
         },
         {
             to: '/rosters',
-            label: 'Rosters',
+            label: 'Requests',
             icon: <UsersIcon className="h-5 w-5" />,
         },
         {
@@ -602,7 +596,6 @@ function Layout({ children }: LayoutProps) {
 function getPageTitle(pathname: string) {
     switch (pathname) {
         case '/': return 'Home'
-        case '/requests': return 'Requests'
         case '/manage-sessions': return 'Manage Sessions'
         case '/rosters': return 'Class Rosters'
         case '/schematic': return 'Class Schedule'

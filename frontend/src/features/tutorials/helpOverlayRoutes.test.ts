@@ -10,7 +10,7 @@ describe('helpOverlayRoutes', () => {
   })
 
   it('returns null for unsupported routes', () => {
-    expect(routeToHelpOverlayId('/')).toBeNull()
+    expect(routeToHelpOverlayId('/')).toBe('dashboard')
     expect(routeToHelpOverlayId('/staff-notes')).toBeNull()
     expect(routeToHelpOverlayId('/unknown')).toBeNull()
   })

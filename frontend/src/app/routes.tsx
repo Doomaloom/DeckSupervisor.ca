@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Navigate, Routes, Route } from 'react-router-dom'
 import DashboardPage from '../features/dashboard/DashboardPage'
 import ManageSessionsPage from '../features/sessions/ManageSessionsPage'
 import PrintPage from '../features/print/PrintPage'
@@ -8,7 +8,6 @@ import ReportCardsPage from '../features/report-cards/ReportCardsPage'
 import StaffNotesPage from '../features/staff-notes/StaffNotesPage'
 import FullTimerToolsPage from '../features/full-timer-tools/FullTimerToolsPage'
 import AttendanceSheetMakerPage from '../features/full-timer-tools/AttendanceSheetMakerPage'
-import RequestsPage from '../features/requests/RequestsPage'
 import SignInPage from '../features/auth/SignInPage'
 import AccountPage from '../features/account/AccountPage'
 import TeamPage from '../features/teams/TeamPage'
@@ -52,14 +51,7 @@ function AppRoutes() {
       <Route path="/report-cards" element={<ReportCardsPage />} />
       <Route path="/staff-notes" element={<StaffNotesPage />} />
       <Route path="/session-planning" element={<SessionPlanningPage />} />
-      <Route
-        path="/requests"
-        element={
-          <RequireFullTime>
-            <RequestsPage />
-          </RequireFullTime>
-        }
-      />
+      <Route path="/requests" element={<Navigate to="/rosters?view=requests" replace />} />
       <Route
         path="/full-timer-tools"
         element={

@@ -116,10 +116,9 @@ describe('Layout tutorials', () => {
 
     await user.click(screen.getByRole('button', { name: 'Help' }))
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(await screen.findByText('Rosters Quick Tips')).toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: 'Tip 1: Filters and Search' })).toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: 'Tip 4: Roster Print Button' })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(await screen.findByText('Filters and Search')).toBeInTheDocument()
+    expect(await screen.findByText('Tip 1 of 4')).toBeInTheDocument()
   })
 
   it('shows a brief unsupported message on routes without page overlays', async () => {
@@ -139,11 +138,11 @@ describe('Layout tutorials', () => {
     renderLayout('/schematic')
 
     await user.click(screen.getByRole('button', { name: 'Help' }))
-    expect(await screen.findByText('Schematic Quick Tips')).toBeInTheDocument()
+    expect(await screen.findByText('Board Structure')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Help' }))
 
-    expect(screen.queryByText('Schematic Quick Tips')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('closes the page overlay on escape', async () => {
@@ -151,11 +150,11 @@ describe('Layout tutorials', () => {
     renderLayout('/print')
 
     await user.click(screen.getByRole('button', { name: 'Help' }))
-    expect(await screen.findByText('Print Quick Tips')).toBeInTheDocument()
+    expect(await screen.findByText('Print Page Overview')).toBeInTheDocument()
 
     await user.keyboard('{Escape}')
 
-    expect(screen.queryByText('Print Quick Tips')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('updates the help content when a pin is selected', async () => {
@@ -163,13 +162,14 @@ describe('Layout tutorials', () => {
     renderLayout('/schematic')
 
     await user.click(screen.getByRole('button', { name: 'Help' }))
-    await user.click(await screen.findByRole('button', { name: 'Tip 3: Multi-Move' }))
+    await user.click(await screen.findByRole('button', { name: 'Next' }))
+    await user.click(await screen.findByRole('button', { name: 'Next' }))
 
     expect(screen.getAllByText('Multi-Move').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/same-column selection/i).length).toBeGreaterThan(0)
   })
 
-  it('renders the mobile bottom sheet on small screens', async () => {
+  it('renders the help popover on small screens', async () => {
     const user = userEvent.setup()
     window.innerWidth = 480
     window.dispatchEvent(new Event('resize'))
@@ -177,6 +177,7 @@ describe('Layout tutorials', () => {
 
     await user.click(screen.getByRole('button', { name: 'Help' }))
 
-    expect(document.querySelector('[data-component="page-help-bottom-sheet"]')).not.toBeNull()
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(await screen.findByText('Session Summary')).toBeInTheDocument()
   })
 })

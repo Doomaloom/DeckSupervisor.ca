@@ -9,13 +9,13 @@ describe('tutorialRegistry', () => {
 
     expect(prepWorkflow).toBeDefined()
     expect(prepWorkflow.steps.map(step => step.title)).toEqual([
-      'Start from Home',
-      'Upload CSV and choose an extracted session',
-      'Confirm the session in Manage Sessions',
-      'Customize the Schematic',
-      'Review Rosters before printing',
-      'Choose the right Print output',
-      'Page overviews',
+      'The Preparation Workflow',
+      'Step 1: Input the CSV on the Dashboard',
+      'Step 2: Adjust Session Settings in Manage Sessions',
+      'Step 3: Make the Schematic',
+      'Step 4: Adjust Rosters if needed',
+      'Step 5: Print',
+      'Deep dives',
     ])
   })
 
