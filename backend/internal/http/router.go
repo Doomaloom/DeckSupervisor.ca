@@ -79,6 +79,13 @@ func NewRouter() *mux.Router {
 
 	// PDF generation and document exports
 	r.HandleFunc("/api/attendance-pdf", handlers.AttendancePDF).Methods("POST")
+	r.HandleFunc("/api/attendance-sheets", handlers.AttendanceSheets).Methods("GET")
+	r.HandleFunc("/api/attendance-sheets", handlers.CreateAttendanceSheet).Methods("POST")
+	r.HandleFunc("/api/attendance-sheets/templates", handlers.AttendanceSheetTemplates).Methods("GET")
+	r.HandleFunc("/api/attendance-sheets/templates/{template}", handlers.AttendanceSheetTemplateSeed).Methods("GET")
+	r.HandleFunc("/api/attendance-sheets/preview-pdf", handlers.AttendanceSheetPreviewPDF).Methods("POST")
+	r.HandleFunc("/api/attendance-sheets/{id}", handlers.UpdateAttendanceSheet).Methods("PUT")
+	r.HandleFunc("/api/attendance-sheets/{id}", handlers.DeleteAttendanceSheet).Methods("DELETE")
 	r.HandleFunc("/api/concat-pdfs", handlers.ConcatPDF).Methods("POST")
 	r.HandleFunc("/api/blank-pdf", handlers.BlankPDF).Methods("POST")
 	r.HandleFunc("/api/schematic-maker", handlers.SchematicMaker).Methods("POST")

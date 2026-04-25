@@ -103,6 +103,7 @@ alter table teams enable row level security;
 alter table team_members enable row level security;
 alter table team_invites enable row level security;
 alter table custom_rosters enable row level security;
+alter table attendance_sheets enable row level security;
 alter table report_cards enable row level security;
 alter table request_assignments enable row level security;
 
@@ -202,6 +203,56 @@ create policy "Custom rosters owner only"
   on custom_rosters for all
   using (owner_id = auth.uid())
   with check (owner_id = auth.uid());
+
+drop policy if exists "Attendance sheets read" on attendance_sheets;
+drop policy if exists "Attendance sheets create" on attendance_sheets;
+drop policy if exists "Attendance sheets update" on attendance_sheets;
+drop policy if exists "Attendance sheets delete" on attendance_sheets;
+
+create policy "Attendance sheets read"
+  on attendance_sheets for select
+  using (
+    is_team_owner(team_id, auth.uid())
+    or is_team_member(team_id, auth.uid())
+  );
+
+create policy "Attendance sheets create"
+  on attendance_sheets for insert
+  with check (
+    created_by = auth.uid()
+    and is_full_time(auth.uid())
+    and (
+      is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  );
+
+create policy "Attendance sheets update"
+  on attendance_sheets for update
+  using (
+    is_full_time(auth.uid())
+    and (
+      is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  )
+  with check (
+    is_full_time(auth.uid())
+    and (
+      is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  );
+
+create policy "Attendance sheets delete"
+  on attendance_sheets for delete
+  using (
+    is_full_time(auth.uid())
+    and (
+      is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  );
 
 drop policy if exists "Report cards read" on report_cards;
 drop policy if exists "Report cards create" on report_cards;

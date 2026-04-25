@@ -88,3 +88,65 @@ func TestBuildCombinedTemplateHTML(t *testing.T) {
 		t.Fatalf("expected fronts before backs in combined html, got %q", combinedHTML)
 	}
 }
+
+func TestBuildCustomSheetHTMLFromTemplatePreservesTemplateShellAndReplacesEditableContent(t *testing.T) {
+	html, err := buildCustomSheetHTMLFromTemplate("Splash1", NormalizeSheetDefinition(SheetDefinition{
+		BaseTemplate:       "Splash1",
+		Title:              "Custom Splash 1",
+		ShowPreviousLevel:  true,
+		ShowResult:         true,
+		ShowRegisterIn:     true,
+		SkillColumnWidthPt: 50,
+		Skills: []SheetSkill{
+			{
+				ID:      "custom-entry",
+				Label:   "1. Custom Entry Skill",
+				Details: []string{"Custom detail line"},
+			},
+		},
+	}, "Splash 1"))
+	if err != nil {
+		t.Fatalf("buildCustomSheetHTMLFromTemplate returned error: %v", err)
+	}
+
+	required := []string{
+		`class="templatePage`,
+		`id="attendance-rows"`,
+		`id="student-rows"`,
+		`id="instructor"`,
+		`id="start_time"`,
+		`id="session"`,
+		`id="location"`,
+		`id="barcode"`,
+		"Custom Splash 1",
+		"1. Custom Entry Skill",
+		"Custom detail line",
+	}
+	for _, needle := range required {
+		if !strings.Contains(html, needle) {
+			t.Fatalf("expected custom template html to contain %q", needle)
+		}
+	}
+	if strings.Contains(html, "Enter and Exit Shallow Water") {
+		t.Fatal("expected original skill label to be replaced")
+	}
+}
+
+func TestBuildCustomSheetHTMLUsesGenericLayoutForBlankSheets(t *testing.T) {
+	html := buildCustomSheetHTML(NormalizeSheetDefinition(SheetDefinition{
+		Title:             "Blank Custom",
+		ShowPreviousLevel: false,
+		ShowResult:        true,
+		ShowRegisterIn:    false,
+		Skills: []SheetSkill{
+			{Label: "1. Blank Skill", Details: []string{"Blank detail"}},
+		},
+	}, "Blank Custom"))
+
+	if !strings.Contains(html, "Blank Custom") || !strings.Contains(html, "1. Blank Skill") {
+		t.Fatalf("expected generic custom html to contain blank sheet content")
+	}
+	if strings.Contains(html, "Previous Level") || strings.Contains(html, "Register In") {
+		t.Fatalf("expected disabled fixed columns to be omitted")
+	}
+}

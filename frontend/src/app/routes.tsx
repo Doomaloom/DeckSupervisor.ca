@@ -7,6 +7,7 @@ import SchematicPage from '../features/schematic/SchematicPage'
 import ReportCardsPage from '../features/report-cards/ReportCardsPage'
 import StaffNotesPage from '../features/staff-notes/StaffNotesPage'
 import FullTimerToolsPage from '../features/full-timer-tools/FullTimerToolsPage'
+import AttendanceSheetMakerPage from '../features/full-timer-tools/AttendanceSheetMakerPage'
 import RequestsPage from '../features/requests/RequestsPage'
 import SignInPage from '../features/auth/SignInPage'
 import AccountPage from '../features/account/AccountPage'
@@ -64,6 +65,14 @@ function AppRoutes() {
         element={
           <RequireFullTime>
             <FullTimerToolsPage />
+          </RequireFullTime>
+        }
+      />
+      <Route
+        path="/full-timer-tools/attendance-sheets"
+        element={
+          <RequireFullTime>
+            <AttendanceSheetMakerPage />
           </RequireFullTime>
         }
       />

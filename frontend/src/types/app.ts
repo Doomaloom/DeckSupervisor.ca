@@ -84,6 +84,47 @@ export type CustomRoster = {
     createdAt: string
 }
 
+export type AttendanceSheetSkill = {
+    id: string
+    label: string
+    details: string[]
+}
+
+export type AttendanceSheetData = {
+    baseTemplate?: string
+    title: string
+    headerLabel: string
+    sheetWidthPx: number
+    rotateHeightPx: number
+    rotateTranslatePx: number
+    rotateTopPx: number
+    skillColumnWidthPt: number
+    nameColumnWidthPt: number
+    showPreviousLevel: boolean
+    showResult: boolean
+    showRegisterIn: boolean
+    skills: AttendanceSheetSkill[]
+}
+
+export type AttendanceSheet = {
+    id: string
+    teamId: string
+    name: string
+    baseTemplate: string | null
+    defaultForTemplate: string | null
+    sheetData: AttendanceSheetData
+    createdAt: string
+    updatedAt: string
+}
+
+export type SaveAttendanceSheetRequest = {
+    teamId: string
+    name: string
+    baseTemplate?: string | null
+    defaultForTemplate?: string | null
+    sheetData: AttendanceSheetData
+}
+
 export type ExtractedClass = {
     sessionKey: string
     dayOfWeek: string

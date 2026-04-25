@@ -45,6 +45,18 @@ create table if not exists custom_rosters (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists attendance_sheets (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references teams(id) on delete cascade,
+  created_by uuid not null references profiles(id) on delete restrict,
+  name text not null,
+  base_template text,
+  default_for_template text,
+  sheet_data jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists report_cards (
   id uuid primary key default gen_random_uuid(),
   session text not null,
@@ -72,6 +84,12 @@ create index if not exists report_cards_session_team_idx on report_cards(session
 create index if not exists report_cards_team_day_idx on report_cards(team_id, day);
 create index if not exists report_cards_created_by_idx on report_cards(created_by);
 create index if not exists request_assignments_term_location_idx on request_assignments(term, location);
+create index if not exists attendance_sheets_team_id_idx on attendance_sheets(team_id);
+create index if not exists attendance_sheets_created_by_idx on attendance_sheets(created_by);
+create index if not exists attendance_sheets_team_updated_idx on attendance_sheets(team_id, updated_at desc);
+create unique index if not exists attendance_sheets_team_default_template_unique_idx
+  on attendance_sheets(team_id, default_for_template)
+  where default_for_template is not null;
 create unique index if not exists report_cards_unique_with_team_idx
   on report_cards(session, day, instructor, team_id, created_by)
   where team_id is not null;

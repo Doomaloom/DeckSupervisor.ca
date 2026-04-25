@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -35,17 +36,41 @@ var (
 var scriptTagPattern = regexp.MustCompile(`(?is)<script[^>]*>.*?</script>`)
 
 type Request struct {
-	Template string `json:"template"`
-	Session  string `json:"session"`
-	Filename string `json:"filename"`
-	Title    string `json:"title"`
-	Roster   Roster `json:"roster"`
-	Rosters  []Item `json:"rosters"`
+	Template string           `json:"template"`
+	Sheet    *SheetDefinition `json:"sheet"`
+	Session  string           `json:"session"`
+	Filename string           `json:"filename"`
+	Title    string           `json:"title"`
+	Roster   Roster           `json:"roster"`
+	Rosters  []Item           `json:"rosters"`
 }
 
 type Item struct {
-	Template string `json:"template"`
-	Roster   Roster `json:"roster"`
+	Template string           `json:"template"`
+	Sheet    *SheetDefinition `json:"sheet"`
+	Roster   Roster           `json:"roster"`
+}
+
+type SheetDefinition struct {
+	BaseTemplate       string       `json:"baseTemplate"`
+	Title              string       `json:"title"`
+	HeaderLabel        string       `json:"headerLabel"`
+	SheetWidthPx       int          `json:"sheetWidthPx"`
+	RotateHeightPx     int          `json:"rotateHeightPx"`
+	RotateTranslatePx  int          `json:"rotateTranslatePx"`
+	RotateTopPx        int          `json:"rotateTopPx"`
+	SkillColumnWidthPt int          `json:"skillColumnWidthPt"`
+	NameColumnWidthPt  int          `json:"nameColumnWidthPt"`
+	ShowPreviousLevel  bool         `json:"showPreviousLevel"`
+	ShowResult         bool         `json:"showResult"`
+	ShowRegisterIn     bool         `json:"showRegisterIn"`
+	Skills             []SheetSkill `json:"skills"`
+}
+
+type SheetSkill struct {
+	ID      string   `json:"id"`
+	Label   string   `json:"label"`
+	Details []string `json:"details"`
 }
 
 type Roster struct {
@@ -76,6 +101,7 @@ type renderPayload struct {
 type pdfPayload struct {
 	Session string
 	Roster  Roster
+	Sheet   *SheetDefinition
 }
 
 type templateSections struct {
@@ -89,6 +115,7 @@ type templateSections struct {
 
 type renderJob struct {
 	templatePath string
+	sheet        *SheetDefinition
 	payload      pdfPayload
 }
 
@@ -101,14 +128,17 @@ func Generate(ctx context.Context, req Request) ([]byte, string, error) {
 	items := req.Rosters
 	if len(items) == 0 {
 		req.Template = strings.TrimSpace(req.Template)
-		if req.Template == "" {
+		if req.Template == "" && req.Sheet == nil {
 			return nil, "", ErrMissingTemplate
 		}
-		items = []Item{{Template: req.Template, Roster: req.Roster}}
+		items = []Item{{Template: req.Template, Sheet: req.Sheet, Roster: req.Roster}}
 	}
 
 	pdfs := make([][]byte, 0, len(items))
 	firstTemplate := strings.TrimSpace(items[0].Template)
+	if firstTemplate == "" && items[0].Sheet != nil {
+		firstTemplate = "custom"
+	}
 	firstCode := items[0].Roster.Code
 
 	if len(items) > 1 {
@@ -119,18 +149,14 @@ func Generate(ctx context.Context, req Request) ([]byte, string, error) {
 		pdfs = rendered
 	} else {
 		template := strings.TrimSpace(items[0].Template)
-		if template == "" {
+		if template == "" && items[0].Sheet == nil {
 			return nil, "", ErrMissingTemplate
 		}
 
-		templatePath, err := resolveTemplate(template)
-		if err != nil {
-			return nil, "", ErrTemplateNotFound
-		}
-
-		pdfBytes, err := renderPDF(ctx, templatePath, pdfPayload{
+		pdfBytes, err := renderPDF(ctx, template, pdfPayload{
 			Session: session,
 			Roster:  items[0].Roster,
+			Sheet:   items[0].Sheet,
 		})
 		if err != nil {
 			return nil, "", errors.New("unable to render attendance PDF")
@@ -212,11 +238,29 @@ func templatesDir() (string, error) {
 	return "", errors.New("unable to resolve backend path")
 }
 
-func renderPDF(ctx context.Context, templatePath string, data pdfPayload) ([]byte, error) {
+func renderPDF(ctx context.Context, template string, data pdfPayload) ([]byte, error) {
 	return renderHTMLAsPDF(ctx, func() (string, []renderPayload, error) {
-		templateHTML, err := readTemplateHTML(templatePath)
-		if err != nil {
-			return "", nil, err
+		var templateHTML string
+		if data.Sheet != nil {
+			sheet := NormalizeSheetDefinition(*data.Sheet, data.Roster.Level)
+			if strings.TrimSpace(sheet.BaseTemplate) != "" {
+				var err error
+				templateHTML, err = buildCustomSheetHTMLFromTemplate(sheet.BaseTemplate, sheet)
+				if err != nil {
+					return "", nil, err
+				}
+			} else {
+				templateHTML = buildCustomSheetHTML(sheet)
+			}
+		} else {
+			templatePath, err := resolveTemplate(template)
+			if err != nil {
+				return "", nil, err
+			}
+			templateHTML, err = readTemplateHTML(templatePath)
+			if err != nil {
+				return "", nil, err
+			}
 		}
 		return templateHTML, []renderPayload{buildRenderPayload(data.Session, data.Roster)}, nil
 	})
@@ -371,18 +415,24 @@ func renderGroupedItems(ctx context.Context, session string, items []Item) ([][]
 	jobs := make([]renderJob, 0, len(items))
 	for index, item := range items {
 		template := strings.TrimSpace(item.Template)
-		if template == "" {
+		if template == "" && item.Sheet == nil {
 			return nil, fmt.Errorf("attendance item %d: %w", index+1, ErrMissingTemplate)
 		}
-		templatePath, err := resolveTemplate(template)
-		if err != nil {
-			return nil, fmt.Errorf("attendance item %d: %w", index+1, ErrTemplateNotFound)
+		templatePath := ""
+		if item.Sheet == nil {
+			resolved, err := resolveTemplate(template)
+			if err != nil {
+				return nil, fmt.Errorf("attendance item %d: %w", index+1, ErrTemplateNotFound)
+			}
+			templatePath = resolved
 		}
 		jobs = append(jobs, renderJob{
 			templatePath: templatePath,
+			sheet:        item.Sheet,
 			payload: pdfPayload{
 				Session: session,
 				Roster:  item.Roster,
+				Sheet:   item.Sheet,
 			},
 		})
 	}
@@ -404,21 +454,41 @@ func renderGroupedItems(ctx context.Context, session string, items []Item) ([][]
 
 			var pdfBytes []byte
 			var err error
-			if len(chunk) == 2 {
+			if len(chunk) == 2 && chunk[0].sheet == nil && chunk[1].sheet == nil {
 				pdfBytes, err = renderCombinedPDF(ctx, chunk)
 			} else {
-				pdfBytes, err = renderPDF(ctx, chunk[0].templatePath, chunk[0].payload)
+				pdfBytes, err = renderSingleJobPDF(ctx, chunk[0])
 			}
 			if err != nil {
 				return nil, fmt.Errorf("attendance item %d: %w", start+pairStart+1, err)
 			}
 			output = append(output, pdfBytes)
+			if len(chunk) == 2 && (chunk[0].sheet != nil || chunk[1].sheet != nil) {
+				pdfBytes, err = renderSingleJobPDF(ctx, chunk[1])
+				if err != nil {
+					return nil, fmt.Errorf("attendance item %d: %w", start+pairStart+2, err)
+				}
+				output = append(output, pdfBytes)
+			}
 		}
 
 		start = end
 	}
 
 	return output, nil
+}
+
+func renderSingleJobPDF(ctx context.Context, job renderJob) ([]byte, error) {
+	if job.sheet != nil {
+		return renderPDF(ctx, "", job.payload)
+	}
+	return renderHTMLAsPDF(ctx, func() (string, []renderPayload, error) {
+		templateHTML, err := readTemplateHTML(job.templatePath)
+		if err != nil {
+			return "", nil, err
+		}
+		return templateHTML, []renderPayload{buildRenderPayload(job.payload.Session, job.payload.Roster)}, nil
+	})
 }
 
 func renderCombinedPDF(ctx context.Context, items []renderJob) ([]byte, error) {
@@ -739,6 +809,369 @@ func isTagBoundary(char byte) bool {
 	}
 }
 
+func NormalizeSheetDefinition(sheet SheetDefinition, fallbackTitle string) SheetDefinition {
+	sheet.BaseTemplate = strings.TrimSpace(sheet.BaseTemplate)
+	sheet.Title = strings.TrimSpace(sheet.Title)
+	if sheet.Title == "" {
+		sheet.Title = strings.TrimSpace(fallbackTitle)
+	}
+	if sheet.Title == "" {
+		sheet.Title = "Custom Attendance"
+	}
+	sheet.HeaderLabel = strings.TrimSpace(sheet.HeaderLabel)
+	if sheet.HeaderLabel == "" {
+		sheet.HeaderLabel = "Day/Time"
+	}
+	if sheet.SheetWidthPx <= 0 {
+		sheet.SheetWidthPx = 1300
+	}
+	if sheet.RotateHeightPx <= 0 {
+		sheet.RotateHeightPx = 300
+	}
+	if sheet.RotateTranslatePx <= 0 {
+		sheet.RotateTranslatePx = 190
+	}
+	if sheet.RotateTopPx <= 0 {
+		sheet.RotateTopPx = 100
+	}
+	if sheet.SkillColumnWidthPt <= 0 {
+		sheet.SkillColumnWidthPt = 50
+	}
+	if sheet.NameColumnWidthPt <= 0 {
+		sheet.NameColumnWidthPt = 630
+	}
+	for index := range sheet.Skills {
+		sheet.Skills[index].ID = strings.TrimSpace(sheet.Skills[index].ID)
+		sheet.Skills[index].Label = strings.TrimSpace(sheet.Skills[index].Label)
+		details := make([]string, 0, len(sheet.Skills[index].Details))
+		for _, detail := range sheet.Skills[index].Details {
+			if trimmed := strings.TrimSpace(detail); trimmed != "" {
+				details = append(details, trimmed)
+			}
+		}
+		sheet.Skills[index].Details = details
+	}
+	return sheet
+}
+
+func buildCustomSheetHTMLFromTemplate(template string, sheet SheetDefinition) (string, error) {
+	templatePath, err := resolveTemplate(strings.TrimSpace(template))
+	if err != nil {
+		return "", err
+	}
+	templateHTML, err := readTemplateHTML(templatePath)
+	if err != nil {
+		return "", err
+	}
+
+	sections, err := extractTemplateSections(templateHTML)
+	if err != nil {
+		return "", err
+	}
+
+	frontHTML, err := buildCustomTemplateFrontHTML(sections.FrontInnerHTML, sheet)
+	if err != nil {
+		return "", err
+	}
+	backHTML := buildCustomTemplateBackHTML(sections.BackInnerHTML, sheet)
+
+	headInner := replaceHTMLTitle(sections.HeadInnerHTML, sheet.Title)
+	bodyAttrs := sections.BodyAttrsHTML
+	documentAttrs := sections.DocumentAttrs
+	if strings.TrimSpace(documentAttrs) == "" {
+		documentAttrs = ` id="document"`
+	}
+
+	return fmt.Sprintf(`<!DOCTYPE html>
+<html lang="en">
+<head>
+%s
+</head>
+<body%s>
+	<div class="relative">
+		<div%s>
+			<div%s>%s
+			<p class="break-before-page"><span
+						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span></p>
+%s</div>
+		</div>
+	</div>
+</body>
+</html>`, headInner, bodyAttrs, documentAttrs, sections.PageAttrs, frontHTML, backHTML), nil
+}
+
+func buildCustomTemplateFrontHTML(frontHTML string, sheet SheetDefinition) (string, error) {
+	rowStart, rowEnd, err := rawTagBoundsContaining(frontHTML, strings.ToLower(frontHTML), `id="student-rows"`)
+	if err != nil {
+		return "", err
+	}
+	rowHTML := frontHTML[rowStart:rowEnd]
+	rowAttrs, _, rowInner, err := rawTagByName(rowHTML, strings.ToLower(rowHTML), "tr")
+	if err != nil {
+		return "", err
+	}
+
+	cells := tableCells(rowInner)
+	if len(cells) == 0 {
+		return "", errors.New("attendance template missing header cells")
+	}
+
+	headerCell := replaceTemplateHeaderTitle(cells[0], sheet.Title)
+	var previousCell string
+	var resultCell string
+	var registerCell string
+	blankCells := make([]string, 0)
+	skillPrototype := ""
+
+	for _, cell := range cells[1:] {
+		label := cleanTemplateCellText(cell)
+		lower := strings.ToLower(label)
+		switch {
+		case strings.Contains(lower, "previous level"):
+			if previousCell == "" {
+				previousCell = cell
+			}
+		case label == "":
+			blankCells = append(blankCells, cell)
+		case strings.Contains(lower, "result:") || strings.Contains(lower, "complete (c)"):
+			if resultCell == "" {
+				resultCell = cell
+			}
+		case strings.Contains(lower, "register"):
+			if registerCell == "" {
+				registerCell = cell
+			}
+		default:
+			if skillPrototype == "" {
+				skillPrototype = cell
+			}
+		}
+	}
+	if skillPrototype == "" {
+		skillPrototype = `<td class="rotate rotate-cell align-top text-left" style="width: 50pt; height: 50pt; text-align: left; vertical-align: top;"><span style="font-family: Arial;"><font size="1"><strong></strong></font></span></td>`
+	}
+
+	nextCells := []string{headerCell}
+	if sheet.ShowPreviousLevel && previousCell != "" {
+		nextCells = append(nextCells, previousCell)
+	}
+	for _, skill := range sheet.Skills {
+		if strings.TrimSpace(skill.Label) == "" {
+			continue
+		}
+		nextCells = append(nextCells, replaceTemplateCellLabel(skillPrototype, skill.Label))
+	}
+	nextCells = append(nextCells, blankCells...)
+	if sheet.ShowResult && resultCell != "" {
+		nextCells = append(nextCells, resultCell)
+	}
+	if sheet.ShowRegisterIn && registerCell != "" {
+		nextCells = append(nextCells, registerCell)
+	}
+
+	nextRow := fmt.Sprintf("<tr%s>\n%s\n</tr>", rowAttrs, strings.Join(nextCells, "\n"))
+	return frontHTML[:rowStart] + nextRow + frontHTML[rowEnd:], nil
+}
+
+func buildCustomTemplateBackHTML(backHTML string, sheet SheetDefinition) string {
+	tableStart := strings.Index(strings.ToLower(backHTML), "<table")
+	if tableStart < 0 {
+		return backHTML + buildCustomTemplateDetailsTable(sheet)
+	}
+	tableEndRel := strings.LastIndex(strings.ToLower(backHTML[tableStart:]), "</table>")
+	if tableEndRel < 0 {
+		return backHTML[:tableStart] + buildCustomTemplateDetailsTable(sheet)
+	}
+	tableEnd := tableStart + tableEndRel + len("</table>")
+	return backHTML[:tableStart] + buildCustomTemplateDetailsTable(sheet) + backHTML[tableEnd:]
+}
+
+func buildCustomTemplateDetailsTable(sheet SheetDefinition) string {
+	cells := make([][]string, 4)
+	for index, skill := range sheet.Skills {
+		if strings.TrimSpace(skill.Label) == "" {
+			continue
+		}
+		lines := make([]string, 0, len(skill.Details))
+		for _, detail := range skill.Details {
+			if trimmed := strings.TrimSpace(detail); trimmed != "" {
+				lines = append(lines, "&nbsp;&nbsp;&nbsp;&bull;&nbsp;"+html.EscapeString(trimmed))
+			}
+		}
+		body := ""
+		if len(lines) > 0 {
+			body = "<br>" + strings.Join(lines, "<br>")
+		}
+		cells[index%4] = append(cells[index%4], fmt.Sprintf(`<p><font size="1"><b>%s</b>%s</font></p>`, html.EscapeString(skill.Label), body))
+	}
+	return fmt.Sprintf(`<div class="h-0"></div>
+				<table border="0" class="w-[1200pt] border-collapse text-[9px] leading-tight text-black">
+					<tbody>
+						<tr>
+							<td width="300" valign="top" style="padding: 0in 4pt; width: 280pt;">%s</td>
+							<td width="300" valign="top" style="padding: 0in 4pt; width: 280pt;">%s</td>
+							<td width="300" valign="top" style="padding: 0in 4pt; width: 280pt;">%s</td>
+							<td width="300" valign="top" style="padding: 0in 4pt; width: 280pt;">%s</td>
+						</tr>
+					</tbody>
+				</table>`,
+		strings.Join(cells[0], "\n"),
+		strings.Join(cells[1], "\n"),
+		strings.Join(cells[2], "\n"),
+		strings.Join(cells[3], "\n"),
+	)
+}
+
+func replaceHTMLTitle(headInner string, title string) string {
+	re := regexp.MustCompile(`(?is)<title>.*?</title>`)
+	if re.MatchString(headInner) {
+		return re.ReplaceAllString(headInner, "<title>"+html.EscapeString(title)+"</title>")
+	}
+	return "<title>" + html.EscapeString(title) + "</title>\n" + headInner
+}
+
+func replaceTemplateHeaderTitle(cell string, title string) string {
+	re := regexp.MustCompile(`(?is)<font([^>]*)size=["']?5["']?([^>]*)>.*?</font>`)
+	if re.MatchString(cell) {
+		return re.ReplaceAllString(cell, "<font$1size=\"5\"$2>"+html.EscapeString(title)+"</font>")
+	}
+	return cell
+}
+
+func replaceTemplateCellLabel(cell string, label string) string {
+	re := regexp.MustCompile(`(?is)<strong([^>]*)>.*?</strong>`)
+	if re.MatchString(cell) {
+		return re.ReplaceAllString(cell, "<strong$1>"+html.EscapeString(label)+"</strong>")
+	}
+	return cell
+}
+
+func tableCells(rowInner string) []string {
+	re := regexp.MustCompile(`(?is)<td\b[^>]*>.*?</td>`)
+	return re.FindAllString(rowInner, -1)
+}
+
+func cleanTemplateCellText(cell string) string {
+	value := regexp.MustCompile(`(?is)<[^>]+>`).ReplaceAllString(cell, " ")
+	value = html.UnescapeString(value)
+	value = strings.ReplaceAll(value, "\u00a0", " ")
+	value = regexp.MustCompile(`\s+`).ReplaceAllString(value, " ")
+	return strings.TrimSpace(value)
+}
+
+func buildCustomSheetHTML(sheet SheetDefinition) string {
+	columns := make([]string, 0, len(sheet.Skills)+3)
+	if sheet.ShowPreviousLevel {
+		columns = append(columns, buildCustomRotatedHeader("Previous Level", sheet.SkillColumnWidthPt))
+	}
+	for _, skill := range sheet.Skills {
+		if strings.TrimSpace(skill.Label) == "" {
+			continue
+		}
+		columns = append(columns, buildCustomRotatedHeader(skill.Label, sheet.SkillColumnWidthPt))
+	}
+	if sheet.ShowResult {
+		columns = append(columns, buildCustomRotatedHeader("Result: Complete (c) Incomplete (I)", sheet.SkillColumnWidthPt))
+	}
+	if sheet.ShowRegisterIn {
+		columns = append(columns, buildCustomRotatedHeader("Register In", sheet.SkillColumnWidthPt))
+	}
+
+	detailsHTML := buildCustomSheetDetailsHTML(sheet.Skills)
+	return fmt.Sprintf(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>%s</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #fff; color: #000; font-family: Arial, sans-serif; }
+    #document { width: fit-content; padding: 0; }
+    .templatePage { --sheet-width: %dpx; --rotate-height: %dpx; --rotate-translate: %dpx; --rotate-top: %dpx; page-break-after: always; padding: 0; }
+    .templatePage:last-child { page-break-after: auto; }
+    .attendance-table { width: var(--sheet-width); border-collapse: collapse; border: 1px solid #000; font-size: 10px; line-height: 1.2; }
+    .attendance-table td { border: 1px solid #000; }
+    .header-cell { width: %dpt; height: 50pt; padding: 8pt; vertical-align: top; white-space: nowrap; font-size: 13px; }
+    .header-title { display: block; margin-bottom: 8px; font-size: 24px; font-weight: 700; }
+    .rotate-cell { position: relative; width: %dpt; height: var(--rotate-height) !important; vertical-align: top; text-align: left; white-space: nowrap; }
+    .rotate-cell > span { position: absolute; top: var(--rotate-top); left: 0; display: block; transform: translate(0, var(--rotate-translate)) rotate(-90deg); transform-origin: left top; font-size: 9px; font-weight: 700; }
+    .details-table { width: 1200pt; border-collapse: collapse; font-size: 9px; line-height: 1.25; }
+    .details-table td { width: 300pt; padding: 0 4pt; vertical-align: top; }
+    .skill-detail { break-inside: avoid; page-break-inside: avoid; margin: 0 0 8px; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div id="document">
+    <div class="templatePage">
+      <table border="1" class="attendance-table">
+        <tbody id="attendance-rows">
+          <tr id="student-rows">
+            <td class="header-cell">
+              <span class="header-title">%s</span>
+              <strong>Instructor: <span id="instructor"></span></strong><br>
+              <strong>%s: </strong><span id="start_time"></span><br>
+              <strong>Session: </strong><span id="session"></span><br>
+              <strong>Location: </strong><span id="location"></span><br>
+              <strong>Barcode: </strong><span id="barcode"></span>
+            </td>
+            %s
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="templatePage">
+      %s
+    </div>
+  </div>
+</body>
+</html>`,
+		html.EscapeString(sheet.Title),
+		sheet.SheetWidthPx,
+		sheet.RotateHeightPx,
+		sheet.RotateTranslatePx,
+		sheet.RotateTopPx,
+		sheet.NameColumnWidthPt,
+		sheet.SkillColumnWidthPt,
+		html.EscapeString(sheet.Title),
+		html.EscapeString(sheet.HeaderLabel),
+		strings.Join(columns, "\n"),
+		detailsHTML,
+	)
+}
+
+func buildCustomRotatedHeader(label string, widthPt int) string {
+	return fmt.Sprintf(`<td class="rotate rotate-cell" style="width: %dpt;"><span>%s</span></td>`, widthPt, html.EscapeString(label))
+}
+
+func buildCustomSheetDetailsHTML(skills []SheetSkill) string {
+	cells := make([][]string, 4)
+	for index, skill := range skills {
+		if strings.TrimSpace(skill.Label) == "" {
+			continue
+		}
+		detailLines := make([]string, 0, len(skill.Details))
+		for _, detail := range skill.Details {
+			detailLines = append(detailLines, "&nbsp;&nbsp;&nbsp;&bull;&nbsp;"+html.EscapeString(detail))
+		}
+		body := strings.Join(detailLines, "<br>")
+		if body != "" {
+			body = "<br>" + body
+		}
+		block := fmt.Sprintf(`<p class="skill-detail"><strong>%s</strong>%s</p>`, html.EscapeString(skill.Label), body)
+		cells[index%4] = append(cells[index%4], block)
+	}
+	if len(cells[0])+len(cells[1])+len(cells[2])+len(cells[3]) == 0 {
+		return `<table border="0" class="details-table"><tbody><tr><td></td><td></td><td></td><td></td></tr></tbody></table>`
+	}
+	return fmt.Sprintf(`<table border="0" class="details-table"><tbody><tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr></tbody></table>`,
+		strings.Join(cells[0], "\n"),
+		strings.Join(cells[1], "\n"),
+		strings.Join(cells[2], "\n"),
+		strings.Join(cells[3], "\n"),
+	)
+}
+
 func renderSequential(ctx context.Context, session string, items []Item) ([][]byte, error) {
 	if len(items) == 0 {
 		return nil, errors.New("no attendance items provided")
@@ -747,17 +1180,14 @@ func renderSequential(ctx context.Context, session string, items []Item) ([][]by
 	output := make([][]byte, 0, len(items))
 	for index, item := range items {
 		template := strings.TrimSpace(item.Template)
-		if template == "" {
+		if template == "" && item.Sheet == nil {
 			return nil, fmt.Errorf("attendance item %d: %w", index+1, ErrMissingTemplate)
 		}
-		templatePath, err := resolveTemplate(template)
-		if err != nil {
-			return nil, fmt.Errorf("attendance item %d: %w", index+1, ErrTemplateNotFound)
-		}
 
-		pdfBytes, err := renderPDF(ctx, templatePath, pdfPayload{
+		pdfBytes, err := renderPDF(ctx, template, pdfPayload{
 			Session: session,
 			Roster:  item.Roster,
+			Sheet:   item.Sheet,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("attendance item %d: %w", index+1, err)
@@ -772,26 +1202,27 @@ func renderManyTabs(ctx context.Context, session string, items []Item) ([][]byte
 		return nil, errors.New("no attendance items provided")
 	}
 
-	type renderJob struct {
-		templatePath string
-		payload      pdfPayload
-	}
-
 	jobs := make([]renderJob, 0, len(items))
 	for index, item := range items {
 		template := strings.TrimSpace(item.Template)
-		if template == "" {
+		if template == "" && item.Sheet == nil {
 			return nil, fmt.Errorf("attendance item %d: %w", index+1, ErrMissingTemplate)
 		}
-		templatePath, err := resolveTemplate(template)
-		if err != nil {
-			return nil, fmt.Errorf("attendance item %d: %w", index+1, ErrTemplateNotFound)
+		templatePath := ""
+		if item.Sheet == nil {
+			resolved, err := resolveTemplate(template)
+			if err != nil {
+				return nil, fmt.Errorf("attendance item %d: %w", index+1, ErrTemplateNotFound)
+			}
+			templatePath = resolved
 		}
 		jobs = append(jobs, renderJob{
 			templatePath: templatePath,
+			sheet:        item.Sheet,
 			payload: pdfPayload{
 				Session: session,
 				Roster:  item.Roster,
+				Sheet:   item.Sheet,
 			},
 		})
 	}
@@ -827,7 +1258,13 @@ func renderManyTabs(ctx context.Context, session string, items []Item) ([][]byte
 			defer wg.Done()
 			for index := range jobIndexes {
 				job := jobs[index]
-				pdfBytes, err := renderPDFInTab(browserCtx, job.templatePath, job.payload)
+				var pdfBytes []byte
+				var err error
+				if job.sheet != nil {
+					pdfBytes, err = renderHTMLInTab(browserCtx, buildCustomSheetHTML(NormalizeSheetDefinition(*job.sheet, job.payload.Roster.Level)), []renderPayload{buildRenderPayload(job.payload.Session, job.payload.Roster)})
+				} else {
+					pdfBytes, err = renderPDFInTab(browserCtx, job.templatePath, job.payload)
+				}
 				if err != nil {
 					errs[index] = fmt.Errorf("attendance item %d: %w", index+1, err)
 					continue
@@ -845,7 +1282,7 @@ func renderManyTabs(ctx context.Context, session string, items []Item) ([][]byte
 
 	for index, err := range errs {
 		if err != nil {
-			pdfBytes, retryErr := renderPDF(ctx, jobs[index].templatePath, jobs[index].payload)
+			pdfBytes, retryErr := renderSingleJobPDF(ctx, jobs[index])
 			if retryErr != nil {
 				return nil, fmt.Errorf("attendance item %d: %w", index+1, retryErr)
 			}

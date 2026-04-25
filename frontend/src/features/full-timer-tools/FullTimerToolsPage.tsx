@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { createTermKey, formatTermLabel, useCurrentTerm } from '../../app/useCurrentTerm'
 import { getYearFromDate } from '../../shared/session/sessionLabels'
@@ -370,14 +371,33 @@ function FullTimerToolsPage() {
             )}
           </div>
         </div>
-      </section>
 
-      <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
-        <h3 className="text-lg font-semibold">Next Tools</h3>
-        <p className="mt-2 text-secondary">
-          Tell me what should come next and I will wire it in here.
-        </p>
-      </div>
+        <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary/70">
+            Tool 2
+          </p>
+          <h3 className="mt-2 text-lg font-semibold">Attendance Sheet Maker</h3>
+          <p className="mt-2 text-sm text-secondary/80">
+            Create editable attendance sheets from built-in templates.
+          </p>
+          <Link
+            className={`mt-4 inline-flex rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+              currentTeamId
+                ? 'bg-secondary text-accent hover:-translate-y-0.5 hover:bg-primary'
+                : 'pointer-events-none bg-secondary/30 text-secondary/60'
+            }`}
+            aria-disabled={!currentTeamId}
+            to="/full-timer-tools/attendance-sheets"
+          >
+            Open Attendance Sheet Maker
+          </Link>
+          {!currentTeamId ? (
+            <p className="mt-3 text-sm text-secondary/70">
+              Select a team first so new sheets are tied to the right team.
+            </p>
+          ) : null}
+        </div>
+      </section>
     </div>
   )
 }

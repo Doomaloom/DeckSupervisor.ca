@@ -79,6 +79,57 @@ alter table if exists custom_rosters
 create index if not exists custom_rosters_session_id_idx on custom_rosters(session_id);
 create index if not exists custom_rosters_owner_session_day_idx on custom_rosters(owner_id, session_id, day);
 
+create table if not exists attendance_sheets (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references teams(id) on delete cascade,
+  created_by uuid not null references profiles(id) on delete restrict,
+  name text not null,
+  base_template text,
+  default_for_template text,
+  sheet_data jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table attendance_sheets add column if not exists team_id uuid references teams(id) on delete cascade;
+alter table attendance_sheets add column if not exists created_by uuid references profiles(id) on delete restrict;
+alter table attendance_sheets add column if not exists name text;
+alter table attendance_sheets add column if not exists base_template text;
+alter table attendance_sheets add column if not exists default_for_template text;
+alter table attendance_sheets add column if not exists sheet_data jsonb default '{}'::jsonb;
+alter table attendance_sheets add column if not exists created_at timestamptz default now();
+alter table attendance_sheets add column if not exists updated_at timestamptz default now();
+
+update attendance_sheets
+set sheet_data = '{}'::jsonb
+where sheet_data is null;
+
+update attendance_sheets
+set created_at = now()
+where created_at is null;
+
+update attendance_sheets
+set updated_at = now()
+where updated_at is null;
+
+alter table attendance_sheets
+  alter column team_id set not null,
+  alter column created_by set not null,
+  alter column name set not null,
+  alter column sheet_data set default '{}'::jsonb,
+  alter column sheet_data set not null,
+  alter column created_at set default now(),
+  alter column created_at set not null,
+  alter column updated_at set default now(),
+  alter column updated_at set not null;
+
+create index if not exists attendance_sheets_team_id_idx on attendance_sheets(team_id);
+create index if not exists attendance_sheets_created_by_idx on attendance_sheets(created_by);
+create index if not exists attendance_sheets_team_updated_idx on attendance_sheets(team_id, updated_at desc);
+create unique index if not exists attendance_sheets_team_default_template_unique_idx
+  on attendance_sheets(team_id, default_for_template)
+  where default_for_template is not null;
+
 create table if not exists schematics (
   id uuid primary key default gen_random_uuid(),
   session_id uuid not null references sessions(id) on delete cascade,

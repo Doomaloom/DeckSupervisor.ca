@@ -173,6 +173,7 @@ alter table session_reports enable row level security;
 alter table roster_level_edits enable row level security;
 alter table roster_student_level_edits enable row level security;
 alter table custom_rosters enable row level security;
+alter table attendance_sheets enable row level security;
 alter table report_cards enable row level security;
 alter table request_assignments enable row level security;
 alter table team_invites enable row level security;
@@ -422,6 +423,10 @@ drop policy if exists "Custom rosters read" on custom_rosters;
 drop policy if exists "Custom rosters create" on custom_rosters;
 drop policy if exists "Custom rosters update" on custom_rosters;
 drop policy if exists "Custom rosters delete" on custom_rosters;
+drop policy if exists "Attendance sheets read" on attendance_sheets;
+drop policy if exists "Attendance sheets create" on attendance_sheets;
+drop policy if exists "Attendance sheets update" on attendance_sheets;
+drop policy if exists "Attendance sheets delete" on attendance_sheets;
 drop policy if exists "Report cards read" on report_cards;
 drop policy if exists "Report cards create" on report_cards;
 drop policy if exists "Report cards update" on report_cards;
@@ -470,6 +475,51 @@ create policy "Custom rosters update"
 create policy "Custom rosters delete"
   on custom_rosters for delete
   using (can_edit_session(session_id, auth.uid()));
+
+create policy "Attendance sheets read"
+  on attendance_sheets for select
+  using (
+    is_team_owner(team_id, auth.uid())
+    or is_team_member(team_id, auth.uid())
+  );
+
+create policy "Attendance sheets create"
+  on attendance_sheets for insert
+  with check (
+    created_by = auth.uid()
+    and is_full_time(auth.uid())
+    and (
+      is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  );
+
+create policy "Attendance sheets update"
+  on attendance_sheets for update
+  using (
+    is_full_time(auth.uid())
+    and (
+      is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  )
+  with check (
+    is_full_time(auth.uid())
+    and (
+      is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  );
+
+create policy "Attendance sheets delete"
+  on attendance_sheets for delete
+  using (
+    is_full_time(auth.uid())
+    and (
+      is_team_owner(team_id, auth.uid())
+      or is_team_member(team_id, auth.uid())
+    )
+  );
 
 create policy "Request assignments read"
   on request_assignments for select
