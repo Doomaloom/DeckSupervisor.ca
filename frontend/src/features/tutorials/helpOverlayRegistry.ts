@@ -162,6 +162,41 @@ export const helpOverlayRegistry: Record<HelpOverlayId, HelpOverlayDefinition> =
         placement: 'top-left',
       },
       {
+        id: 'ft-header',
+        title: 'Team Schematic (Full-Time)',
+        body: [
+          'Full-timers can view saved schematics for the entire team term.',
+          'Use the header to confirm you are looking at the right team and term context.',
+        ],
+        selector: '[data-help-anchor="ft-schematic-header"]',
+        order: 2,
+        placement: 'top-left',
+        optional: true,
+      },
+      {
+        id: 'ft-days',
+        title: 'Day Selection',
+        body: [
+          'Switch between session days to view different saved layouts.',
+          'Only days with saved classes will be enabled for selection.',
+        ],
+        selector: '[data-help-anchor="ft-schematic-days"]',
+        order: 3,
+        placement: 'top-left',
+        optional: true,
+      },
+      {
+        id: 'ft-location',
+        title: 'Location Filter',
+        body: [
+          'View the schedule for a specific pool or facility location.',
+        ],
+        selector: '[data-help-anchor="ft-schematic-location"]',
+        order: 4,
+        placement: 'bottom-left',
+        optional: true,
+      },
+      {
         id: 'single-move',
         title: 'Single Move',
         body: [
@@ -169,7 +204,7 @@ export const helpOverlayRegistry: Record<HelpOverlayId, HelpOverlayDefinition> =
           'This is the fastest way to fix one assignment without restructuring a whole block.',
         ],
         selector: '[data-help-anchor="schematic-single-move"]',
-        order: 2,
+        order: 5,
         placement: 'top-left',
       },
       {
@@ -180,7 +215,7 @@ export const helpOverlayRegistry: Record<HelpOverlayId, HelpOverlayDefinition> =
           'Multi-move is for grouped shifts, not arbitrary cards from different columns.',
         ],
         selector: '[data-help-anchor="schematic-multi-move"]',
-        order: 3,
+        order: 6,
         placement: 'top-right',
       },
       {
@@ -190,7 +225,7 @@ export const helpOverlayRegistry: Record<HelpOverlayId, HelpOverlayDefinition> =
           'Use a temporary column when you need extra space to reshuffle classes before final cleanup.',
         ],
         selector: '[data-help-anchor="schematic-add-column"]',
-        order: 4,
+        order: 7,
         placement: 'bottom-left',
       },
       {
@@ -200,7 +235,7 @@ export const helpOverlayRegistry: Record<HelpOverlayId, HelpOverlayDefinition> =
           'After moving classes around, remove empty columns to clean the board back up.',
         ],
         selector: '[data-help-anchor="schematic-remove-empty-columns"]',
-        order: 5,
+        order: 8,
         placement: 'bottom-left',
       },
       {
@@ -211,7 +246,7 @@ export const helpOverlayRegistry: Record<HelpOverlayId, HelpOverlayDefinition> =
           'If the page is read-only, this area becomes View Only instead.',
         ],
         selector: '[data-help-anchor="schematic-save-schedule"]',
-        order: 6,
+        order: 9,
         placement: 'bottom-right',
       },
     ],
@@ -344,6 +379,127 @@ export const helpOverlayRegistry: Record<HelpOverlayId, HelpOverlayDefinition> =
         selector: '[data-help-anchor="print-options-grid"]',
         order: 6,
         placement: 'center-right',
+      },
+    ],
+  },
+  requests: {
+    id: 'requests',
+    routePaths: ['/rosters'],
+    title: 'Instructor Requests Quick Tips',
+    introTitle: 'Reconcile requests against active rosters',
+    introBody: [
+      'The requests view helps you match instructor time-off or location requests to the actual classes extracted from the roster CSV.',
+      'Click a numbered area for details on the matching and assignment flow.',
+    ],
+    tips: [
+      {
+        id: 'tabs',
+        title: 'Full-Time Roster Tabs',
+        body: [
+          'Switch between the flat Roster View, the Schematic Preview, and the Requests list.',
+          'All views on this page operate on the locally uploaded roster CSV.',
+        ],
+        selector: '[data-help-anchor="full-time-roster-tabs"]',
+        order: 1,
+        placement: 'top-left',
+      },
+      {
+        id: 'requests-panel',
+        title: 'Request List & Import',
+        body: [
+          'Upload your instructor requests CSV here.',
+          'Use the list to track who has been accommodated and who is still pending.',
+        ],
+        selector: '[data-help-anchor="full-time-requests-panel"]',
+        order: 2,
+        placement: 'top-right',
+      },
+      {
+        id: 'schematic-preview',
+        title: 'Schematic Preview',
+        body: [
+          'This provides a quick visual of the current assignments for a specific day.',
+          'Useful for spotting holes or double-assignments before finalized prep.',
+        ],
+        selector: '[data-help-anchor="full-time-schematic-header"]',
+        order: 3,
+        placement: 'top-left',
+        optional: true,
+      },
+      {
+        id: 'selected-class',
+        title: 'Selected Class Match',
+        body: [
+          'Click a class on the schematic preview to see any matched instructor requests for that specific time and day.',
+        ],
+        selector: '[data-help-anchor="full-time-schematic-selected-class"]',
+        order: 4,
+        placement: 'bottom-left',
+        optional: true,
+      },
+    ],
+  },
+  'attendance-sheets': {
+    id: 'attendance-sheets',
+    routePaths: ['/full-timer-tools/attendance-sheets'],
+    title: 'Attendance Sheet Maker Quick Tips',
+    introTitle: 'Build and preview custom attendance templates',
+    introBody: [
+      'Use this tool to create reusable attendance sheet layouts for your team.',
+      'Click a numbered area to see how to build, edit, and preview your sheets.',
+    ],
+    tips: [
+      {
+        id: 'new-blank',
+        title: 'New Blank Sheet',
+        body: [
+          'Start from scratch with a completely empty attendance template.',
+        ],
+        selector: '[data-help-anchor="attendance-maker-new"]',
+        order: 1,
+        placement: 'bottom-left',
+      },
+      {
+        id: 'template',
+        title: 'Seed from Template',
+        body: [
+          'Choose a built-in template to quickly populate common skill columns and titles.',
+        ],
+        selector: '[data-help-anchor="attendance-maker-template"]',
+        order: 2,
+        placement: 'bottom-left',
+      },
+      {
+        id: 'list',
+        title: 'Saved Sheets',
+        body: [
+          'Review and select from attendance sheets you have previously saved for this team.',
+        ],
+        selector: '[data-help-anchor="attendance-maker-list"]',
+        order: 3,
+        placement: 'bottom-left',
+      },
+      {
+        id: 'editor',
+        title: 'Sheet Editor',
+        body: [
+          'Update the sheet name, title, and skill columns here.',
+          'Save your changes to reuse this sheet across different sessions.',
+        ],
+        selector: '[data-help-anchor="attendance-maker-editor"]',
+        order: 4,
+        placement: 'top-left',
+      },
+      {
+        id: 'preview',
+        title: 'PDF Preview',
+        body: [
+          'The PDF preview updates automatically as you edit.',
+          'Confirm the layout and skill column spacing before downloading.',
+        ],
+        selector: '[data-help-anchor="attendance-maker-preview"]',
+        order: 5,
+        placement: 'top-right',
       },
     ],
   },

@@ -836,7 +836,7 @@ function RostersPage() {
                             Session Term: <span className="font-semibold">{currentTerm?.label ?? 'No term selected'}</span>
                         </p>
                     </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-4 flex flex-wrap gap-2" data-help-anchor="full-time-roster-tabs">
                         <button
                             type="button"
                             className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${fullTimeViewTab === 'rosters'
@@ -922,23 +922,25 @@ function RostersPage() {
                                 onRemoveInstructor={handleRemoveFullTimeInstructorAssignment}
                             />
                         ) : fullTimeViewTab === 'requests' ? (
-                            <FullTimeRequestListPanel
-                                draft={fullTimeRequestDraft}
-                                entries={fullTimeRequestEntries}
-                                onDraftChange={handleFullTimeRequestDraftChange}
-                                onAddRequest={handleAddFullTimeRequest}
-                                onImportCsv={file => {
-                                    void handleImportFullTimeRequests(file)
-                                }}
-                                onAutoAssign={handleAutoAssignFullTimeRequests}
-                                onReattemptEntry={handleReattemptFullTimeRequestAssignment}
-                                onEntryChange={handleFullTimeRequestEntryChange}
-                                onDeleteRequest={handleDeleteFullTimeRequest}
-                            />
+                            <div data-help-anchor="full-time-requests-panel">
+                                <FullTimeRequestListPanel
+                                    draft={fullTimeRequestDraft}
+                                    entries={fullTimeRequestEntries}
+                                    onDraftChange={handleFullTimeRequestDraftChange}
+                                    onAddRequest={handleAddFullTimeRequest}
+                                    onImportCsv={file => {
+                                        void handleImportFullTimeRequests(file)
+                                    }}
+                                    onAutoAssign={handleAutoAssignFullTimeRequests}
+                                    onReattemptEntry={handleReattemptFullTimeRequestAssignment}
+                                    onEntryChange={handleFullTimeRequestEntryChange}
+                                    onDeleteRequest={handleDeleteFullTimeRequest}
+                                />
+                            </div>
                         ) : (
                             <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
                                 <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <div>
+                                    <div data-help-anchor="full-time-schematic-header">
                                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
                                             Schematic Preview
                                         </p>
@@ -995,7 +997,7 @@ function RostersPage() {
                                             </button>
                                         </div>
                                         {selectedFullTimeCourse ? (
-                                            <div className="mb-4 rounded-2xl border border-secondary/20 bg-bg p-4 text-secondary">
+                                            <div className="mb-4 rounded-2xl border border-secondary/20 bg-bg p-4 text-secondary" data-help-anchor="full-time-schematic-selected-class">
                                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                                     <div>
                                                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">

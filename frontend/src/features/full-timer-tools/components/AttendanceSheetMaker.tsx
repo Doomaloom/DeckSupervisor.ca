@@ -288,12 +288,13 @@ function AttendanceSheetMaker({ teamId, teamName, selectedTermLabel }: Props) {
                 <div className="flex flex-col gap-4">
                     <button
                         type="button"
+                        data-help-anchor="attendance-maker-new"
                         className="rounded-2xl bg-secondary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5"
                         onClick={handleNewBlank}
                     >
                         New Blank Sheet
                     </button>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2" data-help-anchor="attendance-maker-template">
                         <label className="text-sm font-semibold text-secondary">
                             Create From Built-In
                             <select
@@ -325,17 +326,19 @@ function AttendanceSheetMaker({ teamId, teamName, selectedTermLabel }: Props) {
                             You can still create from built-in templates and preview PDFs.
                         </p>
                     )}
-                    <AttendanceSheetList
-                        sheets={sheets}
-                        selectedSheetId={selectedSheetId}
-                        loading={savedSheetsLoading}
-                        onSelect={handleSelectSheet}
-                    />
+                    <div data-help-anchor="attendance-maker-list">
+                        <AttendanceSheetList
+                            sheets={sheets}
+                            selectedSheetId={selectedSheetId}
+                            loading={savedSheetsLoading}
+                            onSelect={handleSelectSheet}
+                        />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
 
-                    <div className="min-w-0 rounded-2xl border border-secondary/20 bg-accent/70 p-4">
+                    <div className="min-w-0 rounded-2xl border border-secondary/20 bg-accent/70 p-4" data-help-anchor="attendance-maker-editor">
                         {draft ? (
                             <AttendanceSheetEditor
                                 draft={draft}
@@ -354,7 +357,7 @@ function AttendanceSheetMaker({ teamId, teamName, selectedTermLabel }: Props) {
                             </p>
                         )}
                     </div>
-                    <section className="flex min-h-[34rem] min-w-0 flex-col rounded-2xl border-2 border-secondary p-3">
+                    <section className="flex min-h-[34rem] min-w-0 flex-col rounded-2xl border-2 border-secondary p-3" data-help-anchor="attendance-maker-preview">
                         <div className="flex flex-wrap items-center justify-between gap-3 px-1 pb-3">
                             <div>
                                 <h4 className="text-sm font-semibold">PDF Preview</h4>

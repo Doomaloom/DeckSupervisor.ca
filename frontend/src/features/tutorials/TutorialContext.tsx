@@ -27,9 +27,9 @@ type TutorialContextValue = {
   activeOverlayId: HelpOverlayId | null
   activeOverlayTipId: string | null
   helpUnsupportedMessage: string | null
-  openSidebarHelpForPath: (pathname: string) => void
+  openSidebarHelpForPath: (pathname: string, search?: string) => void
   closePageHelp: () => void
-  togglePageHelpForPath: (pathname: string) => void
+  togglePageHelpForPath: (pathname: string, search?: string) => void
   selectPageHelpTip: (tipId: string | null) => void
   nextPageHelpTip: () => void
   previousPageHelpTip: () => void
@@ -121,19 +121,19 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     setActiveStepIndex(clampStepIndex(activeTutorialId, index))
   }
 
-  const getUnsupportedHelpMessage = (pathname: string) => {
-    const overlayId = routeToHelpOverlayId(pathname)
+  const getUnsupportedHelpMessage = (pathname: string, search?: string) => {
+    const overlayId = routeToHelpOverlayId(pathname, search)
     if (overlayId) {
       return helpOverlayRegistry[overlayId].unsupportedMessage ?? null
     }
     return 'Quick tips are not available on this page yet. Use Help / Tutorials on Home for the full prep walkthrough.'
   }
 
-  const openSidebarHelpForPath = (pathname: string) => {
-    const overlayId = routeToHelpOverlayId(pathname)
+  const openSidebarHelpForPath = (pathname: string, search?: string) => {
+    const overlayId = routeToHelpOverlayId(pathname, search)
     if (!overlayId) {
       closePageHelp()
-      setHelpUnsupportedMessage(getUnsupportedHelpMessage(pathname))
+      setHelpUnsupportedMessage(getUnsupportedHelpMessage(pathname, search))
       return
     }
 
@@ -144,13 +144,13 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     setIsPageHelpOpen(true)
   }
 
-  const togglePageHelpForPath = (pathname: string) => {
-    const overlayId = routeToHelpOverlayId(pathname)
+  const togglePageHelpForPath = (pathname: string, search?: string) => {
+    const overlayId = routeToHelpOverlayId(pathname, search)
     if (overlayId && isPageHelpOpen && activeOverlayId === overlayId) {
       closePageHelp()
       return
     }
-    openSidebarHelpForPath(pathname)
+    openSidebarHelpForPath(pathname, search)
   }
 
   const selectPageHelpTip = (tipId: string | null) => {
@@ -270,8 +270,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           closePageHelp()
           setHelpUnsupportedMessage(
             overlayId
-              ? helpOverlayRegistry[overlayId].unsupportedMessage ?? getUnsupportedHelpMessage(location.pathname)
-              : getUnsupportedHelpMessage(location.pathname),
+              ? helpOverlayRegistry[overlayId].unsupportedMessage ?? getUnsupportedHelpMessage(location.pathname, location.search)
+              : getUnsupportedHelpMessage(location.pathname, location.search),
           )
         }}
       />

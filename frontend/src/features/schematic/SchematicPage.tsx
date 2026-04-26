@@ -68,7 +68,7 @@ function SchematicPage() {
     if (accountType === 'full_time') {
         return (
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-                <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+                <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md" data-help-anchor="ft-schematic-header">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary/70">
                         Full-Time Schematic
                     </p>
@@ -77,7 +77,7 @@ function SchematicPage() {
                         View saved schematics by day and location for the selected team and session term.
                     </p>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-4 flex flex-wrap gap-2" data-help-anchor="ft-schematic-days">
                         {fullTimeView.days.map(day => {
                             const isActive = fullTimeView.selectedDay === day.key
                             const isDisabled = day.count === 0
@@ -98,7 +98,7 @@ function SchematicPage() {
                         })}
                     </div>
 
-                    <div className="mt-4 grid grid-cols-1 gap-4 md:max-w-sm">
+                    <div className="mt-4 grid grid-cols-1 gap-4 md:max-w-sm" data-help-anchor="ft-schematic-location">
                         <label className="flex flex-col gap-2 text-sm font-semibold text-secondary">
                             Location
                             <select

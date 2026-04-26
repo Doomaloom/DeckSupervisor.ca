@@ -6,8 +6,12 @@ const routeHelpOverlayMap: Record<string, HelpOverlayId> = {
   '/schematic': 'schematic',
   '/rosters': 'rosters',
   '/print': 'print',
+  '/full-timer-tools/attendance-sheets': 'attendance-sheets',
 }
 
-export function routeToHelpOverlayId(pathname: string): HelpOverlayId | null {
+export function routeToHelpOverlayId(pathname: string, search?: string): HelpOverlayId | null {
+  if (pathname === '/rosters' && search && new URLSearchParams(search).get('view') === 'requests') {
+    return 'requests'
+  }
   return routeHelpOverlayMap[pathname] ?? null
 }

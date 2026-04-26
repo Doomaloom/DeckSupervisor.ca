@@ -4,6 +4,8 @@ export type HelpOverlayId =
   | 'schematic'
   | 'rosters'
   | 'print'
+  | 'requests'
+  | 'attendance-sheets'
 
 export type HelpOverlayTipPlacement =
   | 'top-left'

@@ -488,9 +488,8 @@ function Layout({ children }: LayoutProps) {
                         type="button"
                         className={helpButtonClassName}
                         aria-label="Help"
-                        onClick={() => togglePageHelpForPath(location.pathname)}
-                    >
-                        {isSidebarCollapsed ? (
+                        onClick={() => togglePageHelpForPath(location.pathname, location.search)}
+                    >                        {isSidebarCollapsed ? (
                             <>
                                 <QuestionMarkCircleIcon className="h-5 w-5" />
                                 <span className="sr-only">Help</span>
