@@ -53,4 +53,6 @@ export type FullTimeRequestEntry = {
     matchedRequestCount: number
     requiresManualReview: boolean
     manualReviewNote: string
+    schematicConflict: boolean
+    schematicConflictNote: string
 }

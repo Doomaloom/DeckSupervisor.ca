@@ -7,7 +7,9 @@ import {
 } from '../../shared/csv/csvUtils'
 import { sortSessionDays } from '../../shared/session/sessionDays'
 import { buildCourses } from '../schematic/utils/courses'
+import { normalizeCourseCodeForCompare } from '../schematic/utils/courseCode'
 import { createRequestAwareLayout } from '../schematic/utils/layout'
+import { normalizeSessionLocationKey } from '../../shared/session/sourceLocations'
 import type {
     FullTimeInstructorAssignments,
     FullTimeInstructorDayAssignments,
@@ -88,6 +90,8 @@ export function normalizeRequestEntries(input: unknown): FullTimeRequestEntry[] 
             matchedRequestCount: Number.isFinite(value.matchedRequestCount) ? Math.max(Number(value.matchedRequestCount), 0) : 0,
             requiresManualReview: Boolean(value.requiresManualReview),
             manualReviewNote: typeof value.manualReviewNote === 'string' ? value.manualReviewNote : '',
+            schematicConflict: Boolean(value.schematicConflict),
+            schematicConflictNote: typeof value.schematicConflictNote === 'string' ? value.schematicConflictNote : '',
         }
     })
 }
@@ -217,6 +221,7 @@ type RequestRosterMatch = {
     code: string
     serviceName: string
     time: string
+    location: string
     matchSource: FullTimeRequestMatchSource
     requiresManualReview: boolean
     manualReviewNote: string
@@ -234,6 +239,7 @@ function buildRequestRosterMatches(rosters: ClassRoster[]) {
             code: roster.code,
             serviceName: roster.serviceName,
             time: roster.time,
+            location: roster.location,
             phone: normalizePhone(student.phone),
             firstName: normalizeStudentFirstName(student.name),
             fullName: normalizeStudentFullName(student.name),
@@ -257,6 +263,7 @@ function findRequestMatch(
                 code: phoneMatch.code,
                 serviceName: phoneMatch.serviceName,
                 time: phoneMatch.time,
+                location: phoneMatch.location,
                 matchSource: 'phone',
                 requiresManualReview: false,
                 manualReviewNote: '',
@@ -271,6 +278,7 @@ function findRequestMatch(
                     code: phoneMatch.code,
                     serviceName: phoneMatch.serviceName,
                     time: phoneMatch.time,
+                    location: phoneMatch.location,
                     matchSource: 'phone',
                     requiresManualReview: false,
                     manualReviewNote: '',
@@ -295,6 +303,7 @@ function findRequestMatch(
                     code: bestPhoneMatch.match.code,
                     serviceName: bestPhoneMatch.match.serviceName,
                     time: bestPhoneMatch.match.time,
+                    location: bestPhoneMatch.match.location,
                     matchSource: 'phone',
                     requiresManualReview: true,
                     manualReviewNote: 'Phone number matched multiple students; first name was fuzzy-matched.',
@@ -330,6 +339,7 @@ function findRequestMatch(
             code: bestNameMatch.match.code,
             serviceName: bestNameMatch.match.serviceName,
             time: bestNameMatch.match.time,
+            location: bestNameMatch.match.location,
             matchSource: 'name',
             requiresManualReview: true,
             manualReviewNote: 'Student name was fuzzy-matched and should be reviewed manually.',
@@ -340,6 +350,7 @@ function findRequestMatch(
         code: nameMatch.code,
         serviceName: nameMatch.serviceName,
         time: nameMatch.time,
+        location: nameMatch.location,
         matchSource: 'name',
         requiresManualReview: attemptedPhoneMatch,
         manualReviewNote: attemptedPhoneMatch
@@ -351,10 +362,11 @@ function findRequestMatch(
 export function attemptAutoAssignFullTimeRequests(
     entries: FullTimeRequestEntry[],
     rosters: ClassRoster[],
+    schematicClassKeys?: Set<string>,
 ): AutoAssignFullTimeRequestsResult {
     const rosterMatches = buildRequestRosterMatches(rosters)
 
-    const nextEntries = buildAutoAssignedFullTimeRequestEntries(entries, rosterMatches)
+    const nextEntries = buildAutoAssignedFullTimeRequestEntries(entries, rosterMatches, schematicClassKeys)
     const nextRosters = syncFullTimeRostersWithRequests(nextEntries, rosters)
 
     return {
@@ -366,6 +378,7 @@ export function attemptAutoAssignFullTimeRequests(
 export function buildAutoAssignedFullTimeRequestEntries(
     entries: FullTimeRequestEntry[],
     rostersOrMatches: ClassRoster[] | ReturnType<typeof buildRequestRosterMatches>,
+    schematicClassKeys?: Set<string>,
 ) {
     const rosterMatches = Array.isArray(rostersOrMatches) && rostersOrMatches.length > 0 && 'students' in rostersOrMatches[0]
         ? buildRequestRosterMatches(rostersOrMatches as ClassRoster[])
@@ -387,8 +400,14 @@ export function buildAutoAssignedFullTimeRequestEntries(
                 matchedRequestCount: 0,
                 requiresManualReview: false,
                 manualReviewNote: '',
+                schematicConflict: false,
+                schematicConflictNote: '',
             }
         }
+
+        const schematicConflict = schematicClassKeys?.has(
+            buildSchematicClassKey(match.day, match.location, match.code),
+        ) ?? false
 
         return {
             ...entry,
@@ -403,6 +422,10 @@ export function buildAutoAssignedFullTimeRequestEntries(
             matchedRequestCount: 0,
             requiresManualReview: match.requiresManualReview,
             manualReviewNote: match.manualReviewNote,
+            schematicConflict,
+            schematicConflictNote: schematicConflict
+                ? 'Saved schematic exists for this class. Request is highlighted only; roster instructor was not changed.'
+                : '',
         }
     })
 
@@ -437,7 +460,7 @@ export function syncFullTimeRostersWithRequests(
 ) {
     const instructorVotesByRoster = new Map<string, Map<string, number>>()
     entries.forEach(entry => {
-        if (!entry.accommodated || !entry.matchedCode) {
+        if (!entry.accommodated || !entry.matchedCode || entry.schematicConflict) {
             return
         }
         const requestedInstructor = entry.instructor.trim()
@@ -488,6 +511,14 @@ export function syncFullTimeRostersWithRequests(
         }
     })
     return nextRosters
+}
+
+export function buildSchematicClassKey(day: string, location: string | null | undefined, code: string) {
+    return [
+        day.trim(),
+        normalizeSessionLocationKey(location),
+        normalizeCourseCodeForCompare(code),
+    ].join('::')
 }
 
 export function sortDayKeys(days: string[]) {

@@ -3,8 +3,10 @@ import type { ClassRoster } from '../../types/app'
 import type { FullTimeRequestEntry } from './types'
 import {
   attemptAutoAssignFullTimeRequests,
+  buildSchematicClassKey,
   getInstructorPeriodsForDay,
   parseFullTimeRequestCsv,
+  syncFullTimeRostersWithRequests,
 } from './fullTimePlanning'
 
 const rosterClasses: ClassRoster[] = [
@@ -52,6 +54,8 @@ function makeEntry(overrides: Partial<FullTimeRequestEntry>): FullTimeRequestEnt
     matchedRequestCount: overrides.matchedRequestCount ?? 0,
     requiresManualReview: overrides.requiresManualReview ?? false,
     manualReviewNote: overrides.manualReviewNote ?? '',
+    schematicConflict: overrides.schematicConflict ?? false,
+    schematicConflictNote: overrides.schematicConflictNote ?? '',
   }
 }
 
@@ -150,6 +154,53 @@ describe('fullTimePlanning', () => {
     expect(result.entries.map(entry => entry.matchedRequestCount)).toEqual([2, 2, 1])
     expect(result.rosters[0].instructor).toBe('Coach Amy')
     expect(result.rosters[0].students.every(student => student.instructor === 'Coach Amy')).toBe(true)
+  })
+
+  it('keeps schematic-backed requests matched but highlight-only without changing roster instructors', () => {
+    const schematicClassKeys = new Set([buildSchematicClassKey('Mo', 'Pool A', '1001')])
+    const result = attemptAutoAssignFullTimeRequests(
+      [makeEntry({ id: '1', instructor: 'Coach Amy', firstName: 'Alice' })],
+      rosterClasses,
+      schematicClassKeys,
+    )
+
+    expect(result.entries[0]).toMatchObject({
+      accommodated: true,
+      matchedCode: '1001',
+      schematicConflict: true,
+    })
+    expect(result.entries[0].schematicConflictNote).toContain('highlighted only')
+    expect(result.rosters[0].instructor).toBe('Existing Coach')
+    expect(result.rosters[0].students.every(student => student.instructor === 'Existing Coach')).toBe(true)
+  })
+
+  it('ignores schematic-conflict request votes while syncing non-conflicting roster instructors', () => {
+    const nextRosters = syncFullTimeRostersWithRequests(
+      [
+        makeEntry({
+          id: '1',
+          instructor: 'Coach Amy',
+          accommodated: true,
+          matchedDay: 'Mo',
+          matchedCode: '1001',
+          schematicConflict: true,
+        }),
+        makeEntry({
+          id: '2',
+          firstName: 'Janet',
+          lastName: 'Doe',
+          phone: '5556667777',
+          instructor: 'Coach Beth',
+          accommodated: true,
+          matchedDay: 'Mo',
+          matchedCode: '1002',
+        }),
+      ],
+      rosterClasses,
+    )
+
+    expect(nextRosters[0].instructor).toBe('Existing Coach')
+    expect(nextRosters[1].instructor).toBe('Coach Beth')
   })
 
   it('returns all-day or am/pm instructor periods based on common breaks', () => {

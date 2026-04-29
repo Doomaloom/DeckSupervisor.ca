@@ -248,6 +248,11 @@ function FullTimeRequestListPanel({
                                                 Manual review: {entry.manualReviewNote || 'This match should be reviewed manually.'}
                                             </p>
                                         ) : null}
+                                        {entry.schematicConflict ? (
+                                            <p className="mt-1 font-semibold text-secondary">
+                                                {entry.schematicConflictNote || 'Saved schematic exists. Highlight only; roster instructor not changed.'}
+                                            </p>
+                                        ) : null}
                                     </div>
                                 ) : null}
                             </article>

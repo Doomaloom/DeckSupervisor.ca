@@ -3,7 +3,27 @@ import type { Student } from '../../../types/app'
 import type { Course } from '../types'
 import { timeToMinutes } from './time'
 
-export function buildCourses(students: Student[], requestInstructorByCode?: Map<string, string>): Course[] {
+export type BuildCoursesOptions = {
+    assignedInstructorByCode?: Map<string, string>
+    requestInstructorByCode?: Map<string, string>
+    requestHighlightOnlyCodes?: Set<string>
+}
+
+function normalizeBuildCoursesOptions(input?: Map<string, string> | BuildCoursesOptions): BuildCoursesOptions {
+    if (!input) {
+        return {}
+    }
+    if (input instanceof Map) {
+        return {
+            assignedInstructorByCode: input,
+            requestInstructorByCode: input,
+        }
+    }
+    return input
+}
+
+export function buildCourses(students: Student[], optionsInput?: Map<string, string> | BuildCoursesOptions): Course[] {
+    const options = normalizeBuildCoursesOptions(optionsInput)
     const map = new Map<string, Course>()
     students.forEach(student => {
         const existing = map.get(student.code)
@@ -16,7 +36,10 @@ export function buildCourses(students: Student[], requestInstructorByCode?: Map<
             }
             return
         }
-        const assignedInstructor = requestInstructorByCode?.get(student.code) ?? ''
+        const rosterInstructor = options.assignedInstructorByCode?.get(student.code) ?? ''
+        const requestInstructor = options.requestInstructorByCode?.get(student.code) ?? ''
+        const requestHighlightOnly = Boolean(options.requestHighlightOnlyCodes?.has(student.code))
+        const assignedInstructor = requestHighlightOnly ? rosterInstructor : requestInstructor || rosterInstructor
         const startTime = extractStartTime(student.time)
         const endTime = extractEndTime(student.time)
         const startMinutes = timeToMinutes(startTime)
@@ -32,8 +55,10 @@ export function buildCourses(students: Student[], requestInstructorByCode?: Map<
             studentCount: student.waitlist ? 0 : 1,
             studentName: student.waitlist ? undefined : student.name,
             assignedInstructor: assignedInstructor || undefined,
-            isRequested: Boolean(assignedInstructor),
-            isLockedToInstructor: Boolean(assignedInstructor),
+            requestInstructor: requestInstructor || undefined,
+            requestHighlightOnly,
+            isRequested: Boolean(requestInstructor),
+            isLockedToInstructor: Boolean(requestInstructor) && !requestHighlightOnly,
         })
     })
 

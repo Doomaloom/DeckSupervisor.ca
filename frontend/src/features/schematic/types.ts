@@ -9,6 +9,8 @@ export type Course = {
     studentCount: number
     studentName?: string
     assignedInstructor?: string
+    requestInstructor?: string
+    requestHighlightOnly?: boolean
     isRequested?: boolean
     isLockedToInstructor?: boolean
 }

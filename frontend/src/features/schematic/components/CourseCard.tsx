@@ -24,9 +24,11 @@ function CourseCard({
     onDragStart,
     onDrop,
 }: CourseCardProps) {
-    const requestClass = course.isRequested
-        ? 'bg-yellow-200 ring-2 ring-yellow-500'
-        : 'bg-white'
+    const requestClass = course.requestHighlightOnly
+        ? 'bg-yellow-50 ring-1 ring-yellow-300'
+        : course.isRequested
+            ? 'bg-yellow-200 ring-2 ring-yellow-500'
+            : 'bg-white'
     const selectedClass = selected ? 'ring-4 ring-secondary ring-offset-1' : ''
 
     return (
@@ -42,9 +44,9 @@ function CourseCard({
             <div className="flex flex-1 flex-col items-center justify-center gap-1 px-2 py-1 text-center">
                 <p className="font-semibold">{course.level}</p>
                 <p>{course.code}</p>
-                {course.isRequested && course.assignedInstructor ? (
-                    <p className="rounded-full bg-yellow-400 px-2 py-0.5 text-[0.65rem] font-semibold">
-                        Request: {course.assignedInstructor}
+                {course.isRequested && (course.requestInstructor || course.assignedInstructor) ? (
+                    <p className={`${course.requestHighlightOnly ? 'bg-yellow-200' : 'bg-yellow-400'} rounded-full px-2 py-0.5 text-[0.65rem] font-semibold`}>
+                        Request: {course.requestInstructor || course.assignedInstructor}
                     </p>
                 ) : null}
                 {course.studentName && course.level.toLowerCase().includes('private') && (

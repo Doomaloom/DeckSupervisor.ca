@@ -8,10 +8,13 @@ import { getStoredItem, setStoredItem } from '../../lib/browserStorage'
 import { extractStartTime } from '../../lib/time'
 import { flushDirtyInstructorPdfs, invalidateInstructorPdfs } from '../../lib/instructorPdfCache'
 import type { ClassRoster, Student } from '../../types/app'
+import { getYearFromDate } from '../../shared/session/sessionLabels'
+import { getEffectiveSourceLocations, normalizeSessionLocationKey } from '../../shared/session/sourceLocations'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES, dayNames } from '../schematic/constants'
 import FullTimeRostersPanel from '../schematic/components/FullTimeRostersPanel'
 import SchematicBoard from '../schematic/components/SchematicBoard'
 import { buildCourses } from '../schematic/utils/courses'
+import { normalizeCourseCodeForCompare } from '../schematic/utils/courseCode'
 import { buildTimeLabels } from '../schematic/utils/time'
 import { useSchematicBoard } from '../schematic/hooks/useSchematicBoard'
 import CustomRostersPanel from './components/CustomRostersPanel'
@@ -25,6 +28,7 @@ import {
     attemptAutoAssignFullTimeRequests,
     buildColumnsForDay,
     buildAutoAssignedFullTimeRequestEntries,
+    buildSchematicClassKey,
     createEmptyInstructorDayAssignments,
     parseFullTimeRequestCsv,
     createRequestId,
@@ -53,7 +57,7 @@ import type {
 } from './types'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
-import { fetchCsvAnalyze } from '../../lib/serverApi'
+import { fetchCsvAnalyze, fetchSchematics, fetchTeamSessions } from '../../lib/serverApi'
 
 type FullTimeRosterItem = {
     day: string
@@ -73,6 +77,27 @@ type StoredFullTimeRosters = {
     fileName: string
     importedAt: string
     classes: ClassRoster[]
+}
+
+type FullTimeTeamSessionRow = {
+    id: string
+    session_day: string
+    session_season: string | null
+    session_year: number | null
+    start_date: string | null
+    location: string | null
+    source_locations: string[]
+    updated_at: string
+}
+
+type FullTimeSchematicPayload = {
+    codes: string[]
+    instructors: string[]
+}
+
+type FullTimeSchematicRow = {
+    session_id: string
+    data: { codes?: string[]; instructors?: string[] } | null
 }
 
 type FullTimeRequestDraft = Pick<FullTimeRequestEntry, 'firstName' | 'lastName' | 'phone' | 'instructor'>
@@ -157,6 +182,8 @@ function RostersPage() {
     const [fullTimeInstructorAssignments, setFullTimeInstructorAssignments] = useState<FullTimeInstructorAssignments>({})
     const [fullTimeRequestEntries, setFullTimeRequestEntries] = useState<FullTimeRequestEntry[]>([])
     const [fullTimeRequestDraft, setFullTimeRequestDraft] = useState<FullTimeRequestDraft>(emptyFullTimeRequestDraft)
+    const [fullTimeTeamSessions, setFullTimeTeamSessions] = useState<FullTimeTeamSessionRow[]>([])
+    const [fullTimeSchematicsBySession, setFullTimeSchematicsBySession] = useState<Map<string, FullTimeSchematicPayload>>(new Map())
     const [fullTimeUploadError, setFullTimeUploadError] = useState('')
     const [fullTimeUploading, setFullTimeUploading] = useState(false)
     const fullTimeUploadInputRef = useRef<HTMLInputElement | null>(null)
@@ -303,6 +330,66 @@ function RostersPage() {
         setFullTimeRequestEntries(loadFullTimeRequestEntries(currentTeamId, fullTimeTermKey))
     }, [accountType, currentTeamId, fullTimeTermKey])
 
+    useEffect(() => {
+        if (accountType !== 'full_time' || !currentTeamId || !currentTerm) {
+            setFullTimeTeamSessions([])
+            setFullTimeSchematicsBySession(new Map())
+            return
+        }
+
+        let active = true
+        const loadSchematics = async () => {
+            try {
+                const sessionsResponse = await fetchTeamSessions(
+                    currentTeamId,
+                    'id,session_day,session_season,session_year,start_date,location,source_locations,updated_at',
+                )
+                if (!active) {
+                    return
+                }
+                const termSessions = ((sessionsResponse.sessions ?? []) as FullTimeTeamSessionRow[]).filter(session => {
+                    const season = (session.session_season ?? '').trim().toLowerCase()
+                    const year = session.session_year ?? getYearFromDate(session.start_date)
+                    return season === currentTerm.season && year === currentTerm.year
+                })
+                setFullTimeTeamSessions(termSessions)
+
+                if (termSessions.length === 0) {
+                    setFullTimeSchematicsBySession(new Map())
+                    return
+                }
+
+                const schematicsResponse = await fetchSchematics(termSessions.map(session => session.id))
+                if (!active) {
+                    return
+                }
+                const next = new Map<string, FullTimeSchematicPayload>()
+                ;((schematicsResponse.schematics ?? []) as FullTimeSchematicRow[]).forEach(row => {
+                    const codes = row.data?.codes ?? []
+                    if (codes.length === 0) {
+                        return
+                    }
+                    next.set(row.session_id, {
+                        codes,
+                        instructors: row.data?.instructors ?? [],
+                    })
+                })
+                setFullTimeSchematicsBySession(next)
+            } catch (error) {
+                console.error('Failed to load saved schematics for full-time requests', error)
+                if (active) {
+                    setFullTimeTeamSessions([])
+                    setFullTimeSchematicsBySession(new Map())
+                }
+            }
+        }
+
+        void loadSchematics()
+        return () => {
+            active = false
+        }
+    }, [accountType, currentTeamId, currentTerm?.season, currentTerm?.year])
+
     const fullTimeRosterItems = useMemo(
         () => fullTimeRosterClasses.map(convertClassRosterToItem),
         [fullTimeRosterClasses],
@@ -367,6 +454,30 @@ function RostersPage() {
         [fullTimeInstructorDayKeys, fullTimeRosterClasses],
     )
 
+    const fullTimeSchematicClassKeys = useMemo(() => {
+        const keys = new Set<string>()
+        fullTimeTeamSessions.forEach(session => {
+            const schematic = fullTimeSchematicsBySession.get(session.id)
+            if (!schematic || schematic.codes.length === 0) {
+                return
+            }
+            const sourceLocations = getEffectiveSourceLocations(session)
+            const locationKeys = sourceLocations.length > 0
+                ? sourceLocations.map(location => normalizeSessionLocationKey(location)).filter(Boolean)
+                : [normalizeSessionLocationKey(session.location)]
+            locationKeys.forEach(locationKey => {
+                schematic.codes.forEach(code => {
+                    const normalizedCode = normalizeCourseCodeForCompare(code)
+                    if (!session.session_day || !locationKey || !normalizedCode) {
+                        return
+                    }
+                    keys.add(buildSchematicClassKey(session.session_day, locationKey, normalizedCode))
+                })
+            })
+        })
+        return keys
+    }, [fullTimeSchematicsBySession, fullTimeTeamSessions])
+
     const fullTimeSchematicDay = fullTimeDayFilter || fullTimeRosterDayOptions[0] || ''
     const fullTimeSchematicStudents = useMemo(() => {
         return fullTimeRosterClasses
@@ -390,17 +501,53 @@ function RostersPage() {
     }, [fullTimeRosterClasses, fullTimeSchematicDay])
 
     const fullTimeSchematicCourses = useMemo(() => {
-        const instructorByCode = new Map<string, string>()
+        const assignedInstructorByCode = new Map<string, string>()
         fullTimeRosterClasses
             .filter(roster => roster.day === fullTimeSchematicDay)
             .forEach(roster => {
                 const instructor = roster.instructor.trim()
                 if (instructor) {
-                    instructorByCode.set(roster.code, instructor)
+                    assignedInstructorByCode.set(roster.code, instructor)
                 }
             })
-        return buildCourses(fullTimeSchematicStudents, instructorByCode)
-    }, [fullTimeRosterClasses, fullTimeSchematicDay, fullTimeSchematicStudents])
+
+        const requestVotesByCode = new Map<string, Map<string, number>>()
+        const requestHighlightOnlyCodes = new Set<string>()
+        fullTimeRequestEntries.forEach(entry => {
+            if (!entry.accommodated || entry.matchedDay !== fullTimeSchematicDay || !entry.matchedCode) {
+                return
+            }
+            const instructor = entry.instructor.trim()
+            if (!instructor) {
+                return
+            }
+            const votes = requestVotesByCode.get(entry.matchedCode) ?? new Map<string, number>()
+            votes.set(instructor, (votes.get(instructor) ?? 0) + 1)
+            requestVotesByCode.set(entry.matchedCode, votes)
+            if (entry.schematicConflict) {
+                requestHighlightOnlyCodes.add(entry.matchedCode)
+            }
+        })
+
+        const requestInstructorByCode = new Map<string, string>()
+        requestVotesByCode.forEach((votes, code) => {
+            const [winner] = Array.from(votes.entries()).sort(([leftName, leftCount], [rightName, rightCount]) => {
+                if (leftCount !== rightCount) {
+                    return rightCount - leftCount
+                }
+                return leftName.localeCompare(rightName, 'en', { sensitivity: 'base' })
+            })[0] ?? []
+            if (winner) {
+                requestInstructorByCode.set(code, winner)
+            }
+        })
+
+        return buildCourses(fullTimeSchematicStudents, {
+            assignedInstructorByCode,
+            requestInstructorByCode,
+            requestHighlightOnlyCodes,
+        })
+    }, [fullTimeRequestEntries, fullTimeRosterClasses, fullTimeSchematicDay, fullTimeSchematicStudents])
     const fullTimeInstructorOptions = useMemo(() => {
         const names = new Set<string>()
         fullTimeRosterClasses
@@ -639,6 +786,8 @@ function RostersPage() {
             matchedRequestCount: 0,
             requiresManualReview: false,
             manualReviewNote: '',
+            schematicConflict: false,
+            schematicConflictNote: '',
         } satisfies FullTimeRequestEntry
 
         if (!nextEntry.firstName || !nextEntry.lastName || !nextEntry.phone || !nextEntry.instructor) {
@@ -731,6 +880,8 @@ function RostersPage() {
                 matchedRequestCount: 0,
                 requiresManualReview: false,
                 manualReviewNote: '',
+                schematicConflict: false,
+                schematicConflictNote: '',
             } satisfies FullTimeRequestEntry))
 
             if (imported.length === 0) {
@@ -752,7 +903,7 @@ function RostersPage() {
         if (!currentTeamId) {
             return
         }
-        const next = attemptAutoAssignFullTimeRequests(fullTimeRequestEntries, fullTimeRosterClasses)
+        const next = attemptAutoAssignFullTimeRequests(fullTimeRequestEntries, fullTimeRosterClasses, fullTimeSchematicClassKeys)
         setFullTimeRequestEntries(next.entries)
         setFullTimeRosterClasses(next.rosters)
         saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next.entries)
@@ -769,7 +920,7 @@ function RostersPage() {
             return
         }
 
-        const [updatedEntry] = buildAutoAssignedFullTimeRequestEntries([targetEntry], fullTimeRosterClasses)
+        const [updatedEntry] = buildAutoAssignedFullTimeRequestEntries([targetEntry], fullTimeRosterClasses, fullTimeSchematicClassKeys)
         if (!updatedEntry) {
             return
         }
@@ -800,6 +951,8 @@ function RostersPage() {
                     accommodated: false,
                     reason: 'conflicting_request',
                     reasonNote: '',
+                    schematicConflict: false,
+                    schematicConflictNote: '',
                 }
             })
             saveFullTimeRequestEntries(currentTeamId, fullTimeTermKey, next)
@@ -1052,6 +1205,11 @@ function RostersPage() {
                                                                     {entry.requiresManualReview ? (
                                                                         <p className="mt-1 text-sm font-semibold text-danger">
                                                                             Manual review: {entry.manualReviewNote || 'This match should be reviewed manually.'}
+                                                                        </p>
+                                                                    ) : null}
+                                                                    {entry.schematicConflict ? (
+                                                                        <p className="mt-1 text-sm font-semibold text-secondary">
+                                                                            {entry.schematicConflictNote || 'Saved schematic exists. Highlight only; roster instructor not changed.'}
                                                                         </p>
                                                                     ) : null}
                                                                     <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-secondary/60">

@@ -76,6 +76,31 @@ describe('course utils', () => {
     expect(courses[1].code).toBe('1002')
   })
 
+  it('supports highlight-only request metadata without locking courses', () => {
+    const courses = buildCourses(students, {
+      assignedInstructorByCode: new Map([['1001', 'Existing Coach']]),
+      requestInstructorByCode: new Map([['1001', 'Coach Amy'], ['1002', 'Coach Beth']]),
+      requestHighlightOnlyCodes: new Set(['1001']),
+    })
+
+    expect(courses[0]).toMatchObject({
+      code: '1001',
+      assignedInstructor: 'Existing Coach',
+      requestInstructor: 'Coach Amy',
+      requestHighlightOnly: true,
+      isRequested: true,
+      isLockedToInstructor: false,
+    })
+    expect(courses[1]).toMatchObject({
+      code: '1002',
+      assignedInstructor: 'Coach Beth',
+      requestInstructor: 'Coach Beth',
+      requestHighlightOnly: false,
+      isRequested: true,
+      isLockedToInstructor: true,
+    })
+  })
+
   it('builds time-compatible columns and compares overlaps correctly', () => {
     const courses = buildCourses(students)
     const columns = buildColumns(courses)
