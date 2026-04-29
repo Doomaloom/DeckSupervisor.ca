@@ -53,7 +53,10 @@ func NewClientFromRequest(r *http.Request) (*Client, error) {
 
 func NewServiceClientFromEnv() (*Client, error) {
 	supabaseURL := strings.TrimSpace(os.Getenv("SUPABASE_URL"))
-	serviceRoleKey := strings.TrimSpace(os.Getenv("SUPABASE_SERVICE_ROLE_KEY"))
+	serviceRoleKey := strings.TrimSpace(os.Getenv("SUPABASE_SERVICE_KEY"))
+	if serviceRoleKey == "" {
+		serviceRoleKey = strings.TrimSpace(os.Getenv("SUPABASE_SERVICE_KEY"))
+	}
 	if supabaseURL == "" || serviceRoleKey == "" {
 		return nil, errors.New("missing supabase service env config")
 	}
@@ -62,6 +65,7 @@ func NewServiceClientFromEnv() (*Client, error) {
 		supabaseURL: strings.TrimSuffix(supabaseURL, "/"),
 		apiKey:      serviceRoleKey,
 		httpClient:  &http.Client{Timeout: 15 * time.Second},
+		accessToken: serviceRoleKey,
 	}, nil
 }
 

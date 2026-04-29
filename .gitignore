@@ -18,6 +18,7 @@ frontend/.cache/
 
 backend/bin/
 backend/tmp/
+backend/.tmp/
 
 old_app/node_modules/
 old_app/.cache/

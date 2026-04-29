@@ -26,6 +26,7 @@ type ClassRoster struct {
 type RosterStudent struct {
 	Name       string `json:"name"`
 	Phone      string `json:"phone"`
+	Email      string `json:"email"`
 	Age        string `json:"age"`
 	Instructor string `json:"instructor"`
 	Level      string `json:"level"`
@@ -117,8 +118,6 @@ func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*Extr
 			continue
 		}
 
-		fmt.Printf("Processing row %d: courseCode=%s, dayValue=%s, timeRange=%s\n", i, courseCode, dayValue, timeRange)
-
 		start, end := splitTimeRange(timeRange)
 
 		startTime24, startDate := extractTimeAndDate(start)
@@ -146,6 +145,7 @@ func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*Extr
 		isWaitlist := isWaitingStatus(statusValue)
 
 		phone := strings.TrimSpace(row.Col("AttendeePhone").Elem(0).String())
+		email := rowString(row, "AttendeeEmail", "E-mail", "Email")
 		name := normalizeExtractedStudentName(strings.TrimSpace(row.Col("AttendeeName").Elem(0).String()))
 		age := strings.TrimSpace(row.Col("Age").Elem(0).String())
 		hasAttendee := name != ""
@@ -193,6 +193,7 @@ func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*Extr
 			existing.Class.Roster = append(existing.Class.Roster, RosterStudent{
 				Name:       name,
 				Phone:      phone,
+				Email:      email,
 				Age:        age,
 				Instructor: instructor,
 				Level:      serviceName,
@@ -315,6 +316,20 @@ func csvRowsToMaps(rows []csvRow) []map[string]interface{} {
 		out = append(out, next)
 	}
 	return out
+}
+
+func rowString(row dataframe.DataFrame, names ...string) string {
+	available := map[string]struct{}{}
+	for _, name := range row.Names() {
+		available[name] = struct{}{}
+	}
+	for _, name := range names {
+		if _, ok := available[name]; !ok {
+			continue
+		}
+		return strings.TrimSpace(row.Col(name).Elem(0).String())
+	}
+	return ""
 }
 
 func normalizeExtractedStudentName(name string) string {
