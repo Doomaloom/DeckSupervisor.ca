@@ -34,7 +34,7 @@ function TodoTab({
           value={todoText}
           onChange={event => setTodoText(event.target.value)}
           placeholder="Add a todo item"
-          disabled={!isSessionReady}
+          disabled={!isSessionReady || !isEditable}
         />
         <button
           type="button"
@@ -60,7 +60,7 @@ function TodoTab({
                   type="checkbox"
                   checked={item.done}
                   onChange={() => onToggleTodo(item.id)}
-                  disabled={!isSessionReady}
+                  disabled={!isSessionReady || !isEditable}
                 />
                 <div>
                   <p

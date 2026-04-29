@@ -8,6 +8,9 @@ import {
   createSessionNote,
   deleteSessionNote,
   fetchSessionNotes,
+  fetchTeamSessions,
+  fetchTeamTermSessionNotes,
+  fetchTeamTermSessionReports,
   updateSessionNote,
 } from '../../lib/serverApi'
 import { supabase } from '../../lib/supabaseClient'
@@ -22,6 +25,17 @@ import type { NoteItem, ReportItem, TabKey, TodoItem } from './types'
 import { normalizeReportData } from './utils/reportData'
 import { buildStorageKey, loadJson, saveJson } from './utils/storage'
 
+type FullTimeNotesScopeSummary = {
+  teamId: string
+  teamName: string
+  termLabel: string
+  sessionCount: number
+  rawNoteCount: number
+  rawReportCount: number
+  activeTabCount: number
+  locations: string[]
+}
+
 const createId = () =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
@@ -30,7 +44,7 @@ const createId = () =>
 function StaffNotesPage() {
   const { accountType, isGuest, user } = useAuth()
   const { sessionId: currentSessionId, session: currentSession, access } = useCurrentSession()
-  const { currentTeamId } = useCurrentTeam()
+  const { currentTeam, currentTeamId } = useCurrentTeam()
   const { currentTerm } = useCurrentTerm()
   const isFullTime = accountType === 'full_time'
   const sessionId = isGuest ? getCurrentSessionId() : currentSessionId
@@ -42,6 +56,8 @@ function StaffNotesPage() {
   const [noteText, setNoteText] = useState('')
   const [employeeName, setEmployeeName] = useState('')
   const [todoText, setTodoText] = useState('')
+  const [fullTimeScopeSummary, setFullTimeScopeSummary] =
+    useState<FullTimeNotesScopeSummary | null>(null)
 
   const currentSessionContext = useMemo(
     () =>
@@ -98,10 +114,7 @@ function StaffNotesPage() {
     [activeTab],
   )
 
-  const visibleTabs = useMemo(
-    () => (isFullTime ? tabs.filter(tab => tab.key !== 'todo') : tabs),
-    [isFullTime],
-  )
+  const visibleTabs = tabs
 
   useEffect(() => {
     if (visibleTabs.some(tab => tab.key === activeTab)) {
@@ -155,39 +168,36 @@ function StaffNotesPage() {
     }
 
     if (isFullTime) {
-      if (!supabase) {
-        setNotes([])
-        setTodos([])
-        clearReports()
-        return
-      }
       if (!currentTeamId || !currentTerm) {
         setNotes([])
         setTodos([])
+        setFullTimeScopeSummary(null)
         clearReports()
         return
       }
 
       let active = true
       const loadTeamTermNotes = async () => {
-        const [{ data: teamData, error: teamError }, { data: memberData, error: memberError }, { data: sessionData, error: sessionError }] = await Promise.all([
-          supabase.from('teams').select('owner_id').eq('id', currentTeamId).maybeSingle(),
-          supabase.from('team_members').select('user_id').eq('team_id', currentTeamId),
-          supabase
-            .from('sessions')
-            .select('id,session_day,session_season,session_year,start_date,location')
-            .eq('team_id', currentTeamId),
-        ])
-
-        if (!active) {
+        let sessionData: any[] = []
+        try {
+          const response = await fetchTeamSessions(
+            currentTeamId,
+            'id,session_day,session_season,session_year,start_date,location',
+          )
+          sessionData = response.sessions ?? []
+        } catch (error) {
+          if (!active) {
+            return
+          }
+          console.error('Failed to load full-time notes scope', error)
+          setNotes([])
+          setTodos([])
+          setFullTimeScopeSummary(null)
+          clearReports()
           return
         }
 
-        if (teamError || memberError || sessionError) {
-          console.error('Failed to load full-time notes scope', teamError ?? memberError ?? sessionError)
-          setNotes([])
-          setTodos([])
-          clearReports()
+        if (!active) {
           return
         }
 
@@ -200,6 +210,16 @@ function StaffNotesPage() {
         if (scopedSessions.length === 0) {
           setNotes([])
           setTodos([])
+          setFullTimeScopeSummary({
+            teamId: currentTeamId,
+            teamName: currentTeam?.name ?? 'Selected team',
+            termLabel: currentTerm.label,
+            sessionCount: 0,
+            rawNoteCount: 0,
+            rawReportCount: 0,
+            activeTabCount: 0,
+            locations: [],
+          })
           clearReports()
           return
         }
@@ -216,69 +236,80 @@ function StaffNotesPage() {
             ),
           ]),
         )
+        const fallbackSessionContext = `${currentTerm.label} | ${currentTeam?.name ?? 'Selected team'}`
         const sessionIds = scopedSessions.map(session => session.id)
+        const locations = Array.from(
+          new Set(
+            scopedSessions
+              .map(session => (session.location ?? '').trim())
+              .filter(Boolean),
+          ),
+        ).sort()
 
-        const allowedAuthorIds = new Set<string>()
-        const ownerId = teamData?.owner_id ?? ''
-        if (ownerId) {
-          allowedAuthorIds.add(ownerId)
+        const baseScopeSummary: FullTimeNotesScopeSummary = {
+          teamId: currentTeamId,
+          teamName: currentTeam?.name ?? 'Selected team',
+          termLabel: currentTerm.label,
+          sessionCount: scopedSessions.length,
+          rawNoteCount: 0,
+          rawReportCount: 0,
+          activeTabCount: 0,
+          locations,
         }
-        ;(memberData ?? []).forEach(row => {
-          const userId = (row.user_id ?? '').trim()
-          if (userId) {
-            allowedAuthorIds.add(userId)
-          }
-        })
 
         if (activeTab === 'report') {
-          const { data: reportData, error: reportError } = await supabase
-            .from('session_reports')
-            .select('id,session_id,created_by,title,report_data,created_at,updated_at')
-            .in('session_id', sessionIds)
-            .order('updated_at', { ascending: false })
+          console.info('Staff Notes full-time term report scope', {
+            currentTeamId,
+            currentTeamName: currentTeam?.name ?? null,
+            currentTerm,
+            scopedSessionIds: sessionIds,
+            query: {
+              table: 'session_reports',
+              team_id: currentTeamId,
+              session_season: currentTerm.season,
+              session_year: currentTerm.year,
+            },
+          })
+          let reportData: any[] = []
+          try {
+            const response = await fetchTeamTermSessionReports(currentTeamId, currentTerm.season, currentTerm.year)
+            reportData = response.reports ?? []
+          } catch (error) {
+            if (!active) {
+              return
+            }
+            console.error('Failed to load full-time reports', error)
+            setNotes([])
+            setTodos([])
+            setFullTimeScopeSummary({ ...baseScopeSummary, rawReportCount: 0, activeTabCount: 0 })
+            clearReports()
+            return
+          }
 
           if (!active) {
             return
           }
 
-          if (reportError) {
-            console.error('Failed to load full-time reports', reportError)
-            setNotes([])
-            setTodos([])
-            clearReports()
-            return
-          }
-
-          const teamReports = (reportData ?? []).filter(row => allowedAuthorIds.has(row.created_by))
+          const teamReports = reportData ?? []
+          setFullTimeScopeSummary({
+            ...baseScopeSummary,
+            rawReportCount: teamReports.length,
+            activeTabCount: teamReports.length,
+          })
           if (teamReports.length === 0) {
+            console.info('Full-time reports scope empty', {
+              currentTeamId,
+              currentTeamName: currentTeam?.name ?? null,
+              currentTerm,
+              scopedSessionIds: sessionIds,
+              scopedSessionCount: scopedSessions.length,
+              rawReportCount: reportData?.length ?? 0,
+            })
             setNotes([])
             setTodos([])
             clearReports()
             return
           }
-
-          const authorIds = Array.from(new Set(teamReports.map(row => row.created_by).filter(Boolean)))
-          const { data: authorProfiles, error: authorError } = authorIds.length
-            ? await supabase
-                .from('profiles')
-                .select('id,first_name,last_name,email')
-                .in('id', authorIds)
-            : { data: [], error: null }
-
-          if (!active) {
-            return
-          }
-
-          if (authorError) {
-            console.error('Failed to load report author profiles', authorError)
-          }
-
-          const authorNameById = new Map(
-            (authorProfiles ?? []).map(profile => {
-              const fullName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
-              return [profile.id, fullName || profile.email || 'Unknown author']
-            }),
-          )
 
           const mappedReports: ReportItem[] = teamReports.map(row => ({
             id: row.id,
@@ -287,8 +318,7 @@ function StaffNotesPage() {
             title: row.title ?? 'Untitled report',
             reportData: normalizeReportData(row.report_data, []),
             createdBy: row.created_by,
-            authorName: authorNameById.get(row.created_by) ?? 'Unknown author',
-            sessionContext: sessionMap.get(row.session_id) ?? undefined,
+            sessionContext: sessionMap.get(row.session_id) ?? fallbackSessionContext,
           }))
 
           setLoadedReports(mappedReports)
@@ -297,55 +327,75 @@ function StaffNotesPage() {
           return
         }
 
-        const { data: noteData, error: noteError } = await supabase
-          .from('session_notes')
-          .select('id,session_id,created_by,created_at,note_type,text,employee_name,done')
-          .in('session_id', sessionIds)
-          .order('created_at', { ascending: false })
+        console.info('Staff Notes full-time term note scope', {
+          currentTeamId,
+          currentTeamName: currentTeam?.name ?? null,
+          currentTerm,
+          scopedSessionIds: sessionIds,
+          query: {
+            table: 'session_notes',
+            team_id: currentTeamId,
+            session_season: currentTerm.season,
+            session_year: currentTerm.year,
+          },
+        })
+        let noteData: any[] = []
+        try {
+          const response = await fetchTeamTermSessionNotes(currentTeamId, currentTerm.season, currentTerm.year)
+          noteData = response.notes ?? []
+        } catch (error) {
+          if (!active) {
+            return
+          }
+          console.error('Failed to load full-time team notes', error)
+          setNotes([])
+          setTodos([])
+          setFullTimeScopeSummary({ ...baseScopeSummary, rawNoteCount: 0, activeTabCount: 0 })
+          clearReports()
+          return
+        }
 
         if (!active) {
           return
         }
 
-        if (noteError) {
-          console.error('Failed to load full-time team notes', noteError)
-          setNotes([])
-          setTodos([])
-          clearReports()
-          return
-        }
-
-        const teamNotes = (noteData ?? []).filter(row => allowedAuthorIds.has(row.created_by))
+        const teamNotes = noteData ?? []
         const filteredRows = teamNotes.filter(row => row.note_type === activeTab)
+        setFullTimeScopeSummary({
+          ...baseScopeSummary,
+          rawNoteCount: teamNotes.length,
+          activeTabCount: filteredRows.length,
+        })
         if (filteredRows.length === 0) {
+          console.info('Full-time notes scope empty', {
+            currentTeamId,
+            currentTeamName: currentTeam?.name ?? null,
+            currentTerm,
+            activeTab,
+            scopedSessionIds: sessionIds,
+            scopedSessionCount: scopedSessions.length,
+            rawNoteCount: noteData?.length ?? 0,
+            filteredTabCount: filteredRows.length,
+          })
           setNotes([])
           setTodos([])
           clearReports()
           return
         }
 
-        const authorIds = Array.from(new Set(filteredRows.map(row => row.created_by).filter(Boolean)))
-        const { data: authorProfiles, error: authorError } = authorIds.length
-          ? await supabase
-              .from('profiles')
-              .select('id,first_name,last_name,email')
-              .in('id', authorIds)
-          : { data: [], error: null }
-
-        if (!active) {
+        if (activeTab === 'todo') {
+          setTodos(
+            filteredRows.map(row => ({
+              id: row.id,
+              createdAt: row.created_at,
+              text: row.text,
+              done: row.done ?? false,
+            })),
+          )
+          setNotes([])
+          clearReports()
           return
         }
-
-        if (authorError) {
-          console.error('Failed to load note author profiles', authorError)
-        }
-
-        const authorNameById = new Map(
-          (authorProfiles ?? []).map(profile => {
-            const fullName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
-            return [profile.id, fullName || profile.email || 'Unknown author']
-          }),
-        )
 
         setNotes(
           filteredRows.map(row => ({
@@ -353,8 +403,7 @@ function StaffNotesPage() {
             createdAt: row.created_at,
             text: row.text,
             employeeName: row.employee_name ?? undefined,
-            authorName: authorNameById.get(row.created_by) ?? 'Unknown author',
-            sessionContext: sessionMap.get(row.session_id) ?? undefined,
+            sessionContext: sessionMap.get(row.session_id) ?? fallbackSessionContext,
           })),
         )
         setTodos([])
@@ -465,6 +514,7 @@ function StaffNotesPage() {
     activeTab,
     clearReports,
     currentTeamId,
+    currentTeam?.name,
     currentTerm,
     currentSessionContext,
     instructorNames,
@@ -473,6 +523,13 @@ function StaffNotesPage() {
     sessionId,
     setLoadedReports,
   ])
+
+  useEffect(() => {
+    if (isFullTime) {
+      return
+    }
+    console.info('Staff Notes active session_id', { sessionId })
+  }, [isFullTime, sessionId])
 
   useEffect(() => {
     if (!employeeName) {
@@ -599,6 +656,9 @@ function StaffNotesPage() {
     if (!sessionId) {
       return
     }
+    if (!isEditable) {
+      return
+    }
     if (isGuest) {
       const next = todos.map(item => (item.id === id ? { ...item, done: !item.done } : item))
       setTodos(next)
@@ -631,15 +691,43 @@ function StaffNotesPage() {
     !isFullTime && Boolean(user?.id) && (access.mode === 'owner' || access.mode === 'shared')
   const isEditable = isGuest || canWriteDbNotes
 
+  const activeTabLabel = activeConfig.label
+  const fullTimeEmptyLabel = (() => {
+    if (!currentTeamId) {
+      return 'Select DeckSupervisor Demo Aquatics on Home to view demo notes.'
+    }
+    if (!currentTerm) {
+      return 'Select Spring 2026 on Home to view demo notes for the source CSV.'
+    }
+    if (fullTimeScopeSummary?.sessionCount === 0) {
+      return `No sessions found for this team in ${currentTerm.label}.`
+    }
+    if (fullTimeScopeSummary && fullTimeScopeSummary.activeTabCount === 0) {
+      if (activeConfig.type === 'report') {
+        return `${fullTimeScopeSummary.sessionCount} sessions found for ${fullTimeScopeSummary.termLabel}, but no reports were returned for team/term scope.`
+      }
+      if (fullTimeScopeSummary.rawNoteCount === 0) {
+        return `${fullTimeScopeSummary.sessionCount} sessions found for ${fullTimeScopeSummary.termLabel}, but no notes were returned for team/term scope.`
+      }
+      const noteWord = activeTab === 'todo' ? 'todo items' : activeTabLabel
+      return `${fullTimeScopeSummary.rawNoteCount} notes loaded for ${fullTimeScopeSummary.termLabel}, but no ${noteWord} were found.`
+    }
+    return activeConfig.type === 'report'
+      ? 'No team member reports found for the selected term.'
+      : 'No team member notes found for this tab in the selected term.'
+  })()
+
   const listEmptyLabel =
     activeConfig.type === 'todo'
-      ? 'No todo items yet.'
+      ? isFullTime
+        ? fullTimeEmptyLabel
+        : 'No todo items yet.'
       : activeConfig.type === 'report'
       ? isFullTime
-        ? 'No team member reports found for the selected term.'
+        ? fullTimeEmptyLabel
         : 'No reports yet.'
       : isFullTime
-      ? 'No team member notes found for this tab in the selected term.'
+      ? fullTimeEmptyLabel
       : 'No notes yet.'
   const isAddNoteDisabled = !isSessionReady || noteText.trim() === '' || !isEditable
   const isAddTodoDisabled = !isSessionReady || todoText.trim() === '' || !isEditable
@@ -658,6 +746,30 @@ function StaffNotesPage() {
       ) : null}
 
       <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+        {isFullTime ? (
+          <div className="mb-5 rounded-2xl border border-secondary/20 bg-bg p-4 text-sm text-secondary">
+            <p className="font-semibold">
+              Viewing {fullTimeScopeSummary?.teamName ?? currentTeam?.name ?? 'selected team'} |{' '}
+              {fullTimeScopeSummary?.termLabel ?? currentTerm?.label ?? 'No term selected'} |{' '}
+              {fullTimeScopeSummary?.sessionCount ?? 0} sessions
+              {fullTimeScopeSummary?.locations.length
+                ? ` | ${fullTimeScopeSummary.locations.join(', ')}`
+                : ''}
+            </p>
+            {fullTimeScopeSummary ? (
+              <p className="mt-1 text-secondary/70">
+                {activeConfig.type === 'report'
+                  ? `${fullTimeScopeSummary.rawReportCount} reports loaded for ${fullTimeScopeSummary.teamName} | ${fullTimeScopeSummary.termLabel}.`
+                  : `${fullTimeScopeSummary.rawNoteCount} notes loaded for ${fullTimeScopeSummary.teamName} | ${fullTimeScopeSummary.termLabel}. ${activeTabLabel}: ${fullTimeScopeSummary.activeTabCount}.`}
+              </p>
+            ) : (
+              <p className="mt-1 text-secondary/70">
+                Select a team and term on Home to load full-time notes.
+              </p>
+            )}
+          </div>
+        ) : null}
+
         <TabBar visibleTabs={visibleTabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
         <div className="mt-6">

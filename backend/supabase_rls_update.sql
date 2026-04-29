@@ -331,6 +331,85 @@ drop policy if exists "Session reports create" on session_reports;
 drop policy if exists "Session reports update" on session_reports;
 drop policy if exists "Session reports delete" on session_reports;
 
+alter table session_notes add column if not exists team_id uuid references teams(id) on delete cascade;
+alter table session_notes add column if not exists session_season text;
+alter table session_notes add column if not exists session_year integer;
+alter table session_reports add column if not exists team_id uuid references teams(id) on delete cascade;
+alter table session_reports add column if not exists session_season text;
+alter table session_reports add column if not exists session_year integer;
+
+create index if not exists session_notes_team_term_idx
+  on session_notes(team_id, lower(session_season), session_year, created_at desc);
+create index if not exists session_reports_team_term_idx
+  on session_reports(team_id, lower(session_season), session_year, updated_at desc);
+
+update session_notes n
+set
+  team_id = s.team_id,
+  session_season = s.session_season,
+  session_year = s.session_year
+from sessions s
+where n.session_id = s.id
+  and (
+    n.team_id is distinct from s.team_id
+    or n.session_season is distinct from s.session_season
+    or n.session_year is distinct from s.session_year
+  );
+
+update session_reports r
+set
+  team_id = s.team_id,
+  session_season = s.session_season,
+  session_year = s.session_year
+from sessions s
+where r.session_id = s.id
+  and (
+    r.team_id is distinct from s.team_id
+    or r.session_season is distinct from s.session_season
+    or r.session_year is distinct from s.session_year
+  );
+
+create or replace function populate_session_note_report_scope()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+set row_security = off
+as $$
+declare
+  session_row record;
+begin
+  select team_id, session_season, session_year
+  into session_row
+  from sessions
+  where id = new.session_id;
+
+  if not found then
+    raise exception 'session % not found', new.session_id;
+  end if;
+
+  new.team_id := session_row.team_id;
+  new.session_season := session_row.session_season;
+  new.session_year := session_row.session_year;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists populate_session_notes_scope on session_notes;
+create trigger populate_session_notes_scope
+before insert or update of session_id
+on session_notes
+for each row
+execute function populate_session_note_report_scope();
+
+drop trigger if exists populate_session_reports_scope on session_reports;
+create trigger populate_session_reports_scope
+before insert or update of session_id
+on session_reports
+for each row
+execute function populate_session_note_report_scope();
+
 create policy "Session notes read"
   on session_notes for select
   using (can_read_session(session_id, auth.uid()));

@@ -184,6 +184,26 @@ export function fetchTeamSessions(teamId: string, select?: string) {
   return request<{ sessions: any[] }>(`/api/teams/${encodeURIComponent(teamId)}/sessions?${params.toString()}`)
 }
 
+export function fetchTeamTermSessionNotes(teamId: string, season: string, year: number) {
+  const params = new URLSearchParams({
+    season,
+    year: String(year),
+  })
+  return request<{ notes: any[] }>(
+    `/api/teams/${encodeURIComponent(teamId)}/session-notes?${params.toString()}`,
+  )
+}
+
+export function fetchTeamTermSessionReports(teamId: string, season: string, year: number) {
+  const params = new URLSearchParams({
+    season,
+    year: String(year),
+  })
+  return request<{ reports: any[] }>(
+    `/api/teams/${encodeURIComponent(teamId)}/session-reports?${params.toString()}`,
+  )
+}
+
 export async function fetchCsvSessionCandidates(
   file: File,
   scope?: { teamId?: string; termSeason?: string; termYear?: number }

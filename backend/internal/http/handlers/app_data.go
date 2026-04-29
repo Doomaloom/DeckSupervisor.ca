@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,12 +69,30 @@ type shareRow struct {
 }
 
 type sessionNoteRow struct {
-	ID           string  `json:"id"`
-	CreatedAt    string  `json:"created_at"`
-	NoteType     string  `json:"note_type"`
-	Text         string  `json:"text"`
-	EmployeeName *string `json:"employee_name"`
-	Done         *bool   `json:"done"`
+	ID            string  `json:"id"`
+	SessionID     *string `json:"session_id,omitempty"`
+	TeamID        *string `json:"team_id,omitempty"`
+	SessionSeason *string `json:"session_season,omitempty"`
+	SessionYear   *int    `json:"session_year,omitempty"`
+	CreatedBy     *string `json:"created_by,omitempty"`
+	CreatedAt     string  `json:"created_at"`
+	NoteType      string  `json:"note_type"`
+	Text          string  `json:"text"`
+	EmployeeName  *string `json:"employee_name"`
+	Done          *bool   `json:"done"`
+}
+
+type sessionReportRow struct {
+	ID            string         `json:"id"`
+	SessionID     *string        `json:"session_id,omitempty"`
+	TeamID        *string        `json:"team_id,omitempty"`
+	SessionSeason *string        `json:"session_season,omitempty"`
+	SessionYear   *int           `json:"session_year,omitempty"`
+	CreatedBy     string         `json:"created_by"`
+	Title         string         `json:"title"`
+	ReportData    map[string]any `json:"report_data"`
+	CreatedAt     string         `json:"created_at"`
+	UpdatedAt     string         `json:"updated_at"`
 }
 
 type reportCardRow struct {
@@ -508,7 +527,7 @@ func SessionNotes(w http.ResponseWriter, r *http.Request) {
 	}
 	query := url.Values{}
 	query.Set("session_id", "eq."+sessionID)
-	query.Set("select", "id,created_at,note_type,text,employee_name,done")
+	query.Set("select", "id,session_id,team_id,session_season,session_year,created_at,note_type,text,employee_name,done")
 	query.Set("order", "created_at.desc")
 	var rows []sessionNoteRow
 	if err := client.Get(r.Context(), "/rest/v1/session_notes", query, &rows); err != nil {
@@ -516,6 +535,68 @@ func SessionNotes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, map[string]any{"notes": rows})
+}
+
+func TeamTermSessionNotes(w http.ResponseWriter, r *http.Request) {
+	client, err := supabasesvc.NewClientFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	season, year, ok := parseTermQuery(r)
+	if !ok {
+		http.Error(w, "Missing or invalid season/year", http.StatusBadRequest)
+		return
+	}
+	teamID := strings.TrimSpace(mux.Vars(r)["id"])
+	if teamID == "" {
+		http.Error(w, "Missing team id", http.StatusBadRequest)
+		return
+	}
+
+	query := url.Values{}
+	query.Set("team_id", "eq."+teamID)
+	query.Set("session_season", "ilike."+season)
+	query.Set("session_year", "eq."+strconv.Itoa(year))
+	query.Set("select", "id,session_id,team_id,session_season,session_year,created_by,created_at,note_type,text,employee_name,done")
+	query.Set("order", "created_at.desc")
+	var rows []sessionNoteRow
+	if err := client.Get(r.Context(), "/rest/v1/session_notes", query, &rows); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, map[string]any{"notes": rows})
+}
+
+func TeamTermSessionReports(w http.ResponseWriter, r *http.Request) {
+	client, err := supabasesvc.NewClientFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	season, year, ok := parseTermQuery(r)
+	if !ok {
+		http.Error(w, "Missing or invalid season/year", http.StatusBadRequest)
+		return
+	}
+	teamID := strings.TrimSpace(mux.Vars(r)["id"])
+	if teamID == "" {
+		http.Error(w, "Missing team id", http.StatusBadRequest)
+		return
+	}
+
+	query := url.Values{}
+	query.Set("team_id", "eq."+teamID)
+	query.Set("session_season", "ilike."+season)
+	query.Set("session_year", "eq."+strconv.Itoa(year))
+	query.Set("select", "id,session_id,team_id,session_season,session_year,created_by,title,report_data,created_at,updated_at")
+	query.Set("order", "updated_at.desc")
+	var rows []sessionReportRow
+	if err := client.Get(r.Context(), "/rest/v1/session_reports", query, &rows); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, map[string]any{"reports": rows})
 }
 
 func CreateSessionNote(w http.ResponseWriter, r *http.Request) {
@@ -574,6 +655,18 @@ func DeleteSessionNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func parseTermQuery(r *http.Request) (string, int, bool) {
+	season := strings.TrimSpace(r.URL.Query().Get("season"))
+	if season == "" {
+		return "", 0, false
+	}
+	year, err := strconv.Atoi(strings.TrimSpace(r.URL.Query().Get("year")))
+	if err != nil || year <= 0 {
+		return "", 0, false
+	}
+	return season, year, true
 }
 
 func ReportCardTotals(w http.ResponseWriter, r *http.Request) {

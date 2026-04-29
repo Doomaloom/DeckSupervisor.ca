@@ -56,6 +56,8 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/session-notes", handlers.CreateSessionNote).Methods("POST")
 	r.HandleFunc("/api/session-notes/{id}", handlers.UpdateSessionNote).Methods("PATCH")
 	r.HandleFunc("/api/session-notes/{id}", handlers.DeleteSessionNote).Methods("DELETE")
+	r.HandleFunc("/api/teams/{id}/session-notes", handlers.TeamTermSessionNotes).Methods("GET")
+	r.HandleFunc("/api/teams/{id}/session-reports", handlers.TeamTermSessionReports).Methods("GET")
 
 	// Report cards and schematics
 	r.HandleFunc("/api/report-cards/totals", handlers.ReportCardTotals).Methods("GET")

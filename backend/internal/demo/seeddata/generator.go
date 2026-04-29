@@ -322,7 +322,7 @@ func GenerateFromCSV(r io.Reader, opts SourceCSVOptions) (Dataset, error) {
 
 func demoAccounts() []Account {
 	return []Account{
-		{Email: "demo.fulltime@decksupervisor.local", Password: DefaultPass, FirstName: "Alex", LastName: "Rivera", Location: "Bayside Community Pool", AccountType: "full_time"},
+		{Email: "demo.fulltime@decksupervisor.local", Password: DefaultPass, FirstName: "Frank", LastName: "Kocun", Location: "Bayside Community Pool", AccountType: "full_time"},
 		{Email: "demo.jamie@decksupervisor.local", Password: DefaultPass, FirstName: "Jamie", LastName: "Chen", Location: "Bayside Community Pool", AccountType: "part_time"},
 		{Email: "demo.morgan@decksupervisor.local", Password: DefaultPass, FirstName: "Morgan", LastName: "Patel", Location: "Hillcrest Aquatic Centre", AccountType: "part_time"},
 		{Email: "demo.taylor@decksupervisor.local", Password: DefaultPass, FirstName: "Taylor", LastName: "Brooks", Location: "Bayside Community Pool", AccountType: "part_time"},
@@ -796,68 +796,175 @@ func durationMinutes(start24 string, end24 string) int {
 }
 
 func buildNotes(sessions []Session) []Note {
-	selected := firstSessions(sessions, 3)
-	notes := []Note(nil)
-	types := []string{"general", "recognition", "feedback", "coaching", "todo", "todo"}
-	texts := []string{
-		"Demo note: confirm extra flutter boards are on deck before the first lesson block.",
-		"Demo recognition: instructor handled a nervous swimmer with a calm entry progression.",
-		"Demo feedback: parent asked about moving from Splash 1 to Splash 2 next term.",
-		"Demo coaching: review tighter transitions between 30-minute lessons.",
-		"Demo todo: follow up with the waitlisted family for the 4:30 class.",
-		"Demo todo: print spare attendance sheets for coverage staff.",
-	}
-	for index, session := range selected {
-		for noteIndex, noteType := range types {
-			notes = append(notes, Note{
+	notes := make([]Note, 0, len(sessions)*6)
+	for sessionIndex, session := range sessions {
+		staff := sessionStaff(session)
+		levels := sessionLevelExamples(session, 2)
+		levelOne := levels[0]
+		levelTwo := levels[minInt(1, len(levels)-1)]
+		primary := staffAt(staff, sessionIndex)
+		secondary := staffAt(staff, sessionIndex+1)
+		third := staffAt(staff, sessionIndex+2)
+		timeRange := formatTimeRange(session.Start24, session.End24)
+		notes = append(notes,
+			Note{
+				SessionKey: session.Key,
+				Type:       "general",
+				Text:       fmt.Sprintf("%s %s setup note: keep extra kickboards ready at %s for the %s block.", session.Day, session.Location, timeRange, levelOne),
+			},
+			Note{
 				SessionKey:   session.Key,
-				Type:         noteType,
-				Text:         texts[noteIndex],
-				EmployeeName: session.Instructors[noteIndex%len(session.Instructors)],
-				Done:         noteType == "todo" && noteIndex%2 == 1,
-			})
-		}
-		_ = index
+				Type:         "recognition",
+				Text:         fmt.Sprintf("%s gave clear, calm instructions during %s at %s and helped a nervous swimmer rejoin the group.", primary, levelOne, session.Location),
+				EmployeeName: primary,
+			},
+			Note{
+				SessionKey:   session.Key,
+				Type:         "feedback",
+				Text:         fmt.Sprintf("%s should tighten the handoff between %s and %s during the %s %s shift.", secondary, levelOne, levelTwo, session.Day, timeRange),
+				EmployeeName: secondary,
+			},
+			Note{
+				SessionKey:   session.Key,
+				Type:         "coaching",
+				Text:         fmt.Sprintf("Coach %s on using one concise correction before each repeat in %s rather than giving several changes at once.", third, levelOne),
+				EmployeeName: third,
+			},
+			Note{
+				SessionKey: session.Key,
+				Type:       "todo",
+				Text:       fmt.Sprintf("Follow up with the family asking about moving from %s into the next level at %s.", levelOne, session.Location),
+				Done:       false,
+			},
+			Note{
+				SessionKey: session.Key,
+				Type:       "todo",
+				Text:       fmt.Sprintf("Printed spare attendance sheets for %s %s.", session.Location, session.Day),
+				Done:       true,
+			},
+		)
 	}
 	return notes
 }
 
 func buildReports(sessions []Session) []Report {
-	var reports []Report
-	for _, session := range firstSessions(sessions, 2) {
-		instructor := "Jamie Chen"
-		if len(session.Instructors) > 0 {
-			instructor = session.Instructors[0]
-		}
+	reports := make([]Report, 0, len(sessions))
+	for sessionIndex, session := range sessions {
+		staff := sessionStaff(session)
+		levels := sessionLevelExamples(session, 2)
+		levelOne := levels[0]
+		levelTwo := levels[minInt(1, len(levels)-1)]
+		primary := staffAt(staff, sessionIndex)
+		secondary := staffAt(staff, sessionIndex+1)
+		third := staffAt(staff, sessionIndex+2)
+		cover := staffAt(staff, sessionIndex+3)
+		timeRange := formatTimeRange(session.Start24, session.End24)
 		reports = append(reports, Report{
 			SessionKey: session.Key,
-			Title:      "Demo operations report - " + session.Day + " " + session.Location,
+			Title:      fmt.Sprintf("Demo operations report - %s %s %s", session.Day, session.Location, timeRange),
 			Data: map[string]any{
 				"staff": map[string]any{
-					"performance":      []map[string]string{{"instructor": instructor, "text": "Strong class control and consistent parent communication."}},
-					"strengthWeakness": []map[string]string{{"instructor": instructor, "text": "strengths:Clear demonstrations|Positive corrections|weaknesses:Needs faster equipment reset"}},
-					"successionPlans":  []map[string]string{{"instructor": instructor, "text": "Ready to shadow private lessons next week."}},
-					"instructorCovers": []map[string]string{{"instructor": instructor, "coveredBy": "Sam Nguyen", "details": "Covered the final 30-minute block during guard rotation."}},
+					"performance": []map[string]string{
+						{"instructor": primary, "text": fmt.Sprintf("Strong class control in %s and steady parent communication at %s.", levelOne, session.Location)},
+						{"instructor": secondary, "text": fmt.Sprintf("Kept the %s lane moving and used clear demonstrations during %s.", levelTwo, timeRange)},
+					},
+					"strengthWeakness": []map[string]string{
+						{"instructor": primary, "text": "strengths:Clear demonstrations|Positive corrections|weaknesses:Needs faster equipment reset"},
+						{"instructor": secondary, "text": "strengths:Good parent handoff|Confident lane presence|weaknesses:Needs tighter transition timing"},
+					},
+					"successionPlans":  []map[string]string{{"instructor": third, "text": fmt.Sprintf("Ready to shadow %s and support a small group without direct prompting.", levelOne)}},
+					"instructorCovers": []map[string]string{{"instructor": secondary, "coveredBy": cover, "details": fmt.Sprintf("Covered the final part of the %s shift during deck rotation.", session.Day)}},
 				},
 				"lessonStructure": map[string]any{
-					"challengingTimes": []map[string]string{{"time": formatTimeRange(session.Start24, session.End24), "lessons": "Overlapping preschool and Splash classes", "description": "High parent traffic at transition; use one check-in point."}},
-					"newClassLayouts":  []map[string]string{{"level": "Splash 4", "description": "Split deep-end skills into a second lane for pacing."}},
+					"challengingTimes": []map[string]string{{"time": timeRange, "lessons": levelOne + " / " + levelTwo, "description": fmt.Sprintf("High parent traffic at %s; keep one check-in point and direct swimmers to their lane signs.", session.Location)}},
+					"newClassLayouts":  []map[string]string{{"level": levelOne, "description": fmt.Sprintf("Keep %s closest to the shallow entry and use the adjacent lane for skill progressions.", levelOne)}},
 				},
 				"safetyFacility": map[string]any{
-					"safetyConcerns":       []map[string]string{{"concernType": "equipment", "description": "One kickboard bin should be moved away from the wet walkway."}},
-					"maintenanceIssues":    []map[string]string{{"item": "Lane rope", "description": "Tension needs adjustment before the next block."}},
-					"poolDeckWorksWell":    []map[string]string{{"item": "Entry table", "description": "Single table kept parents out of the lesson lanes."}},
-					"poolDeckImprovements": []map[string]string{{"item": "Signage", "description": "Add level signs near the shallow end."}},
+					"safetyConcerns":       []map[string]string{{"concernType": "supervision", "description": fmt.Sprintf("Keep one instructor watching the transition space between %s and %s.", levelOne, levelTwo)}},
+					"maintenanceIssues":    []map[string]string{{"item": "Lane rope", "description": fmt.Sprintf("Tension needs adjustment at %s before the next %s block.", session.Location, session.Day)}},
+					"poolDeckWorksWell":    []map[string]string{{"item": "Check-in table", "description": "Single table kept parents out of lesson lanes and reduced deck traffic."}},
+					"poolDeckImprovements": []map[string]string{{"item": "Level signs", "description": fmt.Sprintf("Add clearer %s and %s signs near the first lane.", levelOne, levelTwo)}},
 				},
-				"parentCustomerFeedback": []map[string]string{{"feedbackType": "praise", "description": "Parent complimented the clear progress update after class."}},
+				"parentCustomerFeedback": []map[string]string{
+					{"feedbackType": "praise", "description": fmt.Sprintf("Parent complimented %s for a clear progress update after %s.", primary, levelOne)},
+					{"feedbackType": "question", "description": fmt.Sprintf("Family asked whether their swimmer should move from %s into the next level.", levelOne)},
+				},
 				"projectsInitiatives": map[string]any{
-					"adminWork":   []map[string]string{{"work": "Report cards", "description": "Demo totals synced by instructor."}},
-					"initiatives": []map[string]string{{"title": "Deck traffic pilot", "brief": "Trial one-way parent flow during weekend blocks."}},
+					"adminWork":   []map[string]string{{"work": "Report cards", "description": fmt.Sprintf("Review report card counts for %s instructors after the %s session.", session.Location, session.Day)}},
+					"initiatives": []map[string]string{{"title": "Deck flow pilot", "brief": fmt.Sprintf("Trial one-way parent flow during %s at %s.", timeRange, session.Location)}},
 				},
 			},
 		})
 	}
 	return reports
+}
+
+func sessionStaff(session Session) []string {
+	seen := map[string]struct{}{}
+	var staff []string
+	for _, instructor := range session.Instructors {
+		name := strings.TrimSpace(instructor)
+		if name == "" {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		staff = append(staff, name)
+	}
+	sort.Strings(staff)
+	if len(staff) == 0 {
+		return demoStaff()
+	}
+	return staff
+}
+
+func staffAt(staff []string, index int) string {
+	if len(staff) == 0 {
+		staff = demoStaff()
+	}
+	return staff[index%len(staff)]
+}
+
+func demoStaff() []string {
+	return []string{"Jamie Chen", "Morgan Patel", "Taylor Brooks", "Sam Nguyen"}
+}
+
+func sessionLevelExamples(session Session, count int) []string {
+	classes := append([]Class(nil), session.Classes...)
+	sort.Slice(classes, func(i, j int) bool {
+		if classes[i].Start24 != classes[j].Start24 {
+			return classes[i].Start24 < classes[j].Start24
+		}
+		if classes[i].End24 != classes[j].End24 {
+			return classes[i].End24 < classes[j].End24
+		}
+		return classes[i].EventID < classes[j].EventID
+	})
+	seen := map[string]struct{}{}
+	var levels []string
+	for _, class := range classes {
+		level := strings.TrimSpace(class.ServiceName)
+		if level == "" {
+			continue
+		}
+		if _, ok := seen[level]; ok {
+			continue
+		}
+		seen[level] = struct{}{}
+		levels = append(levels, level)
+		if len(levels) >= count {
+			break
+		}
+	}
+	if len(levels) == 0 {
+		return []string{"Splash 1", "Little Splash 1"}
+	}
+	for len(levels) < count {
+		levels = append(levels, levels[len(levels)-1])
+	}
+	return levels
 }
 
 func buildReportCards(sessions []Session) []ReportCardTotal {
@@ -1078,6 +1185,19 @@ func maxInt(values ...int) int {
 		}
 	}
 	return max
+}
+
+func minInt(values ...int) int {
+	if len(values) == 0 {
+		return 0
+	}
+	min := values[0]
+	for _, value := range values[1:] {
+		if value < min {
+			min = value
+		}
+	}
+	return min
 }
 
 func normalizeKey(value string) string {

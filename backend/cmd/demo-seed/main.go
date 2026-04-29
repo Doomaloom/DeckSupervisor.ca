@@ -70,6 +70,9 @@ func run(ctx context.Context, opts options) error {
 	for index := range dataset.Accounts {
 		dataset.Accounts[index].Password = opts.password
 	}
+	if err := validateDatasetReferences(dataset); err != nil {
+		return err
+	}
 
 	if err := writeCSVs(opts.output, dataset); err != nil {
 		return err
@@ -133,13 +136,60 @@ func writeCSVs(output string, dataset seeddata.Dataset) error {
 }
 
 func printDryRun(dataset seeddata.Dataset) {
-	fmt.Printf("Dry run: would create %d auth users, 1 team, %d sessions, %d classes, %d request assignments. Single-day CSV: %s.\n",
+	fmt.Printf("Dry run: would create %d auth users, 1 team, %d sessions, %d classes, %d request assignments, %d notes, %d reports, %d report card rows. Terms: %s. Locations: %s. Single-day CSV: %s.\n",
 		len(dataset.Accounts),
 		len(dataset.Sessions),
 		len(dataset.Classes),
 		len(dataset.RequestAssignments),
+		len(dataset.Notes),
+		len(dataset.Reports),
+		len(dataset.ReportCards),
+		strings.Join(datasetTerms(dataset), ", "),
+		strings.Join(dataset.Locations, ", "),
 		dataset.SelectedSingleDay,
 	)
+}
+
+func validateDatasetReferences(dataset seeddata.Dataset) error {
+	sessionKeys := make(map[string]struct{}, len(dataset.Sessions))
+	for _, session := range dataset.Sessions {
+		sessionKeys[session.Key] = struct{}{}
+	}
+	for _, note := range dataset.Notes {
+		if _, ok := sessionKeys[note.SessionKey]; !ok {
+			return fmt.Errorf("demo note references unknown session key %q", note.SessionKey)
+		}
+	}
+	for _, report := range dataset.Reports {
+		if _, ok := sessionKeys[report.SessionKey]; !ok {
+			return fmt.Errorf("demo report references unknown session key %q", report.SessionKey)
+		}
+	}
+	for _, card := range dataset.ReportCards {
+		if strings.TrimSpace(card.SessionKey) == "" {
+			continue
+		}
+		if _, ok := sessionKeys[card.SessionKey]; !ok {
+			return fmt.Errorf("demo report card references unknown session key %q", card.SessionKey)
+		}
+	}
+	return nil
+}
+
+func datasetTerms(dataset seeddata.Dataset) []string {
+	seen := map[string]struct{}{}
+	for _, session := range dataset.Sessions {
+		seen[termLabel(session.SessionSeason, session.SessionYear)] = struct{}{}
+	}
+	terms := make([]string, 0, len(seen))
+	for term := range seen {
+		terms = append(terms, term)
+	}
+	sort.Strings(terms)
+	if len(terms) == 0 {
+		return []string{"none"}
+	}
+	return terms
 }
 
 func loadDataset(opts options) (seeddata.Dataset, error) {

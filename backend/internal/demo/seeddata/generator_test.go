@@ -226,6 +226,141 @@ func TestReportCardsReflectBookedStudents(t *testing.T) {
 	}
 }
 
+func TestNotesReferenceGeneratedSessions(t *testing.T) {
+	for name, dataset := range map[string]Dataset{
+		"synthetic": Generate(),
+		"source":    mustGenerateFromCSV(t, sourceCSVFixture()),
+	} {
+		t.Run(name, func(t *testing.T) {
+			sessionKeys := sessionKeySet(dataset.Sessions)
+			for _, note := range dataset.Notes {
+				if !sessionKeys[note.SessionKey] {
+					t.Fatalf("note references unknown session key %q", note.SessionKey)
+				}
+			}
+			for _, report := range dataset.Reports {
+				if !sessionKeys[report.SessionKey] {
+					t.Fatalf("report references unknown session key %q", report.SessionKey)
+				}
+			}
+		})
+	}
+}
+
+func TestSourceCSVNotesCoverEveryParsedSession(t *testing.T) {
+	dataset := mustGenerateFromCSV(t, sourceCSVFixture())
+	bySession := map[string]map[string]int{}
+	for _, note := range dataset.Notes {
+		if bySession[note.SessionKey] == nil {
+			bySession[note.SessionKey] = map[string]int{}
+		}
+		bySession[note.SessionKey][note.Type]++
+	}
+	for _, session := range dataset.Sessions {
+		counts := bySession[session.Key]
+		for _, noteType := range []string{"general", "recognition", "feedback", "coaching", "todo"} {
+			if counts[noteType] == 0 {
+				t.Fatalf("session %q missing %s note", session.Key, noteType)
+			}
+		}
+	}
+}
+
+func TestSourceCSVReportsCoverEveryParsedSession(t *testing.T) {
+	dataset := mustGenerateFromCSV(t, sourceCSVFixture())
+	bySession := map[string]int{}
+	for _, report := range dataset.Reports {
+		bySession[report.SessionKey]++
+	}
+	for _, session := range dataset.Sessions {
+		if bySession[session.Key] != 1 {
+			t.Fatalf("expected one report for session %q, got %d", session.Key, bySession[session.Key])
+		}
+	}
+}
+
+func TestGeneratedNotesIncludeSessionContext(t *testing.T) {
+	for name, dataset := range map[string]Dataset{
+		"synthetic": Generate(),
+		"source":    mustGenerateFromCSV(t, sourceCSVFixture()),
+	} {
+		t.Run(name, func(t *testing.T) {
+			text := notesText(dataset.Notes)
+			if name == "source" {
+				for _, expected := range []string{"Real Pool", "Splash 1"} {
+					if !strings.Contains(text, expected) {
+						t.Fatalf("expected source notes to include %q in %q", expected, text)
+					}
+				}
+			}
+			for _, note := range dataset.Notes {
+				if (note.Type == "recognition" || note.Type == "feedback" || note.Type == "coaching") && strings.TrimSpace(note.EmployeeName) == "" {
+					t.Fatalf("expected %s note to include employee name: %+v", note.Type, note)
+				}
+			}
+		})
+	}
+}
+
+func TestGeneratedReportsIncludeSessionContext(t *testing.T) {
+	for name, dataset := range map[string]Dataset{
+		"synthetic": Generate(),
+		"source":    mustGenerateFromCSV(t, sourceCSVFixture()),
+	} {
+		t.Run(name, func(t *testing.T) {
+			sessionByKey := map[string]Session{}
+			for _, session := range dataset.Sessions {
+				sessionByKey[session.Key] = session
+			}
+			for _, report := range dataset.Reports {
+				session := sessionByKey[report.SessionKey]
+				if !strings.Contains(report.Title, session.Day) || !strings.Contains(report.Title, session.Location) {
+					t.Fatalf("report title %q does not include session day/location %+v", report.Title, session)
+				}
+				level := sessionLevelExamples(session, 1)[0]
+				if !strings.Contains(reportDataText(report.Data), level) {
+					t.Fatalf("expected report for %q to include level %q", report.SessionKey, level)
+				}
+			}
+		})
+	}
+}
+
+func TestGeneratedReportsCoverAllSections(t *testing.T) {
+	dataset := Generate()
+	if len(dataset.Reports) != len(dataset.Sessions) {
+		t.Fatalf("expected one report per session, got %d reports for %d sessions", len(dataset.Reports), len(dataset.Sessions))
+	}
+	for _, report := range dataset.Reports {
+		assertReportArray(t, report, "staff", "performance")
+		assertReportArray(t, report, "staff", "strengthWeakness")
+		assertReportArray(t, report, "staff", "successionPlans")
+		assertReportArray(t, report, "staff", "instructorCovers")
+		assertReportArray(t, report, "lessonStructure", "challengingTimes")
+		assertReportArray(t, report, "lessonStructure", "newClassLayouts")
+		assertReportArray(t, report, "safetyFacility", "safetyConcerns")
+		assertReportArray(t, report, "safetyFacility", "maintenanceIssues")
+		assertReportArray(t, report, "safetyFacility", "poolDeckWorksWell")
+		assertReportArray(t, report, "safetyFacility", "poolDeckImprovements")
+		if values, ok := report.Data["parentCustomerFeedback"].([]map[string]string); !ok || len(values) == 0 {
+			t.Fatalf("report %q missing parentCustomerFeedback", report.SessionKey)
+		}
+		assertReportArray(t, report, "projectsInitiatives", "adminWork")
+		assertReportArray(t, report, "projectsInitiatives", "initiatives")
+	}
+}
+
+func TestGeneratedReportsUseMultipleEmployees(t *testing.T) {
+	dataset := Generate()
+	staff := map[string]struct{}{}
+	for _, report := range dataset.Reports {
+		collectReportInstructors(report.Data, staff)
+	}
+	if len(staff) < 4 {
+		t.Fatalf("expected at least 4 staff in reports, got %d: %#v", len(staff), staff)
+	}
+}
+
 func countClasses(classesBySession map[string][]tasks.ExtractedClass) int {
 	total := 0
 	for _, classes := range classesBySession {
@@ -241,6 +376,74 @@ func mustGenerateFromCSV(t *testing.T, payload string) Dataset {
 		t.Fatalf("GenerateFromCSV returned error: %v", err)
 	}
 	return dataset
+}
+
+func sessionKeySet(sessions []Session) map[string]bool {
+	out := map[string]bool{}
+	for _, session := range sessions {
+		out[session.Key] = true
+	}
+	return out
+}
+
+func notesText(notes []Note) string {
+	var parts []string
+	for _, note := range notes {
+		parts = append(parts, note.Text)
+	}
+	return strings.Join(parts, "\n")
+}
+
+func reportDataText(value any) string {
+	switch typed := value.(type) {
+	case string:
+		return typed
+	case map[string]any:
+		parts := make([]string, 0, len(typed))
+		for _, next := range typed {
+			parts = append(parts, reportDataText(next))
+		}
+		return strings.Join(parts, "\n")
+	case []map[string]string:
+		var parts []string
+		for _, row := range typed {
+			for _, value := range row {
+				parts = append(parts, value)
+			}
+		}
+		return strings.Join(parts, "\n")
+	default:
+		return ""
+	}
+}
+
+func assertReportArray(t *testing.T, report Report, section string, field string) {
+	t.Helper()
+	parent, ok := report.Data[section].(map[string]any)
+	if !ok {
+		t.Fatalf("report %q missing section %q", report.SessionKey, section)
+	}
+	values, ok := parent[field].([]map[string]string)
+	if !ok || len(values) == 0 {
+		t.Fatalf("report %q missing %s.%s", report.SessionKey, section, field)
+	}
+}
+
+func collectReportInstructors(value any, staff map[string]struct{}) {
+	switch typed := value.(type) {
+	case map[string]any:
+		for _, next := range typed {
+			collectReportInstructors(next, staff)
+		}
+	case []map[string]string:
+		for _, row := range typed {
+			for _, key := range []string{"instructor", "coveredBy"} {
+				if name := strings.TrimSpace(row[key]); name != "" {
+					staff[name] = struct{}{}
+				}
+			}
+		}
+	}
 }
 
 func expectedReportCardTotals(sessions []Session) map[string]int {
