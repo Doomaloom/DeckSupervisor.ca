@@ -15,10 +15,10 @@ import {
 } from '../../../lib/storage'
 import { useCurrentSession } from '../../../app/useCurrentSession'
 import { invalidateCachedSchematicPdfs } from '../../../lib/printPdfCache'
-import { fetchSchematic, upsertSchematic } from '../../../lib/serverApi'
+import { fetchSchematic, upsertSchematic, fetchRequestAssignments } from '../../../lib/serverApi'
 import { invalidateInstructorPdfs, prefetchInstructorPacket } from '../../../lib/instructorPdfCache'
 import { formatMiniSessionTitle, formatSessionDisplayName } from '../../../shared/session/sessionLabels'
-import type { ExtractedClass, Student } from '../../../types/app'
+import type { ExtractedClass, Student, RequestAssignment } from '../../../types/app'
 import { prefetchSchematicPdfs } from '../../print/utils/printCachePrefetch'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
 import { buildCourses } from '../utils/courses'
@@ -68,6 +68,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
     const { access, session: currentSession, sessionId } = useCurrentSession()
     const [students, setStudents] = useState<Student[]>([])
     const [extractedClasses, setExtractedClasses] = useState<ExtractedClass[]>([])
+    const [requestAssignments, setRequestAssignments] = useState<RequestAssignment[]>([])
     const [remoteSchedule, setRemoteSchedule] = useState<StoredCourseLayout | null>(null)
     const sessionTitle =
         formatMiniSessionTitle(selectedDay ?? currentSession?.session_day, currentSession?.session_year, currentSession?.start_date) ||
@@ -81,6 +82,29 @@ export function useSchematicSchedule(selectedDay: string | null) {
             includeTimeRange: false,
             fallback: 'Session',
         })
+
+    useEffect(() => {
+        if (!currentSession?.session_season || !currentSession?.session_year || !currentSession?.location) {
+            setRequestAssignments([])
+            return
+        }
+
+        const term = `${currentSession.session_season} ${currentSession.session_year}`
+        const location = currentSession.location
+
+        let active = true
+        fetchRequestAssignments({ term, location }).then(response => {
+            if (active && response?.assignments) {
+                setRequestAssignments(response.assignments)
+            }
+        }).catch(error => {
+            console.error('Failed to fetch request assignments for schematic view:', error)
+        })
+
+        return () => {
+            active = false
+        }
+    }, [currentSession?.session_season, currentSession?.session_year, currentSession?.location])
 
     useEffect(() => {
         setStudents(getStudentsForDay(selectedDay ?? ''))
@@ -126,7 +150,16 @@ export function useSchematicSchedule(selectedDay: string | null) {
     }, [extractedClasses, selectedDay])
 
     const courses = useMemo(() => {
-        const rosterCourses = buildCourses(students)
+        const requestInstructorByCode = new Map<string, string>()
+        requestAssignments.forEach(assignment => {
+            const instructor = assignment.instructor.trim()
+            if (instructor) {
+                requestInstructorByCode.set(assignment.eventId, instructor)
+            }
+        })
+        const rosterCourses = buildCourses(students, {
+            requestInstructorByCode,
+        })
         if (extractedStudentCountByCode.size === 0) {
             return rosterCourses
         }
@@ -140,7 +173,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
                 studentCount: extractedCount,
             }
         })
-    }, [extractedStudentCountByCode, students])
+    }, [extractedStudentCountByCode, students, requestAssignments])
     const scheduleStartMinutes = useMemo(() => {
         if (courses.length === 0) {
             return 0

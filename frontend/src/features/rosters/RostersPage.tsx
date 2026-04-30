@@ -7,7 +7,7 @@ import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { getStoredItem, setStoredItem } from '../../lib/browserStorage'
 import { extractStartTime } from '../../lib/time'
 import { flushDirtyInstructorPdfs, invalidateInstructorPdfs } from '../../lib/instructorPdfCache'
-import type { ClassRoster, Student } from '../../types/app'
+import type { ClassRoster, RequestAssignment, Student } from '../../types/app'
 import { getYearFromDate } from '../../shared/session/sessionLabels'
 import { getEffectiveSourceLocations, normalizeSessionLocationKey } from '../../shared/session/sourceLocations'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES, dayNames } from '../schematic/constants'
@@ -57,7 +57,15 @@ import type {
 } from './types'
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
-import { fetchCsvAnalyze, fetchSchematics, fetchTeamSessions } from '../../lib/serverApi'
+import {
+    createRequestAssignment,
+    deleteRequestAssignment,
+    fetchCsvAnalyze,
+    fetchRequestAssignments,
+    fetchSchematics,
+    fetchTeamSessions,
+    updateRequestAssignment,
+} from '../../lib/serverApi'
 
 type FullTimeRosterItem = {
     day: string
@@ -132,6 +140,37 @@ function saveStoredFullTimeRosters(teamId: string, fileName: string, classes: Cl
     )
 }
 
+function getFullTimeTermLabel(term: { label?: string; season?: string; year?: number } | null | undefined) {
+    return term?.label || [term?.season, term?.year].filter(Boolean).join(' ')
+}
+
+function getRequestAssignmentKey(code: string, location: string) {
+    return `${code.trim()}::${location.trim().toLowerCase()}`
+}
+
+function applyRequestAssignmentsToRosters(
+    classes: ClassRoster[],
+    assignments: Map<string, RequestAssignment>,
+) {
+    if (assignments.size === 0) {
+        return classes
+    }
+    return classes.map(roster => {
+        const assignment = assignments.get(getRequestAssignmentKey(roster.code, roster.location))
+        if (!assignment) {
+            return roster
+        }
+        return {
+            ...roster,
+            instructor: assignment.instructor,
+            students: roster.students.map(student => ({
+                ...student,
+                instructor: assignment.instructor,
+            })),
+        }
+    })
+}
+
 function convertClassRosterToItem(roster: ClassRoster): FullTimeRosterItem {
     return {
         day: roster.day,
@@ -184,6 +223,9 @@ function RostersPage() {
     const [fullTimeRequestDraft, setFullTimeRequestDraft] = useState<FullTimeRequestDraft>(emptyFullTimeRequestDraft)
     const [fullTimeTeamSessions, setFullTimeTeamSessions] = useState<FullTimeTeamSessionRow[]>([])
     const [fullTimeSchematicsBySession, setFullTimeSchematicsBySession] = useState<Map<string, FullTimeSchematicPayload>>(new Map())
+    const [fullTimeRequestAssignments, setFullTimeRequestAssignments] = useState<Map<string, RequestAssignment>>(new Map())
+    const [fullTimeAssignmentSavingKey, setFullTimeAssignmentSavingKey] = useState('')
+    const [fullTimeAssignmentError, setFullTimeAssignmentError] = useState('')
     const [fullTimeUploadError, setFullTimeUploadError] = useState('')
     const [fullTimeUploading, setFullTimeUploading] = useState(false)
     const fullTimeUploadInputRef = useRef<HTMLInputElement | null>(null)
@@ -454,6 +496,70 @@ function RostersPage() {
         [fullTimeInstructorDayKeys, fullTimeRosterClasses],
     )
 
+    const fullTimeTermLabel = useMemo(() => getFullTimeTermLabel(currentTerm), [currentTerm])
+
+    useEffect(() => {
+        if (accountType !== 'full_time' || !currentTeamId || !fullTimeTermLabel) {
+            setFullTimeRequestAssignments(new Map())
+            setFullTimeAssignmentError('')
+            return
+        }
+
+        let active = true
+        const loadAssignments = async () => {
+            try {
+                const response = await fetchRequestAssignments({ term: fullTimeTermLabel })
+                if (!active) {
+                    return
+                }
+                setFullTimeRequestAssignments(new Map(
+                    (response.assignments ?? []).map(assignment => [
+                        getRequestAssignmentKey(assignment.eventId, assignment.location),
+                        assignment,
+                    ]),
+                ))
+            } catch (error) {
+                console.error('Failed to load request assignments', error)
+                if (active) {
+                    setFullTimeRequestAssignments(new Map())
+                    setFullTimeAssignmentError(error instanceof Error ? error.message : 'Failed to load saved instructor assignments.')
+                }
+            }
+        }
+
+        void loadAssignments()
+        return () => {
+            active = false
+        }
+    }, [accountType, currentTeamId, fullTimeTermLabel])
+
+    useEffect(() => {
+        if (!currentTeamId || fullTimeAssignmentSavingKey || fullTimeRosterClasses.length === 0 || fullTimeRequestAssignments.size === 0) {
+            return
+        }
+        let changed = false
+        const next = fullTimeRosterClasses.map(roster => {
+            const assignment = fullTimeRequestAssignments.get(getRequestAssignmentKey(roster.code, roster.location))
+            if (!assignment || roster.instructor === assignment.instructor) {
+                return roster
+            }
+            changed = true
+            return {
+                ...roster,
+                instructor: assignment.instructor,
+                students: roster.students.map(student => ({
+                    ...student,
+                    instructor: assignment.instructor,
+                })),
+            }
+        })
+        if (!changed) {
+            return
+        }
+        setFullTimeRosterClasses(next)
+        saveStoredFullTimeRosters(currentTeamId, fullTimeRosterFileName, next)
+    }, [currentTeamId, fullTimeAssignmentSavingKey, fullTimeRequestAssignments, fullTimeRosterClasses, fullTimeRosterFileName])
+
     const fullTimeSchematicClassKeys = useMemo(() => {
         const keys = new Set<string>()
         fullTimeTeamSessions.forEach(session => {
@@ -636,15 +742,16 @@ function RostersPage() {
                 })
             const classes = (analyzed.rosters ?? []).map(roster => ({
                 ...roster,
-                instructor: '',
+                instructor: roster.instructor ?? '',
                 students: roster.students.map(student => ({
                     ...student,
-                    instructor: '',
+                    instructor: student.instructor || roster.instructor || '',
                 })),
             }))
-            setFullTimeRosterClasses(classes)
+            const assignedClasses = applyRequestAssignmentsToRosters(classes, fullTimeRequestAssignments)
+            setFullTimeRosterClasses(assignedClasses)
             setFullTimeRosterFileName(file.name)
-            saveStoredFullTimeRosters(currentTeamId, file.name, classes)
+            saveStoredFullTimeRosters(currentTeamId, file.name, assignedClasses)
             setFullTimeDayFilter('')
             setFullTimeLevelFilter('')
             setFullTimeSearchQuery('')
@@ -657,27 +764,70 @@ function RostersPage() {
     }
 
     const handleFullTimeInstructorChange = (day: string, code: string, value: string) => {
-        if (!currentTeamId) {
+        if (!currentTeamId || !fullTimeTermLabel) {
             return
         }
         const normalizedValue = value
-        setFullTimeRosterClasses(current => {
-            const next = current.map(roster => {
-                if (roster.day !== day || roster.code !== code) {
-                    return roster
-                }
-                return {
-                    ...roster,
+        const previousClasses = fullTimeRosterClasses
+        const previousAssignments = fullTimeRequestAssignments
+        const targetRoster = fullTimeRosterClasses.find(roster => roster.day === day && roster.code === code)
+        if (!targetRoster) {
+            return
+        }
+        const assignmentKey = getRequestAssignmentKey(targetRoster.code, targetRoster.location)
+        const existingAssignment = fullTimeRequestAssignments.get(assignmentKey)
+        const nextClasses = fullTimeRosterClasses.map(roster => {
+            if (roster.day !== day || roster.code !== code) {
+                return roster
+            }
+            return {
+                ...roster,
+                instructor: normalizedValue,
+                students: roster.students.map(student => ({
+                    ...student,
                     instructor: normalizedValue,
-                    students: roster.students.map(student => ({
-                        ...student,
-                        instructor: normalizedValue,
-                    })),
-                }
-            })
-            saveStoredFullTimeRosters(currentTeamId, fullTimeRosterFileName, next)
-            return next
+                })),
+            }
         })
+        setFullTimeRosterClasses(nextClasses)
+        saveStoredFullTimeRosters(currentTeamId, fullTimeRosterFileName, nextClasses)
+        setFullTimeAssignmentSavingKey(assignmentKey)
+        setFullTimeAssignmentError('')
+
+        const persistAssignment = async () => {
+            try {
+                const instructor = normalizedValue.trim()
+                if (instructor) {
+                    const response = existingAssignment
+                        ? await updateRequestAssignment(existingAssignment.id, { instructor })
+                        : await createRequestAssignment({
+                            eventId: targetRoster.code,
+                            term: fullTimeTermLabel,
+                            location: targetRoster.location,
+                            instructor,
+                        })
+                    setFullTimeRequestAssignments(current => new Map(current).set(assignmentKey, response.assignment))
+                    return
+                }
+                if (existingAssignment) {
+                    await deleteRequestAssignment(existingAssignment.id)
+                    setFullTimeRequestAssignments(current => {
+                        const next = new Map(current)
+                        next.delete(assignmentKey)
+                        return next
+                    })
+                }
+            } catch (error) {
+                setFullTimeRosterClasses(previousClasses)
+                saveStoredFullTimeRosters(currentTeamId, fullTimeRosterFileName, previousClasses)
+                setFullTimeRequestAssignments(previousAssignments)
+                setFullTimeAssignmentError(error instanceof Error ? error.message : 'Failed to save instructor assignment.')
+            } finally {
+                setFullTimeAssignmentSavingKey('')
+            }
+        }
+
+        void persistAssignment()
     }
 
     const handleClearFullTimeRosterAssignments = () => {
@@ -699,6 +849,31 @@ function RostersPage() {
             saveStoredFullTimeRosters(currentTeamId, fullTimeRosterFileName, next)
             return next
         })
+        const assignmentKeys = new Set(
+            fullTimeRosterClasses.map(roster => getRequestAssignmentKey(roster.code, roster.location)),
+        )
+        const assignmentsToDelete = Array.from(fullTimeRequestAssignments.values()).filter(assignment =>
+            assignmentKeys.has(getRequestAssignmentKey(assignment.eventId, assignment.location)),
+        )
+        if (assignmentsToDelete.length === 0) {
+            return
+        }
+        setFullTimeAssignmentSavingKey('__clear__')
+        setFullTimeAssignmentError('')
+        void Promise.all(assignmentsToDelete.map(assignment => deleteRequestAssignment(assignment.id)))
+            .then(() => {
+                setFullTimeRequestAssignments(current => {
+                    const next = new Map(current)
+                    assignmentsToDelete.forEach(assignment => {
+                        next.delete(getRequestAssignmentKey(assignment.eventId, assignment.location))
+                    })
+                    return next
+                })
+            })
+            .catch(error => {
+                setFullTimeAssignmentError(error instanceof Error ? error.message : 'Failed to clear saved instructor assignments.')
+            })
+            .finally(() => setFullTimeAssignmentSavingKey(''))
     }
 
     const updateFullTimeInstructorAssignments = (
@@ -949,7 +1124,7 @@ function RostersPage() {
                 return {
                     ...entry,
                     accommodated: false,
-                    reason: 'conflicting_request',
+                    reason: 'conflicting_request' as const,
                     reasonNote: '',
                     schematicConflict: false,
                     schematicConflictNote: '',
@@ -1049,6 +1224,14 @@ function RostersPage() {
                             <div className="rounded-card border-2 border-danger/30 bg-danger/10 p-4 text-sm font-semibold text-danger">
                                 {fullTimeUploadError}
                             </div>
+                        ) : null}
+                        {fullTimeAssignmentError ? (
+                            <div className="rounded-card border-2 border-danger/30 bg-danger/10 p-4 text-sm font-semibold text-danger">
+                                Instructor assignment was updated locally, but could not be saved to the database: {fullTimeAssignmentError}
+                            </div>
+                        ) : null}
+                        {fullTimeAssignmentSavingKey ? (
+                            <p className="text-sm font-semibold text-secondary/80">Saving instructor assignment...</p>
                         ) : null}
                         {fullTimeViewTab === 'rosters' ? (
                             <FullTimeRostersPanel
