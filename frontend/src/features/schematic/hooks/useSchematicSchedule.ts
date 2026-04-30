@@ -70,6 +70,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
     const [extractedClasses, setExtractedClasses] = useState<ExtractedClass[]>([])
     const [requestAssignments, setRequestAssignments] = useState<RequestAssignment[]>([])
     const [remoteSchedule, setRemoteSchedule] = useState<StoredCourseLayout | null>(null)
+    const [hasExistingSchematic, setHasExistingSchematic] = useState<boolean>(false)
     const sessionTitle =
         formatMiniSessionTitle(selectedDay ?? currentSession?.session_day, currentSession?.session_year, currentSession?.start_date) ||
         formatSessionDisplayName({
@@ -157,8 +158,15 @@ export function useSchematicSchedule(selectedDay: string | null) {
                 requestInstructorByCode.set(assignment.eventId, instructor)
             }
         })
+        const requestHighlightOnlyCodes = new Set<string>()
+        if (hasExistingSchematic) {
+            for (const code of requestInstructorByCode.keys()) {
+                requestHighlightOnlyCodes.add(code)
+            }
+        }
         const rosterCourses = buildCourses(students, {
             requestInstructorByCode,
+            requestHighlightOnlyCodes,
         })
         if (extractedStudentCountByCode.size === 0) {
             return rosterCourses
@@ -173,7 +181,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
                 studentCount: extractedCount,
             }
         })
-    }, [extractedStudentCountByCode, students, requestAssignments])
+    }, [extractedStudentCountByCode, students, requestAssignments, hasExistingSchematic])
     const scheduleStartMinutes = useMemo(() => {
         if (courses.length === 0) {
             return 0
@@ -201,6 +209,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
     useEffect(() => {
         if (access.mode === 'guest' || !sessionId || !currentSession) {
             setRemoteSchedule(null)
+            setHasExistingSchematic(access.mode === 'guest' ? Boolean(getScheduleForDay(selectedDay ?? '')) : false)
             return
         }
         let active = true
@@ -210,6 +219,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
                 return
             }
             const dataValue = response.schematic?.data as { codes?: string[]; instructors?: string[] } | undefined
+            setHasExistingSchematic(Boolean(response.schematic))
             if (dataValue?.codes?.length) {
                 setRemoteSchedule({
                     codes: dataValue.codes ?? [],
@@ -223,7 +233,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
         return () => {
             active = false
         }
-    }, [access.mode, currentSession, sessionId])
+    }, [access.mode, currentSession, sessionId, selectedDay])
 
     const storedLayout = access.mode === 'guest' ? getScheduleForDay(selectedDay ?? '') : remoteSchedule
     const {
@@ -259,6 +269,9 @@ export function useSchematicSchedule(selectedDay: string | null) {
             instructors,
             codes,
         })
+        if (access.mode === 'guest') {
+            setHasExistingSchematic(true)
+        }
 
         const assignments = columns.map((column, index) => ({
             name: (instructors[index] ?? '').trim(),
@@ -295,6 +308,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
             }
             try {
                 await upsertSchematic(sessionId, nextRemoteSchedule)
+                setHasExistingSchematic(true)
             } catch (error) {
                 alert(`Failed to save schedule: ${error instanceof Error ? error.message : 'Unknown error'}`)
                 return
