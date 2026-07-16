@@ -21,8 +21,9 @@ describe('attendance template catalog', () => {
   it('contains all 23 migrated templates', () => {
     expect(attendanceTemplates).toHaveLength(23)
     expect(new Set(attendanceTemplates.map(template => template.key)).size).toBe(23)
-    expect(attendanceTemplates.every(template => template.skills.length > 0)).toBe(true)
-    expect(attendanceTemplates.every(template => template.backSections.length > 0)).toBe(true)
+    expect(attendanceTemplates.every(template => template.columns.length > 0)).toBe(true)
+    expect(attendanceTemplates.every(template => template.columns.every(column => column.widthPt > 0))).toBe(true)
+    expect(attendanceTemplates.every(template => template.backColumns.some(column => column.blocks.length > 0))).toBe(true)
   })
 
   it('falls back to Splash Fitness and identifies the compact private sheet', () => {
