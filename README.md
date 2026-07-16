@@ -61,8 +61,8 @@ The app supports:
 ### Backend
 
 - Go (`net/http` + `gorilla/mux`)
-- Endpoint-oriented API for CSV processing and PDF generation
-- Service-layer design for attendance rendering, schematic PDF creation, custom roster handling, and PDF operations
+- Endpoint-oriented API for CSV analysis, authentication, persistence, sharing, and spreadsheet exports
+- Lightweight stateless runtime; PDF rendering and assembly stay in the browser
 
 ### Data and Identity
 
@@ -77,56 +77,33 @@ The app supports:
 
 - Frontend deployed separately from API
 - Frontend rewrites `/api/*` to backend service
-- Backend containerized and configured for Chromium-based PDF rendering
+- Backend containerized as a small Go + CA-certificates image
+- Fly runs one shared-CPU/1 GB Machine that suspends to zero while idle
 
 ## Fly Deploy Notes
 
-The Fly app builds from [fly.toml](/Users/frankkocun/Documents/DeckSupervisor.ca/fly.toml) using [backend/Dockerfile](/Users/frankkocun/Documents/DeckSupervisor.ca/backend/Dockerfile).
+The Fly app builds from `fly.toml` using `backend/Dockerfile`.
 To keep deploys fast:
 
 - `.dockerignore` excludes the frontend tree, local binaries, temp output, and sample files from the Docker build context
 - the backend Dockerfile uses BuildKit cache mounts for Go module and build caches
-- the runtime stage can use a prebuilt Chromium image via `RUNTIME_BASE_IMAGE`
+- the runtime stage contains only the statically compiled server and CA certificates
 
-### Build The Chromium Runtime Base
+### Deploy
 
-Use the dedicated runtime-base Dockerfile:
-
-```bash
-./scripts/build-runtime-base.sh
-```
-
-By default it builds and pushes:
+Use the deployment helper from the repository root:
 
 ```bash
-registry.fly.io/decksupervisor:runtime-base-latest
+./scripts/deploy-fly.sh
 ```
 
-The helper uses `docker buildx` and publishes a Linux `amd64` image by default so Fly can pull it during remote builds.
-
-Optional environment variables:
+The helper validates configuration, deploys with Fly high availability disabled, and enforces a single Machine. Override the app or configuration when needed:
 
 ```bash
-IMAGE_NAME=registry.fly.io/decksupervisor \
-IMAGE_TAG=2026-03-23 \
-IMAGE_PLATFORM=linux/amd64 \
-PUSH_IMAGE=1 \
-./scripts/build-runtime-base.sh
+APP_NAME=decksupervisor CONFIG_FILE=fly.toml ./scripts/deploy-fly.sh
 ```
 
-If Docker is not already authenticated to Fly's registry, run:
-
-```bash
-fly auth docker
-```
-
-### Deploy Using The Prebuilt Runtime Base
-
-```bash
-fly deploy --build-arg RUNTIME_BASE_IMAGE=registry.fly.io/decksupervisor:runtime-base-latest
-```
-
-If you use a versioned tag, pass that exact tag to `fly deploy`.
+`auto_stop_machines = "suspend"`, `auto_start_machines = true`, and `min_machines_running = 0` let the API suspend fully when idle. The first API request after an idle period can take longer while Fly resumes the Machine; subsequent requests use the already-running process. Frontend PDF preview, generation, and packet assembly do not wake the API.
 
 ## Key Design Choices
 
@@ -151,13 +128,13 @@ Tradeoff: deterministic hash resolution adds complexity, but meaningfully reduce
 
 ### 4) Browser-Rendered PDF Pipeline
 
-Attendance and schematic outputs are rendered through Chromium (`chromedp`) to preserve print layout, then merged/rotated with `pdfcpu` when needed.
+Attendance, schematic, masterlist, and session-report outputs are rendered as vector PDFs in the SPA with `@react-pdf/renderer`. Blank pages, rotation, metadata, and packet merging use `pdf-lib`.
 
-Tradeoff: heavier server runtime requirements, but better formatting fidelity for operations-critical printouts.
+Tradeoff: the PDF engine is a sizeable lazy-loaded browser chunk, but document work no longer consumes Fly CPU or RAM.
 
 ### 5) Operational Performance Controls
 
-Instructor packet generation supports concurrency limits and incremental caching (IndexedDB + packet refresh strategy) to reduce repeated render costs.
+Instructor packet generation supports concurrency limits and versioned incremental caching (IndexedDB + packet refresh strategy) to reduce repeated render costs.
 
 Tradeoff: added caching complexity, but faster repeat print workflows for supervisors.
 
