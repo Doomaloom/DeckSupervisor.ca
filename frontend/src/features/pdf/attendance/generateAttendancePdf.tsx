@@ -19,5 +19,5 @@ export async function generateAttendancePdf(request: AttendancePdfRequest) {
     request.filename?.trim() || items[0].roster.code || items[0].template,
     'attendance',
   )
-  return renderPdfArtifact(<AttendanceDocument items={items} title={title} />, { title, filename })
+  return renderPdfArtifact(<AttendanceDocument items={items} title={title} session={request.session} />, { title, filename })
 }

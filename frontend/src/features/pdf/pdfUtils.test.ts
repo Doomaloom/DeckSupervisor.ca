@@ -8,9 +8,12 @@ describe('frontend PDF utilities', () => {
     const landscape = await createBlankPdf({ orientation: 'landscape' })
     const rotated = await rotatePdf(landscape, 270)
     const merged = await mergePdfs([portrait, rotated], { title: 'Packet' })
-    const document = await PDFDocument.load(await merged.arrayBuffer())
+    const document = await PDFDocument.load(await merged.arrayBuffer(), { updateMetadata: false })
     expect(document.getPageCount()).toBe(2)
     expect(document.getTitle()).toBe('Packet')
+    expect(document.getCreator()).toBe('DeckSupervisor')
+    expect(document.getProducer()).toBe('DeckSupervisor')
+    expect(document.getCreationDate()).toBeInstanceOf(Date)
     expect(document.getPage(1).getRotation().angle).toBe(270)
   })
 

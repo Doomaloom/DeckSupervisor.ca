@@ -68,7 +68,7 @@ export function SessionReportDocument({ request }: { request: SessionReportPdfRe
   const title = scalarText(request.title) || 'Session Report'
   const sections = Object.entries(request).filter(([key]) => key !== 'title' && !metaKeys.includes(key))
   return (
-    <Document title={title} author="DeckSupervisor" creator="DeckSupervisor" producer="DeckSupervisor">
+    <Document title={title} author="DeckSupervisor" creator="DeckSupervisor" producer="DeckSupervisor" creationDate={new Date()}>
       <Page size="LETTER" style={styles.page} wrap>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.subtitle}>Formal Session Report</Text>

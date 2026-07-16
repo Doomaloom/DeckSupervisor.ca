@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
 
 const startDateFromSchedule = (schedule: string) => schedule.trim().split(/\s+/)[1] ?? ''
 
-function FrontSheet({ item, compact }: { item: AttendancePdfItem; compact: boolean }) {
+function FrontSheet({ item, compact, session }: { item: AttendancePdfItem; compact: boolean; session?: string }) {
   const template = getAttendanceTemplate(item.template)
   const specialColumns = [
     template.showPreviousLevel ? 'Previous Level' : '',
@@ -94,12 +94,15 @@ function FrontSheet({ item, compact }: { item: AttendancePdfItem; compact: boole
       <View style={styles.frontHeader}>
         <View style={styles.details}>
           <Text style={styles.title}>{template.title}</Text>
+          <Text style={styles.detail}>Session: {session?.trim() || ' '}</Text>
+          <Text style={styles.detail}>Course: {item.roster.serviceName || item.roster.level || ' '}</Text>
           <Text style={styles.detail}>Instructor: {item.roster.instructor || ' '}</Text>
           <Text style={styles.detail}>
             Start Day/Time: {[startDateFromSchedule(item.roster.schedule), item.roster.time].filter(Boolean).join(' ')}
           </Text>
           <Text style={styles.detail}>Location: {item.roster.location || ' '}</Text>
           <Text style={styles.detail}>Barcode: {item.roster.code || ' '}</Text>
+          <Text style={styles.detail}>Schedule: {item.roster.schedule || ' '}</Text>
         </View>
         <View style={styles.skillArea}>
           {headings.map((heading, index) => (
@@ -169,19 +172,21 @@ export function groupAttendanceItems(items: AttendancePdfItem[]) {
 export function AttendanceDocument({
   items,
   title,
+  session,
 }: {
   items: AttendancePdfItem[]
   title: string
+  session?: string
 }) {
   const groups = groupAttendanceItems(items)
   return (
-    <Document title={title} author="DeckSupervisor" creator="DeckSupervisor" producer="DeckSupervisor">
+    <Document title={title} author="DeckSupervisor" creator="DeckSupervisor" producer="DeckSupervisor" creationDate={new Date()}>
       {groups.flatMap((group, groupIndex) => {
         const compact = group.length === 2
         return [
           <Page key={`front-${groupIndex}`} size="LETTER" orientation="landscape" style={styles.page}>
             {group.map((item, index) => (
-              <FrontSheet key={`${item.roster.code}-${item.template}-${index}`} item={item} compact={compact} />
+              <FrontSheet key={`${item.roster.code}-${item.template}-${index}`} item={item} compact={compact} session={session} />
             ))}
           </Page>,
           <Page key={`back-${groupIndex}`} size="LETTER" orientation="landscape" style={styles.page}>

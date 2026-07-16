@@ -34,7 +34,7 @@ export function SchematicDocument({ request }: { request: SchematicPdfRequest })
     detail: { fontSize: 5.5 * scale, marginTop: 1 },
   })
   return (
-    <Document title="Schematic" author="DeckSupervisor" creator="DeckSupervisor" producer="DeckSupervisor">
+    <Document title="Schematic" author="DeckSupervisor" creator="DeckSupervisor" producer="DeckSupervisor" creationDate={new Date()}>
       <Page size="LETTER" orientation={orientation} style={styles.page}>
         <Text style={styles.title}>{request.title?.trim() || 'Schematic'}</Text>
         <Text style={styles.subtitle}>{[request.dateRange, request.weeksLabel].filter(Boolean).join(' • ')}</Text>

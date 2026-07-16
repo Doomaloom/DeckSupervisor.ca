@@ -14,7 +14,10 @@ export async function createBlankPdf(options: {
     page.setRotation(degrees(270))
   }
   document.setTitle('Blank')
+  document.setAuthor('DeckSupervisor')
   document.setProducer('DeckSupervisor')
+  document.setCreator('DeckSupervisor')
+  document.setCreationDate(new Date())
   return toBlob(await document.save())
 }
 

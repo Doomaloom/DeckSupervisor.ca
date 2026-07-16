@@ -20,7 +20,7 @@ export function MasterlistDocument({ request }: { request: MasterlistPdfRequest 
     group: { padding: 3, fontSize, backgroundColor: '#f4f4f4', borderWidth: border, borderColor: '#111111' },
   })
   return (
-    <Document title="Masterlist" author="DeckSupervisor" creator="DeckSupervisor" producer="DeckSupervisor">
+    <Document title="Masterlist" author="DeckSupervisor" creator="DeckSupervisor" producer="DeckSupervisor" creationDate={new Date()}>
       <Page size="LETTER" style={styles.page} wrap>
         {title ? <Text style={styles.title}>{title}</Text> : null}
         <View style={[styles.row, styles.header]} fixed>
