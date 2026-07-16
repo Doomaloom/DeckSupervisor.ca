@@ -2,21 +2,43 @@ import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { MasterlistPdfRequest } from '../types'
 import { buildMasterlistRows, buildMasterlistTitle, normalizeMasterlistFontSize } from './masterlistModel'
 
-const widths = ['9%', '18%', '13%', '15%', '21%', '7%', '17%']
+export const masterlistColumnWeights = [11, 22, 14, 18, 24, 8, 20] as const
+const weightTotal = masterlistColumnWeights.reduce((sum, weight) => sum + weight, 0)
+const widths = masterlistColumnWeights.map(weight => `${(weight / weightTotal) * 100}%`)
 const headers = ['EventID', 'EventTime', 'Instructor', 'ServiceName', 'AttendeeName', 'Age', 'AttendeePhone']
+export const cssPixelsToPoints = (value: number) => value * 0.75
 
 export function MasterlistDocument({ request }: { request: MasterlistPdfRequest }) {
   const rows = buildMasterlistRows(request.rosters, request.options)
   const title = buildMasterlistTitle(request)
-  const fontSize = normalizeMasterlistFontSize(request.options.font_size)
-  const border = request.options.borders ? 0.5 : 0
+  const fontSize = cssPixelsToPoints(normalizeMasterlistFontSize(request.options.font_size))
+  const border = request.options.borders ? 1 : 0
   const styles = StyleSheet.create({
-    page: { padding: 25, fontFamily: 'Helvetica', color: '#111111' },
-    title: { fontSize: 11, fontWeight: 700, textAlign: 'center', marginBottom: 6 },
+    page: { padding: 25.2, fontFamily: 'Liberation Sans', color: '#111111' },
+    title: { fontSize: 10.5, fontWeight: 700, textAlign: 'center', marginBottom: 6 },
     row: { flexDirection: 'row' },
-    header: { backgroundColor: '#eeeeee', fontWeight: 700 },
-    cell: { padding: 3, fontSize, lineHeight: 1.15, borderWidth: border, borderColor: '#111111' },
-    group: { padding: 3, fontSize, backgroundColor: '#f4f4f4', borderWidth: border, borderColor: '#111111' },
+    header: { fontWeight: 700 },
+    cell: {
+      paddingTop: 2.25,
+      paddingBottom: 2.25,
+      paddingLeft: 4.5,
+      paddingRight: 4.5,
+      fontSize,
+      lineHeight: 1.2,
+      borderWidth: border,
+      borderColor: '#000000',
+    },
+    group: {
+      paddingTop: 2.25,
+      paddingBottom: 2.25,
+      paddingLeft: 4.5,
+      paddingRight: 4.5,
+      fontSize,
+      lineHeight: 1.2,
+      backgroundColor: '#f4f4f4',
+      borderWidth: border,
+      borderColor: '#000000',
+    },
   })
   return (
     <Document title="Masterlist" author="DeckSupervisor" creator="DeckSupervisor" producer="DeckSupervisor" creationDate={new Date()}>

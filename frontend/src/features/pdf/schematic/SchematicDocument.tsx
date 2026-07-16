@@ -1,59 +1,121 @@
-import React from 'react'
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { SchematicPdfRequest } from '../types'
+import {
+  buildSchematicMatrix,
+  effectiveSchematicScale,
+  formatSchematicTime,
+} from './schematicModel'
 
-const formatMinutes = (value = 0) => {
-  const hour24 = Math.floor(value / 60) % 24
-  const minutes = value % 60
-  const suffix = hour24 >= 12 ? 'PM' : 'AM'
-  const hour = hour24 % 12 || 12
-  return `${hour}:${String(minutes).padStart(2, '0')} ${suffix}`
-}
-
-export function clampSchematicScale(value: number | undefined) {
-  if (!Number.isFinite(value)) return 100
-  return Math.min(120, Math.max(60, Math.round((value ?? 100) / 5) * 5))
-}
+const border = (scale: number) => ({ borderWidth: Math.max(0.35, scale), borderColor: '#000000' })
 
 export function SchematicDocument({ request }: { request: SchematicPdfRequest }) {
   const orientation = request.orientation === 'landscape' ? 'landscape' : 'portrait'
-  const columns = request.columns ?? []
-  const instructors = request.instructors ?? []
-  const scale = clampSchematicScale(request.scalePercent) / 100
-  const selected = request.highlightInstructor ? request.selectedInstructor : ''
+  const model = buildSchematicMatrix(request)
+  if (!model) return <Document />
+  const scale = effectiveSchematicScale(orientation, model.totalRows, request.scalePercent)
+  const printableWidth = orientation === 'landscape' ? 756 : 576
+  const timeWeight = 16.5
+  const classWeight = 26
+  const totalWeight = timeWeight * 2 + classWeight * model.columnCount
+  const timeWidth = printableWidth * scale * timeWeight / totalWeight
+  const classWidth = printableWidth * scale * classWeight / totalWeight
+  const highlighted = (index: number) => Boolean(
+    request.highlightInstructor
+      && request.selectedInstructor
+      && !['none', 'one-each'].includes(request.selectedInstructor)
+      && request.instructors?.[index]?.trim().toLowerCase() === request.selectedInstructor.trim().toLowerCase(),
+  )
   const styles = StyleSheet.create({
-    page: { padding: 18, fontFamily: 'Helvetica', color: '#111111' },
-    title: { fontSize: 12 * scale, fontWeight: 700, textAlign: 'center' },
-    subtitle: { fontSize: 7 * scale, textAlign: 'center', marginTop: 2, marginBottom: 7 },
-    board: { flexDirection: 'row', flexGrow: 1, borderWidth: 0.7, borderColor: '#111111' },
-    column: { flexGrow: 1, flexBasis: 0, borderRightWidth: 0.5, borderRightColor: '#111111' },
-    instructor: { fontSize: 7 * scale, fontWeight: 700, textAlign: 'center', padding: 3, backgroundColor: '#eeeeee' },
-    highlighted: { backgroundColor: '#fff2a8' },
-    course: { margin: 2, padding: 3, borderWidth: 0.5, borderColor: '#444444', minHeight: 34 * scale },
-    code: { fontSize: 7 * scale, fontWeight: 700 },
-    detail: { fontSize: 5.5 * scale, marginTop: 1 },
+    page: { padding: 18, fontFamily: 'Liberation Sans', color: '#111111' },
+    table: { width: printableWidth * scale },
+    band: { backgroundColor: '#000000', color: '#ffffff', alignItems: 'center', justifyContent: 'center' },
+    row: { flexDirection: 'row' },
+    centered: { alignItems: 'center', justifyContent: 'center', textAlign: 'center' },
   })
+  const cellBorder = border(scale)
   return (
     <Document title="Schematic" author="DeckSupervisor" creator="DeckSupervisor" producer="DeckSupervisor" creationDate={new Date()}>
       <Page size="LETTER" orientation={orientation} style={styles.page}>
-        <Text style={styles.title}>{request.title?.trim() || 'Schematic'}</Text>
-        <Text style={styles.subtitle}>{[request.dateRange, request.weeksLabel].filter(Boolean).join(' • ')}</Text>
-        <View style={styles.board}>
-          {columns.map((courses, columnIndex) => {
-            const instructor = instructors[columnIndex] ?? `Instructor ${columnIndex + 1}`
-            const highlighted = selected && selected !== 'one-each' && instructor === selected
-            return (
-              <View key={columnIndex} style={styles.column}>
-                <Text style={[styles.instructor, highlighted ? styles.highlighted : {}]}>{instructor}</Text>
-                {courses.map((course, courseIndex) => (
-                  <View key={`${course.code}-${courseIndex}`} style={styles.course} wrap={false}>
-                    <Text style={styles.code}>{course.level || course.code || 'Class'}</Text>
-                    <Text style={styles.detail}>
-                      {formatMinutes(course.startMinutes)} • {course.durationMinutes ?? 0} min
+        <View style={styles.table}>
+          <View style={[styles.band, { height: 30 * scale }, cellBorder]}>
+            <Text style={{ fontSize: 20 * scale, fontWeight: 700 }}>{request.title?.trim() || 'Schematic'}</Text>
+          </View>
+          <View style={{ height: 3.75 * scale }} />
+          <View style={[styles.band, { height: 30 * scale }, cellBorder]}>
+            <Text style={{ fontSize: 16 * scale, fontWeight: 700 }}>{request.dateRange ?? ''}</Text>
+          </View>
+          <View style={[styles.row, { height: 30 * scale }]}>
+            <View style={[styles.centered, { width: printableWidth * scale / 2 }, cellBorder]}>
+              <Text style={{ fontSize: 11 * scale, fontWeight: 600 }}>
+                Deck Supervisor:{request.deckSupervisorName?.trim() ? ` ${request.deckSupervisorName.trim()}` : ''}
+              </Text>
+            </View>
+            <View style={[styles.centered, { width: printableWidth * scale / 2 }, cellBorder]}>
+              <Text style={{ fontSize: 11 * scale, fontWeight: 600 }}>Cancelled Dates:</Text>
+              {request.weeksLabel ? <Text style={{ fontSize: 10 * scale }}>{request.weeksLabel}</Text> : null}
+            </View>
+          </View>
+          <View style={[styles.row, { height: 36 * scale }]}>
+            <View style={[styles.centered, { width: timeWidth }, cellBorder]}>
+              <Text style={{ fontSize: 11 * scale, fontWeight: 700 }}>TIME</Text>
+            </View>
+            <View style={{ width: classWidth * model.columnCount }}>
+              <View style={[styles.centered, { height: 18 * scale }, cellBorder]}>
+                <Text style={{ fontSize: 11 * scale, fontWeight: 700 }}>Instructors / Level</Text>
+              </View>
+              <View style={[styles.row, { height: 18 * scale }]}>
+                {Array.from({ length: model.columnCount }, (_, index) => (
+                  <View key={index} style={[
+                    styles.centered,
+                    { width: classWidth, backgroundColor: highlighted(index) ? '#FFEB3B' : '#ffffff' },
+                    cellBorder,
+                  ]}>
+                    <Text style={{ fontSize: 11 * scale, fontWeight: 600 }}>
+                      {request.instructors?.[index]?.trim() || `Instructor ${index + 1}`}
                     </Text>
-                    <Text style={styles.detail}>{course.studentCount ?? 0} of {course.capacity ?? 0}</Text>
                   </View>
                 ))}
+              </View>
+            </View>
+            <View style={[styles.centered, { width: timeWidth }, cellBorder]}>
+              <Text style={{ fontSize: 11 * scale, fontWeight: 700 }}>TIME</Text>
+            </View>
+          </View>
+          {model.matrix.map((row, rowIndex) => {
+            const time = rowIndex % 4 === 0
+              ? formatSchematicTime(model.baseMinutes + Math.floor(rowIndex / 4) * 30)
+              : ''
+            return (
+              <View key={rowIndex} style={[styles.row, { height: 15 * scale }]} wrap={false}>
+                <View style={[styles.centered, { width: timeWidth }, cellBorder]}>
+                  <Text style={{ fontSize: 11 * scale }}>{time}</Text>
+                </View>
+                {row.map((cell, columnIndex) => (
+                  <View
+                    key={columnIndex}
+                    style={[
+                      styles.centered,
+                      {
+                        width: classWidth,
+                        backgroundColor: highlighted(columnIndex)
+                          ? '#FFEB3B'
+                          : cell.kind === 'empty'
+                            ? '#D9D9D9'
+                            : cell.color ?? '#ffffff',
+                        borderTopWidth: cell.border === 'middle' || cell.border === 'bottom' ? 0 : cellBorder.borderWidth,
+                        borderBottomWidth: cell.border === 'middle' || cell.border === 'top' ? 0 : cellBorder.borderWidth,
+                        borderLeftWidth: cell.kind === 'empty' ? 0 : cellBorder.borderWidth,
+                        borderRightWidth: cell.kind === 'empty' ? 0 : cellBorder.borderWidth,
+                        borderColor: '#000000',
+                      },
+                    ]}
+                  >
+                    {cell.text ? <Text style={{ fontSize: 11 * scale, lineHeight: 1 }}>{cell.text}</Text> : null}
+                  </View>
+                ))}
+                <View style={[styles.centered, { width: timeWidth }, cellBorder]}>
+                  <Text style={{ fontSize: 11 * scale }}>{time}</Text>
+                </View>
               </View>
             )
           })}

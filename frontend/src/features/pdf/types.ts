@@ -49,6 +49,7 @@ export type SchematicPdfRequest = {
   title?: string
   dateRange?: string
   weeksLabel?: string
+  deckSupervisorName?: string
   highlightInstructor?: boolean
   selectedInstructor?: string
   instructors?: string[]
@@ -102,8 +103,44 @@ export type MasterlistPdfRequest = {
   sessionProgressLabel?: string
 }
 
-export type SessionReportPdfRequest = Record<string, unknown> & {
-  title?: string
+export type InstructorTextEntry = { instructor: string; text: string }
+export type StrengthWeaknessEntry = { instructor: string; strengths: string[]; weaknesses: string[] }
+export type InstructorCoverEntry = { instructor: string; coveredBy: string; details: string }
+export type ChallengingTimeEntry = { time: string; lessons: string; description: string }
+export type NewClassLayoutEntry = { level: string; description: string }
+export type SafetyConcernEntry = { concernType: string; description: string }
+export type ItemDescriptionEntry = { item: string; description: string }
+export type ParentFeedbackEntry = { feedbackType: string; description: string }
+export type AdminWorkEntry = { work: string; description: string }
+export type InitiativeEntry = { title: string; brief: string }
+
+export type SessionReportPdfRequest = {
+  title: string
+  sessionContext: string
+  authorName: string
+  createdAt: string
+  updatedAt: string
+  staff: {
+    performance: InstructorTextEntry[]
+    strengthWeakness: StrengthWeaknessEntry[]
+    successionPlans: InstructorTextEntry[]
+    instructorCovers: InstructorCoverEntry[]
+  }
+  lessonStructure: {
+    challengingTimes: ChallengingTimeEntry[]
+    newClassLayouts: NewClassLayoutEntry[]
+  }
+  safetyFacility: {
+    safetyConcerns: SafetyConcernEntry[]
+    maintenanceIssues: ItemDescriptionEntry[]
+    poolDeckWorksWell: ItemDescriptionEntry[]
+    poolDeckImprovements: ItemDescriptionEntry[]
+  }
+  parentCustomerFeedback: ParentFeedbackEntry[]
+  projectsInitiatives: {
+    adminWork: AdminWorkEntry[]
+    initiatives: InitiativeEntry[]
+  }
 }
 
-export const PDF_RENDERER_VERSION = 'frontend-vector-v1'
+export const PDF_RENDERER_VERSION = 'frontend-vector-v2-backend-parity'

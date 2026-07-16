@@ -45,10 +45,16 @@ export function normalizeMasterlistFontSize(value: number) {
   return Math.min(18, Math.max(8, Math.round(value)))
 }
 
+export function normalizeMasterlistEventId(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed || !/^\d+$/.test(trimmed)) return trimmed
+  return trimmed.replace(/^0+/, '') || '0'
+}
+
 function buildRosterDataRows(roster: MasterlistRosterInput): NamedDataRow[] {
   const value = roster as unknown as Record<string, unknown>
   const time = text(value.time ?? value.Time)
-  const code = text(value.courseCode ?? value.CourseCode ?? value.code ?? value.Code)
+  const code = normalizeMasterlistEventId(text(value.courseCode ?? value.CourseCode ?? value.code ?? value.Code))
   const serviceName = sanitizeEventName(text(value.serviceName ?? value.ServiceName))
   const rosterInstructor = text(value.instructor ?? value.Instructor)
   const students = records(value.students ?? value.Students)
@@ -150,7 +156,7 @@ export function buildMasterlistRows(
   for (const roster of rosters) {
     const value = roster as unknown as Record<string, unknown>
     const time = text(value.time ?? value.Time)
-    const code = text(value.courseCode ?? value.CourseCode ?? value.code ?? value.Code)
+    const code = normalizeMasterlistEventId(text(value.courseCode ?? value.CourseCode ?? value.code ?? value.Code))
     const serviceName = sanitizeEventName(text(value.serviceName ?? value.ServiceName))
     const rosterInstructor = text(value.instructor ?? value.Instructor)
     const students = records(value.students ?? value.Students)

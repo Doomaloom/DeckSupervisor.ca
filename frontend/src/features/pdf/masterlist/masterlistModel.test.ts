@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildMasterlistRows, buildMasterlistTitle, normalizeMasterlistFontSize, sanitizeEventName } from './masterlistModel'
+import { buildMasterlistRows, buildMasterlistTitle, normalizeMasterlistEventId, normalizeMasterlistFontSize, sanitizeEventName } from './masterlistModel'
 import type { MasterlistFormatOptions, MasterlistPdfRequest, MasterlistRoster } from '../types'
 
 const options: MasterlistFormatOptions = {
@@ -52,6 +52,9 @@ describe('masterlist model', () => {
     expect(sanitizeEventName('Group Private Lesson')).toBe('Group Private')
     expect(normalizeMasterlistFontSize(2)).toBe(8)
     expect(normalizeMasterlistFontSize(30)).toBe(18)
+    expect(normalizeMasterlistEventId('000123')).toBe('123')
+    expect(normalizeMasterlistEventId('000')).toBe('0')
+    expect(normalizeMasterlistEventId('A001')).toBe('A001')
   })
 
   it('builds the session progress title', () => {
@@ -65,7 +68,7 @@ describe('masterlist model', () => {
     ], options)
     expect(rows.at(-1)).toEqual({
       kind: 'data',
-      cells: ['00100', '9:00 AM', 'Alex', 'Splash 1', 'Sam', '8', '555'],
+      cells: ['100', '9:00 AM', 'Alex', 'Splash 1', 'Sam', '8', '555'],
     })
   })
 
