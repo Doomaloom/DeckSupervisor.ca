@@ -13,6 +13,7 @@ export type AttendanceTemplateDefinition = {
   headerHeightPt: number
   columns: AttendanceTemplateColumn[]
   backTableWidthPt: number
+  backSections: string[]
   backColumns: AttendanceBackColumn[]
   compactBackPage: boolean
 }

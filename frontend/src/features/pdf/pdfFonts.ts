@@ -1,12 +1,13 @@
 import { Font } from '@react-pdf/renderer'
-import sansBold from './fonts/LiberationSans-Bold.ttf?url'
-import sansBoldItalic from './fonts/LiberationSans-BoldItalic.ttf?url'
-import sansItalic from './fonts/LiberationSans-Italic.ttf?url'
-import sansRegular from './fonts/LiberationSans-Regular.ttf?url'
-import serifBold from './fonts/LiberationSerif-Bold.ttf?url'
-import serifBoldItalic from './fonts/LiberationSerif-BoldItalic.ttf?url'
-import serifItalic from './fonts/LiberationSerif-Italic.ttf?url'
-import serifRegular from './fonts/LiberationSerif-Regular.ttf?url'
+const source = (url: URL) => typeof window === 'undefined' && url.protocol === 'file:' ? decodeURIComponent(url.pathname) : url.toString()
+const sansBold = source(new URL('./fonts/LiberationSans-Bold.ttf', import.meta.url))
+const sansBoldItalic = source(new URL('./fonts/LiberationSans-BoldItalic.ttf', import.meta.url))
+const sansItalic = source(new URL('./fonts/LiberationSans-Italic.ttf', import.meta.url))
+const sansRegular = source(new URL('./fonts/LiberationSans-Regular.ttf', import.meta.url))
+const serifBold = source(new URL('./fonts/LiberationSerif-Bold.ttf', import.meta.url))
+const serifBoldItalic = source(new URL('./fonts/LiberationSerif-BoldItalic.ttf', import.meta.url))
+const serifItalic = source(new URL('./fonts/LiberationSerif-Italic.ttf', import.meta.url))
+const serifRegular = source(new URL('./fonts/LiberationSerif-Regular.ttf', import.meta.url))
 
 let registered = false
 

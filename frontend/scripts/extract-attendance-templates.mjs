@@ -7,6 +7,8 @@ import { JSDOM } from 'jsdom'
 const revision = process.argv[2] || 'c315c452d8c0b3aabfff324f702f89aee3ce8a2e'
 const output = fileURLToPath(new URL('../src/features/pdf/attendance/attendanceTemplateData.generated.json', import.meta.url))
 const prefix = 'backend/swimming attendance/'
+const previousCatalog = JSON.parse(execFileSync('git', ['show', `${revision}:frontend/src/features/pdf/attendance/attendanceTemplateData.generated.json`], { encoding: 'utf8' }))
+const previousByKey = new Map(previousCatalog.map(template => [template.key, template]))
 const files = execFileSync('git', ['ls-tree', '--full-tree', '-r', '--name-only', revision], { encoding: 'utf8' })
   .split('\n').filter(path => path.startsWith(prefix) && path.endsWith('.html')).sort()
 
@@ -35,6 +37,7 @@ const catalog = files.map(path => {
     headerHeightPt: Number(frontCells[0]?.getAttribute('style')?.match(/height:\s*([\d.]+)pt/i)?.[1] ?? 50),
     columns: frontCells.slice(1).map(cell => ({ text: text(cell), widthPt: width(cell) || 50 })),
     backTableWidthPt: Number(tables[1]?.className.match(/w-\[([\d.]+)pt\]/)?.[1] ?? 1200),
+    backSections: previousByKey.get(key)?.backSections ?? [],
     backColumns: backCells.map(cell => {
       const blocks = [...cell.querySelectorAll(':scope > p')].map(block => text(block)).filter(Boolean)
       return { widthPt: width(cell), blocks: blocks.length ? blocks : [text(cell)].filter(Boolean) }
