@@ -1,4 +1,3 @@
-import React from 'react'
 import { renderPdfArtifact } from '../renderPdf'
 import type { MasterlistPdfRequest } from '../types'
 import { MasterlistDocument } from './MasterlistDocument'

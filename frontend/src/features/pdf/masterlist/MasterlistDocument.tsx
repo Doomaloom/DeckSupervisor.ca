@@ -1,4 +1,3 @@
-import React from 'react'
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { MasterlistPdfRequest } from '../types'
 import { buildMasterlistRows, buildMasterlistTitle, normalizeMasterlistFontSize } from './masterlistModel'
@@ -39,14 +38,24 @@ export function MasterlistDocument({ request }: { request: MasterlistPdfRequest 
             )
           }
           const isTime = row.kind === 'time'
+          const isAlphabetical = row.kind === 'alphabetical'
           return (
             <Text
               key={rowIndex}
+              minPresenceAhead={isAlphabetical ? fontSize * 2.3 : 0}
               style={[
                 styles.group,
                 {
-                  fontWeight: isTime ? (request.options.bold_time ? 700 : 400) : (request.options.bold_course ? 700 : 400),
-                  textAlign: isTime ? (request.options.center_time ? 'center' : 'left') : (request.options.center_course ? 'center' : 'left'),
+                  fontWeight: isAlphabetical
+                    ? 700
+                    : isTime
+                      ? (request.options.bold_time ? 700 : 400)
+                      : (request.options.bold_course ? 700 : 400),
+                  textAlign: isAlphabetical
+                    ? 'left'
+                    : isTime
+                      ? (request.options.center_time ? 'center' : 'left')
+                      : (request.options.center_course ? 'center' : 'left'),
                 },
               ]}
               wrap={false}

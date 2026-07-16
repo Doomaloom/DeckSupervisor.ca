@@ -8,6 +8,7 @@ import {
 } from '../../../lib/storage'
 import { setStorageScope } from '../../../lib/storageScope'
 import type { FormatOptions, Student } from '../../../types/app'
+import { buildMasterlistRows } from '../../pdf/masterlist/masterlistModel'
 import {
   buildBaseSchematicPayload,
   buildMasterlistProgressLabel,
@@ -20,6 +21,8 @@ import {
 } from './printPayloads'
 
 const defaultFormatOptions: FormatOptions = {
+  layout: 'class-time',
+  alphabetical_name_basis: 'last-name',
   time_headers: false,
   instructor_headers: false,
   course_headers: false,
@@ -170,6 +173,28 @@ describe('printPayloads', () => {
             level: 'Splash 1',
           },
         ],
+      },
+    ])
+  })
+
+  it('builds student rows from the same canonical payload used by preview and print', () => {
+    setStudentsForDay('Mo', [
+      makeStudent({ id: 'student-1', code: 'C100', name: 'Alice Smith', age: '7' }),
+    ])
+
+    const payload = buildMasterlistRequestBody({
+      day: 'Mo',
+      sessionId: 'session-1',
+      session,
+      options: defaultFormatOptions,
+    })
+
+    expect(payload).not.toBeNull()
+    const rows = buildMasterlistRows(payload?.rosters ?? [], payload?.options ?? defaultFormatOptions)
+    expect(rows.filter(row => row.kind === 'data')).toEqual([
+      {
+        kind: 'data',
+        cells: ['C100', '9:00 AM - 9:30 AM', 'Coach A', 'Splash 1', 'Alice Smith', '7', '555-1111'],
       },
     ])
   })

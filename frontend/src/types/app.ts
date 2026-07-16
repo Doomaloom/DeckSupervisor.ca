@@ -1,4 +1,9 @@
+export type MasterlistLayout = 'class-time' | 'alphabetical'
+export type MasterlistAlphabeticalNameBasis = 'first-name' | 'last-name'
+
 export type FormatOptions = {
+    layout: MasterlistLayout
+    alphabetical_name_basis: MasterlistAlphabeticalNameBasis
     time_headers: boolean
     instructor_headers: boolean
     course_headers: boolean
@@ -10,7 +15,9 @@ export type FormatOptions = {
     font_size: number
 }
 
-export type BooleanFormatOptionKey = Exclude<keyof FormatOptions, 'font_size'>
+export type BooleanFormatOptionKey = {
+    [Key in keyof FormatOptions]: FormatOptions[Key] extends boolean ? Key : never
+}[keyof FormatOptions]
 
 export type InstructorEntry = {
     name: string

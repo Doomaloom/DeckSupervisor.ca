@@ -26,6 +26,8 @@ type InstructorCoursesByDay = Record<string, InstructorCourseConfig>
 type CustomRostersByDay = Record<string, CustomRoster[]>
 
 const defaultFormatOptions: FormatOptions = {
+  layout: 'class-time',
+  alphabetical_name_basis: 'last-name',
   time_headers: false,
   instructor_headers: false,
   course_headers: false,
@@ -45,9 +47,15 @@ function clampFormatFontSize(value: unknown): number {
 }
 
 function normalizeFormatOptions(value: Partial<FormatOptions> | null | undefined): FormatOptions {
+  const layout = value?.layout === 'alphabetical' ? 'alphabetical' : 'class-time'
+  const alphabeticalNameBasis = value?.alphabetical_name_basis === 'first-name'
+    ? 'first-name'
+    : 'last-name'
   return {
     ...defaultFormatOptions,
     ...(value ?? {}),
+    layout,
+    alphabetical_name_basis: alphabeticalNameBasis,
     font_size: clampFormatFontSize(value?.font_size),
   }
 }

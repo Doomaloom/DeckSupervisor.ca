@@ -1,5 +1,9 @@
-import React from 'react'
-import type { BooleanFormatOptionKey, FormatOptions } from '../../../types/app'
+import type {
+  BooleanFormatOptionKey,
+  FormatOptions,
+  MasterlistAlphabeticalNameBasis,
+  MasterlistLayout,
+} from '../../../types/app'
 import {
   courseHeaderStyleOptions,
   formatOptionItems,
@@ -8,32 +12,45 @@ import {
   timeHeaderStyleOptions,
 } from '../constants'
 import { optionClass } from '../utils'
+import MasterlistLayoutControls from './MasterlistLayoutControls'
 
 type FormattingOptionsPanelProps = {
   formatOptions: FormatOptions
   onToggle: (option: BooleanFormatOptionKey) => void
   onChangeFontSize: (value: string) => void
+  onChangeLayout: (layout: MasterlistLayout) => void
+  onChangeAlphabeticalNameBasis: (basis: MasterlistAlphabeticalNameBasis) => void
 }
 
 function FormattingOptionsPanel({
   formatOptions,
   onToggle,
   onChangeFontSize,
+  onChangeLayout,
+  onChangeAlphabeticalNameBasis,
 }: FormattingOptionsPanelProps) {
   return (
     <div id="formatting-options-panel" data-component="formatting-options-panel" className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
       <h2 className="mb-4 text-center text-xl font-semibold">Formatting Options</h2>
       <div className="flex flex-col gap-2">
-        {formatOptionItems.map(option => (
-          <button
-            key={option.key}
-            type="button"
-            className={optionClass(formatOptions[option.key])}
-            onClick={() => onToggle(option.key)}
-          >
-            {option.label}
-          </button>
-        ))}
+        <MasterlistLayoutControls
+          layout={formatOptions.layout}
+          alphabeticalNameBasis={formatOptions.alphabetical_name_basis}
+          onChangeLayout={onChangeLayout}
+          onChangeAlphabeticalNameBasis={onChangeAlphabeticalNameBasis}
+        />
+        {formatOptionItems
+          .filter(option => formatOptions.layout === 'class-time' || option.key === 'borders')
+          .map(option => (
+            <button
+              key={option.key}
+              type="button"
+              className={optionClass(formatOptions[option.key])}
+              onClick={() => onToggle(option.key)}
+            >
+              {option.label}
+            </button>
+          ))}
 
         <label className="mt-2 flex flex-col gap-2 rounded-2xl border-2 border-secondary p-4 font-semibold">
           Font Size
@@ -48,33 +65,37 @@ function FormattingOptionsPanel({
           />
         </label>
 
-        <fieldset className="mt-2 flex flex-col gap-2 rounded-2xl border-2 border-secondary p-4">
-          <legend className="px-2 font-semibold">Time Header Style</legend>
-          {timeHeaderStyleOptions.map(option => (
-            <button
-              key={option.key}
-              type="button"
-              className={optionClass(formatOptions[option.key])}
-              onClick={() => onToggle(option.key)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </fieldset>
+        {formatOptions.layout === 'class-time' ? (
+          <fieldset className="mt-2 flex flex-col gap-2 rounded-2xl border-2 border-secondary p-4">
+            <legend className="px-2 font-semibold">Time Header Style</legend>
+            {timeHeaderStyleOptions.map(option => (
+              <button
+                key={option.key}
+                type="button"
+                className={optionClass(formatOptions[option.key])}
+                onClick={() => onToggle(option.key)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </fieldset>
+        ) : null}
 
-        <fieldset className="mt-2 flex flex-col gap-2 rounded-2xl border-2 border-secondary p-4">
-          <legend className="px-2 font-semibold">Course Header Style</legend>
-          {courseHeaderStyleOptions.map(option => (
-            <button
-              key={option.key}
-              type="button"
-              className={optionClass(formatOptions[option.key])}
-              onClick={() => onToggle(option.key)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </fieldset>
+        {formatOptions.layout === 'class-time' ? (
+          <fieldset className="mt-2 flex flex-col gap-2 rounded-2xl border-2 border-secondary p-4">
+            <legend className="px-2 font-semibold">Course Header Style</legend>
+            {courseHeaderStyleOptions.map(option => (
+              <button
+                key={option.key}
+                type="button"
+                className={optionClass(formatOptions[option.key])}
+                onClick={() => onToggle(option.key)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </fieldset>
+        ) : null}
       </div>
     </div>
   )

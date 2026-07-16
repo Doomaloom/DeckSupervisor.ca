@@ -57,7 +57,12 @@ export type SchematicPdfRequest = {
   rotateCounterClockwise90?: boolean
 }
 
+export type MasterlistLayout = 'class-time' | 'alphabetical'
+export type MasterlistAlphabeticalNameBasis = 'first-name' | 'last-name'
+
 export type MasterlistFormatOptions = {
+  layout: MasterlistLayout
+  alphabetical_name_basis: MasterlistAlphabeticalNameBasis
   time_headers: boolean
   instructor_headers: boolean
   course_headers: boolean
@@ -69,8 +74,27 @@ export type MasterlistFormatOptions = {
   font_size: number
 }
 
+export type MasterlistStudent = {
+  name: string
+  phone: string
+  age?: string
+  instructor: string
+  level: string
+}
+
+export type MasterlistRoster = {
+  courseCode: string
+  serviceName: string
+  day: string
+  time: string
+  location: string
+  schedule: string
+  instructor: string
+  students: MasterlistStudent[]
+}
+
 export type MasterlistPdfRequest = {
-  rosters: Array<Record<string, unknown>>
+  rosters: MasterlistRoster[]
   options: MasterlistFormatOptions
   sessionName?: string
   generatedDate?: string

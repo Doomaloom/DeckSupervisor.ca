@@ -23,7 +23,12 @@ import {
 } from '../../lib/instructorPdfCache'
 import { buildCustomRosterGroups, buildRosterGroups } from '../rosters/utils'
 import { printOptions } from './constants'
-import type { BooleanFormatOptionKey, FormatOptions } from '../../types/app'
+import type {
+  BooleanFormatOptionKey,
+  FormatOptions,
+  MasterlistAlphabeticalNameBasis,
+  MasterlistLayout,
+} from '../../types/app'
 import type { PrintOptionKey } from './types'
 import { openPdfPrintDialog, openPrintWindow } from '../../lib/browserPrint'
 import { useSessionInstructors } from './hooks/useSessionInstructors'
@@ -397,6 +402,24 @@ function PrintPage() {
         ...current,
         font_size: nextFontSize,
       }
+      setMasterlistDraftOptions(next)
+      return next
+    })
+  }
+
+  const handleChangeMasterlistLayout = (layout: MasterlistLayout) => {
+    setMasterlistFormatOptions(current => {
+      const next = { ...current, layout }
+      setMasterlistDraftOptions(next)
+      return next
+    })
+  }
+
+  const handleChangeMasterlistAlphabeticalNameBasis = (
+    alphabeticalNameBasis: MasterlistAlphabeticalNameBasis,
+  ) => {
+    setMasterlistFormatOptions(current => {
+      const next = { ...current, alphabetical_name_basis: alphabeticalNameBasis }
       setMasterlistDraftOptions(next)
       return next
     })
@@ -1402,6 +1425,8 @@ function PrintPage() {
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleDay1Option}
         onToggleFormat={handleToggleMasterlistOption}
+        onChangeLayout={handleChangeMasterlistLayout}
+        onChangeAlphabeticalNameBasis={handleChangeMasterlistAlphabeticalNameBasis}
         onChangeFontSize={handleChangeMasterlistFontSize}
         onChangeSchematicScale={handleChangeSchematicScale}
         onResetSchematicScale={handleResetSchematicScale}
@@ -1456,6 +1481,8 @@ function PrintPage() {
         isPreviewLoading={isMasterlistPreviewLoading}
         previewError={masterlistPreviewError}
         onToggleFormat={handleToggleMasterlistOption}
+        onChangeLayout={handleChangeMasterlistLayout}
+        onChangeAlphabeticalNameBasis={handleChangeMasterlistAlphabeticalNameBasis}
         onChangeFontSize={handleChangeMasterlistFontSize}
         onClose={() => setActiveModal(null)}
         onToggle={handleToggleMasterlistExtra}

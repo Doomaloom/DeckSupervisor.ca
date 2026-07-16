@@ -1,5 +1,10 @@
 import React from 'react'
-import type { BooleanFormatOptionKey, FormatOptions } from '../../../types/app'
+import type {
+  BooleanFormatOptionKey,
+  FormatOptions,
+  MasterlistAlphabeticalNameBasis,
+  MasterlistLayout,
+} from '../../../types/app'
 import {
   courseHeaderStyleOptions,
   formatOptionItems,
@@ -9,6 +14,7 @@ import {
 } from '../../masterlist/constants'
 import PrintModalShell from './PrintModalShell'
 import SchematicScaleControl from './SchematicScaleControl'
+import MasterlistLayoutControls from '../../masterlist/components/MasterlistLayoutControls'
 
 type Day1Options = {
   schematicCoverPage: boolean
@@ -28,6 +34,8 @@ type Day1OptionsModalProps = {
   onClose: () => void
   onToggle: (key: keyof Day1Options) => void
   onToggleFormat: (key: BooleanFormatOptionKey) => void
+  onChangeLayout: (layout: MasterlistLayout) => void
+  onChangeAlphabeticalNameBasis: (basis: MasterlistAlphabeticalNameBasis) => void
   onChangeFontSize: (value: string) => void
   onChangeSchematicScale: (value: number) => void
   onResetSchematicScale: () => void
@@ -46,6 +54,8 @@ function Day1OptionsModal({
   onClose,
   onToggle,
   onToggleFormat,
+  onChangeLayout,
+  onChangeAlphabeticalNameBasis,
   onChangeFontSize,
   onChangeSchematicScale,
   onResetSchematicScale,
@@ -108,19 +118,28 @@ function Day1OptionsModal({
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
             <legend className="px-2 text-xs font-semibold">Format Options</legend>
-            {formatOptionItems.map(option => (
-              <label
-                key={option.key}
-                className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-              >
-                <input
-                  type="checkbox"
-                  checked={formatOptions[option.key]}
-                  onChange={() => onToggleFormat(option.key)}
-                />
-                {option.label}
-              </label>
-            ))}
+            <MasterlistLayoutControls
+              layout={formatOptions.layout}
+              alphabeticalNameBasis={formatOptions.alphabetical_name_basis}
+              onChangeLayout={onChangeLayout}
+              onChangeAlphabeticalNameBasis={onChangeAlphabeticalNameBasis}
+              compact
+            />
+            {formatOptionItems
+              .filter(option => formatOptions.layout === 'class-time' || option.key === 'borders')
+              .map(option => (
+                <label
+                  key={option.key}
+                  className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+                >
+                  <input
+                    type="checkbox"
+                    checked={formatOptions[option.key]}
+                    onChange={() => onToggleFormat(option.key)}
+                  />
+                  {option.label}
+                </label>
+              ))}
             <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
               Font Size
               <input
@@ -135,41 +154,43 @@ function Day1OptionsModal({
             </label>
           </fieldset>
 
-          <div className="flex flex-col gap-3">
-            <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
-              <legend className="px-2 text-xs font-semibold">Time Header Style</legend>
-              {timeHeaderStyleOptions.map(option => (
-                <label
-                  key={option.key}
-                  className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-                >
-                  <input
-                    type="checkbox"
-                    checked={formatOptions[option.key]}
-                    onChange={() => onToggleFormat(option.key)}
-                  />
-                  {option.label}
-                </label>
-              ))}
-            </fieldset>
+          {formatOptions.layout === 'class-time' ? (
+            <div className="flex flex-col gap-3">
+              <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+                <legend className="px-2 text-xs font-semibold">Time Header Style</legend>
+                {timeHeaderStyleOptions.map(option => (
+                  <label
+                    key={option.key}
+                    className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formatOptions[option.key]}
+                      onChange={() => onToggleFormat(option.key)}
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </fieldset>
 
-            <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
-              <legend className="px-2 text-xs font-semibold">Course Header Style</legend>
-              {courseHeaderStyleOptions.map(option => (
-                <label
-                  key={option.key}
-                  className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-                >
-                  <input
-                    type="checkbox"
-                    checked={formatOptions[option.key]}
-                    onChange={() => onToggleFormat(option.key)}
-                  />
-                  {option.label}
-                </label>
-              ))}
-            </fieldset>
-          </div>
+              <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+                <legend className="px-2 text-xs font-semibold">Course Header Style</legend>
+                {courseHeaderStyleOptions.map(option => (
+                  <label
+                    key={option.key}
+                    className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formatOptions[option.key]}
+                      onChange={() => onToggleFormat(option.key)}
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </fieldset>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
