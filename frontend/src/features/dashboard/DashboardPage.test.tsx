@@ -34,6 +34,7 @@ vi.mock('../../app/useCurrentTeam', () => ({
 
 vi.mock('../../app/useCurrentTerm', () => ({
   useCurrentTerm: mocks.useCurrentTerm,
+  formatTermLabel: (season: string, year: number) => `${season} ${year}`,
 }))
 
 vi.mock('../session-management/hooks/useCurrentSessionScopeSync', () => ({

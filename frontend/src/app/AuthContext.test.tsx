@@ -4,25 +4,37 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { customRender, screen, waitFor } from '../test/render'
 import { AuthProvider, useAuth } from './AuthContext'
 
-const bootstrapAuthSession = vi.fn()
-const onAuthSessionChanged = vi.fn()
-const signInWithPassword = vi.fn()
-const signOut = vi.fn()
-const signUpWithPassword = vi.fn()
-const fetchAccountData = vi.fn()
-const updateProfile = vi.fn()
+const mocks = vi.hoisted(() => ({
+  bootstrapAuthSession: vi.fn(),
+  onAuthSessionChanged: vi.fn(),
+  signInWithPassword: vi.fn(),
+  signOut: vi.fn(),
+  signUpWithPassword: vi.fn(),
+  fetchAccountData: vi.fn(),
+  updateProfile: vi.fn(),
+}))
 
-vi.mock('../lib/authClient', () => ({
+const {
   bootstrapAuthSession,
   onAuthSessionChanged,
   signInWithPassword,
   signOut,
   signUpWithPassword,
+  fetchAccountData,
+  updateProfile,
+} = mocks
+
+vi.mock('../lib/authClient', () => ({
+  bootstrapAuthSession: mocks.bootstrapAuthSession,
+  onAuthSessionChanged: mocks.onAuthSessionChanged,
+  signInWithPassword: mocks.signInWithPassword,
+  signOut: mocks.signOut,
+  signUpWithPassword: mocks.signUpWithPassword,
 }))
 
 vi.mock('../lib/serverApi', () => ({
-  fetchAccountData,
-  updateProfile,
+  fetchAccountData: mocks.fetchAccountData,
+  updateProfile: mocks.updateProfile,
 }))
 
 type Deferred<T> = {
