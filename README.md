@@ -159,3 +159,14 @@ This aligns data access patterns with real staffing responsibilities.
 - Document utility layer for merge, rotate, blank insertion, and filename sanitization
 - Team collaboration model with invitation and date-scoped coverage access
 - Deployment split with API rewrite strategy and containerized backend
+### PDF visual parity tests
+
+Historical PDF comparisons require Chromium, Liberation fonts, Poppler (`pdfinfo` and
+`pdftoppm`), and ImageMagick 7. Current and diagnostic files belong under
+`tmp/pdf-parity/`; only synthetic historical goldens and their manifest are committed.
+Regenerate pinned historical attendance goldens with
+`scripts/pdf-parity/generate-historical.sh`; the script exports the pinned tree and runs
+the isolated Go harness without restoring Chromium dependencies to production.
+Run `cd frontend && npm run test:pdf-visual` after producing the current fixture set.
+Failures retain both rasterized pages and a highlighted difference image. Contact sheets
+can be rebuilt with `scripts/pdf-parity/contact-sheets.sh`.

@@ -9,7 +9,8 @@
         "preview": "vite preview",
         "test": "vitest",
         "test:watch": "vitest --watch",
-        "test:run": "vitest run"
+        "test:run": "vitest run",
+        "test:pdf-visual": "PDF_VISUAL_OUTPUT_DIR=../tmp/pdf-parity/current vitest run src/features/pdf/pdfVisualFixtures.test.ts && bash ../scripts/pdf-parity/compare-pdfs.sh"
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",

@@ -1,0 +1,741 @@
+{
+  "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+  "fixtures": [
+    {
+      "name": "attendance-LittleSplash1.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "LittleSplash1",
+        "session": "Summer 2026",
+        "filename": "attendance-LittleSplash1",
+        "title": "LittleSplash1",
+        "roster": {
+          "code": "00123",
+          "level": "LittleSplash1",
+          "serviceName": "LittleSplash1",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "7fb75d118cd3a0da55ee515637ca704dd0837d678d7fb5933585b68f379d38e4"
+    },
+    {
+      "name": "attendance-LittleSplash2.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "LittleSplash2",
+        "session": "Summer 2026",
+        "filename": "attendance-LittleSplash2",
+        "title": "LittleSplash2",
+        "roster": {
+          "code": "00123",
+          "level": "LittleSplash2",
+          "serviceName": "LittleSplash2",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "31123a6816f5f1d0c49294db8787f242a3d6f5e052f4537d690b57a0bf234bed"
+    },
+    {
+      "name": "attendance-LittleSplash3.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "LittleSplash3",
+        "session": "Summer 2026",
+        "filename": "attendance-LittleSplash3",
+        "title": "LittleSplash3",
+        "roster": {
+          "code": "00123",
+          "level": "LittleSplash3",
+          "serviceName": "LittleSplash3",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "40a1878898e76fd41f7cac1b0f8388267c259b3cc26d132ce296ce4d15b32487"
+    },
+    {
+      "name": "attendance-LittleSplash4.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "LittleSplash4",
+        "session": "Summer 2026",
+        "filename": "attendance-LittleSplash4",
+        "title": "LittleSplash4",
+        "roster": {
+          "code": "00123",
+          "level": "LittleSplash4",
+          "serviceName": "LittleSplash4",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "b4108540acf326526f236b55b83b14f2e37043f2f50b13a2186e1b6b5e3b5f17"
+    },
+    {
+      "name": "attendance-LittleSplash5.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "LittleSplash5",
+        "session": "Summer 2026",
+        "filename": "attendance-LittleSplash5",
+        "title": "LittleSplash5",
+        "roster": {
+          "code": "00123",
+          "level": "LittleSplash5",
+          "serviceName": "LittleSplash5",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "40379c4c3b4ef65bb1e00743a61a06b5eef3c40ac8096ba261897d91ef3064eb"
+    },
+    {
+      "name": "attendance-ParentandTot1.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "ParentandTot1",
+        "session": "Summer 2026",
+        "filename": "attendance-ParentandTot1",
+        "title": "ParentandTot1",
+        "roster": {
+          "code": "00123",
+          "level": "ParentandTot1",
+          "serviceName": "ParentandTot1",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "ea42d51c4711d4fb3fabe7a91669373c46025a0112767eca1c99ce832376dcef"
+    },
+    {
+      "name": "attendance-ParentandTot2.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "ParentandTot2",
+        "session": "Summer 2026",
+        "filename": "attendance-ParentandTot2",
+        "title": "ParentandTot2",
+        "roster": {
+          "code": "00123",
+          "level": "ParentandTot2",
+          "serviceName": "ParentandTot2",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "4d75ef734024e54a822c3b4663e5d744ef330291afc5382fbeafafcd91bff215"
+    },
+    {
+      "name": "attendance-ParentandTot3.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "ParentandTot3",
+        "session": "Summer 2026",
+        "filename": "attendance-ParentandTot3",
+        "title": "ParentandTot3",
+        "roster": {
+          "code": "00123",
+          "level": "ParentandTot3",
+          "serviceName": "ParentandTot3",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "f163f6512d7b4f280d5c31da5df7d9edde4c9344655424adb3d799746904d020"
+    },
+    {
+      "name": "attendance-Splash1.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "Splash1",
+        "session": "Summer 2026",
+        "filename": "attendance-Splash1",
+        "title": "Splash1",
+        "roster": {
+          "code": "00123",
+          "level": "Splash1",
+          "serviceName": "Splash1",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "f37efe56f00e88f437551e07fed66487777a33920d7eb04c971453c9016f8ec3"
+    },
+    {
+      "name": "attendance-Splash2A.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "Splash2A",
+        "session": "Summer 2026",
+        "filename": "attendance-Splash2A",
+        "title": "Splash2A",
+        "roster": {
+          "code": "00123",
+          "level": "Splash2A",
+          "serviceName": "Splash2A",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "30d25ede07178d8f54b24a94b6ee38b7f7862a153ce55ac1f63de42134d301d7"
+    },
+    {
+      "name": "attendance-Splash2B.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "Splash2B",
+        "session": "Summer 2026",
+        "filename": "attendance-Splash2B",
+        "title": "Splash2B",
+        "roster": {
+          "code": "00123",
+          "level": "Splash2B",
+          "serviceName": "Splash2B",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "09352c8bdc81efef5b4073d2b6c21aeecf38a4d0442ca34b163a112ef847eff9"
+    },
+    {
+      "name": "attendance-Splash3.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "Splash3",
+        "session": "Summer 2026",
+        "filename": "attendance-Splash3",
+        "title": "Splash3",
+        "roster": {
+          "code": "00123",
+          "level": "Splash3",
+          "serviceName": "Splash3",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "73979f2ecb630c3fe8721a7c7c7532af343f3b0509a8971ba65b0347fe3d6a03"
+    },
+    {
+      "name": "attendance-Splash4.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "Splash4",
+        "session": "Summer 2026",
+        "filename": "attendance-Splash4",
+        "title": "Splash4",
+        "roster": {
+          "code": "00123",
+          "level": "Splash4",
+          "serviceName": "Splash4",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "2acc6f2f831bdc7684464b5690d68fb69814e0092146ceec8174e26d78f190ed"
+    },
+    {
+      "name": "attendance-Splash5.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "Splash5",
+        "session": "Summer 2026",
+        "filename": "attendance-Splash5",
+        "title": "Splash5",
+        "roster": {
+          "code": "00123",
+          "level": "Splash5",
+          "serviceName": "Splash5",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "ca5acf58ec22eafae7c0bf03ebc76b9880cd2bb4a63bfa26c914ca3da4138260"
+    },
+    {
+      "name": "attendance-Splash6.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "Splash6",
+        "session": "Summer 2026",
+        "filename": "attendance-Splash6",
+        "title": "Splash6",
+        "roster": {
+          "code": "00123",
+          "level": "Splash6",
+          "serviceName": "Splash6",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "3c93bbfb00bf5c0721a66fabcabfac40f49485517ca773b3558040b0d43c2702"
+    },
+    {
+      "name": "attendance-Splash7.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "Splash7",
+        "session": "Summer 2026",
+        "filename": "attendance-Splash7",
+        "title": "Splash7",
+        "roster": {
+          "code": "00123",
+          "level": "Splash7",
+          "serviceName": "Splash7",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "a70dd84e3ef0dbd9cb310384b14993a1a9c1fe651aafa30331345b2a82102351"
+    },
+    {
+      "name": "attendance-Splash8.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "Splash8",
+        "session": "Summer 2026",
+        "filename": "attendance-Splash8",
+        "title": "Splash8",
+        "roster": {
+          "code": "00123",
+          "level": "Splash8",
+          "serviceName": "Splash8",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "7fa5e1d4cd7c98d9cf75b1bb3d92fb4737a91a29e155781028fc425857e125a8"
+    },
+    {
+      "name": "attendance-Splash9.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "Splash9",
+        "session": "Summer 2026",
+        "filename": "attendance-Splash9",
+        "title": "Splash9",
+        "roster": {
+          "code": "00123",
+          "level": "Splash9",
+          "serviceName": "Splash9",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "02d0f0a0ffe57a275a109d6d6340ad3c007c395be2940d2313353a5a27654649"
+    },
+    {
+      "name": "attendance-SplashFitness.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "SplashFitness",
+        "session": "Summer 2026",
+        "filename": "attendance-SplashFitness",
+        "title": "SplashFitness",
+        "roster": {
+          "code": "00123",
+          "level": "SplashFitness",
+          "serviceName": "SplashFitness",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "9424a701e5249e71361b6ac848e2d3b0698d964d778d480755681c9bead1cf62"
+    },
+    {
+      "name": "attendance-SplashPrivate.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "SplashPrivate",
+        "session": "Summer 2026",
+        "filename": "attendance-SplashPrivate",
+        "title": "SplashPrivate",
+        "roster": {
+          "code": "00123",
+          "level": "SplashPrivate",
+          "serviceName": "SplashPrivate",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "d3e5ff3301902be60201968ebdb40ff6b1d6971005794d3448c9ba0c62626765"
+    },
+    {
+      "name": "attendance-TeenAdult1.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "TeenAdult1",
+        "session": "Summer 2026",
+        "filename": "attendance-TeenAdult1",
+        "title": "TeenAdult1",
+        "roster": {
+          "code": "00123",
+          "level": "TeenAdult1",
+          "serviceName": "TeenAdult1",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "8799501170935557a18c04b2e4e9dfaf46501c17e2958d816d8543a00e3a2660"
+    },
+    {
+      "name": "attendance-TeenAdult2.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "TeenAdult2",
+        "session": "Summer 2026",
+        "filename": "attendance-TeenAdult2",
+        "title": "TeenAdult2",
+        "roster": {
+          "code": "00123",
+          "level": "TeenAdult2",
+          "serviceName": "TeenAdult2",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "3aa8278563b2b17582bed038cddc5577eebb11584fa8b8361549025f045081df"
+    },
+    {
+      "name": "attendance-TeenAdult3.pdf",
+      "sourceCommit": "c315c452d8c0b3aabfff324f702f89aee3ce8a2e",
+      "request": {
+        "template": "TeenAdult3",
+        "session": "Summer 2026",
+        "filename": "attendance-TeenAdult3",
+        "title": "TeenAdult3",
+        "roster": {
+          "code": "00123",
+          "level": "TeenAdult3",
+          "serviceName": "TeenAdult3",
+          "time": "9:00 AM",
+          "instructor": "Alex Instructor",
+          "location": "Main Pool",
+          "schedule": "Mon 2026-07-06",
+          "students": [
+            {
+              "name": "Avery Adams"
+            },
+            {
+              "name": "Blair Brown"
+            },
+            {
+              "name": "Casey Chen"
+            }
+          ]
+        },
+        "rosters": null
+      },
+      "sha256": "de959fc9cc5935f4b7ba376363d00b4dece540ce87bf223d74aa3d00cf0ad1d7"
+    }
+  ]
+}
