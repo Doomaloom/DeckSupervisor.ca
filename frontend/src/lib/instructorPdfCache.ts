@@ -10,7 +10,7 @@ import type { RosterGroup } from '../features/rosters/types'
 import { PDF_RENDERER_VERSION } from '../features/pdf/types'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
-const DB_VERSION = 5
+const DB_VERSION = 6
 const PDF_STORE_NAME = 'instructorPdfs'
 const DIRTY_STORE_NAME = 'dirtyInstructorSets'
 const LEGACY_PACKET_STORE_NAME = 'instructorPackets'
@@ -204,7 +204,7 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(DIRTY_STORE_NAME)) {
         db.createObjectStore(DIRTY_STORE_NAME, { keyPath: 'key' })
       }
-      if (request.oldVersion < 4) {
+      if (request.oldVersion < 6) {
         if (db.objectStoreNames.contains(PDF_STORE_NAME)) {
           transaction?.objectStore(PDF_STORE_NAME).clear()
         }

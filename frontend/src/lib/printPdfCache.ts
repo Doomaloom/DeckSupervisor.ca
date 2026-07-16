@@ -1,5 +1,7 @@
+import { PDF_RENDERER_VERSION } from '../features/pdf/types'
+
 const DB_NAME = 'decksupervisor-print-pdf-cache'
-const DB_VERSION = 2
+const DB_VERSION = 3
 const PDF_STORE_NAME = 'printPdfs'
 
 type SchematicPdfCacheEntry = {
@@ -23,7 +25,7 @@ function hashString(value: string) {
 }
 
 function getRequestHash(requestKey: string) {
-  return hashString(requestKey || 'default')
+  return hashString(`${PDF_RENDERER_VERSION}::${requestKey || 'default'}`)
 }
 
 function getEntryKey(sessionId: string, day: string, requestHash: string) {
@@ -51,7 +53,7 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(PDF_STORE_NAME)) {
         db.createObjectStore(PDF_STORE_NAME, { keyPath: 'key' })
       }
-      if (request.oldVersion < 2) {
+      if (request.oldVersion < 3) {
         transaction?.objectStore(PDF_STORE_NAME).clear()
       }
     }
