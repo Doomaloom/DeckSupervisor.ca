@@ -101,12 +101,19 @@ func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*Extr
 
 	for i := 0; i < df.Nrow(); i++ {
 		row := df.Subset([]int{i, i})
-		courseCode := NormalizeEventID(strings.TrimSpace(row.Col("EventID").Elem(0).String()))
-		serviceName := strings.TrimSpace(row.Col("ServiceName").Elem(0).String())
-		location := strings.TrimSpace(row.Col("Facility").Elem(0).String())
-		dayValue := row.Col("DayOfTheWeek").Elem(0).String()
-		eventSchedule := strings.TrimSpace(row.Col("EventSchedule").Elem(0).String())
-		timeRange := strings.TrimSpace(row.Col("EventTime").Elem(0).String())
+		courseCode := NormalizeEventID(frameValue(row, "EventID", "Event ID", "Code"))
+		serviceName := frameValue(row, "ServiceName", "Service Name", "Service")
+		location := frameValue(row, "Facility", "Location")
+		dayValue := frameValue(row, "DayOfTheWeek", "Day Of The Week", "DayOfWeek", "Day")
+		eventSchedule := frameValue(row, "EventSchedule", "Schedule")
+		timeRange := frameValue(row, "EventTime", "Time")
+		if timeRange == "" {
+			start := frameValue(row, "Starts", "Start")
+			end := frameValue(row, "Ends", "End")
+			if start != "" || end != "" {
+				timeRange = strings.TrimSpace(start + " - " + end)
+			}
+		}
 		if courseCode == "" {
 			continue
 		}
@@ -140,14 +147,14 @@ func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*Extr
 		sessionSeason, sessionYear := getSeasonAndYear(eventSchedule, startDate, endDate)
 		dayValue = normalizeExtractedSessionDay(dayValue, sessionSeason, sessionYear, scheduleStartDate, startDate)
 		sessionBucketKey := buildExtractedSessionBucketKey(dayValue, sessionSeason, sessionYear, location)
-		bookedCountFromRoster := parsePositiveInt(strings.TrimSpace(row.Col("Booked").Elem(0).String()))
+		bookedCountFromRoster := parsePositiveInt(frameValue(row, "Booked"))
 
-		statusValue := strings.TrimSpace(row.Col("AttendeeStatus").Elem(0).String())
+		statusValue := frameValue(row, "AttendeeStatus", "Attendee Status", "Status")
 		isWaitlist := isWaitingStatus(statusValue)
 
-		phone := strings.TrimSpace(row.Col("AttendeePhone").Elem(0).String())
-		name := normalizeExtractedStudentName(strings.TrimSpace(row.Col("AttendeeName").Elem(0).String()))
-		age := strings.TrimSpace(row.Col("Age").Elem(0).String())
+		phone := frameValue(row, "AttendeePhone", "Attendee Phone", "Phone")
+		name := normalizeExtractedStudentName(frameValue(row, "AttendeeName", "Attendee Name", "Name"))
+		age := frameValue(row, "Age")
 		hasAttendee := name != ""
 		instructor := resolveExtractedInstructor(courseCode, opts.InstructorMap)
 
@@ -296,6 +303,27 @@ func extractClassesDataFrame(df dataframe.DataFrame, opts ExtractOptions) (*Extr
 		Sessions:         sessions,
 		ClassesBySession: classesBySession,
 	}, nil
+}
+
+func frameValue(row dataframe.DataFrame, names ...string) string {
+	for _, actual := range row.Names() {
+		normalizedActual := normalizeColumnName(actual)
+		for _, candidate := range names {
+			if normalizedActual != normalizeColumnName(candidate) {
+				continue
+			}
+			column := row.Col(actual)
+			if column.Len() == 0 {
+				return ""
+			}
+			return strings.TrimSpace(column.Elem(0).String())
+		}
+	}
+	return ""
+}
+
+func normalizeColumnName(value string) string {
+	return strings.ToLower(strings.Join(strings.Fields(strings.TrimPrefix(value, "\uFEFF")), ""))
 }
 
 func resolveExtractOptions(opts ...ExtractOptions) ExtractOptions {
@@ -671,7 +699,7 @@ func parsePositiveInt(value string) int {
 }
 
 func normalizeExtractedSessionDay(dayValue, sessionSeason string, sessionYear int, scheduleStartDate, startDate time.Time) string {
-	normalizedDay := strings.TrimSpace(dayValue)
+	normalizedDay := normalizeExtractedDayAlias(dayValue)
 	if normalizedDay != "Mo,Tu,We,Th,Fr" {
 		return normalizedDay
 	}
@@ -692,6 +720,31 @@ func normalizeExtractedSessionDay(dayValue, sessionSeason string, sessionYear in
 		return normalizedDay
 	}
 	return miniSession
+}
+
+func normalizeExtractedDayAlias(value string) string {
+	trimmed := strings.TrimSpace(value)
+	normalized := strings.ToLower(strings.Join(strings.Fields(trimmed), " "))
+	switch normalized {
+	case "monday":
+		return "Mo"
+	case "tuesday":
+		return "Tu"
+	case "wednesday":
+		return "We"
+	case "thursday":
+		return "Th"
+	case "friday":
+		return "Fr"
+	case "saturday":
+		return "Sa"
+	case "sunday":
+		return "Su"
+	case "mo tu we th fr", "mo, tu, we, th, fr":
+		return "Mo,Tu,We,Th,Fr"
+	default:
+		return trimmed
+	}
 }
 
 func summerMiniSessionLabel(startDate time.Time) string {

@@ -67,19 +67,9 @@ func NewRouter() *mux.Router {
 
 	// CSV import and export flows
 	r.HandleFunc("/api/analyzeCSV", handlers.AnalyzeCSV).Methods("POST")
-	//	r.HandleFunc("/api/process-csv", handlers.ProcessCSV).Methods("POST")
-	//	r.HandleFunc("/api/extract-classes", handlers.ExtractClasses).Methods("POST")
-	//	r.HandleFunc("/api/csv/session-candidates", handlers.CSVSessionCandidates).Methods("POST")
-	r.HandleFunc("/api/masterlist-rosters", handlers.MasterlistRosters).Methods("POST")
-	r.HandleFunc("/api/masterlist-preview", handlers.MasterlistPreview).Methods("POST")
 
-	// PDF generation and document exports
-	r.HandleFunc("/api/attendance-pdf", handlers.AttendancePDF).Methods("POST")
-	r.HandleFunc("/api/concat-pdfs", handlers.ConcatPDF).Methods("POST")
-	r.HandleFunc("/api/blank-pdf", handlers.BlankPDF).Methods("POST")
+	// Spreadsheet and ZIP exports remain server-side. PDFs are generated in the SPA.
 	r.HandleFunc("/api/schematic-maker", handlers.SchematicMaker).Methods("POST")
-	r.HandleFunc("/api/schematic-pdf", handlers.SchematicPDF).Methods("POST")
-	r.HandleFunc("/api/session-report-pdf", handlers.SessionReportPDF).Methods("POST")
 
 	// Custom rosters
 	r.HandleFunc("/api/custom-rosters", handlers.SaveCustomRoster).Methods("POST")
