@@ -1,8 +1,6 @@
 package httpapi
 
 import (
-	//"net/http"
-
 	"cob-aquatics/internal/http/handlers"
 	"github.com/gorilla/mux"
 )
@@ -92,7 +90,6 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/planner-shares/{code}/save-state", handlers.ApplyPlannerShareSaveState).Methods("POST")
 
 	// Health
-	//r.HandleFunc("/api/health", handlers.Health).Methods("GET")
-	//r.NotFoundHandler = http.NotFoundHandler()
+	r.HandleFunc("/api/health", handlers.Health).Methods("GET")
 	return r
 }
