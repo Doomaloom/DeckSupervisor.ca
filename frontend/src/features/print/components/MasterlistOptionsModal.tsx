@@ -24,7 +24,7 @@ type MasterlistOptionsModalProps = {
   scaleStep: number
   formatOptions: FormatOptions
   notice?: React.ReactNode
-  previewHtml: string | null
+  previewUrl: string | null
   isPreviewLoading: boolean
   previewError: string | null
   onToggleFormat: (key: BooleanFormatOptionKey) => void
@@ -47,7 +47,7 @@ function MasterlistOptionsModal({
   scaleStep,
   formatOptions,
   notice,
-  previewHtml,
+  previewUrl,
   isPreviewLoading,
   previewError,
   onToggleFormat,
@@ -195,11 +195,11 @@ function MasterlistOptionsModal({
               <div className="flex h-full items-center justify-center p-6 text-center text-sm text-secondary/80">
                 {previewError}
               </div>
-            ) : previewHtml ? (
+            ) : previewUrl ? (
               <iframe
                 title="Masterlist preview"
                 className="h-full w-full bg-white"
-                srcDoc={previewHtml}
+                src={previewUrl}
               />
             ) : (
               <div className="flex h-full items-center justify-center p-6 text-center text-sm text-secondary/80">

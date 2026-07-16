@@ -37,7 +37,7 @@ import { getCapacity } from '../schematic/utils/capacity'
 import {
   fetchBlankPdf,
   fetchMasterlistPdf,
-  fetchMasterlistPreviewHtml,
+  fetchMasterlistPreviewPdf,
   fetchSchematicPdf,
 } from './utils/printApi'
 import {
@@ -153,7 +153,7 @@ function PrintPage() {
   const [masterlistFormatOptions, setMasterlistFormatOptions] = useState<FormatOptions>(() =>
     getMasterlistDraftOptions(),
   )
-  const [masterlistPreviewHtml, setMasterlistPreviewHtml] = useState<string | null>(null)
+  const [masterlistPreviewUrl, setMasterlistPreviewUrl] = useState<string | null>(null)
   const [isMasterlistPreviewLoading, setIsMasterlistPreviewLoading] = useState(false)
   const [masterlistPreviewError, setMasterlistPreviewError] = useState<string | null>(null)
   const [blockedPrintJob, setBlockedPrintJob] = useState<BlockedPrintJob | null>(null)
@@ -205,11 +205,18 @@ function PrintPage() {
     if (activeModal !== 'masterlist') {
       setIsMasterlistPreviewLoading(false)
       setMasterlistPreviewError(null)
+      setMasterlistPreviewUrl(current => {
+        if (current) URL.revokeObjectURL(current)
+        return null
+      })
       return
     }
 
     if (!selectedDay) {
-      setMasterlistPreviewHtml(null)
+      setMasterlistPreviewUrl(current => {
+        if (current) URL.revokeObjectURL(current)
+        return null
+      })
       setMasterlistPreviewError('Select a day to preview the masterlist.')
       setIsMasterlistPreviewLoading(false)
       return
@@ -224,24 +231,36 @@ function PrintPage() {
     })
 
     if (!body) {
-      setMasterlistPreviewHtml(null)
+      setMasterlistPreviewUrl(current => {
+        if (current) URL.revokeObjectURL(current)
+        return null
+      })
       setMasterlistPreviewError('No roster data found for the selected day.')
       setIsMasterlistPreviewLoading(false)
       return
     }
 
-    const controller = new AbortController()
+    let active = true
+    let objectUrl: string | null = null
     const timeoutId = window.setTimeout(() => {
       setIsMasterlistPreviewLoading(true)
       setMasterlistPreviewError(null)
 
-      fetchMasterlistPreviewHtml(body, controller.signal)
-        .then(html => {
-          setMasterlistPreviewHtml(html)
+      fetchMasterlistPreviewPdf(body)
+        .then(blob => {
+          objectUrl = URL.createObjectURL(blob)
+          if (!active) {
+            URL.revokeObjectURL(objectUrl)
+            return
+          }
+          setMasterlistPreviewUrl(current => {
+            if (current) URL.revokeObjectURL(current)
+            return objectUrl
+          })
           setMasterlistPreviewError(null)
         })
         .catch(error => {
-          if (controller.signal.aborted) {
+          if (!active) {
             return
           }
           console.error(error)
@@ -252,15 +271,16 @@ function PrintPage() {
           setMasterlistPreviewError(message)
         })
         .finally(() => {
-          if (!controller.signal.aborted) {
+          if (active) {
             setIsMasterlistPreviewLoading(false)
           }
         })
     }, 250)
 
     return () => {
-      controller.abort()
+      active = false
       window.clearTimeout(timeoutId)
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
   }, [
     activeModal,
@@ -708,24 +728,8 @@ function PrintPage() {
     pdfs: Array<{ blob: Blob; filename: string }>,
     options: { filename: string; title: string },
   ) => {
-    const formData = new FormData()
-    pdfs.forEach(pdf => {
-      formData.append('pdfs', pdf.blob, pdf.filename)
-    })
-    formData.append('filename', options.filename)
-    formData.append('title', options.title)
-
-    const response = await fetch('/api/concat-pdfs', {
-      method: 'POST',
-      body: formData,
-    })
-
-    if (!response.ok) {
-      const message = await response.text()
-      throw new Error(message || 'Failed to combine PDFs.')
-    }
-
-    return response.blob()
+    const { mergePdfs } = await import('../pdf')
+    return mergePdfs(pdfs.map(pdf => pdf.blob), options)
   }
 
   useEffect(() => {
@@ -936,24 +940,11 @@ function PrintPage() {
         return
       }
 
-      const formData = new FormData()
-      pdfs.forEach((pdf, index) => {
-        formData.append('pdfs', pdf, `instructor-${index + 1}.pdf`)
+      const { mergePdfs } = await import('../pdf')
+      const combinedPdf = await mergePdfs(pdfs, {
+        filename: 'instructor-sheets',
+        title: 'Instructor Sheets',
       })
-      formData.append('filename', 'instructor-sheets')
-      formData.append('title', 'Instructor Sheets')
-
-      const concatResponse = await fetch('/api/concat-pdfs', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!concatResponse.ok) {
-        const message = await concatResponse.text()
-        throw new Error(message || 'Failed to combine instructor PDFs.')
-      }
-
-      const combinedPdf = await concatResponse.blob()
       await refreshCachedPacket()
       if (
         !printWindow ||
@@ -1461,7 +1452,7 @@ function PrintPage() {
         scaleStep={SCHEMATIC_SCALE_STEP}
         formatOptions={masterlistFormatOptions}
         notice={activeModal === 'masterlist' ? blockedPrintNotice : null}
-        previewHtml={masterlistPreviewHtml}
+        previewUrl={masterlistPreviewUrl}
         isPreviewLoading={isMasterlistPreviewLoading}
         previewError={masterlistPreviewError}
         onToggleFormat={handleToggleMasterlistOption}

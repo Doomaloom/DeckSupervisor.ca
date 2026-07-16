@@ -43,26 +43,15 @@ export function useRosterPrint() {
         const printWindow = openPrintWindow('Attendance Roster')
 
         try {
-            const response = await fetch('/api/attendance-pdf', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    session: sessionName,
-                    rosters,
-                    title: `Attendance - ${roster.serviceName || roster.code || 'Roster'}`,
-                }),
-            })
-
-            if (!response.ok) {
-                const message = await response.text()
-                throw new Error(message || 'Failed to generate attendance PDF')
-            }
-
-            const pdfBlob = await response.blob()
+            const { generateAttendancePdf } = await import('../../pdf')
             const jobLabel = `Attendance - ${roster.serviceName || roster.code || 'Roster'}`
             const filename = buildRosterFilename(roster)
+            const { blob: pdfBlob } = await generateAttendancePdf({
+                session: sessionName,
+                rosters,
+                title: jobLabel,
+                filename,
+            })
             if (printWindow) {
                 const opened = openPdfPrintDialog(pdfBlob, printWindow, {
                     title: jobLabel,

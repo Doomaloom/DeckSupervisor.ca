@@ -429,24 +429,8 @@ export function useSessionReports({
 
     setIsExportingReport(true)
     try {
-      const response = await fetch('/api/session-report-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        const message = await response.text()
-        throw new Error(message || 'Failed to export report PDF')
-      }
-
-      const pdfBlob = await response.blob()
-      const contentDisposition = response.headers.get('Content-Disposition') ?? ''
-      const filenameMatch = /filename="?([^";]+)"?/i.exec(contentDisposition)
-      const fallbackBase = normalizedTitle.replace(/[^a-z0-9-_]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
-      const filename = filenameMatch?.[1] ?? `${fallbackBase || 'session-report'}.pdf`
+      const { generateSessionReportPdf } = await import('../../pdf')
+      const { blob: pdfBlob, filename } = await generateSessionReportPdf(payload)
 
       const blobURL = window.URL.createObjectURL(pdfBlob)
       const link = document.createElement('a')

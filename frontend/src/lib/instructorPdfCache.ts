@@ -7,9 +7,10 @@ import {
   buildRosterGroups,
 } from '../features/rosters/utils'
 import type { RosterGroup } from '../features/rosters/types'
+import { PDF_RENDERER_VERSION } from '../features/pdf/types'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
-const DB_VERSION = 4
+const DB_VERSION = 5
 const PDF_STORE_NAME = 'instructorPdfs'
 const DIRTY_STORE_NAME = 'dirtyInstructorSets'
 const LEGACY_PACKET_STORE_NAME = 'instructorPackets'
@@ -115,7 +116,7 @@ function getPacketKey(sessionId: string, day: string) {
 }
 
 function getPdfEntryKey(sessionId: string, day: string, instructor: string) {
-  return `${getPacketKey(sessionId, day)}::${instructor}`
+  return `${PDF_RENDERER_VERSION}::${getPacketKey(sessionId, day)}::${instructor}`
 }
 
 function normalizeInstructorName(name: string) {
@@ -339,22 +340,12 @@ async function generateInstructorPdf(
   instructor: string,
   rosters: RosterGroup[],
 ): Promise<Blob> {
-  const response = await fetch('/api/attendance-pdf', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(
+  const { generateAttendancePdf } = await import('../features/pdf')
+  return (
+    await generateAttendancePdf(
       buildPdfRequestBody(sessionName.trim() || DEFAULT_SESSION_NAME, instructor, rosters),
-    ),
-  })
-
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || `Failed to generate sheets for ${instructor}`)
-  }
-
-  return response.blob()
+    )
+  ).blob
 }
 
 export function getCurrentSessionId(): string {
