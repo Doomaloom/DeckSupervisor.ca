@@ -5,6 +5,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 historical_dir="${1:-$root/frontend/test-fixtures/pdf-parity/historical}"
 current_dir="${2:-$root/tmp/pdf-parity/current}"
 diff_dir="${3:-$root/tmp/pdf-parity/diffs}"
+filter="${4:-}"
 mkdir -p "$diff_dir"
 
 command -v pdfinfo >/dev/null
@@ -21,6 +22,7 @@ fi
 
 for historical in "${goldens[@]}"; do
   name="$(basename "$historical" .pdf)"
+  if [[ -n "$filter" && "$name" != *"$filter"* ]]; then continue; fi
   current="$current_dir/$name.pdf"
   if [[ ! -f "$current" ]]; then echo "Missing current fixture: $current" >&2; failures=$((failures + 1)); continue; fi
   historical_pages="$(pdfinfo "$historical" | awk '/^Pages:/ {print $2}')"
