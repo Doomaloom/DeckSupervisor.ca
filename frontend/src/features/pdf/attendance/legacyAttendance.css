@@ -1,0 +1,35 @@
+*, ::before, ::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: #e5e7eb; }
+html, body { margin: 0; padding: 0; background: #fff; color: #000; }
+body { font-family: "Liberation Sans", Arial, sans-serif; }
+table { border-collapse: collapse; text-indent: 0; border-color: inherit; }
+.attendance-table td, .attendance-table th { border: 1px solid #000; }
+strong, b { font-weight: 700; }
+.relative { position: relative; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.w-fit { width: fit-content; }
+.w-\[1200pt\] { width: 1200pt; }
+.h-0 { height: 0; }
+.p-3 { padding: .75rem; }
+.p-4 { padding: 1rem; }
+.p-6 { padding: 1.5rem; }
+.bg-white, .bg-slate-100 { background-color: #fff; }
+.border { border-width: 1px; }
+.border-black { border-color: #000; }
+.border-collapse { border-collapse: collapse; }
+.text-black { color: #000; }
+.text-left { text-align: left; }
+.align-top { vertical-align: top; }
+.whitespace-nowrap { white-space: nowrap; }
+.leading-tight { line-height: 1.25; }
+.text-\[9px\] { font-size: 9px; }
+.text-\[10px\] { font-size: 10px; }
+.text-\[13px\] { font-size: 13px; }
+.font-sans { font-family: "Liberation Sans", Arial, sans-serif; }
+.space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.5rem; }
+#document { padding: 0; box-shadow: none; }
+.attendance-page-stage { position: relative; width: 1056px; height: 816px; overflow: hidden; background: #fff; }
+.attendance-page-printable { position: absolute; left: 27.2px; top: 27.2px; width: 1009.6px; height: 769.6px; overflow: hidden; }
+.attendance-page-content { position: absolute; left: 0; top: 0; transform-origin: left top; }
+.attendance-page-content .combined-slot + .combined-slot { margin-top: 1.25rem; }
+.attendance-page-content br { display: block; content: ""; }
+.attendance-page-content .rotate-cell br { display: block; }

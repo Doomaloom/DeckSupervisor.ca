@@ -10,12 +10,13 @@
         "test": "vitest",
         "test:watch": "vitest --watch",
         "test:run": "vitest run",
-        "test:pdf-visual": "PDF_VISUAL_OUTPUT_DIR=../tmp/pdf-parity/current vitest run src/features/pdf/pdfVisualFixtures.test.ts && bash ../scripts/pdf-parity/compare-pdfs.sh"
+        "test:pdf-visual": "bash ../scripts/pdf-parity/test-visual.sh"
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",
         "@react-pdf/renderer": "^4.5.1",
         "@supabase/supabase-js": "^2.49.1",
+        "html2canvas": "^1.4.1",
         "pdf-lib": "^1.17.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
@@ -32,6 +33,7 @@
         "@vitejs/plugin-react": "^4.2.0",
         "autoprefixer": "^10.4.23",
         "jsdom": "^29.0.1",
+        "playwright-core": "^1.61.1",
         "postcss": "^8.5.6",
         "tailwindcss": "^4.1.18",
         "typescript": "^5.3.3",
