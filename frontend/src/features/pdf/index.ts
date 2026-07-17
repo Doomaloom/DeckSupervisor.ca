@@ -6,7 +6,7 @@ export type {
   SchematicPdfRequest,
   SessionReportPdfRequest,
 } from './types'
-export { PDF_RENDERER_VERSION } from './types'
+export { ATTENDANCE_RENDERER_VERSION, PDF_RENDERER_VERSION } from './types'
 export { createBlankPdf, mergePdfs, rotatePdf } from './pdfUtils'
 
 export async function generateAttendancePdf(...args: Parameters<typeof import('./attendance/generateAttendancePdf').generateAttendancePdf>) {

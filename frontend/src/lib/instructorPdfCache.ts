@@ -7,10 +7,10 @@ import {
   buildRosterGroups,
 } from '../features/rosters/utils'
 import type { RosterGroup } from '../features/rosters/types'
-import { PDF_RENDERER_VERSION } from '../features/pdf/types'
+import { ATTENDANCE_RENDERER_VERSION } from '../features/pdf/types'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
-const DB_VERSION = 6
+const DB_VERSION = 7
 const PDF_STORE_NAME = 'instructorPdfs'
 const DIRTY_STORE_NAME = 'dirtyInstructorSets'
 const LEGACY_PACKET_STORE_NAME = 'instructorPackets'
@@ -115,8 +115,8 @@ function getPacketKey(sessionId: string, day: string) {
   return `${sessionId}::${day}`
 }
 
-function getPdfEntryKey(sessionId: string, day: string, instructor: string) {
-  return `${PDF_RENDERER_VERSION}::${getPacketKey(sessionId, day)}::${instructor}`
+export function buildInstructorPdfCacheKey(sessionId: string, day: string, instructor: string) {
+  return `${ATTENDANCE_RENDERER_VERSION}::${getPacketKey(sessionId, day)}::${instructor}`
 }
 
 function normalizeInstructorName(name: string) {
@@ -204,7 +204,7 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(DIRTY_STORE_NAME)) {
         db.createObjectStore(DIRTY_STORE_NAME, { keyPath: 'key' })
       }
-      if (request.oldVersion < 6) {
+      if (request.oldVersion < 7) {
         if (db.objectStoreNames.contains(PDF_STORE_NAME)) {
           transaction?.objectStore(PDF_STORE_NAME).clear()
         }
@@ -247,7 +247,7 @@ async function readInstructorPdfEntry(
 ): Promise<InstructorPdfCacheEntry | null> {
   try {
     const entry = await withStore<InstructorPdfCacheEntry | undefined>(PDF_STORE_NAME, 'readonly', store =>
-      store.get(getPdfEntryKey(sessionId, day, instructor)),
+      store.get(buildInstructorPdfCacheKey(sessionId, day, instructor)),
     )
     return entry ?? null
   } catch (error) {
@@ -258,7 +258,7 @@ async function readInstructorPdfEntry(
 
 async function readInstructorPdfEntriesForDay(sessionId: string, day: string): Promise<InstructorPdfCacheEntry[]> {
   try {
-    const prefix = `${getPacketKey(sessionId, day)}::`
+    const prefix = `${ATTENDANCE_RENDERER_VERSION}::${getPacketKey(sessionId, day)}::`
     const entries = await withStore<InstructorPdfCacheEntry[]>(PDF_STORE_NAME, 'readonly', store =>
       store.getAll(buildDayRange(prefix)),
     )
@@ -275,7 +275,7 @@ async function writeInstructorPdfEntry(entry: InstructorPdfCacheEntry): Promise<
 
 async function deleteInstructorPdfEntry(sessionId: string, day: string, instructor: string): Promise<void> {
   await withStore(PDF_STORE_NAME, 'readwrite', store =>
-    store.delete(getPdfEntryKey(sessionId, day, instructor)),
+    store.delete(buildInstructorPdfCacheKey(sessionId, day, instructor)),
   )
 }
 
