@@ -164,13 +164,9 @@ This aligns data access patterns with real staffing responsibilities.
 Historical PDF comparisons require Chromium, Liberation fonts, Poppler (`pdfinfo` and
 `pdftoppm`), and ImageMagick 7. Current and diagnostic files belong under
 `tmp/pdf-parity/`; only synthetic historical goldens and their manifest are committed.
-Set `CHROME_PATH` when Chrome, Chromium, or Edge is not installed in a standard system
-location.
 Regenerate pinned historical attendance goldens with
 `scripts/pdf-parity/generate-historical.sh`; the script exports the pinned tree and runs
 the isolated Go harness without restoring Chromium dependencies to production.
 Run `cd frontend && npm run test:pdf-visual` after producing the current fixture set.
-Append a fixture name to iterate on one template, for example
-`npm run test:pdf-visual -- attendance-Splash1`.
 Failures retain both rasterized pages and a highlighted difference image. Contact sheets
 can be rebuilt with `scripts/pdf-parity/contact-sheets.sh`.

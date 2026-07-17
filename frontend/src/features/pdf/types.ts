@@ -144,4 +144,3 @@ export type SessionReportPdfRequest = {
 }
 
 export const PDF_RENDERER_VERSION = 'frontend-vector-v2-backend-parity'
-export const ATTENDANCE_RENDERER_VERSION = 'frontend-html-raster-v1'

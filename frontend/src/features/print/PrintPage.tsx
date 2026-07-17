@@ -52,7 +52,7 @@ import {
   buildWeeksLabel,
 } from './utils/printPayloads'
 
-const INSTRUCTOR_PDF_CONCURRENCY = 1
+const INSTRUCTOR_PDF_CONCURRENCY = 2
 const MASTERLIST_FONT_SIZE_MIN = 8
 const MASTERLIST_FONT_SIZE_MAX = 18
 const SCHEMATIC_SCALE_MIN = 60
