@@ -1,6 +1,6 @@
 *, ::before, ::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: #e5e7eb; }
 html, body { margin: 0; padding: 0; background: #fff; color: #000; }
-body { font-family: "Liberation Sans", Arial, sans-serif; }
+body { font-family: "Liberation Serif", "Times New Roman", Times, serif; }
 table { border-collapse: collapse; text-indent: 0; border-color: inherit; }
 .attendance-table td, .attendance-table th { border: 1px solid #000; }
 strong, b { font-weight: 700; }
@@ -24,7 +24,7 @@ strong, b { font-weight: 700; }
 .text-\[9px\] { font-size: 9px; }
 .text-\[10px\] { font-size: 10px; }
 .text-\[13px\] { font-size: 13px; }
-.font-sans { font-family: "Liberation Sans", Arial, sans-serif; }
+.font-sans { font-family: "Liberation Serif", "Times New Roman", Times, serif; }
 .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.5rem; }
 #document { padding: 0; box-shadow: none; }
 .attendance-page-stage { position: relative; width: 1056px; height: 816px; overflow: hidden; background: #fff; }
