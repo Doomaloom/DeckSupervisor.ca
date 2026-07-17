@@ -1,0 +1,390 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splash 7.html</title>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Arial', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .templatePage:not(:last-child) {
+      page-break-after: always;
+    }
+
+    .attendance-table {
+      width: var(--sheet-width);
+    }
+
+    .rotate-cell {
+      position: relative;
+      height: var(--rotate-height) !important;
+      white-space: nowrap;
+    }
+
+    .rotate-cell > span {
+      position: absolute;
+      top: var(--rotate-top);
+      left: 0;
+      display: block;
+      transform: translate(0, var(--rotate-translate)) rotate(-90deg);
+      transform-origin: left top;
+    }
+
+    .rotate-cell br {
+      display: revert;
+    }
+
+    .break-before-page {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    .break-inside-avoid {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+
+      #document {
+        box-shadow: none;
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 p-4 font-sans text-black print:bg-white print:p-0">
+	<div class="relative">
+		<div id="document" class="mx-auto w-fit bg-white p-6 shadow-sm print:p-0 print:shadow-none">
+<div class="templatePage space-y-6" style="--sheet-width: 1400px; --rotate-height: 308px; --rotate-translate: 190px; --rotate-top: 110px;">
+<table border="1" class="attendance-table border-collapse border border-black text-[10px] leading-tight text-black">
+					<tbody id="attendance-rows">
+						<tr id="student-rows">
+							<td class="fa-lg whitespace-nowrap align-top p-3 text-left text-[13px] leading-tight" style="width: 660pt; height: 20pt; white-space: nowrap;"><b>&nbsp;<font
+										size="5">Splash 7 Rookie Patrol</font></b>
+								<p style="text-align: left;"><span style="font-family: Arial;">
+										<font size="3"><strong>&nbsp;Instructor:&nbsp; <span id="instructor"></span></strong><br> <span
+												style="background-color: rgb(255, 255, 255);"><strong>&nbsp;Day/Time:&nbsp;</strong><span id="start_time"></span>
+												<br> <strong>&nbsp;Session:&nbsp;</strong><span id="session"></span>&nbsp;</span><span
+												style="background-color: rgb(255, 255, 255);"><br>
+												<strong>&nbsp;Location:</strong>&nbsp;<span id="location"></span><br>
+												<strong>&nbsp;Barcode:&nbsp;</strong><span id="barcode"></span></span></font>
+									</span></p>
+							</td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>Previous Level</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>1. Head-up Front Crawl or Breaststroke 25 m. or yd.</strong>
+									</font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>2. Scull in ready position - 30 Sec.</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>3. Carry object 2.3 Kg (5 lb) 15 m or yd.</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>4a. Foot-first Surface Dive</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>4b. Head-first Surface Dive</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>5. Lifesaving Kick - 25 m. or yd.</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>6. Inflate Clothing /Use as a Buoyant Assist</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>7. Obstacle Swim - 25 m. or yd.</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>8a. Front Crawl - 50 m or yd </strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>8b. Back Crawl - 50 m or yd</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>8c. Breaststroke - 50 m or yd</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>9. Fitness training - 350 m. or yd. workout (3
+											times)</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>10. Swim 100 m in 3 min (100 yd in 2:40 min) or
+											better</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>11. Assist conscious victim</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>12. Contacting EMS </strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>13. Care for External Bleeding</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>14. Look and See</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 70pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>15a. Victim simulate: a Weak Swimmer and a
+											Non-Swimmer</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 70pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>15b. Victim recognition: a Weak Swimmer and
+											Non-Swimmer</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 70pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>16. Rescue drill: throw aid to target - 30 Sec.</strong>
+									</font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;Result: &nbsp;</strong>&nbsp;Complete (c) Incomplete
+										(I)&nbsp;&nbsp;</font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width: 50pt; height: 20pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;Register&nbsp;In</strong></font>
+								</span></td>
+						</tr> <!-- loop:Client -->
+					</tbody>
+				</table>
+			<p class="break-before-page"><span
+						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span></p>
+<div class="h-0"></div>
+				<table border="0" class="w-[1200pt] border-collapse text-[9px] leading-tight text-black">
+					<tbody>
+						<tr>
+							<td width="300" valign="top" style="padding: 0in 4pt; width: 280pt;">
+								<p>
+									<font size="1"><b>1.&nbsp; Swim 25 m or yd Head-up Front Crawl or
+											Breaststroke</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Basic arm and leg
+										mechanics<br> &nbsp;&nbsp;&nbsp;•&nbsp;Distance completed non-stop<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Eyes above the surface<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>2.&nbsp; Demonstrate Ready Position with a Stationary Scull for 30
+											Sec.</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Ready position maintained with toes at
+										or near surface<br> &nbsp;&nbsp;&nbsp;•&nbsp;Effective support scull showing
+										stationary control<br> &nbsp;&nbsp;&nbsp;•&nbsp;Time met or bettered<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>3.&nbsp; Carry a 2.3 kg(5 lb) Object 15 m or yd Using Swimmer's
+											Choice of Lifesaving Kick</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Basic lifesaving
+										kick mechanics with control of direction<br> &nbsp;&nbsp;&nbsp;•&nbsp;Distance
+										completed non-stop<br> &nbsp;&nbsp;&nbsp;•&nbsp;Head remains above the
+										surface<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>4.&nbsp; Demonstrate a Foot-First and a Head-First Surface Dive to
+											a Maximum Depth of 2 m</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Vertical descent<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Depth attained with ease<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Arm extended above the head on ascent<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>5.&nbsp;Demonstrate 25 m or yd Legs-Only Using Swimmer's Choice of
+											Lifesaving Kick</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Basic lifesaving kick
+										mechanics with control of direction<br> &nbsp;&nbsp;&nbsp;•&nbsp;Distance
+										completed non-stop<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>6. Demonstrate the Ability to Inflate 2 Items of Clothing and Use
+											as a Buoyant Assist</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Clothing items
+										inflated<br> &nbsp;&nbsp;&nbsp;•&nbsp;Candidate Floats Supported by the inflated
+										clothing item<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>7. Swim 25 m or yd Using Any Stroke. Demonstrate the Ability to
+											Swim Under an Obstacle Located at the Halfway Point</b><br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Candidate swims under the obstacle<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Distance completed<br> </font>
+								</p>
+							</td>
+							<td width="300" valign="top" style="padding: 0in 4pt; width: 280pt;">
+								<p>
+									<font size="1"><b>8. Swim Each of the Following Strokes 50 m or yd Front Crawl, Back
+											Crawl, Breaststroke</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Minimum Distance
+										completed (for each stroke)<br> &nbsp;Front Crawl<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Alternate arm action with overarm recovery and
+										underwater pull<br> &nbsp;&nbsp;&nbsp;•&nbsp;Hand entry beyond shoulder; pull
+										past hip<br> &nbsp;&nbsp;&nbsp;•&nbsp;Alternate leg action drive<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Rhythmic kick<br> &nbsp;&nbsp;&nbsp;•&nbsp;Regular
+										breathing pattern to side with underwater exhalation<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Continuous propulsion<br> &nbsp;Back Crawl<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Alternate arm action with overarm recovery and
+										underwater pull<br> &nbsp;&nbsp;&nbsp;•&nbsp;Hand entry beyond shoulder; pull
+										past hip<br> &nbsp;&nbsp;&nbsp;•&nbsp;Alternate leg action drive<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Rhythmic kick<br> &nbsp;&nbsp;&nbsp;•&nbsp;Continuous
+										propulsion<br> &nbsp;Breaststroke<br> &nbsp;&nbsp;&nbsp;•&nbsp;Symmetrical arm
+										recovery and drive<br> &nbsp;&nbsp;&nbsp;•&nbsp;Regular breathing pattern with
+										underwater exhalation<br> &nbsp;&nbsp;&nbsp;•&nbsp;Both legs kick at same time
+										and recover at the same time<br> &nbsp;&nbsp;&nbsp;•&nbsp;Drive with knees
+										apart; feet wider than knees<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>9. Complete a 350 m or yd workout on 3 different Occasions
+											Throughout the Training Course</b><br> &nbsp;Warm-up:<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;100 m or yd Swimmer's choice<br> &nbsp;Work Set:<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;6 x 25 m or yd any Stroke on 60 sec<br> &nbsp;Cool
+										Down:&nbsp;<br> &nbsp;&nbsp;&nbsp;•&nbsp;100 m or yd Swimmer's choice<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Workout is completed at least 3 times during the
+										training course<br> &nbsp;&nbsp;&nbsp;•&nbsp;Ability to locate pulse and count
+										beats per minute<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>10. Swim 100 m in 3 min. or Better (100 yd in 2:40 min) Using any
+											Stroke or Combination of Strokes of the Swimmer's Choice</b><br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Recognizable stroke(s) used<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Distance completed non-stop<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Time met or bettered<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>11. Demonstrate primary assessment of a conscious and cooperative
+											victim who describes his or her chief complaint and how injury
+											occurred</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Assessment of environment for
+										hazards<br> &nbsp;&nbsp;&nbsp;•&nbsp;Establish responsiveness<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Check for obvious signs of bleeding<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Collection of information from victim about chief
+										complaint and how injury occurred<br> &nbsp;&nbsp;&nbsp;•&nbsp;Activate EMS (if
+										required)<br> </font>
+								</p>
+							</td>
+							<td width="300" valign="top" style="padding: 0in 4pt; width: 280pt;">
+								<p>
+									<font size="1"><b>12. Demonstrate the Ability to Recognize When to Call EMS and How
+											To Do It</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Basic understanding demonstrated
+										through performance<br> &nbsp;&nbsp;&nbsp;•&nbsp;Ability to give examples of
+										circumstances requiring an EMS call<br> &nbsp;&nbsp;&nbsp;•&nbsp;Ability to
+										demonstrate an EMS call providing the 4 Ws (who, why, what where)<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>13. Demonstrate Primary Assessment and Appropriate Care for
+											External Bleeding</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Assessment of environment
+										for hazards<br> &nbsp;&nbsp;&nbsp;•&nbsp;Establish responsiveness<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Assess ABCs<br> &nbsp;&nbsp;&nbsp;•&nbsp;Check for
+										obvious signs of bleeding<br> &nbsp;&nbsp;&nbsp;•&nbsp;Direct Pressure<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Elevation if appropriate<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Rest and reassurance for victim<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Recruit bystanders to assist rescuer<br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Activate EMS (if required)<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>14. Look at the Aquatic Facility for 10-15 Sec. Turn and Describe
+											What You Saw</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Recognition of (any) seven
+										elements in the aquatic environment<br> &nbsp;&nbsp;&nbsp;•&nbsp;Ability to
+										identify at least one element that might be a "hot spot" for potential
+										trouble<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>15a. Demonstrate Ability to Simulate in the Water the Appearance
+											of a Weak Swimmer and a Non-Swimmer</b><br>
+										&nbsp;&nbsp;&nbsp;•&nbsp;Behaviour differentiating between the appearance of a
+										weak swimmer and a non-swimmer<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>15b. Demonstrate Ability to Recognize the Difference Between a
+											Weak Swimmer and Non-Swimmer</b><br> &nbsp;&nbsp;&nbsp;•&nbsp;Ability to
+										identify the difference between the appearance of a weak swimmer and a
+										non-swimmer<br> &nbsp;&nbsp;&nbsp;•&nbsp;Understanding of potential risk to
+										rescuer safety from these two victim types<br> </font>
+								</p>
+								<p>
+									<font size="1"><b>16. From a standing Position on Land, Throw a Buoyant Aid With
+											Line to Hit a Target on</b><br> <strong>the Surface of the Water as Many
+											Times as Possible Within 30 sec.</strong><br> &nbsp;&nbsp;&nbsp;•&nbsp;At
+										least 3 "hits" within time limit<br> </font>
+								</p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				</div>
+
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		document.onreadystatechange = function () {
+			if (document.readyState === 'complete') {
+				require(['DefaultPrintersSetting/ajax',
+					'DefaultPrintersSetting/DefaultPrintersServerConnector',
+					'DefaultPrintersSetting/DefaultPrintersClientAppConnector',
+					'DefaultPrintersSetting/PrintJobsExecutor'], function (ajax, serverConnector, clientConnector, PrintJobsExecutor) {
+						var executor = new PrintJobsExecutor(ajax, serverConnector, clientConnector);
+						executor.html = $('#document').html();
+						executor.document = 'Splash 7.html';
+						executor.folder = 'Swimming+Attendance+Worksheets';
+						executor.onError = function () {
+							window.print();
+						};
+						executor.print();
+					});
+			}
+		}
+	</script>
+
+</body>
+
+</html>

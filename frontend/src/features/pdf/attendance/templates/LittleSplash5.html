@@ -1,0 +1,346 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Little Splash 5.html</title>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Arial', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .templatePage:not(:last-child) {
+      page-break-after: always;
+    }
+
+    .attendance-table {
+      width: var(--sheet-width);
+    }
+
+    .rotate-cell {
+      position: relative;
+      height: var(--rotate-height) !important;
+      white-space: nowrap;
+    }
+
+    .rotate-cell > span {
+      position: absolute;
+      top: var(--rotate-top);
+      left: 0;
+      display: block;
+      transform: translate(0, var(--rotate-translate)) rotate(-90deg);
+      transform-origin: left top;
+    }
+
+    .rotate-cell br {
+      display: revert;
+    }
+
+    .break-before-page {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    .break-inside-avoid {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+
+      #document {
+        box-shadow: none;
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 p-4 font-sans text-black print:bg-white print:p-0">
+	<div class="relative">
+		<div id="document" class="mx-auto w-fit bg-white p-6 shadow-sm print:p-0 print:shadow-none">
+<div class="templatePage space-y-6" style="--sheet-width: 1400px; --rotate-height: 300px; --rotate-translate: 190px; --rotate-top: 100px;">
+<table border="1" class="attendance-table border-collapse border border-black text-[10px] leading-tight text-black">
+					<tbody id="attendance-rows">
+						<tr id="student-rows">
+							<td class="fa-lg whitespace-nowrap align-top p-3 text-left text-[13px] leading-tight" style="width: 660pt; height: 50pt; white-space: nowrap;"><b>&nbsp;<font
+										size="5">Little Splash 5</font></b>
+								<p style="text-align: left;"><span style="font-family: Arial;">
+										<font size="3"><strong>&nbsp;Instructor:&nbsp; <span id="instructor"></span> </strong><br> <span
+												style="background-color: rgb(255, 255, 255);"><strong>&nbsp;Day/Time:&nbsp;</strong><span id="start_time"></span><br> <strong>&nbsp;Session:&nbsp;</strong><span id="session"></span>&nbsp;</span><span
+												style="background-color: rgb(255, 255, 255);"><br>
+												<strong>&nbsp;Location:</strong>&nbsp;<span id="location"></span><br>
+												<strong>&nbsp;Barcode:&nbsp;</strong><span id="barcode"></span></span></font>
+									</span></p>
+							</td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>Previous Level</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>1.&nbsp; Forward Roll Entry Wearing PFD</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>2.&nbsp; Tread Water 10 Seconds</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>3.&nbsp; Submerge and Hold Breath 5 Seconds</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>4.&nbsp; Recover Object from Bottom in Chest-deep
+											Water</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>5.&nbsp; Wearing a PFD, sideways entry into deep Water;<br>
+											Tread 20 Seconds; Swim/Kick 10m</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>6.&nbsp; Whip Kick in vertical position (20 Seconds)<br> with
+											a PFD or Buoyant aid</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>7.&nbsp; Front Crawl 5 m</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>8.&nbsp; Back Crawl 5 m</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>9. &nbsp; Interval training: 4x5 m Flutter Kick on Back with
+											<br> 30 Second rests</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>10a. &nbsp; Water Smart Messages - Within Arms'
+											Reach</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>10b. &nbsp; Water Smart Messages - Wear a Lifejacket</strong>
+									</font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong> &nbsp; </strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong> &nbsp; </strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;</strong></font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;"><span
+									style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;Result: &nbsp;</strong>&nbsp;Complete (c) Incomplete
+										(I)&nbsp;&nbsp;</font>
+								</span></td>
+							<td class="rotate rotate-cell align-top text-left"
+								style="width:  90pt; height: 70pt; text-align: left; vertical-align: top;word-wrap:break-word;">
+								<span style="font-family: Arial;">
+									<font size="1"><strong>&nbsp;Register&nbsp;In</strong></font>
+								</span></td>
+						</tr> <!-- loop:Client -->
+					</tbody>
+				</table>
+			<p class="break-before-page"><span
+						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span></p>
+
+<div class="h-0"></div>
+				<table border="0" class="w-[1200pt] border-collapse text-[9px] leading-tight text-black">
+					<tbody>
+						<tr>
+							<td width="320" valign="top" style="padding: 0in 4pt; width: 300pt;">
+								<p style="">
+									<font size="1"><span style="font-family: Arial;"><strong><b>1.&nbsp; Forward Roll
+													Entry Wearing PFD</b></strong><br>
+											&nbsp;&nbsp;&nbsp;•&nbsp;Appropriate PFD correctly donned and fastened on
+											land<br> &nbsp;&nbsp;&nbsp;•&nbsp;Controlled entry and return to surface<br>
+										</span></font>
+								</p>
+								<font size="1">
+									<p style="">
+										<font size="1"><span style="font-family: Arial;"><strong><b>2.&nbsp; Tread Water
+														10 Seconds</b></strong><br> &nbsp;&nbsp;&nbsp;•&nbsp;Vertical
+												body position<br> &nbsp;&nbsp;&nbsp;•&nbsp;Mouth and nose above
+												surface<br> &nbsp;&nbsp;&nbsp;•&nbsp;Sculling action of hand generates
+												support<br> &nbsp;&nbsp;&nbsp;•&nbsp;Supportive kick<br>
+												&nbsp;&nbsp;&nbsp;•&nbsp;Minimum time met<br> </span></font>
+									</p>
+									<font size="1">
+										<p style="">
+											<font size="1"><span style="font-family: Arial;"><strong><b>3.&nbsp;
+															Submerge and Hold Breath 5 Seconds</b></strong><br>
+													&nbsp;&nbsp;&nbsp;•&nbsp;Entire body submerged<br>
+													&nbsp;&nbsp;&nbsp;•&nbsp;Time requirement met<br> </span></font>
+										</p>
+										<font size="1">
+											<p style="">
+												<font size="1"><span style="font-family: Arial;"><strong><b>4.&nbsp;
+																Recover Object from Bottom in Chest-deep
+																Water</b></strong><br> &nbsp;&nbsp;&nbsp;•&nbsp;Face in
+														water and feet off the bottom<br>
+														&nbsp;&nbsp;&nbsp;•&nbsp;Object recovered with hands and
+														returned to surface<br> </span></font>
+											</p>
+											<font size="1"> </font>
+										</font>
+									</font>
+								</font>
+							</td>
+							<td width="320" valign="top" style="padding: 0in 4pt; width: 300pt;">
+								<p style="">
+									<font size="1"><span style="font-family: Arial;"><strong><b>5. Wearing a PFD,
+													Sideways Entry into Deep Water; Tread 20 Seconds; Swim/Kick 10
+													m</b></strong><br> &nbsp;&nbsp;&nbsp;•&nbsp;Completion of skills in
+											a continuous sequence<br> &nbsp;&nbsp;&nbsp;•&nbsp;Distance and time
+											requirements completed<br> </span></font>
+								</p>
+								<font size="1">
+									<p style="">
+										<font size="1"><span style="font-family: Arial;"><strong><b>6.&nbsp; Whip kick
+														in vertical position (20 sec) with a PFD or buoyant
+														aid</b></strong><br> &nbsp;&nbsp;&nbsp;•&nbsp;Kick in vertical
+												position<br> &nbsp;&nbsp;&nbsp;•&nbsp;Kick is simultaneous and
+												symmetrical;heels recover towards buttocks<br>
+												&nbsp;&nbsp;&nbsp;•&nbsp;Legs drive with knees apart;&nbsp;Feet wider
+												than knees<br> &nbsp;&nbsp;&nbsp;•&nbsp;minimum time met<br> </span>
+										</font>
+									</p>
+									<font size="1">
+										<p style="">
+											<font size="1"><span style="font-family: Arial;"><strong><b>7. Front crawl 5
+															m</b></strong><br> &nbsp;&nbsp;&nbsp;•&nbsp;Body on
+													front<br> &nbsp;&nbsp;&nbsp;•&nbsp;Alternate arm action<br>
+													&nbsp;&nbsp;&nbsp;•&nbsp;Propulsive, rhythmic flutter kick with
+													alternate leg drive;&nbsp;Slight knee bend<br>
+													&nbsp;&nbsp;&nbsp;•&nbsp;Breathing with underwater exhalation<br>
+													&nbsp;&nbsp;&nbsp;•&nbsp;Minimum distance completed<br> </span>
+											</font>
+										</p>
+										<font size="1"> </font>
+									</font>
+								</font>
+							</td>
+							<td width="320" valign="top" style="padding: 0in 4pt; width: 300pt;">
+								<p style="">
+									<font size="1"><span style="font-family: Arial;"><strong><b>8.&nbsp; Back Crawl 5
+													m</b></strong><br> &nbsp;&nbsp;&nbsp;•&nbsp;Body on back<br>
+											&nbsp;&nbsp;&nbsp;•&nbsp;Alternate arm action<br>
+											&nbsp;&nbsp;&nbsp;•&nbsp;Propulsive, rhythmic flutter kick with alternate
+											leg drive near the surface<br> &nbsp;&nbsp;&nbsp;•&nbsp;Relaxed
+											breathing<br> &nbsp;&nbsp;&nbsp;•&nbsp;Minimum distance completed<br>
+										</span></font>
+								</p>
+								<font size="1">
+									<p style="">
+										<font size="1"><span style="font-family: Arial;"><strong><b>9.&nbsp; Interval
+														Training: 4x5 m Flutter Kick on Back with 30 Seconds
+														Rests</b></strong><br> &nbsp;&nbsp;&nbsp;•&nbsp;Repetitions
+												completed<br> &nbsp;&nbsp;&nbsp;•&nbsp;Propulsive, rhythmic flutter kick
+												with alternate leg drive near the surface<br> </span></font>
+									</p>
+									<font size="1">
+										<p style="">
+											<font size="1"><span style="font-family: Arial;"><strong><b>10.&nbsp; Water
+															Smart Messages</b></strong><br>
+													&nbsp;&nbsp;&nbsp;•&nbsp;Participation in a water activity
+													reinforcing the Water Smart Messages<br> &nbsp; &nbsp; &nbsp;-
+													Within Arms' Reach<br> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;•Stay away
+													from water unless you are with an adult<br> &nbsp; &nbsp; &nbsp;-
+													Wear a Lifejacket<br> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;•Is everyone
+													in my family wearing lifejackets in the boat?<br> &nbsp; &nbsp;
+													&nbsp; &nbsp; &nbsp;•Are they fastened properly?<br> </span></font>
+										</p>
+										<font size="1"> </font>
+									</font>
+								</font>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				</div>
+
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		document.onreadystatechange = function () {
+			if (document.readyState === 'complete') {
+				require(['DefaultPrintersSetting/ajax',
+					'DefaultPrintersSetting/DefaultPrintersServerConnector',
+					'DefaultPrintersSetting/DefaultPrintersClientAppConnector',
+					'DefaultPrintersSetting/PrintJobsExecutor'], function (ajax, serverConnector, clientConnector, PrintJobsExecutor) {
+						var executor = new PrintJobsExecutor(ajax, serverConnector, clientConnector);
+						executor.html = $('#document').html();
+						executor.document = 'Little Splash 5.html';
+						executor.folder = 'Swimming+Attendance+Worksheets';
+						executor.onError = function () {
+							window.print();
+						};
+						executor.print();
+					});
+			}
+		}
+	</script>
+
+</body>
+
+</html>
