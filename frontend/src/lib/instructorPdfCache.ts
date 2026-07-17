@@ -422,7 +422,7 @@ export async function upsertInstructorPdf(
   }
 
   await writeInstructorPdfEntry({
-    key: getPdfEntryKey(sessionId, day, normalizedInstructor),
+    key: buildInstructorPdfCacheKey(sessionId, day, normalizedInstructor),
     sessionId,
     day,
     instructor: normalizedInstructor,
@@ -510,7 +510,7 @@ export async function ensureInstructorPdf(
     throw new Error('Missing instructor PDF context.')
   }
 
-  const pendingKey = getPdfEntryKey(sessionId, day, normalizedInstructor)
+  const pendingKey = buildInstructorPdfCacheKey(sessionId, day, normalizedInstructor)
   const pending = pendingGenerations.get(pendingKey)
   if (pending) {
     return pending
