@@ -23,12 +23,35 @@ describe('attendance template catalog', () => {
     expect(new Set(attendanceTemplates.map(template => template.key)).size).toBe(23)
     expect(attendanceTemplates.every(template => template.columns.length > 0)).toBe(true)
     expect(attendanceTemplates.every(template => template.columns.every(column => column.widthPt > 0))).toBe(true)
-    expect(attendanceTemplates.every(template => template.backColumns.some(column => column.blocks.length > 0))).toBe(true)
+    const assessmentTemplates = attendanceTemplates.filter(template => template.backPage.kind === 'assessment')
+    expect(assessmentTemplates).toHaveLength(22)
+    expect(assessmentTemplates.every(template => template.backPage.columns.length === 3)).toBe(true)
+    expect(assessmentTemplates.every(template => template.backPage.columns.every(column => column.length > 0))).toBe(true)
+    expect(assessmentTemplates.every(template => template.backPage.naturalHeightPt > 0)).toBe(true)
   })
 
-  it('falls back to Splash Fitness and identifies the compact private sheet', () => {
+  it('retains rich headings, criteria markers, and line boundaries', () => {
+    const assessmentTemplates = attendanceTemplates.filter(template => template.backPage.kind === 'assessment')
+    const blocks = assessmentTemplates.flatMap(template => template.backPage.columns.flat())
+    const lines = blocks.flatMap(block => block.lines)
+
+    expect(blocks.every(block => block.lines.length > 0)).toBe(true)
+    expect(lines.some(line => line.spans.some(span => span.bold))).toBe(true)
+    expect(lines.some(line => line.marker === 'bullet')).toBe(true)
+    expect(lines.some(line => line.marker === 'dash')).toBe(true)
+  })
+
+  it('falls back to Splash Fitness and preserves the private catalog distribution', () => {
     expect(getAttendanceTemplate('missing').key).toBe('SplashFitness')
-    expect(getAttendanceTemplate('SplashPrivate').compactBackPage).toBe(true)
+    const privateTemplate = getAttendanceTemplate('SplashPrivate')
+    expect(privateTemplate.backPage.kind).toBe('private-catalog')
+    if (privateTemplate.backPage.kind !== 'private-catalog') return
+
+    expect(privateTemplate.backPage.columns.map(column => column.length)).toEqual([6, 4, 7])
+    expect(privateTemplate.backPage.columns.flat()).toHaveLength(17)
+    expect(privateTemplate.backPage.columns[0][0].title).toBe('Splash 1')
+    expect(privateTemplate.backPage.columns[2].at(-1)?.title).toBe('Little Splash 5')
+    expect(privateTemplate.backPage.columns.flat().every(block => block.entries.length > 0)).toBe(true)
   })
 
   it('pairs only adjacent rosters with the same code', () => {

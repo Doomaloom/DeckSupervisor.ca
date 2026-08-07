@@ -10,6 +10,8 @@
         "test": "vitest",
         "test:watch": "vitest --watch",
         "test:run": "vitest run",
+        "attendance:catalog:generate": "node scripts/extract-attendance-templates.mjs",
+        "attendance:catalog:check": "node scripts/extract-attendance-templates.mjs --check",
         "test:pdf-visual": "PDF_VISUAL_OUTPUT_DIR=../tmp/pdf-parity/current vitest run src/features/pdf/pdfVisualFixtures.test.ts && bash ../scripts/pdf-parity/compare-pdfs.sh"
     },
     "dependencies": {
