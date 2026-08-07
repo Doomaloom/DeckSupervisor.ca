@@ -7,12 +7,12 @@ import {
   buildRosterGroups,
 } from '../features/rosters/utils'
 import type { RosterGroup } from '../features/rosters/types'
-import { PDF_RENDERER_VERSION } from '../features/pdf/types'
+import { ATTENDANCE_RENDERER_VERSION } from '../features/pdf/types'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
-// Version 7 was already shipped by the HTML attendance renderer. Keep opening
-// that version after the renderer rollback; IndexedDB cannot be downgraded.
-const DB_VERSION = 7
+// IndexedDB versions only move forward. Version 8 invalidates attendance PDFs
+// created by both the retired HTML renderer and the pre-unification vector renderer.
+export const INSTRUCTOR_PDF_CACHE_DB_VERSION = 8
 const PDF_STORE_NAME = 'instructorPdfs'
 const DIRTY_STORE_NAME = 'dirtyInstructorSets'
 const LEGACY_PACKET_STORE_NAME = 'instructorPackets'
@@ -117,8 +117,12 @@ function getPacketKey(sessionId: string, day: string) {
   return `${sessionId}::${day}`
 }
 
-function getPdfEntryKey(sessionId: string, day: string, instructor: string) {
-  return `${PDF_RENDERER_VERSION}::${getPacketKey(sessionId, day)}::${instructor}`
+export function getAttendancePdfEntryKey(sessionId: string, day: string, instructor: string) {
+  return `${ATTENDANCE_RENDERER_VERSION}::${getPacketKey(sessionId, day)}::${instructor}`
+}
+
+export function shouldClearInstructorPdfCache(oldVersion: number) {
+  return oldVersion < INSTRUCTOR_PDF_CACHE_DB_VERSION
 }
 
 function normalizeInstructorName(name: string) {
@@ -193,8 +197,8 @@ function openDb(): Promise<IDBDatabase> {
     return Promise.reject(new Error('IndexedDB not available'))
   }
   return new Promise((resolve, reject) => {
-    const request = window.indexedDB.open(DB_NAME, DB_VERSION)
-    request.onupgradeneeded = () => {
+    const request = window.indexedDB.open(DB_NAME, INSTRUCTOR_PDF_CACHE_DB_VERSION)
+    request.onupgradeneeded = event => {
       const db = request.result
       const transaction = request.transaction
       if (db.objectStoreNames.contains(LEGACY_PACKET_STORE_NAME)) {
@@ -206,7 +210,7 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(DIRTY_STORE_NAME)) {
         db.createObjectStore(DIRTY_STORE_NAME, { keyPath: 'key' })
       }
-      if (request.oldVersion < 6) {
+      if (shouldClearInstructorPdfCache(event.oldVersion)) {
         if (db.objectStoreNames.contains(PDF_STORE_NAME)) {
           transaction?.objectStore(PDF_STORE_NAME).clear()
         }
@@ -249,7 +253,7 @@ async function readInstructorPdfEntry(
 ): Promise<InstructorPdfCacheEntry | null> {
   try {
     const entry = await withStore<InstructorPdfCacheEntry | undefined>(PDF_STORE_NAME, 'readonly', store =>
-      store.get(getPdfEntryKey(sessionId, day, instructor)),
+      store.get(getAttendancePdfEntryKey(sessionId, day, instructor)),
     )
     return entry ?? null
   } catch (error) {
@@ -260,7 +264,7 @@ async function readInstructorPdfEntry(
 
 async function readInstructorPdfEntriesForDay(sessionId: string, day: string): Promise<InstructorPdfCacheEntry[]> {
   try {
-    const prefix = `${getPacketKey(sessionId, day)}::`
+    const prefix = `${ATTENDANCE_RENDERER_VERSION}::${getPacketKey(sessionId, day)}::`
     const entries = await withStore<InstructorPdfCacheEntry[]>(PDF_STORE_NAME, 'readonly', store =>
       store.getAll(buildDayRange(prefix)),
     )
@@ -277,7 +281,7 @@ async function writeInstructorPdfEntry(entry: InstructorPdfCacheEntry): Promise<
 
 async function deleteInstructorPdfEntry(sessionId: string, day: string, instructor: string): Promise<void> {
   await withStore(PDF_STORE_NAME, 'readwrite', store =>
-    store.delete(getPdfEntryKey(sessionId, day, instructor)),
+    store.delete(getAttendancePdfEntryKey(sessionId, day, instructor)),
   )
 }
 
@@ -424,7 +428,7 @@ export async function upsertInstructorPdf(
   }
 
   await writeInstructorPdfEntry({
-    key: getPdfEntryKey(sessionId, day, normalizedInstructor),
+    key: getAttendancePdfEntryKey(sessionId, day, normalizedInstructor),
     sessionId,
     day,
     instructor: normalizedInstructor,
@@ -512,7 +516,7 @@ export async function ensureInstructorPdf(
     throw new Error('Missing instructor PDF context.')
   }
 
-  const pendingKey = getPdfEntryKey(sessionId, day, normalizedInstructor)
+  const pendingKey = getAttendancePdfEntryKey(sessionId, day, normalizedInstructor)
   const pending = pendingGenerations.get(pendingKey)
   if (pending) {
     return pending
