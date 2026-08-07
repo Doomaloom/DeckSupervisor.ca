@@ -10,7 +10,9 @@ import type { RosterGroup } from '../features/rosters/types'
 import { PDF_RENDERER_VERSION } from '../features/pdf/types'
 
 const DB_NAME = 'decksupervisor-pdf-cache'
-const DB_VERSION = 6
+// Version 7 was already shipped by the HTML attendance renderer. Keep opening
+// that version after the renderer rollback; IndexedDB cannot be downgraded.
+const DB_VERSION = 7
 const PDF_STORE_NAME = 'instructorPdfs'
 const DIRTY_STORE_NAME = 'dirtyInstructorSets'
 const LEGACY_PACKET_STORE_NAME = 'instructorPackets'
