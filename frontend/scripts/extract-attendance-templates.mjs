@@ -7,6 +7,8 @@ import { JSDOM } from 'jsdom'
 const revision = process.argv.slice(2).find(argument => !argument.startsWith('--')) || 'c315c452d8c0b3aabfff324f702f89aee3ce8a2e'
 const checkOnly = process.argv.includes('--check')
 const output = fileURLToPath(new URL('../src/features/pdf/attendance/attendanceTemplateData.generated.json', import.meta.url))
+const calibrationFile = fileURLToPath(new URL('../src/features/pdf/attendance/attendanceHeightCalibration.json', import.meta.url))
+const heightCalibration = JSON.parse(readFileSync(calibrationFile, 'utf8'))
 const prefix = 'backend/swimming attendance/'
 const files = execFileSync('git', ['ls-tree', '--full-tree', '-r', '--name-only', revision], { encoding: 'utf8' })
   .split('\n').filter(path => path.startsWith(prefix) && path.endsWith('.html')).sort()
@@ -108,6 +110,8 @@ const catalog = files.map(path => {
   const frontCells = [...(tables[0]?.querySelector('tr')?.children ?? [])]
   const key = path.slice(prefix.length, -5).replaceAll(' ', '')
   const title = elementText(frontCells[0]?.querySelector('font[size="5"]') ?? frontCells[0] ?? document.body)
+  const backPage = key === 'SplashPrivate' ? privateBackPage(tables[1]) : assessmentBackPage(tables[1])
+  if (heightCalibration[key]) backPage.naturalHeightPt = heightCalibration[key]
   return {
     key,
     title,
@@ -118,7 +122,7 @@ const catalog = files.map(path => {
     headerWidthPt: width(frontCells[0]),
     headerHeightPt: Number(frontCells[0]?.getAttribute('style')?.match(/height:\s*([\d.]+)pt/i)?.[1] ?? 50),
     columns: frontCells.slice(1).map(cell => ({ text: elementText(cell), widthPt: width(cell) || 50 })),
-    backPage: key === 'SplashPrivate' ? privateBackPage(tables[1]) : assessmentBackPage(tables[1]),
+    backPage,
   }
 })
 

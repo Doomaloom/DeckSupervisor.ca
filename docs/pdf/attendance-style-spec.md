@@ -68,9 +68,16 @@ never cropped.
 - `npm run attendance:catalog:check` checks the generated catalog against the
   pinned HTML source.
 - `npm run test:attendance-visual` renders the current fixture suite and compares
-  it with historical references.
+  it with the approved unified references at SSIM 0.99 / RMSE 0.03.
+- `npm run test:attendance-historical` runs the migration comparison against the
+  Chromium output. Serif-to-sans and unequal-to-equal-column normalization are
+  expected to remain visible in that diagnostic.
 - Target a template with `npm run test:attendance-visual -- Splash1`, or back-page
   contact sheets with `npm run test:attendance-visual -- backs`.
+- `npm run attendance:calibrate` prints measured historical page-two content
+  heights without changing source files. `npm run attendance:calibrate:write`
+  refreshes the checked-in calibration map and catalog when the pinned goldens
+  change.
 - Poppler and ImageMagick are required for calibration and image comparison.
 - Temporary PDFs, rasters, bounding boxes, and contact sheets belong under
   `tmp/pdf-parity/`.
