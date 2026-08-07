@@ -3,7 +3,7 @@ import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
-import { getCurrentSessionId } from '../../lib/instructorPdfCache'
+import { getCurrentSessionId } from '../../lib/sessionStorage'
 import {
   createSessionNote,
   deleteSessionNote,

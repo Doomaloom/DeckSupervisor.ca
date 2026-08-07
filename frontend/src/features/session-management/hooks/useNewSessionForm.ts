@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import type { CurrentTerm } from '../../../app/useCurrentTerm'
 import { createSession, fetchCsvAnalyze } from '../../../lib/serverApi'
 import { extractClassesFromCsv } from '../../../lib/api'
-import { suppressNextPrefetchForSession } from '../../../lib/instructorPdfCache'
 import { loadSessions, saveSessions } from '../../../lib/sessionStorage'
 import { getYearFromDate, resolveSessionYear } from '../../../shared/session/sessionLabels'
 import { findSingleMatchingExtractedSession } from '../../../shared/session/sessionTimeInference'
@@ -179,7 +178,6 @@ export function useNewSessionForm({
       const sessions = loadSessions()
       sessions.push(nextSession)
       saveSessions(sessions)
-      suppressNextPrefetchForSession(id)
       selectSessionAndSyncDay(id, sessionDay)
       setSaveMessage('Session saved.')
       refreshScope()
@@ -217,7 +215,6 @@ export function useNewSessionForm({
       setSaveMessage(error instanceof Error ? error.message : 'Failed to save session')
       return
     }
-    suppressNextPrefetchForSession(id)
     selectSessionAndSyncDay(id, sessionDay)
     setSaveMessage('Session saved.')
     refreshScope()

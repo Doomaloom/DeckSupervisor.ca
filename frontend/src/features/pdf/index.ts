@@ -1,18 +1,12 @@
 export type {
-  AttendancePdfRequest,
   MasterlistPdfRequest,
   PdfArtifact,
   PdfOrientation,
   SchematicPdfRequest,
   SessionReportPdfRequest,
 } from './types'
-export { ATTENDANCE_RENDERER_VERSION, PDF_RENDERER_VERSION } from './types'
+export { PDF_RENDERER_VERSION } from './types'
 export { createBlankPdf, mergePdfs, rotatePdf } from './pdfUtils'
-
-export async function generateAttendancePdf(...args: Parameters<typeof import('./attendance/generateAttendancePdf').generateAttendancePdf>) {
-  const module = await import('./attendance/generateAttendancePdf')
-  return module.generateAttendancePdf(...args)
-}
 
 export async function generateMasterlistPdf(...args: Parameters<typeof import('./masterlist/generateMasterlistPdf').generateMasterlistPdf>) {
   const module = await import('./masterlist/generateMasterlistPdf')

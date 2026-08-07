@@ -6,35 +6,6 @@ export type PdfArtifact = {
 
 export type PdfOrientation = 'portrait' | 'landscape'
 
-export type AttendancePdfStudent = {
-  name: string
-}
-
-export type AttendancePdfRoster = {
-  code: string
-  level: string
-  serviceName: string
-  time: string
-  instructor: string
-  location: string
-  schedule: string
-  students: AttendancePdfStudent[]
-}
-
-export type AttendancePdfItem = {
-  template: string
-  roster: AttendancePdfRoster
-}
-
-export type AttendancePdfRequest = {
-  template?: string
-  session?: string
-  filename?: string
-  title?: string
-  roster?: AttendancePdfRoster
-  rosters?: AttendancePdfItem[]
-}
-
 export type SchematicPdfCourse = {
   code?: string
   level?: string
@@ -144,4 +115,3 @@ export type SessionReportPdfRequest = {
 }
 
 export const PDF_RENDERER_VERSION = 'frontend-vector-v2-backend-parity'
-export const ATTENDANCE_RENDERER_VERSION = 'frontend-vector-v3-unified-attendance'

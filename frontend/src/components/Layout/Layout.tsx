@@ -22,10 +22,7 @@ import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { formatSessionDisplayName } from '../../shared/session/sessionLabels'
 import { resolveCustomRosters } from '../../lib/customRostersApi'
-import {
-    consumeSuppressedPrefetchForSession,
-    prefetchInstructorPacket,
-} from '../../lib/instructorPdfCache'
+import { cleanupLegacyInstructorPdfCache } from '../../lib/legacyInstructorPdfCacheCleanup'
 import { fetchSchematic } from '../../lib/serverApi'
 import { onStorageScopeChanged } from '../../lib/storageScope'
 import {
@@ -82,20 +79,6 @@ function Layout({ children }: LayoutProps) {
             sessionEndTime24: currentSession.session_end_time24 ?? null,
         })
     }, [accountType, currentSession, currentTerm, scopeVersion])
-    const currentPrintSessionName = useMemo(() => {
-        if (!currentSession) {
-            return currentTerm?.label ?? 'Session'
-        }
-        return formatSessionDisplayName({
-            sessionSeason: currentSession.session_season ?? '',
-            sessionYear: currentSession.session_year ?? null,
-            startDate: currentSession.start_date ?? '',
-            includeDay: false,
-            includeTimeRange: false,
-            fallback: 'Session',
-        })
-    }, [currentSession, currentTerm])
-
     useEffect(() => {
         if (!needsProfile) {
             return
@@ -107,6 +90,10 @@ function Layout({ children }: LayoutProps) {
     useEffect(() => {
         document.title = pageTitle === 'DeckSupervisor.ca' ? pageTitle : `${pageTitle} | DeckSupervisor.ca`
     }, [pageTitle])
+
+    useEffect(() => {
+        cleanupLegacyInstructorPdfCache()
+    }, [])
 
     useEffect(() => {
         return onStorageScopeChanged(() => {
@@ -150,10 +137,6 @@ function Layout({ children }: LayoutProps) {
         if (currentSessionLoading || !currentSession || !sessionId || !targetDay) {
             return
         }
-        if (consumeSuppressedPrefetchForSession(sessionId)) {
-            return
-        }
-
         const prefetchKey = `${sessionId}::${targetDay}`
         if (attemptedPrintPrefetches.has(prefetchKey)) {
             return
@@ -198,19 +181,13 @@ function Layout({ children }: LayoutProps) {
                 }
             }
 
-            await Promise.all([
-                prefetchInstructorPacket(sessionId, targetDay, {
-                    concurrency: 1,
-                    sessionName: currentPrintSessionName,
-                }),
-                prefetchSchematicPdfs({
-                    day: targetDay,
-                    sessionId,
-                    session: currentSession,
-                    storedLayout,
-                    customRostersOverride: customRosters,
-                }),
-            ])
+            await prefetchSchematicPdfs({
+                day: targetDay,
+                sessionId,
+                session: currentSession,
+                storedLayout,
+                customRostersOverride: customRosters,
+            })
         }
 
         void prefetch().catch(error => {
@@ -221,7 +198,7 @@ function Layout({ children }: LayoutProps) {
         return () => {
             active = false
         }
-    }, [currentPrintSessionName, currentSession, currentSessionLoading, selectedDay, user, scopeVersion])
+    }, [currentSession, currentSessionLoading, selectedDay, user, scopeVersion])
 
     const navBaseClasses =
         'flex items-center justify-start rounded-[10px] bg-white/10 px-3 py-2 text-accent transition hover:-translate-y-0.5'

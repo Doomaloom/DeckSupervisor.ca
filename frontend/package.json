@@ -10,13 +10,7 @@
         "test": "vitest",
         "test:watch": "vitest --watch",
         "test:run": "vitest run",
-        "attendance:catalog:generate": "node scripts/extract-attendance-templates.mjs",
-        "attendance:catalog:check": "node scripts/extract-attendance-templates.mjs --check",
-        "attendance:calibrate": "node scripts/calibrate-attendance-heights.mjs",
-        "attendance:calibrate:write": "node scripts/calibrate-attendance-heights.mjs --write && npm run attendance:catalog:generate",
-        "test:attendance-visual": "bash ../scripts/pdf-parity/attendance-visual.sh",
-        "test:attendance-historical": "ATTENDANCE_VISUAL_REFERENCE=historical bash ../scripts/pdf-parity/attendance-visual.sh",
-        "test:pdf-visual": "PDF_VISUAL_OUTPUT_DIR=../tmp/pdf-parity/current vitest run src/features/pdf/pdfVisualFixtures.test.ts && bash ../scripts/pdf-parity/compare-pdfs.sh"
+        "test:pdf-visual": "bash ../scripts/pdf-parity/compare-pdfs.sh"
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",

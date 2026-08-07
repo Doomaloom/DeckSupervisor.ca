@@ -5,7 +5,6 @@ import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { getStoredItem, setStoredItem } from '../../lib/browserStorage'
 import { extractStartTime } from '../../lib/time'
-import { flushDirtyInstructorPdfs, invalidateInstructorPdfs } from '../../lib/instructorPdfCache'
 import type { ClassRoster, Student } from '../../types/app'
 import { SLOT_HEIGHT_REM, SLOT_MINUTES, dayNames } from '../schematic/constants'
 import FullTimeRostersPanel from '../schematic/components/FullTimeRostersPanel'
@@ -154,16 +153,8 @@ function RostersPage() {
         sessionId ?? undefined,
         isGuest,
     )
-    const canManageInstructorPdfCache =
-        accountType !== 'full_time' && (isGuest || access.mode === 'owner' || access.allowRosterEdits)
-    const markInstructorPdfsDirty = (instructors: string[]) => {
-        if (!canManageInstructorPdfCache || !selectedDay || !sessionId) {
-            return
-        }
-        void invalidateInstructorPdfs(sessionId, selectedDay, instructors)
-    }
     const { customRosters, saveCustomRosters, updateCustomRosterLevel } =
-        useCustomRosters(selectedDay ?? '', students, sessionId ?? undefined, markInstructorPdfsDirty)
+        useCustomRosters(selectedDay ?? '', students, sessionId ?? undefined)
     const customRosterGroups = useMemo(() => {
         const rosterByCode = new Map(rosters.map(roster => [roster.code, roster]))
         const studentsById = new Map(students.map(student => [student.id, student]))
@@ -214,7 +205,6 @@ function RostersPage() {
         sessionId: sessionId ?? undefined,
         currentUserId: user?.id,
         canEdit: isGuest || access.mode === 'owner' || access.allowRosterEdits,
-        onInstructorPdfDirty: markInstructorPdfsDirty,
     })
     const {
         blockedPrintJob,
@@ -229,14 +219,6 @@ function RostersPage() {
             [code]: !current[code],
         }))
     }
-    useEffect(() => {
-        return () => {
-            if (canManageInstructorPdfCache && selectedDay && sessionId) {
-                void flushDirtyInstructorPdfs(sessionId, selectedDay, { concurrency: 1 })
-            }
-        }
-    }, [canManageInstructorPdfCache, selectedDay, sessionId])
-
     useEffect(() => {
         if (accountType !== 'full_time' || !currentTeamId) {
             setFullTimeRosterClasses([])
