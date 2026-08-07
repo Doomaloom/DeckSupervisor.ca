@@ -1110,8 +1110,6 @@ function RostersPage() {
                 {blockedPrintJob ? (
                     <PrintPopupBlockedNotice
                         jobLabel={blockedPrintJob.jobLabel}
-                        pdfBlob={blockedPrintJob.pdfBlob}
-                        filename={blockedPrintJob.filename}
                         onRetry={retryBlockedPrint}
                         onDismiss={clearBlockedPrintJob}
                     />

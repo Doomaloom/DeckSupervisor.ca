@@ -38,8 +38,9 @@ function PrintPopupBlockedNotice({
         <div>
           <p className="text-sm font-semibold text-danger">Browser blocked the print window.</p>
           <p className="mt-1 text-sm text-secondary">
-            Allow pop-ups for this site and retry printing. You can also open or download the PDF
-            and print it manually from the browser viewer.
+            {pdfBlob
+              ? 'Allow pop-ups for this site and retry printing. You can also open or download the PDF and print it manually from the browser viewer.'
+              : 'Allow pop-ups for this site and retry. Attendance opens the Chrome or Edge print dialog, where you can print or choose Save as PDF.'}
           </p>
         </div>
         {onDismiss ? (

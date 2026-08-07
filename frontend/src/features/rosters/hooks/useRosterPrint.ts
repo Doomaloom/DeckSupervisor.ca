@@ -1,29 +1,14 @@
 import { useState } from 'react'
-import { openPdfPrintDialog, openPrintWindow } from '../../../lib/browserPrint'
+import { openAttendancePrintWindow, printAttendanceHtml } from '../../attendance-print'
 import { buildAttendancePrintItems } from '../utils'
 import { useCurrentSession } from '../../../app/useCurrentSession'
 import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
 import type { RosterGroup } from '../types'
 
-function toFileToken(value: string) {
-    return value
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-}
-
-function buildRosterFilename(roster: RosterGroup) {
-    const parts = [roster.code, roster.serviceName, roster.time].filter(Boolean).map(toFileToken).filter(Boolean)
-    return `${parts.join('-') || 'attendance-roster'}.pdf`
-}
-
 export function useRosterPrint() {
     const { session: currentSession } = useCurrentSession()
     const [blockedPrintJob, setBlockedPrintJob] = useState<{
         jobLabel: string
-        filename: string
-        pdfBlob: Blob
         roster: RosterGroup
     } | null>(null)
 
@@ -40,34 +25,20 @@ export function useRosterPrint() {
             sessionEndTime24: currentSession?.session_end_time24 ?? null,
             fallback: 'Session',
         })
-        const printWindow = openPrintWindow('Attendance Roster')
+        const printWindow = openAttendancePrintWindow('Attendance Roster')
+        if (!printWindow) {
+            setBlockedPrintJob({ jobLabel: `Attendance - ${roster.serviceName || roster.code || 'Roster'}`, roster })
+            return
+        }
 
         try {
-            const { generateAttendancePdf } = await import('../../pdf')
             const jobLabel = `Attendance - ${roster.serviceName || roster.code || 'Roster'}`
-            const filename = buildRosterFilename(roster)
-            const { blob: pdfBlob } = await generateAttendancePdf({
+            const result = await printAttendanceHtml({
                 session: sessionName,
                 rosters,
                 title: jobLabel,
-                filename,
-            })
-            if (printWindow) {
-                const opened = openPdfPrintDialog(pdfBlob, printWindow, {
-                    title: jobLabel,
-                    filename,
-                })
-                if (opened) {
-                    return
-                }
-            }
-
-            setBlockedPrintJob({
-                jobLabel,
-                filename,
-                pdfBlob,
-                roster,
-            })
+            }, printWindow)
+            if (result.status === 'failed') throw result.error
         } catch (error) {
             console.error(error)
             alert('Unable to generate attendance PDF. Please try again.')

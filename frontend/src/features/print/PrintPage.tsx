@@ -14,14 +14,9 @@ import {
 } from '../../lib/storage'
 import { ensureCachedSchematicPdf } from '../../lib/printPdfCache'
 import { getStorageScope } from '../../lib/storageScope'
-import {
-  ensureInstructorPdf,
-  getCurrentSessionId,
-  getInstructorPacket,
-  onInstructorPdfCacheUpdated,
-  prefetchInstructorPacket,
-} from '../../lib/instructorPdfCache'
-import { buildCustomRosterGroups, buildRosterGroups } from '../rosters/utils'
+import { getCurrentSessionId } from '../../lib/sessionStorage'
+import { openAttendancePrintWindow, printAttendanceHtml } from '../attendance-print'
+import { buildAttendancePrintItems, buildCustomRosterGroups, buildRosterGroups } from '../rosters/utils'
 import { printOptions } from './constants'
 import type {
   BooleanFormatOptionKey,
@@ -52,40 +47,11 @@ import {
   buildWeeksLabel,
 } from './utils/printPayloads'
 
-const INSTRUCTOR_PDF_CONCURRENCY = 2
 const MASTERLIST_FONT_SIZE_MIN = 8
 const MASTERLIST_FONT_SIZE_MAX = 18
 const SCHEMATIC_SCALE_MIN = 60
 const SCHEMATIC_SCALE_MAX = 120
 const SCHEMATIC_SCALE_STEP = 5
-
-const mapWithConcurrency = async <T, R>(
-  items: T[],
-  concurrency: number,
-  mapper: (item: T, index: number) => Promise<R>,
-): Promise<R[]> => {
-  if (items.length === 0) {
-    return []
-  }
-
-  const workerCount = Math.max(1, Math.min(items.length, Math.floor(concurrency) || 1))
-  const results = new Array<R>(items.length)
-  let nextIndex = 0
-
-  const worker = async () => {
-    while (true) {
-      const currentIndex = nextIndex
-      nextIndex += 1
-      if (currentIndex >= items.length) {
-        return
-      }
-      results[currentIndex] = await mapper(items[currentIndex], currentIndex)
-    }
-  }
-
-  await Promise.all(Array.from({ length: workerCount }, () => worker()))
-  return results
-}
 
 const toFileToken = (value: string) =>
   value
@@ -112,8 +78,8 @@ const clampSchematicScalePercent = (value: number) => {
 
 type BlockedPrintJob = {
   jobLabel: string
-  filename: string
-  pdfBlob: Blob
+  filename?: string
+  pdfBlob?: Blob
   retry: () => void
 }
 
@@ -132,17 +98,7 @@ function PrintPage() {
     highlightInstructorName: false,
     customMasterlistFormat: false,
   })
-  const [cachedInstructorPacket, setCachedInstructorPacket] = useState<Awaited<
-    ReturnType<typeof getInstructorPacket>
-  > | null>(null)
   const [busyInstructors, setBusyInstructors] = useState<Record<string, boolean>>({})
-  const [isRefreshingInstructorPdfs, setIsRefreshingInstructorPdfs] = useState(false)
-  const [refreshingCachedInstructors, setRefreshingCachedInstructors] = useState<
-    Record<string, boolean>
-  >({})
-  const [refreshProgress, setRefreshProgress] = useState<{ completed: number; total: number } | null>(
-    null,
-  )
   const [isPrintingAllInstructors, setIsPrintingAllInstructors] = useState(false)
   const [instructorExtras, setInstructorExtras] = useState({
     schematicCoverPage: false,
@@ -755,48 +711,6 @@ function PrintPage() {
     return mergePdfs(pdfs.map(pdf => pdf.blob), options)
   }
 
-  useEffect(() => {
-    let isActive = true
-    const loadPacket = async () => {
-      if (!selectedDay) {
-        setCachedInstructorPacket(null)
-        return
-      }
-      const sessionId = getCurrentSessionId()
-      if (!sessionId) {
-        setCachedInstructorPacket(null)
-        return
-      }
-      const packet = await getInstructorPacket(sessionId, selectedDay, {
-        sessionName: sessionTitle,
-      })
-      if (isActive) {
-        setCachedInstructorPacket(packet)
-      }
-    }
-
-    void loadPacket()
-
-    const sessionId = getCurrentSessionId()
-    if (!selectedDay || !sessionId) {
-      return () => {
-        isActive = false
-      }
-    }
-
-    const unsubscribe = onInstructorPdfCacheUpdated(detail => {
-      if (detail.sessionId !== sessionId || detail.day !== selectedDay) {
-        return
-      }
-      void loadPacket()
-    })
-
-    return () => {
-      isActive = false
-      unsubscribe()
-    }
-  }, [currentSession?.id, selectedDay, sessionTitle])
-
   const groupRostersByInstructor = (rosterGroups: ReturnType<typeof buildRosterGroups>) => {
     const grouped = new Map<string, typeof rosterGroups>()
     rosterGroups.forEach(roster => {
@@ -814,71 +728,9 @@ function PrintPage() {
     return grouped
   }
 
-  const refreshCachedPacket = async () => {
-    if (!selectedDay) {
-      setCachedInstructorPacket(null)
-      return
-    }
-    const sessionId = getCurrentSessionId()
-    if (!sessionId) {
-      setCachedInstructorPacket(null)
-      return
-    }
-    const packet = await getInstructorPacket(sessionId, selectedDay, {
-      sessionName: sessionTitle,
-    })
-    setCachedInstructorPacket(packet)
-  }
-
-  const handleRefreshInstructorPdfs = async () => {
-    if (!selectedDay) {
-      alert('Please select a day before refreshing PDFs.')
-      return
-    }
-    const sessionId = getCurrentSessionId()
-    if (!sessionId) {
-      alert('Please select a session before refreshing PDFs.')
-      return
-    }
-    setIsRefreshingInstructorPdfs(true)
-    setRefreshingCachedInstructors({})
-    setRefreshProgress(null)
-    try {
-      const result = await prefetchInstructorPacket(sessionId, selectedDay, {
-        concurrency: 1,
-        force: true,
-        sessionName: sessionTitle,
-        onStart: total => {
-          setRefreshProgress({ completed: 0, total })
-        },
-        onProgress: ({ name, completed, total }) => {
-          setRefreshingCachedInstructors(current => ({
-            ...current,
-            [name]: true,
-          }))
-          setRefreshProgress({ completed, total })
-        },
-      })
-      await refreshCachedPacket()
-      if (result.failed.length > 0) {
-        alert(`Some instructor PDFs could not be refreshed: ${result.failed.join(', ')}`)
-      }
-    } finally {
-      setIsRefreshingInstructorPdfs(false)
-      setRefreshProgress(null)
-      setRefreshingCachedInstructors({})
-    }
-  }
-
   const handlePrintAllInstructorSheets = async () => {
     if (!selectedDay) {
       alert('Please select a day before printing instructor sheets.')
-      return
-    }
-
-    const sessionId = getCurrentSessionId()
-    if (!sessionId) {
-      alert('Please select a session before printing.')
       return
     }
 
@@ -889,7 +741,11 @@ function PrintPage() {
     }
 
     clearBlockedPrintJob()
-    const printWindow = openPrintWindow('Instructor Sheets')
+    const printWindow = openAttendancePrintWindow('Instructor Sheets')
+    if (!printWindow) {
+      setBlockedPrintJob({ jobLabel: 'Instructor Sheets', retry: () => { void handlePrintAllInstructorSheets() } })
+      return
+    }
 
     setIsPrintingAllInstructors(true)
 
@@ -906,85 +762,17 @@ function PrintPage() {
         return
       }
 
-      const sheetResults = await mapWithConcurrency(
-        orderedNames,
-        INSTRUCTOR_PDF_CONCURRENCY,
-        async name => {
-          return {
-            name,
-            pdfBlob: await ensureInstructorPdf(sessionId, selectedDay, name, {
-              sessionName: sessionTitle,
-            }),
-          }
-        },
-      )
-
-      const pdfs: Blob[] = []
-      let baseSchematicCover: Blob | null = null
-      let baseSchematicBlank: Blob | null = null
-
-      if (instructorExtras.schematicCoverPage && !instructorExtras.highlightCoverInstructor) {
-        const result = await fetchSchematicCoverWithBlank(
-          instructorCoverOrientation,
-          undefined,
-          true,
-        )
-        baseSchematicCover = result.schematicCover
-        baseSchematicBlank = result.blankPage
-      }
-
-      for (const result of sheetResults) {
-        if (!result) {
-          continue
-        }
-        const { name, pdfBlob } = result
-        if (instructorExtras.schematicCoverPage) {
-          if (instructorExtras.highlightCoverInstructor) {
-            const result = await fetchSchematicCoverWithBlank(
-              instructorCoverOrientation,
-              { highlightInstructor: true, selectedInstructor: name },
-              true,
-            )
-            pdfs.push(result.schematicCover)
-            pdfs.push(result.blankPage)
-          } else if (baseSchematicCover) {
-            pdfs.push(baseSchematicCover)
-            if (baseSchematicBlank) {
-              pdfs.push(baseSchematicBlank)
-            }
-          }
-        }
-        pdfs.push(pdfBlob)
-      }
-
-      if (pdfs.length === 0) {
-        alert('No instructor sheets available to print.')
-        printWindow?.close()
-        return
-      }
-
-      const { mergePdfs } = await import('../pdf')
-      const combinedPdf = await mergePdfs(pdfs, {
-        filename: 'instructor-sheets',
-        title: 'Instructor Sheets',
-      })
-      await refreshCachedPacket()
-      if (
-        !printWindow ||
-        !openPdfPrintDialog(combinedPdf, printWindow, {
-          title: 'Instructor Sheets',
-          filename: 'instructor-sheets.pdf',
-        })
-      ) {
-        setBlockedPrintJob({
-          jobLabel: 'Instructor Sheets',
-          filename: 'instructor-sheets.pdf',
-          pdfBlob: combinedPdf,
-          retry: () => {
-            void handlePrintAllInstructorSheets()
+      const rosters = orderedNames.flatMap(name => (grouped.get(name) ?? []).flatMap(roster => buildAttendancePrintItems(roster)))
+      const result = await printAttendanceHtml({ session: sessionTitle, title: 'Instructor Sheets', rosters }, printWindow, {
+        ...(instructorExtras.schematicCoverPage ? {
+          schematicCover: {
+            request: buildSchematicPayload(instructorCoverOrientation, { highlightInstructor: false, selectedInstructor: 'none' }),
+            highlightEachInstructor: instructorExtras.highlightCoverInstructor,
+            blankBack: true,
           },
-        })
-      }
+        } : {}),
+      })
+      if (result.status === 'failed') throw result.error
     } catch (error) {
       console.error(error)
       const message =
@@ -1015,14 +803,12 @@ function PrintPage() {
       return
     }
 
-    const sessionId = getCurrentSessionId()
-    if (!sessionId) {
-      alert('Please select a session before printing.')
+    clearBlockedPrintJob()
+    const printWindow = openAttendancePrintWindow(`Instructor - ${name}`)
+    if (!printWindow) {
+      setBlockedPrintJob({ jobLabel: `Instructor - ${name}`, retry: () => { void handlePrintInstructorSheet(name) } })
       return
     }
-
-    clearBlockedPrintJob()
-    const printWindow = openPrintWindow(`Instructor - ${name}`)
 
     setBusyInstructors(current => ({
       ...current,
@@ -1030,68 +816,21 @@ function PrintPage() {
     }))
 
     try {
-      let schematicCover: Blob | null = null
-      let schematicBlank: Blob | null = null
-      if (instructorExtras.schematicCoverPage) {
-        const highlight =
-          instructorExtras.highlightCoverInstructor && name
-            ? { highlightInstructor: true, selectedInstructor: name }
-            : { highlightInstructor: false, selectedInstructor: 'none' }
-        const result = await fetchSchematicCoverWithBlank(instructorCoverOrientation, highlight, true)
-        schematicCover = result.schematicCover
-        schematicBlank = result.blankPage
-      }
-
-      const pdfBlob = await ensureInstructorPdf(sessionId, selectedDay, name, {
-        sessionName: sessionTitle,
-      })
-      await refreshCachedPacket()
-      if (schematicCover) {
-        const combined = await concatPdfs(
-          [
-            { blob: schematicCover, filename: 'schematic-cover.pdf' },
-            ...(schematicBlank ? [{ blob: schematicBlank, filename: 'schematic-blank.pdf' }] : []),
-            { blob: pdfBlob, filename: `instructor-${name}.pdf` },
-          ],
-          {
-            filename: buildPdfFilename('instructor', name).replace(/\.pdf$/i, ''),
-            title: `Instructor - ${name}`,
+      const grouped = groupRostersByInstructor(rosterGroups)
+      const rosters = (grouped.get(name) ?? []).flatMap(roster => buildAttendancePrintItems(roster))
+      const result = await printAttendanceHtml({ session: sessionTitle, title: `Instructor - ${name}`, rosters }, printWindow, {
+        ...(instructorExtras.schematicCoverPage ? {
+          schematicCover: {
+            request: buildSchematicPayload(instructorCoverOrientation, {
+              highlightInstructor: instructorExtras.highlightCoverInstructor,
+              selectedInstructor: instructorExtras.highlightCoverInstructor ? name : 'none',
+            }),
+            highlightEachInstructor: instructorExtras.highlightCoverInstructor,
+            blankBack: true,
           },
-        )
-        if (
-          !printWindow ||
-          !openPdfPrintDialog(combined, printWindow, {
-            title: `Instructor - ${name}`,
-            filename: buildPdfFilename('instructor', name),
-          })
-        ) {
-          setBlockedPrintJob({
-            jobLabel: `Instructor - ${name}`,
-            filename: buildPdfFilename('instructor', name),
-            pdfBlob: combined,
-            retry: () => {
-              void handlePrintInstructorSheet(name)
-            },
-          })
-        }
-      } else {
-        if (
-          !printWindow ||
-          !openPdfPrintDialog(pdfBlob, printWindow, {
-            title: `Instructor - ${name}`,
-            filename: buildPdfFilename('instructor', name),
-          })
-        ) {
-          setBlockedPrintJob({
-            jobLabel: `Instructor - ${name}`,
-            filename: buildPdfFilename('instructor', name),
-            pdfBlob,
-            retry: () => {
-              void handlePrintInstructorSheet(name)
-            },
-          })
-        }
-      }
+        } : {}),
+      })
+      if (result.status === 'failed') throw result.error
     } catch (error) {
       console.error(error)
       const message =
@@ -1232,47 +971,6 @@ function PrintPage() {
     return concatPdfs(pdfs, { filename: 'day1-masterlist', title: 'Masterlist' })
   }
 
-  const buildDay1InstructorBlob = async (name: string) => {
-    if (!selectedDay) {
-      throw new Error('Please select a day before printing Day 1 materials.')
-    }
-
-    const sessionId = getCurrentSessionId()
-    if (!sessionId) {
-      throw new Error('Please select a session before printing.')
-    }
-
-    const rosterGroups = buildRosterGroupsForDay(selectedDay)
-    const rostersToPrint = rosterGroups.filter(roster => roster.instructor === name)
-    if (rostersToPrint.length === 0) {
-      throw new Error(`No classes found for ${name}.`)
-    }
-
-    const pdfBlob = await ensureInstructorPdf(sessionId, selectedDay, name, {
-      sessionName: sessionTitle,
-    })
-
-    if (!day1Options.schematicCoverPage) {
-      return pdfBlob
-    }
-
-    const highlight = day1Options.highlightInstructorName
-      ? { highlightInstructor: true, selectedInstructor: name }
-      : undefined
-    const result = await fetchSchematicCoverWithBlank(coverOrientation, highlight, true)
-    return concatPdfs(
-      [
-        { blob: result.schematicCover, filename: 'schematic-cover.pdf' },
-        { blob: result.blankPage, filename: 'schematic-blank.pdf' },
-        { blob: pdfBlob, filename: `instructor-${name}.pdf` },
-      ],
-      {
-        filename: buildPdfFilename('day1', 'instructor', name).replace(/\.pdf$/i, ''),
-        title: `Instructor - ${name}`,
-      },
-    )
-  }
-
   const handlePrintDay1 = async () => {
     if (!selectedDay) {
       alert('Please select a day before printing Day 1 materials.')
@@ -1305,12 +1003,14 @@ function PrintPage() {
     const printWindows = [
       openPrintWindow('Schematic'),
       openPrintWindow('Masterlist'),
-      ...orderedNames.map(name => openPrintWindow(`Instructor - ${name}`)),
+      openAttendancePrintWindow('Day 1 Instructor Sheets'),
     ]
     const popupBlocked = printWindows.some(windowRef => !windowRef)
 
     if (popupBlocked) {
       printWindows.forEach(windowRef => windowRef?.close())
+      setBlockedPrintJob({ jobLabel: 'Day 1 Materials', retry: () => { void handlePrintDay1() } })
+      return
     }
 
     try {
@@ -1321,35 +1021,9 @@ function PrintPage() {
         }),
       )
       const masterlistBlob = await buildDay1MasterlistBlob()
-      const instructorBlobs: Array<{ name: string; blob: Blob }> = []
-
-      for (const name of orderedNames) {
-        const instructorBlob = await buildDay1InstructorBlob(name)
-        instructorBlobs.push({ name, blob: instructorBlob })
-      }
-
-      if (popupBlocked) {
-        const combinedDay1Blob = await concatPdfs(
-          [
-            { blob: schematicBlob, filename: 'schematic.pdf' },
-            { blob: masterlistBlob, filename: 'masterlist.pdf' },
-            ...instructorBlobs.map(entry => ({
-              blob: entry.blob,
-              filename: buildPdfFilename('instructor', entry.name),
-            })),
-          ],
-          { filename: 'day1-materials', title: 'Day 1 Materials' },
-        )
-        setBlockedPrintJob({
-          jobLabel: 'Day 1 Materials',
-          filename: 'day1-materials.pdf',
-          pdfBlob: combinedDay1Blob,
-          retry: () => {
-            void handlePrintDay1()
-          },
-        })
-        return
-      }
+      const attendanceRosters = orderedNames.flatMap(name =>
+        (grouped.get(name) ?? []).flatMap(roster => buildAttendancePrintItems(roster)),
+      )
 
       openPdfPrintDialog(schematicBlob, printWindows[0], {
         title: 'Schematic',
@@ -1359,12 +1033,20 @@ function PrintPage() {
         title: 'Masterlist',
         filename: 'masterlist.pdf',
       })
-      for (const [index, entry] of instructorBlobs.entries()) {
-        openPdfPrintDialog(entry.blob, printWindows[index + 2], {
-          title: `Instructor - ${entry.name}`,
-          filename: buildPdfFilename('instructor', entry.name),
-        })
-      }
+      const attendanceResult = await printAttendanceHtml({
+        session: sessionTitle,
+        title: 'Day 1 Instructor Sheets',
+        rosters: attendanceRosters,
+      }, printWindows[2]!, {
+        ...(day1Options.schematicCoverPage ? {
+          schematicCover: {
+            request: buildSchematicPayload(coverOrientation, { highlightInstructor: false, selectedInstructor: 'none' }),
+            highlightEachInstructor: day1Options.highlightInstructorName,
+            blankBack: true,
+          },
+        } : {}),
+      })
+      if (attendanceResult.status === 'failed') throw attendanceResult.error
     } catch (error) {
       console.error(error)
       printWindows.forEach(windowRef => windowRef?.close())
@@ -1435,20 +1117,7 @@ function PrintPage() {
       <InstructorOptionsModal
         open={activeModal === 'instructors'}
         instructorNames={instructorNames}
-        cachedInstructors={cachedInstructorPacket?.instructors.reduce<Record<string, boolean>>(
-          (acc, entry) => {
-            acc[entry.name] = true
-            return acc
-          },
-          { ...refreshingCachedInstructors },
-        ) ?? refreshingCachedInstructors}
         busyInstructors={busyInstructors}
-        isRefreshing={isRefreshingInstructorPdfs}
-        refreshLabel={
-          isRefreshingInstructorPdfs && refreshProgress
-            ? `Refreshing ${refreshProgress.completed}/${refreshProgress.total}`
-            : undefined
-        }
         isPrintingAll={isPrintingAllInstructors}
         notice={activeModal === 'instructors' ? blockedPrintNotice : null}
         extras={instructorExtras}
@@ -1458,7 +1127,6 @@ function PrintPage() {
         scaleMax={SCHEMATIC_SCALE_MAX}
         scaleStep={SCHEMATIC_SCALE_STEP}
         onClose={() => setActiveModal(null)}
-        onRefresh={handleRefreshInstructorPdfs}
         onPrintAll={handlePrintAllInstructorSheets}
         onPrintInstructor={handlePrintInstructorSheet}
         onToggleCover={handleToggleInstructorCover}

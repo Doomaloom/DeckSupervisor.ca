@@ -5,10 +5,7 @@ import SchematicScaleControl from './SchematicScaleControl'
 type InstructorOptionsModalProps = {
   open: boolean
   instructorNames: string[]
-  cachedInstructors: Record<string, boolean>
   busyInstructors: Record<string, boolean>
-  isRefreshing: boolean
-  refreshLabel?: string
   isPrintingAll: boolean
   notice?: React.ReactNode
   extras: {
@@ -21,7 +18,6 @@ type InstructorOptionsModalProps = {
   scaleMax: number
   scaleStep: number
   onClose: () => void
-  onRefresh: () => void
   onPrintAll: () => void
   onPrintInstructor: (name: string) => void
   onToggleCover: () => void
@@ -34,10 +30,7 @@ type InstructorOptionsModalProps = {
 function InstructorOptionsModal({
   open,
   instructorNames,
-  cachedInstructors,
   busyInstructors,
-  isRefreshing,
-  refreshLabel,
   isPrintingAll,
   notice,
   extras,
@@ -47,7 +40,6 @@ function InstructorOptionsModal({
   scaleMax,
   scaleStep,
   onClose,
-  onRefresh,
   onPrintAll,
   onPrintInstructor,
   onToggleCover,
@@ -79,14 +71,6 @@ function InstructorOptionsModal({
             disabled={isPrintingAll || instructorNames.length === 0}
           >
             {isPrintingAll ? 'Preparing...' : 'Print all as one'}
-          </button>
-          <button
-            type="button"
-            className="rounded-2xl border border-secondary/40 px-3 py-1 text-xs font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={onRefresh}
-            disabled={isRefreshing}
-          >
-            {isRefreshing ? (refreshLabel ?? 'Refreshing...') : 'Refresh PDFs'}
           </button>
         </div>
       </div>
@@ -144,7 +128,6 @@ function InstructorOptionsModal({
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {instructorNames.map(name => {
-              const isReady = cachedInstructors[name] ?? false
               const isBusy = busyInstructors[name] ?? false
               return (
                 <div
@@ -153,9 +136,7 @@ function InstructorOptionsModal({
                 >
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-secondary">{name}</span>
-                    <span className="text-xs text-secondary/70">
-                      {isReady ? 'Ready to print' : 'Not cached yet'}
-                    </span>
+                    <span className="text-xs text-secondary/70">Historical HTML template</span>
                   </div>
                   <button
                     type="button"
