@@ -71,23 +71,27 @@ export function fillAttendanceRoster(root: HTMLElement, roster: AttendancePrintR
     row.dataset.generatedAttendanceRow = 'true'
     const nameCell = root.ownerDocument.createElement('td')
     const strong = root.ownerDocument.createElement('strong')
-    strong.style.fontFamily = 'Arial, sans-serif'
+    strong.style.fontFamily = 'Arial'
     strong.textContent = `${index + 1}. ${student.name}`
-    nameCell.append(strong, root.ownerDocument.createElement('br'))
+    nameCell.append(strong)
+
+    const font = root.ownerDocument.createElement('font')
+    font.append(root.ownerDocument.createElement('br'))
 
     const absent = root.ownerDocument.createElement('span')
     absent.style.textDecoration = 'underline'
     absent.textContent = 'A'
-    nameCell.append(absent, 'bsent/')
+    font.append(absent, 'bsent/')
     const present = root.ownerDocument.createElement('span')
     present.style.textDecoration = 'underline'
     present.textContent = 'P'
-    nameCell.append(present, 'resent', root.ownerDocument.createElement('br'))
+    font.append(present, 'resent', root.ownerDocument.createElement('br'))
     const days = root.ownerDocument.createElement('span')
     days.style.color = 'rgb(98, 98, 98)'
     days.style.fontSize = '11px'
     days.textContent = Array.from({ length: 14 }, (_, day) => `[Day ${day + 1}]`).join(' ')
-    nameCell.append(days)
+    font.append(days)
+    nameCell.append(font)
     row.append(nameCell)
     for (let cellIndex = 0; cellIndex < blankCells; cellIndex += 1) {
       const cell = root.ownerDocument.createElement('td')

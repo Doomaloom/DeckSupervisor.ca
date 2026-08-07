@@ -56,7 +56,7 @@ try {
   const browser = await chromium.launch({ executablePath: await executablePath(), headless: true })
   try {
     for (const name of requestedFixtures()) {
-      const page = await browser.newPage()
+      const page = await browser.newPage({ viewport: { width: 1400, height: 900 } })
       await page.goto(`http://127.0.0.1:${port}/attendance-print-fixture.html?fixture=${encodeURIComponent(name)}`, { waitUntil: 'networkidle' })
       await page.waitForFunction(() => window.__ATTENDANCE_FIXTURE_READY__ || window.__ATTENDANCE_FIXTURE_ERROR__, null, { timeout: 15000 })
       const error = await page.evaluate(() => window.__ATTENDANCE_FIXTURE_ERROR__)

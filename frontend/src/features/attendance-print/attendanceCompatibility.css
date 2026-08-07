@@ -19,8 +19,18 @@ body {
 .attendance-print-document { margin: 8px; }
 .print-page { break-after: page; page-break-after: always; break-inside: avoid; page-break-inside: avoid; }
 .print-page:last-child { break-after: auto; page-break-after: auto; }
+.print-page[data-page-kind^="attendance-"] { padding-left: 8px; }
+.print-page[data-page-kind="attendance-front"] { padding-top: 8px; }
 .attendance-print-document .templatePage { page-break-after: auto !important; }
 .combined-page .combined-slot + .combined-slot { margin-top: 1.25rem; }
+.combined-page[data-page-kind="attendance-front"] .combined-slot {
+  width: 108.695652%;
+  zoom: 0.92;
+}
+.combined-page[data-page-kind="attendance-front"] .combined-slot > .templatePage {
+  transform: scaleX(1.08695652);
+  transform-origin: top left;
+}
 .combined-page br { display: block; content: ""; }
 .combined-page .rotate-cell br { display: block; }
 /* The backend removed Tailwind's script before printing. These definitions are
