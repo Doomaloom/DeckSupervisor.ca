@@ -9,7 +9,7 @@ import {
   ATTENDANCE_PRINTABLE,
   ATTENDANCE_PRIVATE_STYLE,
 } from './attendanceStyle'
-import { buildAttendanceFrontModel, getPairedDensityScale } from './attendanceLayout'
+import { buildAttendanceBackModel, buildAttendanceFrontModel } from './attendanceLayout'
 import type {
   AttendanceAssessmentBackPage,
   AttendanceBackBlock,
@@ -121,10 +121,10 @@ function AssessmentBlock({ block, densityScale }: { block: AttendanceBackBlock; 
 }
 
 function AssessmentBackSheet({ page, paired }: { page: AttendanceAssessmentBackPage; paired: boolean }) {
-  const densityScale = paired ? getPairedDensityScale(page.naturalHeightPt) : 1
+  const { columns, densityScale } = buildAttendanceBackModel(page, paired)
   const columnWidth = (ATTENDANCE_PRINTABLE.width - ATTENDANCE_BACK_STYLE.columnGap * 2) / 3
   return <View wrap={false} style={{ width: ATTENDANCE_PRINTABLE.width, flexDirection: 'row' }}>
-    {page.columns.map((blocks, columnIndex) => <View key={columnIndex} style={{
+    {columns.map((blocks, columnIndex) => <View key={columnIndex} style={{
       width: columnWidth,
       marginRight: columnIndex < 2 ? ATTENDANCE_BACK_STYLE.columnGap : 0,
       paddingHorizontal: ATTENDANCE_BACK_STYLE.cellPadding * densityScale,
@@ -137,10 +137,10 @@ function AssessmentBackSheet({ page, paired }: { page: AttendanceAssessmentBackP
 }
 
 function PrivateCatalogBackSheet({ page, paired }: { page: AttendancePrivateBackPage; paired: boolean }) {
-  const densityScale = paired ? getPairedDensityScale(page.naturalHeightPt) : 1
+  const { columns, densityScale } = buildAttendanceBackModel(page, paired)
   const columnWidth = (ATTENDANCE_PRINTABLE.width - ATTENDANCE_PRIVATE_STYLE.columnGap * 2) / 3
   return <View wrap={false} style={{ width: ATTENDANCE_PRINTABLE.width, flexDirection: 'row' }}>
-    {page.columns.map((blocks, columnIndex) => <View key={columnIndex} style={{
+    {columns.map((blocks, columnIndex) => <View key={columnIndex} style={{
       width: columnWidth,
       marginRight: columnIndex < 2 ? ATTENDANCE_PRIVATE_STYLE.columnGap : 0,
       fontSize: ATTENDANCE_PRIVATE_STYLE.fontSize * densityScale,

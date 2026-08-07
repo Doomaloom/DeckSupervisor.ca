@@ -1,6 +1,6 @@
 import type { AttendancePdfItem } from '../types'
 import { ATTENDANCE_FRONT_STYLE, ATTENDANCE_PAIR, ATTENDANCE_PRINTABLE } from './attendanceStyle'
-import type { AttendanceTemplateDefinition } from './attendanceTemplates'
+import type { AttendanceBackPage, AttendanceTemplateDefinition } from './attendanceTemplates'
 
 export function getFrontFit(template: AttendanceTemplateDefinition) {
   return ATTENDANCE_PRINTABLE.width / (template.sheetWidthPx * 0.75)
@@ -26,6 +26,16 @@ export function getFrontRowHeight(template: AttendanceTemplateDefinition, densit
 export function getPairedDensityScale(naturalHeightPt: number) {
   if (!Number.isFinite(naturalHeightPt) || naturalHeightPt <= 0) return 1
   return Math.min(1, ATTENDANCE_PAIR.slotHeight / naturalHeightPt)
+}
+
+export function buildAttendanceBackModel<T extends AttendanceBackPage>(backPage: T, paired = false) {
+  return {
+    kind: backPage.kind,
+    columns: backPage.columns,
+    densityScale: paired ? getPairedDensityScale(backPage.naturalHeightPt) : 1,
+    naturalHeight: backPage.naturalHeightPt,
+    blockCount: backPage.columns.reduce((sum, column) => sum + column.length, 0),
+  }
 }
 
 export function buildAttendanceFrontModel(item: AttendancePdfItem, template: AttendanceTemplateDefinition, paired = false) {

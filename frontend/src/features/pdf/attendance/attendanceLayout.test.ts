@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AttendancePdfItem } from '../types'
 import {
+  buildAttendanceBackModel,
   buildAttendanceFrontModel,
   getFrontColumnWidths,
   getFrontFit,
@@ -57,5 +58,18 @@ describe('attendance front layout', () => {
     expect(single.rowHeight).toBeCloseTo(getFrontRowHeight(template), 8)
     expect(paired.densityScale).toBeLessThan(1)
     expect(paired.headerHeight + paired.students.length * paired.rowHeight).toBeCloseTo(ATTENDANCE_PAIR.slotHeight, 8)
+  })
+
+  it('keeps the complete private catalog in its dedicated three-column model', () => {
+    const privatePage = getAttendanceTemplate('SplashPrivate').backPage
+    expect(privatePage.kind).toBe('private-catalog')
+    const single = buildAttendanceBackModel(privatePage)
+    const paired = buildAttendanceBackModel(privatePage, true)
+
+    expect(single.kind).toBe('private-catalog')
+    expect(single.columns.map(column => column.length)).toEqual([6, 4, 7])
+    expect(single.blockCount).toBe(17)
+    expect(single.densityScale).toBe(1)
+    expect(paired.densityScale).toBeLessThan(1)
   })
 })
