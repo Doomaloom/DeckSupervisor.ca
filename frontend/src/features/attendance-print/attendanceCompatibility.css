@@ -21,6 +21,8 @@ body {
 .print-page:last-child { break-after: auto; page-break-after: auto; }
 .print-page[data-page-kind^="attendance-"] { padding-left: 8px; }
 .print-page[data-page-kind="attendance-front"] { padding-top: 8px; }
+.print-page[data-page-kind="attendance-back"] > .templatePage { transform: translateY(-24px); }
+.print-page tr[data-generated-attendance-row="true"] { line-height: 1; }
 .attendance-print-document .templatePage { page-break-after: auto !important; }
 .combined-page .combined-slot + .combined-slot { margin-top: 1.25rem; }
 .combined-page[data-page-kind="attendance-front"] .combined-slot {
