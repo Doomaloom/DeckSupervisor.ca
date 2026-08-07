@@ -5,7 +5,8 @@ import serifRegular from '../pdf/fonts/LiberationSerif-Regular.ttf?url'
 import serifBold from '../pdf/fonts/LiberationSerif-Bold.ttf?url'
 import { loadAttendanceTemplate } from './templateRegistry'
 import { extractAttendanceTemplateSections, fillAttendanceRoster } from './templateDom'
-import type { AttendancePrintItem, AttendancePrintRequest } from './types'
+import { buildSchematicCoverElement } from './schematicCover'
+import type { AttendancePrintItem, AttendancePrintOptions, AttendancePrintRequest } from './types'
 
 export function groupAttendancePrintItems(items: AttendancePrintItem[]) {
   const groups: AttendancePrintItem[][] = []
@@ -45,7 +46,20 @@ function printPage(document: Document, kind: string) {
   return page
 }
 
-export async function buildAttendancePrintDocument(request: AttendancePrintRequest): Promise<Document> {
+function adjacentInstructorPackets(items: AttendancePrintItem[]) {
+  const packets: AttendancePrintItem[][] = []
+  items.forEach(item => {
+    const current = packets.at(-1)
+    if (current?.[0].roster.instructor === item.roster.instructor) current.push(item)
+    else packets.push([item])
+  })
+  return packets
+}
+
+export async function buildAttendancePrintDocument(
+  request: AttendancePrintRequest,
+  options: AttendancePrintOptions = {},
+): Promise<Document> {
   const items = requestItems(request)
   const document = window.document.implementation.createHTMLDocument(request.title?.trim() || 'Attendance Sheets')
   document.documentElement.lang = 'en'
@@ -70,27 +84,43 @@ export async function buildAttendancePrintDocument(request: AttendancePrintReque
   })
 
   const byItem = new Map(items.map((item, index) => [item, loaded[index].sections]))
-  for (const group of groupAttendancePrintItems(items)) {
-    const paired = group.length === 2
-    for (const side of ['front', 'back'] as const) {
-      const page = printPage(document, `attendance-${side}`)
-      if (paired) page.classList.add('combined-page')
-      for (const item of group) {
-        const sections = byItem.get(item)
-        if (!sections) continue
-        const source = side === 'front' ? sections.frontFragment : sections.backFragment
-        const fragment = document.importNode(source, true)
-        fillAttendanceRoster(fragment, item.roster, request.session?.trim() || 'Session')
-        if (paired) {
-          const slot = document.createElement('div')
-          slot.className = 'combined-slot'
-          slot.append(fragment)
-          page.append(slot)
-        } else {
-          page.append(fragment)
-        }
+  const packets = options.schematicCover ? adjacentInstructorPackets(items) : [items]
+  for (const packet of packets) {
+    if (options.schematicCover) {
+      const instructor = packet[0]?.roster.instructor ?? ''
+      const coverRequest = {
+        ...options.schematicCover.request,
+        ...(options.schematicCover.highlightEachInstructor
+          ? { highlightInstructor: true, selectedInstructor: instructor }
+          : {}),
       }
-      document.body.append(page)
+      const cover = printPage(document, 'schematic-cover')
+      cover.append(buildSchematicCoverElement(document, coverRequest))
+      document.body.append(cover)
+      if (options.schematicCover.blankBack !== false) document.body.append(printPage(document, 'blank'))
+    }
+    for (const group of groupAttendancePrintItems(packet)) {
+      const paired = group.length === 2
+      for (const side of ['front', 'back'] as const) {
+        const page = printPage(document, `attendance-${side}`)
+        if (paired) page.classList.add('combined-page')
+        for (const item of group) {
+          const sections = byItem.get(item)
+          if (!sections) continue
+          const source = side === 'front' ? sections.frontFragment : sections.backFragment
+          const fragment = document.importNode(source, true)
+          fillAttendanceRoster(fragment, item.roster, request.session?.trim() || 'Session')
+          if (paired) {
+            const slot = document.createElement('div')
+            slot.className = 'combined-slot'
+            slot.append(fragment)
+            page.append(slot)
+          } else {
+            page.append(fragment)
+          }
+        }
+        document.body.append(page)
+      }
     }
   }
   return document

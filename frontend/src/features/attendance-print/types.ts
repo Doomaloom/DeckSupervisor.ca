@@ -41,3 +41,13 @@ export type AttendancePrintPage = {
   kind: 'attendance-front' | 'attendance-back' | 'schematic-cover' | 'blank'
   element: HTMLElement
 }
+
+export type AttendanceSchematicCoverOptions = {
+  request: import('../pdf/types').SchematicPdfRequest
+  highlightEachInstructor?: boolean
+  blankBack?: boolean
+}
+
+export type AttendancePrintOptions = {
+  schematicCover?: AttendanceSchematicCoverOptions
+}

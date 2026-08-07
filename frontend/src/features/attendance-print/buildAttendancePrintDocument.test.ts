@@ -27,4 +27,27 @@ describe('attendance HTML print document', () => {
     expect(document.querySelectorAll('script')).toHaveLength(0)
     expect(document.documentElement.outerHTML).not.toContain('cdn.tailwindcss.com')
   })
+
+  it('places a highlighted schematic cover and blank back before each instructor packet', async () => {
+    const document = await buildAttendancePrintDocument({
+      rosters: [item('A', 'Splash1'), { ...item('B', 'Splash2A'), roster: { ...item('B', 'Splash2A').roster, instructor: 'Blair' } }],
+    }, {
+      schematicCover: {
+        highlightEachInstructor: true,
+        blankBack: true,
+        request: {
+          orientation: 'landscape', title: 'Schematic', instructors: ['Alex', 'Blair'],
+          columns: [
+            [{ code: 'A', level: 'Splash 1', startMinutes: 540, durationMinutes: 30, studentCount: 4, capacity: 8 }],
+            [{ code: 'B', level: 'Splash 2', startMinutes: 540, durationMinutes: 30, studentCount: 7, capacity: 8 }],
+          ],
+        },
+      },
+    })
+    expect(Array.from(document.querySelectorAll('.print-page')).map(page => page.getAttribute('data-page-kind'))).toEqual([
+      'schematic-cover', 'blank', 'attendance-front', 'attendance-back',
+      'schematic-cover', 'blank', 'attendance-front', 'attendance-back',
+    ])
+    expect(document.body.textContent).toContain('Instructors / Level')
+  })
 })

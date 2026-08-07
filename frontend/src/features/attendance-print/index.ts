@@ -3,8 +3,10 @@ export { openAttendancePrintWindow, printAttendanceHtml } from './printAttendanc
 export { loadAttendanceTemplate } from './templateRegistry'
 export type {
   AttendancePrintItem,
+  AttendancePrintOptions,
   AttendancePrintRequest,
   AttendancePrintResult,
   AttendancePrintRoster,
   AttendancePrintStudent,
+  AttendanceSchematicCoverOptions,
 } from './types'

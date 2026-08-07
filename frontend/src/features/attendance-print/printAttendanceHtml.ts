@@ -1,5 +1,5 @@
 import { buildAttendancePrintDocument } from './buildAttendancePrintDocument'
-import type { AttendancePrintRequest, AttendancePrintResult } from './types'
+import type { AttendancePrintOptions, AttendancePrintRequest, AttendancePrintResult } from './types'
 
 const PREPARATION_TIMEOUT_MS = 15_000
 
@@ -31,9 +31,10 @@ async function waitForLayout(printWindow: Window) {
 export async function printAttendanceHtml(
   request: AttendancePrintRequest,
   existingWindow: Window,
+  options: AttendancePrintOptions = {},
 ): Promise<AttendancePrintResult> {
   try {
-    const prepared = await withTimeout(buildAttendancePrintDocument(request))
+    const prepared = await withTimeout(buildAttendancePrintDocument(request, options))
     existingWindow.document.open()
     existingWindow.document.write(`<!doctype html>${prepared.documentElement.outerHTML}`)
     existingWindow.document.close()
