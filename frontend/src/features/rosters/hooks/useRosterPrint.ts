@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { openAttendancePrintWindow, printAttendanceHtml } from '../../attendance-print'
+import { openAttendancePrintWindow } from '../../attendance-print/openAttendancePrintWindow'
 import { buildAttendancePrintItems } from '../utils'
 import { useCurrentSession } from '../../../app/useCurrentSession'
 import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
@@ -32,6 +32,7 @@ export function useRosterPrint() {
         }
 
         try {
+            const { printAttendanceHtml } = await import('../../attendance-print/printAttendanceHtml')
             const jobLabel = `Attendance - ${roster.serviceName || roster.code || 'Roster'}`
             const result = await printAttendanceHtml({
                 session: sessionName,
@@ -41,7 +42,7 @@ export function useRosterPrint() {
             if (result.status === 'failed') throw result.error
         } catch (error) {
             console.error(error)
-            alert('Unable to generate attendance PDF. Please try again.')
+            alert('Unable to prepare attendance sheets. Please try again.')
             printWindow?.close()
         }
     }

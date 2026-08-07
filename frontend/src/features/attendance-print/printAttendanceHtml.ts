@@ -3,19 +3,6 @@ import type { AttendancePrintOptions, AttendancePrintRequest, AttendancePrintRes
 
 const PREPARATION_TIMEOUT_MS = 15_000
 
-function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ?? character)
-}
-
-export function openAttendancePrintWindow(title = 'Attendance Sheets') {
-  const printWindow = window.open('', '_blank')
-  if (!printWindow) return null
-  printWindow.document.open()
-  printWindow.document.write(`<title>${escapeHtml(title)}</title><p style="font-family:Arial,sans-serif">Preparing attendance sheets…</p>`)
-  printWindow.document.close()
-  return printWindow
-}
-
 function withTimeout<T>(promise: Promise<T>) {
   return new Promise<T>((resolve, reject) => {
     const timeout = window.setTimeout(() => reject(new Error('Attendance print preparation timed out.')), PREPARATION_TIMEOUT_MS)

@@ -5,6 +5,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 historical_dir="${1:-$root/frontend/test-fixtures/pdf-parity/historical}"
 current_dir="${2:-$root/tmp/pdf-parity/current}"
 diff_dir="${3:-$root/tmp/pdf-parity/diffs}"
+fixture_filter="${4:-*}"
 mkdir -p "$diff_dir"
 
 command -v pdfinfo >/dev/null
@@ -13,7 +14,7 @@ command -v magick >/dev/null
 
 failures=0
 shopt -s nullglob
-goldens=("$historical_dir"/*.pdf)
+goldens=("$historical_dir"/$fixture_filter.pdf)
 if (( ${#goldens[@]} == 0 )); then
   echo "No historical PDF fixtures found in $historical_dir" >&2
   exit 1

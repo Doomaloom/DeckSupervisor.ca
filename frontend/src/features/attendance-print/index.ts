@@ -1,5 +1,6 @@
 export { buildAttendancePrintDocument, groupAttendancePrintItems } from './buildAttendancePrintDocument'
-export { openAttendancePrintWindow, printAttendanceHtml } from './printAttendanceHtml'
+export { openAttendancePrintWindow } from './openAttendancePrintWindow'
+export { printAttendanceHtml } from './printAttendanceHtml'
 export { loadAttendanceTemplate } from './templateRegistry'
 export type {
   AttendancePrintItem,

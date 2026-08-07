@@ -15,7 +15,7 @@ import {
 import { ensureCachedSchematicPdf } from '../../lib/printPdfCache'
 import { getStorageScope } from '../../lib/storageScope'
 import { getCurrentSessionId } from '../../lib/sessionStorage'
-import { openAttendancePrintWindow, printAttendanceHtml } from '../attendance-print'
+import { openAttendancePrintWindow } from '../attendance-print/openAttendancePrintWindow'
 import { buildAttendancePrintItems, buildCustomRosterGroups, buildRosterGroups } from '../rosters/utils'
 import { printOptions } from './constants'
 import type {
@@ -763,6 +763,7 @@ function PrintPage() {
       }
 
       const rosters = orderedNames.flatMap(name => (grouped.get(name) ?? []).flatMap(roster => buildAttendancePrintItems(roster)))
+      const { printAttendanceHtml } = await import('../attendance-print/printAttendanceHtml')
       const result = await printAttendanceHtml({ session: sessionTitle, title: 'Instructor Sheets', rosters }, printWindow, {
         ...(instructorExtras.schematicCoverPage ? {
           schematicCover: {
@@ -818,6 +819,7 @@ function PrintPage() {
     try {
       const grouped = groupRostersByInstructor(rosterGroups)
       const rosters = (grouped.get(name) ?? []).flatMap(roster => buildAttendancePrintItems(roster))
+      const { printAttendanceHtml } = await import('../attendance-print/printAttendanceHtml')
       const result = await printAttendanceHtml({ session: sessionTitle, title: `Instructor - ${name}`, rosters }, printWindow, {
         ...(instructorExtras.schematicCoverPage ? {
           schematicCover: {
@@ -1033,6 +1035,7 @@ function PrintPage() {
         title: 'Masterlist',
         filename: 'masterlist.pdf',
       })
+      const { printAttendanceHtml } = await import('../attendance-print/printAttendanceHtml')
       const attendanceResult = await printAttendanceHtml({
         session: sessionTitle,
         title: 'Day 1 Instructor Sheets',
