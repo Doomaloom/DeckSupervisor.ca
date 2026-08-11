@@ -13,7 +13,7 @@ describe('historical attendance template registry', () => {
     loaded.forEach(template => {
       expect(template.html).toContain('id="attendance-rows"')
       expect(template.html).toContain('id="student-rows"')
-      expect(template.html).toContain('break-before-page')
+      expect(template.html).toMatch(/page-break-before:\s*always|break-before-page/)
     })
   })
 

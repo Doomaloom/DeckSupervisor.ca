@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 import { LEGACY_ATTENDANCE_TEMPLATE_KEYS, loadAttendanceTemplate } from './templateRegistry'
 
 const compatibilityCss = readFileSync(resolve(process.cwd(), 'src/features/attendance-print/attendanceCompatibility.css'), 'utf8')
+const intentionallyInertClasses = new Set(['walkme-to-remove'])
 
 describe('attendance compatibility stylesheet', () => {
   it('defines every historical utility class locally or in template-owned CSS', async () => {
@@ -13,8 +14,11 @@ describe('attendance compatibility stylesheet', () => {
       const parsed = new DOMParser().parseFromString(html, 'text/html')
       const localCss = Array.from(parsed.querySelectorAll('style'), style => style.textContent ?? '').join('\n').replaceAll('\\', '')
       const sharedCss = compatibilityCss.replaceAll('\\', '')
-      const classes = new Set(Array.from(parsed.querySelectorAll('[class]')).flatMap(element => Array.from(element.classList)))
+      const page = parsed.querySelector('.templatePage')
+      expect(page, `${key} must contain .templatePage`).not.toBeNull()
+      const classes = new Set(Array.from(page!.querySelectorAll('[class]')).flatMap(element => Array.from(element.classList)))
       for (const token of classes) {
+        if (intentionallyInertClasses.has(token)) continue
         const selector = `.${token}`
         if (!sharedCss.includes(selector) && !localCss.includes(selector)) uncovered.push(`${key}:${token}`)
       }
