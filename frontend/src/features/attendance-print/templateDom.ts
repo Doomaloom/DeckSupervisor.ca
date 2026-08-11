@@ -19,13 +19,7 @@ export function extractAttendanceTemplateSections(key: string, html: string): At
   const parsed = new DOMParser().parseFromString(html, 'text/html')
   parsed.querySelectorAll('script, link[href]').forEach(element => element.remove())
   const page = parsed.querySelector('.templatePage')
-  const boundary = page
-    ? Array.from(page.children).find(element => {
-        if (element.classList.contains('break-before-page')) return true
-        const style = (element.getAttribute('style') ?? '').toLowerCase()
-        return /(?:page-)?break-before\s*:\s*always/.test(style)
-      })
-    : undefined
+  const boundary = page?.querySelector(':scope > .break-before-page')
   if (!page || !boundary) throw new Error(`Attendance template ${key} is missing its front/back boundary.`)
 
   const nodes = Array.from(page.childNodes)

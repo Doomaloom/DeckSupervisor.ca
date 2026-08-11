@@ -1,62 +1,81 @@
-<html lang="en"
-	class="js flexbox flexboxlegacy canvas canvastext webgl no-touch geolocation postmessage no-websqldatabase indexeddb hashchange history draganddrop websockets rgba hsla multiplebgs backgroundsize borderimage borderradius boxshadow textshadow opacity cssanimations csscolumns cssgradients cssreflections csstransforms csstransforms3d csstransitions fontface generatedcontent video audio localstorage sessionstorage webworkers no-applicationcache svg inlinesvg smil svgclippaths jPanelMenu">
+<html lang="en">
 
 <head>
-	<script type="module" id="truffle-injected" data-runtime="bkkjeefjfjcfdfifddmkdmcpmaakmelp"
-		src="chrome-extension://bkkjeefjfjcfdfifddmkdmcpmaakmelp/contexts/all/injected-script/index.js"></script>
-	<title>
-		Splash Fitness.html
-	</title>
-	<style type="text/css">
-		.templatePage:not(:last-child) {
-			page-break-after: always;
-		}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splash Fitness.html</title>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Arial', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .templatePage:not(:last-child) {
+      page-break-after: always;
+    }
 
-		body {
-			overflow-x: visible !important;
-		}
-	</style>
-	<script src="chrome-extension://efbelpdhldnphhkfdokjaejacjoclefk/js/webScript.js"></script>
+    .attendance-table {
+      width: var(--sheet-width);
+    }
+
+    .rotate-cell {
+      position: relative;
+      height: var(--rotate-height) !important;
+      white-space: nowrap;
+    }
+
+    .rotate-cell > span {
+      position: absolute;
+      top: var(--rotate-top);
+      left: 0;
+      display: block;
+      transform: translate(0, var(--rotate-translate)) rotate(-90deg);
+      transform-origin: left top;
+    }
+
+    .rotate-cell br {
+      display: revert;
+    }
+
+    .break-before-page {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    .break-inside-avoid {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+
+      #document {
+        box-shadow: none;
+        padding: 0;
+      }
+    }
+  </style>
 </head>
 
-<body data-menu-position="closed" cnet-shopping-enabled="true">
-	<div class="jPanelMenu-panel" style="position: relative; left: 0px;">
-		<div id="document">
-			<form id="AjaxAntiForgeryForm">
-				<input name="__RequestVerificationToken" type="hidden"
-					value="73Z0sLduDIBI1i_pBwJCf4Tl4GbGegxO-mtPv8_TQ6288AiIF4In6kr7S1YzIjxN-C6-75qcii7hLOQHSK_AoIPHOPYCNDl3QZSpViZ6nGnHV8XzoN6bI1k-prIBh-yZlLCqd3D1RSlWhbd3JMam1Awoncc1">
-			</form>
-			<div class="templatePage">
-				<style>
-					/* Fixed Size for the Table */
-					table {
-						width: 1400px;
-					}
-
-					/*            - add this .rotate class to all the td            - adjust this height value if your titles get longer (see #2)            */
-					.rotate {
-						white-space: nowrap;
-						height: 320px !important;
-						position: relative;
-					}
-
-					/*            - Adjust the top value if you adjusted the height value            */
-					.rotate span {
-						transform: translate(0, 190px) rotate(-90deg);
-						transform-origin: left top;
-						display: block;
-						position: absolute;
-						top: 120px;
-						left: 0px;
-					}
-
-					/*            - This removes all the break tags so it stays on one line            */
-					/*            .rotate br {            display: none;            }            */
-				</style>
-				<table border="1">
+<body class="bg-slate-100 p-4 font-sans text-black print:bg-white print:p-0">
+	<div class="relative">
+		<div id="document" class="mx-auto w-fit bg-white p-6 shadow-sm print:p-0 print:shadow-none">
+<div class="templatePage space-y-6" style="--sheet-width: 1400px; --rotate-height: 320px; --rotate-translate: 190px; --rotate-top: 120px;">
+<table border="1" class="attendance-table border-collapse border border-black text-[10px] leading-tight text-black">
 					<tbody id="attendance-rows">
 						<tr id="student-rows">
-							<td class="fa-lg" style="width: 660pt; height: 20pt; white-space: nowrap;"><b>&nbsp;<font
+							<td class="fa-lg whitespace-nowrap align-top p-3 text-left text-[13px] leading-tight" style="width: 660pt; height: 20pt; white-space: nowrap;"><b>&nbsp;<font
 										size="5">Splash Fitness</font></b>
 								<p style="text-align: left;"><span style="font-family: Arial;">
 										<font size="3"><strong>&nbsp;Instructor:&nbsp; <span id="instructor"></span></strong><br> <span
@@ -67,112 +86,112 @@
 												<strong>&nbsp;Barcode:&nbsp;</strong><span id="barcode"></span></span></font>
 									</span></p>
 							</td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>1. Pace Clocks and Timers</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>2. Stretches for Swimmers</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 60pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>3. Kicking Interval Training: 4 x 25 m Flutter Kick and/or
 											<br> Whip Kick with 15-20 sec Rests </strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 60pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>4. Swimming Interval Training: Swim Interval Sets Selected
 											<br> by the Swimmer</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>5. Workout 300 m.</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 60pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>6. Workout design: Design and Demonstrate 2 Sample <br>
 											Workouts</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>7. Distance Swim: Endurance Challenge</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 60pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>8. Sprint Swim: 25 m each for at Least 2 Strokes Chosen <br>
 											by the Swimmer</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;Result: &nbsp;</strong>&nbsp;Complete (c) Incomplete
 										(I)&nbsp;&nbsp;</font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width: 30pt; height: 30pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;Register&nbsp;In</strong></font>
@@ -181,46 +200,10 @@
 				
 					</tbody>
 				</table>
-			<p style="page-break-before: always;"> <span
-						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span>
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<meta http-equiv="X-UA-Compatible" content="ie=edge">
-					<title>Document</title>
-				</p>
-				<style>
-					.wm-ab-launcher-spinner {
-						height: 100%;
-						left: 0;
-						position: absolute;
-						top: 0;
-						width: 100%;
-					}
-
-					.wm-ab-launcher-spinner::before {
-						animation: wm-ab-spin 1.5s linear infinite;
-						border: 2px solid #f3f3f3;
-						border-radius: 50%;
-						border-top: 2px solid transparent;
-						content: '';
-						height: 18px;
-						left: calc(50% - 9px);
-						position: absolute;
-						top: calc(50% - 9px);
-						width: 18px;
-					}
-
-					@keyframes wm-ab-spin {
-						0% {
-							transform: rotate(0deg);
-						}
-
-						100% {
-							transform: rotate(360deg);
-						}
-					}
-				</style>
-				<div style="page-break-before: auto;"> </div>
-				<table width="1200" style="width: 1200pt; font-size: 10px;" border="0" cellspacing="0" cellpadding="0">
+			<p class="break-before-page"><span
+						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span></p>
+<div class="h-0"></div>
+				<table border="0" class="w-[1200pt] border-collapse text-[9px] leading-tight text-black">
 					<tbody>
 						<tr>
 							<td width="320" valign="top" style="padding: 0in 4pt; width: 300pt;">
@@ -339,39 +322,6 @@
 		}
 	</script>
 
-	<style id="jPanelMenu-style-master">
-		body {
-			width: 100%
-		}
-
-		.jPanelMenu,
-		body {
-			overflow-x: hidden
-		}
-
-		#jPanelMenu-menu {
-			display: block;
-			position: fixed;
-			top: 0;
-			left: 0;
-			height: 100%;
-			z-index: -1;
-			overflow-x: hidden;
-			overflow-y: scroll;
-			-webkit-overflow-scrolling: touch
-		}
-
-		.jPanelMenu-panel {
-			position: static;
-			left: 0;
-			top: 0;
-			z-index: 2;
-			width: 100%;
-			min-height: 100%;
-			background: #fff
-		}
-	</style><scribe-shadow id="crxjs-ext" data-crx="okfkdaglfjjjfefdcppliegebpoegaii"
-		style="position: fixed; width: 0px; height: 0px; top: 0px; left: 0px; z-index: 2147483647; overflow: visible; visibility: visible;"></scribe-shadow>
 </body>
 
 </html>

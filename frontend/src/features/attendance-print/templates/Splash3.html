@@ -1,62 +1,81 @@
-<html lang="en"
-	class="js flexbox flexboxlegacy canvas canvastext webgl no-touch geolocation postmessage no-websqldatabase indexeddb hashchange history draganddrop websockets rgba hsla multiplebgs backgroundsize borderimage borderradius boxshadow textshadow opacity cssanimations csscolumns cssgradients cssreflections csstransforms csstransforms3d csstransitions fontface generatedcontent video audio localstorage sessionstorage webworkers no-applicationcache svg inlinesvg smil svgclippaths jPanelMenu">
+<html lang="en">
 
 <head>
-	<script type="module" id="truffle-injected" data-runtime="bkkjeefjfjcfdfifddmkdmcpmaakmelp"
-		src="chrome-extension://bkkjeefjfjcfdfifddmkdmcpmaakmelp/contexts/all/injected-script/index.js"></script>
-	<title>
-		Splash 3.html
-	</title>
-	<style type="text/css">
-		.templatePage:not(:last-child) {
-			page-break-after: always;
-		}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splash 3.html</title>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Arial', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .templatePage:not(:last-child) {
+      page-break-after: always;
+    }
 
-		body {
-			overflow-x: visible !important;
-		}
-	</style>
-	<script src="chrome-extension://efbelpdhldnphhkfdokjaejacjoclefk/js/webScript.js"></script>
+    .attendance-table {
+      width: var(--sheet-width);
+    }
+
+    .rotate-cell {
+      position: relative;
+      height: var(--rotate-height) !important;
+      white-space: nowrap;
+    }
+
+    .rotate-cell > span {
+      position: absolute;
+      top: var(--rotate-top);
+      left: 0;
+      display: block;
+      transform: translate(0, var(--rotate-translate)) rotate(-90deg);
+      transform-origin: left top;
+    }
+
+    .rotate-cell br {
+      display: revert;
+    }
+
+    .break-before-page {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    .break-inside-avoid {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+
+      #document {
+        box-shadow: none;
+        padding: 0;
+      }
+    }
+  </style>
 </head>
 
-<body data-menu-position="closed" cnet-shopping-enabled="true">
-	<div class="jPanelMenu-panel" style="position: relative; left: 0px;">
-		<div id="document">
-			<form id="AjaxAntiForgeryForm">
-				<input name="__RequestVerificationToken" type="hidden"
-					value="l9WjV6RDcr-zX3UUFjnKBT1H8OG2Zx_1TpFxHJNRgWwo6H4GNpiIGbwVSIBLwaPIull_rmAOenzQkgql2MmDmnUEhEi5IJUsprVd6EqItB2xh6yVbKCjjDZerk-dii-OzQd4NK7cRJJ1gks14ggLWKlzWV41">
-			</form>
-			<div class="templatePage">
-				<style>
-					/* Fixed Size for the Table */
-					table {
-						width: 1300px;
-					}
-
-					/*            - add this .rotate class to all the td            - adjust this height value if your titles get longer (see #2)            */
-					.rotate {
-						white-space: nowrap;
-						height: 270px !important;
-						position: relative;
-					}
-
-					/*            - Adjust the top value if you adjusted the height value            */
-					.rotate span {
-						transform: translate(0, 190px) rotate(-90deg);
-						transform-origin: left top;
-						display: block;
-						position: absolute;
-						top: 80px;
-						left: 0px;
-					}
-
-					/*            - This removes all the break tags so it stays on one line            */
-					/*            .rotate br {            display: none;            }            */
-				</style>
-				<table border="1" class="">
+<body class="bg-slate-100 p-4 font-sans text-black print:bg-white print:p-0">
+	<div class="relative">
+		<div id="document" class="mx-auto w-fit bg-white p-6 shadow-sm print:p-0 print:shadow-none">
+<div class="templatePage space-y-6" style="--sheet-width: 1300px; --rotate-height: 270px; --rotate-translate: 190px; --rotate-top: 80px;">
+<table border="1" class="attendance-table border-collapse border border-black text-[10px] leading-tight text-black">
 					<tbody id="attendance-rows">
 						<tr id="student-rows">
-							<td class="fa-lg" style="width: 660pt; height: 50pt; white-space: nowrap;"><b>&nbsp;<font
+							<td class="fa-lg whitespace-nowrap align-top p-3 text-left text-[13px] leading-tight" style="width: 660pt; height: 50pt; white-space: nowrap;"><b>&nbsp;<font
 										size="5">Splash 3</font></b>
 								<p style="text-align: left;"><span style="font-family: Arial;">
 										<font size="3"><strong>&nbsp;Instructor:&nbsp; <span id="instructor"></span></strong><br> <span
@@ -66,112 +85,112 @@
 												<strong>&nbsp;Barcode:&nbsp;</strong><span id="barcode"></span></span></font>
 									</span></p>
 							</td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>Previous Level</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>1. Kneeling Dive into Deep Water</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>2. Forward Roll Entry into Deep Water</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>3. Tread Water 30 Seconds</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>4. Handstand in Shallow Water</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>5. Front Somersault (in Water)</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  65pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>6. Jump into deep water, tread 30 sec., <br> and swim/kick 25
 											m</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  65pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>7. Flutter Kick on Back 5 m, Reverse Direction and <br>
 											Flutter Kick on Front 5 m</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  65pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>8. Flutter Kick on Front 5 m, Reverse Direction and <br>
 											Flutter Kick on Back 5 m</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>9. Whip Kick on Back 10 m</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>10a. Front Crawl 15 m </strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>10b. Back Crawl 15 m&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  65pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>11. Interval Training: 4x15 m Flutter Kick with 20 Second
 											<br> Rests</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>12a. Water Smart Messages - Swim with a Buddy</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>12b. Water Smart Messages - Wear a Lifejacket</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>12c. Water Smart Messages - Check the Ice</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>12d. Water Smart Messages - Swim to Survive</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp; </strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;</strong></font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;Result: &nbsp;</strong>&nbsp;Complete (c) Incomplete
 										(I)&nbsp;&nbsp;</font>
 								</span></td>
-							<td class="rotate"
+							<td class="rotate rotate-cell align-top text-left"
 								style="width:  50pt; height: 50pt; text-align: left; vertical-align: top;"><span
 									style="font-family: Arial;">
 									<font size="1"><strong>&nbsp;Register&nbsp;In</strong></font>
@@ -179,47 +198,10 @@
 						</tr> <!-- loop:Client -->
 					</tbody>
 				</table>
-			<p style="page-break-before: always"> <span
-						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span>
-					<meta charset="UTF-8">
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<meta http-equiv="X-UA-Compatible" content="ie=edge">
-					<title>Document</title>
-				</p>
-				<style>
-					.wm-ab-launcher-spinner {
-						height: 100%;
-						left: 0;
-						position: absolute;
-						top: 0;
-						width: 100%;
-					}
-
-					.wm-ab-launcher-spinner::before {
-						animation: wm-ab-spin 1.5s linear infinite;
-						border: 2px solid #f3f3f3;
-						border-radius: 50%;
-						border-top: 2px solid transparent;
-						content: '';
-						height: 18px;
-						left: calc(50% - 9px);
-						position: absolute;
-						top: calc(50% - 9px);
-						width: 18px;
-					}
-
-					@keyframes wm-ab-spin {
-						0% {
-							transform: rotate(0deg);
-						}
-
-						100% {
-							transform: rotate(360deg);
-						}
-					}
-				</style>
-				<div style="page-break-before: auto;"> </div>
-				<table border="0" cellspacing="0" cellpadding="0" width="1200" style="width: 1200pt; " font="" size="1">
+			<p class="break-before-page"><span
+						style="font-size: 0.9em; background-color: rgb(255, 255, 255);"></span></p>
+<div class="h-0"></div>
+				<table border="0" class="w-[1200pt] border-collapse text-[9px] leading-tight text-black">
 					<tbody>
 						<tr>
 							<td width="320" valign="top" style="padding: 0in 4pt; width: 300pt;">
@@ -345,39 +327,6 @@
 		}
 	</script>
 
-	<style id="jPanelMenu-style-master">
-		body {
-			width: 100%
-		}
-
-		.jPanelMenu,
-		body {
-			overflow-x: hidden
-		}
-
-		#jPanelMenu-menu {
-			display: block;
-			position: fixed;
-			top: 0;
-			left: 0;
-			height: 100%;
-			z-index: -1;
-			overflow-x: hidden;
-			overflow-y: scroll;
-			-webkit-overflow-scrolling: touch
-		}
-
-		.jPanelMenu-panel {
-			position: static;
-			left: 0;
-			top: 0;
-			z-index: 2;
-			width: 100%;
-			min-height: 100%;
-			background: #fff
-		}
-	</style><scribe-shadow id="crxjs-ext" data-crx="okfkdaglfjjjfefdcppliegebpoegaii"
-		style="position: fixed; width: 0px; height: 0px; top: 0px; left: 0px; z-index: 2147483647; overflow: visible; visibility: visible;"></scribe-shadow>
 </body>
 
 </html>

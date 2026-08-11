@@ -1,9 +1,8 @@
 # Attendance browser-print architecture
 
 Attendance sheets are assembled from the historical HTML templates in
-`frontend/src/features/attendance-print/templates/`. Those files are copied
-byte-for-byte from `backend/swimming attendance/` on the `main` branch at commit
-`3bbb1f61c93f2b384186a545b4218cd5f14d01fb` and remain the content and
+`frontend/src/features/attendance-print/templates/`. Those files were copied
+from commit `c315c452d8c0b3aabfff324f702f89aee3ce8a2e` and remain the content and
 template-specific geometry authority.
 
 ## How printing works
