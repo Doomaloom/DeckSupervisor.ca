@@ -101,34 +101,37 @@ function MasterlistOptionsModal({
               Schematic Coverpage
             </label>
             {extras.schematicCoverPage && (
-              <>
-                <label
-                  className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-                >
-                  Cover Orientation
-                  <select
-                    className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
-                    value={coverOrientation}
-                    onChange={event =>
-                      onSelectCoverOrientation(
-                        event.target.value === 'landscape' ? 'landscape' : 'portrait',
-                      )
-                    }
-                  >
-                    <option value="portrait">Portrait</option>
-                    <option value="landscape">Landscape</option>
-                  </select>
-                </label>
-                <SchematicScaleControl
-                  value={schematicScalePercent}
-                  min={scaleMin}
-                  max={scaleMax}
-                  step={scaleStep}
-                  onChange={onChangeSchematicScale}
-                  onReset={onResetSchematicScale}
-                  compact
-                />
-              </>
+              <details className="group rounded-2xl border border-secondary/20 bg-bg text-xs text-secondary">
+                <summary className="cursor-pointer select-none px-3 py-2 font-semibold marker:text-primary">
+                  Schematic Cover Settings
+                </summary>
+                <div className="flex flex-col gap-2 border-t border-secondary/20 p-3">
+                  <label className="flex flex-col gap-2 font-semibold">
+                    Cover Orientation
+                    <select
+                      className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
+                      value={coverOrientation}
+                      onChange={event =>
+                        onSelectCoverOrientation(
+                          event.target.value === 'landscape' ? 'landscape' : 'portrait',
+                        )
+                      }
+                    >
+                      <option value="portrait">Portrait</option>
+                      <option value="landscape">Landscape</option>
+                    </select>
+                  </label>
+                  <SchematicScaleControl
+                    value={schematicScalePercent}
+                    min={scaleMin}
+                    max={scaleMax}
+                    step={scaleStep}
+                    onChange={onChangeSchematicScale}
+                    onReset={onResetSchematicScale}
+                    compact
+                  />
+                </div>
+              </details>
             )}
             {formatOptionItems
               .filter(option => formatOptions.layout === 'class-time' || option.key === 'borders')

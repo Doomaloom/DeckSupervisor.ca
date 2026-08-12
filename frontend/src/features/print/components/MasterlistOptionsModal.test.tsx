@@ -17,13 +17,13 @@ const classTimeOptions: FormatOptions = {
   font_size: 11,
 }
 
-function renderModal(formatOptions: FormatOptions) {
+function renderModal(formatOptions: FormatOptions, schematicCoverPage = false) {
   const onChangeLayout = vi.fn()
   const onChangeAlphabeticalNameBasis = vi.fn()
   customRender(
     <MasterlistOptionsModal
       open
-      extras={{ schematicCoverPage: false }}
+      extras={{ schematicCoverPage }}
       coverOrientation="portrait"
       schematicScalePercent={100}
       scaleMin={60}
@@ -73,5 +73,17 @@ describe('MasterlistOptionsModal', () => {
     expect(screen.queryByText('Instructor Headers')).not.toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Alphabetize by'), { target: { value: 'first-name' } })
     expect(onChangeAlphabeticalNameBasis).toHaveBeenCalledWith('first-name')
+  })
+
+  it('keeps schematic cover settings in a collapsed disclosure', () => {
+    renderModal(classTimeOptions, true)
+
+    const summary = screen.getByText('Schematic Cover Settings')
+    const disclosure = summary.closest('details')
+
+    expect(disclosure).not.toHaveAttribute('open')
+    fireEvent.click(summary)
+    expect(disclosure).toHaveAttribute('open')
+    expect(screen.getByText('Cover Orientation')).toBeInTheDocument()
   })
 })
