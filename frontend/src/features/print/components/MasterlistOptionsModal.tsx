@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import type {
   BooleanFormatOptionKey,
   FormatOptions,
@@ -45,6 +45,26 @@ type MasterlistOptionsModalProps = {
   onPrint: () => void
 }
 
+function MinimizedOptionsGroup({
+  title,
+  onExpand,
+}: {
+  title: string
+  onExpand: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className="flex w-full items-center justify-between rounded-2xl border-2 border-secondary px-4 py-3 text-left text-xs font-semibold text-secondary transition hover:bg-bg"
+      aria-expanded="false"
+      onClick={onExpand}
+    >
+      <span>{title}</span>
+      <span aria-hidden="true" className="text-base leading-none text-primary">+</span>
+    </button>
+  )
+}
+
 function MasterlistOptionsModal({
   open,
   extras,
@@ -69,6 +89,8 @@ function MasterlistOptionsModal({
   onResetSchematicScale,
   onPrint,
 }: MasterlistOptionsModalProps) {
+  const [coverGroupOpen, setCoverGroupOpen] = useState(false)
+
   if (!open) {
     return null
   }
@@ -83,30 +105,62 @@ function MasterlistOptionsModal({
     >
       <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
-          <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
-            <legend className="px-2 text-xs font-semibold">Format Options</legend>
-            <MasterlistLayoutControls
-              layout={formatOptions.layout}
-              alphabeticalNameBasis={formatOptions.alphabetical_name_basis}
-              onChangeLayout={onChangeLayout}
-              onChangeAlphabeticalNameBasis={onChangeAlphabeticalNameBasis}
-              compact
-            />
-            <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
-              <input
-                type="checkbox"
-                checked={extras.schematicCoverPage}
-                onChange={() => onToggle('schematicCoverPage')}
+          {coverGroupOpen ? (
+            <MinimizedOptionsGroup title="Format Options" onExpand={() => setCoverGroupOpen(false)} />
+          ) : (
+            <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+              <legend className="px-2 text-xs font-semibold">Format Options</legend>
+              <MasterlistLayoutControls
+                layout={formatOptions.layout}
+                alphabeticalNameBasis={formatOptions.alphabetical_name_basis}
+                onChangeLayout={onChangeLayout}
+                onChangeAlphabeticalNameBasis={onChangeAlphabeticalNameBasis}
+                compact
               />
-              Schematic Coverpage
-            </label>
-            {extras.schematicCoverPage && (
-              <details className="group rounded-2xl border border-secondary/20 bg-bg text-xs text-secondary">
-                <summary className="cursor-pointer select-none px-3 py-2 font-semibold marker:text-primary">
-                  Schematic Cover Settings
-                </summary>
-                <div className="flex flex-col gap-2 border-t border-secondary/20 p-3">
-                  <label className="flex flex-col gap-2 font-semibold">
+              {formatOptionItems
+                .filter(option => formatOptions.layout === 'class-time' || option.key === 'borders')
+                .map(option => (
+                  <label
+                    key={option.key}
+                    className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formatOptions[option.key]}
+                      onChange={() => onToggleFormat(option.key)}
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
+                Font Size
+                <input
+                  type="number"
+                  min={masterlistFontSizeMin}
+                  max={masterlistFontSizeMax}
+                  step={1}
+                  className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
+                  value={formatOptions.font_size}
+                  onChange={event => onChangeFontSize(event.target.value)}
+                />
+              </label>
+            </fieldset>
+          )}
+
+          {coverGroupOpen ? (
+            <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+              <legend className="px-2 text-xs font-semibold">Schematic Coverpage</legend>
+              <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
+                <input
+                  type="checkbox"
+                  checked={extras.schematicCoverPage}
+                  onChange={() => onToggle('schematicCoverPage')}
+                />
+                Include Schematic Coverpage
+              </label>
+              {extras.schematicCoverPage ? (
+                <>
+                  <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
                     Cover Orientation
                     <select
                       className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
@@ -130,73 +184,60 @@ function MasterlistOptionsModal({
                     onReset={onResetSchematicScale}
                     compact
                   />
-                </div>
-              </details>
-            )}
-            {formatOptionItems
-              .filter(option => formatOptions.layout === 'class-time' || option.key === 'borders')
-              .map(option => (
-                <label
-                  key={option.key}
-                  className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-                >
-                  <input
-                    type="checkbox"
-                    checked={formatOptions[option.key]}
-                    onChange={() => onToggleFormat(option.key)}
-                  />
-                  {option.label}
-                </label>
-              ))}
-            <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
-              Font Size
-              <input
-                type="number"
-                min={masterlistFontSizeMin}
-                max={masterlistFontSizeMax}
-                step={1}
-                className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
-                value={formatOptions.font_size}
-                onChange={event => onChangeFontSize(event.target.value)}
-              />
-            </label>
-          </fieldset>
+                </>
+              ) : null}
+            </fieldset>
+          ) : (
+            <MinimizedOptionsGroup
+              title="Schematic Coverpage"
+              onExpand={() => setCoverGroupOpen(true)}
+            />
+          )}
 
           {formatOptions.layout === 'class-time' ? (
             <div className="flex flex-col gap-3">
-              <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
-                <legend className="px-2 text-xs font-semibold">Time Header Style</legend>
-                {timeHeaderStyleOptions.map(option => (
-                  <label
-                    key={option.key}
-                    className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formatOptions[option.key]}
-                      onChange={() => onToggleFormat(option.key)}
-                    />
-                    {option.label}
-                  </label>
-                ))}
-              </fieldset>
+              {coverGroupOpen ? (
+                <>
+                  <MinimizedOptionsGroup title="Time Header Style" onExpand={() => setCoverGroupOpen(false)} />
+                  <MinimizedOptionsGroup title="Course Header Style" onExpand={() => setCoverGroupOpen(false)} />
+                </>
+              ) : (
+                <>
+                  <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+                    <legend className="px-2 text-xs font-semibold">Time Header Style</legend>
+                    {timeHeaderStyleOptions.map(option => (
+                      <label
+                        key={option.key}
+                        className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formatOptions[option.key]}
+                          onChange={() => onToggleFormat(option.key)}
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </fieldset>
 
-              <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
-                <legend className="px-2 text-xs font-semibold">Course Header Style</legend>
-                {courseHeaderStyleOptions.map(option => (
-                  <label
-                    key={option.key}
-                    className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formatOptions[option.key]}
-                      onChange={() => onToggleFormat(option.key)}
-                    />
-                    {option.label}
-                  </label>
-                ))}
-              </fieldset>
+                  <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+                    <legend className="px-2 text-xs font-semibold">Course Header Style</legend>
+                    {courseHeaderStyleOptions.map(option => (
+                      <label
+                        key={option.key}
+                        className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formatOptions[option.key]}
+                          onChange={() => onToggleFormat(option.key)}
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </fieldset>
+                </>
+              )}
             </div>
           ) : null}
         </div>

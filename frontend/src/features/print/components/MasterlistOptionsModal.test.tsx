@@ -75,15 +75,21 @@ describe('MasterlistOptionsModal', () => {
     expect(onChangeAlphabeticalNameBasis).toHaveBeenCalledWith('first-name')
   })
 
-  it('keeps schematic cover settings in a collapsed disclosure', () => {
+  it('opens schematic cover options as their own group and minimizes the other groups', () => {
     renderModal(classTimeOptions, true)
 
-    const summary = screen.getByText('Schematic Cover Settings')
-    const disclosure = summary.closest('details')
+    expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Schematic Coverpage' }))
 
-    expect(disclosure).not.toHaveAttribute('open')
-    fireEvent.click(summary)
-    expect(disclosure).toHaveAttribute('open')
+    expect(screen.queryByLabelText('Masterlist layout')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Format Options' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Time Header Style' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Course Header Style' })).toBeInTheDocument()
+    expect(screen.getByText('Include Schematic Coverpage')).toBeInTheDocument()
     expect(screen.getByText('Cover Orientation')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Format Options' }))
+    expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
+    expect(screen.queryByText('Cover Orientation')).not.toBeInTheDocument()
   })
 })
