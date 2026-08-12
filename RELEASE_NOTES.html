@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deck Supervisor — Main Port Release Notes</title>
+  <style>
+    :root {
+      --primary: #007acc;
+      --secondary: #005f99;
+      --ink: #173246;
+      --muted: #5f7483;
+      --line: #d7e6ef;
+      --soft: #eef7fc;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: #eaf3f8; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .document {
+      width: min(1080px, calc(100% - 40px));
+      margin: 32px auto;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--white);
+      box-shadow: 0 24px 70px rgba(18, 66, 96, 0.14);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 54px 58px 48px;
+      color: var(--white);
+      background:
+        radial-gradient(circle at 90% 15%, rgba(255,255,255,.2), transparent 28%),
+        linear-gradient(135deg, #004f80 0%, var(--primary) 62%, #39a9e8 100%);
+    }
+
+    .hero::after {
+      position: absolute;
+      right: -60px;
+      bottom: -110px;
+      width: 310px;
+      height: 310px;
+      border: 42px solid rgba(255,255,255,.09);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .brand {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 42px;
+    }
+
+    .brand img {
+      width: 58px;
+      height: 58px;
+      padding: 5px;
+      border-radius: 15px;
+      background: var(--white);
+      object-fit: contain;
+    }
+
+    .brand-name {
+      font-size: 19px;
+      font-weight: 750;
+      letter-spacing: .01em;
+    }
+
+    .release-label {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 12px;
+      border: 1px solid rgba(255,255,255,.45);
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin: 0;
+      font-size: clamp(42px, 6vw, 68px);
+      line-height: 1.03;
+      letter-spacing: -.045em;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 22px 0 0;
+      color: rgba(255,255,255,.9);
+      font-size: 19px;
+    }
+
+    main { padding: 44px 58px 54px; }
+
+    .intro {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .highlights {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 0 0 42px;
+    }
+
+    .highlight {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 58px;
+      padding: 13px 15px;
+      border: 1px solid #cfe5f2;
+      border-radius: 15px;
+      background: var(--soft);
+      color: var(--secondary);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .highlight::before {
+      flex: 0 0 auto;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 5px rgba(0,122,204,.12);
+      content: "";
+    }
+
+    .section {
+      padding: 30px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 13px;
+    }
+
+    .section-number {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 13px;
+      color: var(--white);
+      background: var(--secondary);
+      font-weight: 800;
+    }
+
+    h2 {
+      margin: 0;
+      color: var(--secondary);
+      font-size: 25px;
+      line-height: 1.2;
+      letter-spacing: -.02em;
+    }
+
+    .section-lead {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    ul {
+      margin: 14px 0 0 62px;
+      padding: 0;
+      columns: 2;
+      column-gap: 42px;
+    }
+
+    li {
+      break-inside: avoid;
+      margin: 0 0 9px 18px;
+      padding-left: 4px;
+    }
+
+    li::marker { color: var(--primary); }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 4px 62px;
+    }
+
+    .choice {
+      padding: 16px;
+      border-left: 4px solid var(--primary);
+      border-radius: 6px 14px 14px 6px;
+      background: var(--soft);
+    }
+
+    .choice strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--secondary);
+    }
+
+    .note {
+      margin: 18px 0 0 62px;
+      padding: 16px 18px;
+      border-radius: 14px;
+      color: var(--secondary);
+      background: #e6f4fb;
+      font-weight: 650;
+    }
+
+    .closing {
+      margin-top: 34px;
+      padding: 30px;
+      border-radius: 20px;
+      color: var(--white);
+      background: linear-gradient(135deg, var(--secondary), var(--primary));
+    }
+
+    .closing h2 { color: var(--white); }
+    .closing p { margin: 9px 0 0; color: rgba(255,255,255,.9); }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 58px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      background: #f7fbfd;
+      font-size: 12px;
+    }
+
+    @media (max-width: 720px) {
+      .document { width: 100%; margin: 0; border: 0; border-radius: 0; }
+      .hero, main { padding-right: 24px; padding-left: 24px; }
+      .highlights, .choice-grid { grid-template-columns: 1fr; }
+      ul { columns: 1; }
+      .choice-grid, .note, ul { margin-left: 0; }
+      footer { padding-right: 24px; padding-left: 24px; }
+    }
+
+    @media print {
+      @page { size: Letter; margin: .42in; }
+
+      html, body { background: var(--white); }
+      body { font-size: 9.2pt; line-height: 1.4; }
+
+      .document {
+        width: 100%;
+        margin: 0;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .hero {
+        min-height: 5.25in;
+        padding: .48in .5in;
+        border-radius: 20px;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .brand { margin-bottom: .62in; }
+      .brand img { width: 52px; height: 52px; }
+      h1 { max-width: 6.3in; font-size: 40pt; }
+      .hero-copy { max-width: 6.15in; font-size: 13pt; }
+
+      main { padding: .32in .12in 0; }
+      .intro { font-size: 11.5pt; }
+      .highlights { margin-bottom: .34in; }
+      .highlight { min-height: 44px; padding: 9px 12px; font-size: 9pt; }
+      .section { padding: .18in 0; }
+      .section-heading { grid-template-columns: 38px minmax(0, 1fr); gap: 12px; }
+      .section-number { width: 34px; height: 34px; border-radius: 10px; }
+      h2 { font-size: 16pt; }
+      .section-lead { font-size: 9.5pt; }
+      ul { margin-top: 10px; margin-left: 50px; column-gap: 28px; }
+      li { margin-bottom: 5px; }
+      .choice-grid, .note { margin-left: 50px; }
+      .choice, .note { padding: 11px 13px; }
+      .closing { margin-top: 12px; padding: 18px 22px; }
+      .closing p { margin-top: 5px; }
+
+      .highlight, .section-heading, .choice, .note, .closing, li {
+        break-inside: avoid;
+      }
+
+      .section-number, .highlight, .choice, .note, .closing {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      footer { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <article class="document">
+    <header class="hero">
+      <div class="brand">
+        <img src="frontend/decksupervisor_logo_512.png" alt="Deck Supervisor logo">
+        <div class="brand-name">Deck Supervisor</div>
+      </div>
+      <div class="release-label">Main Port Update</div>
+      <h1>A smoother way to run every session.</h1>
+      <p class="hero-copy">A major collection of improvements to imports, session setup, rosters, masterlists, schematics, attendance sheets, and reports.</p>
+    </header>
+
+    <main>
+      <p class="intro">This release is focused on saving staff time, reducing repeated work, and making printed materials more flexible and dependable.</p>
+
+      <div class="highlights" aria-label="Release highlights">
+        <div class="highlight">Simpler, more reliable roster imports</div>
+        <div class="highlight">Clearer session and dashboard workflows</div>
+        <div class="highlight">Flexible masterlists with live previews</div>
+        <div class="highlight">Adjustable schematic previews and covers</div>
+        <div class="highlight">Familiar attendance sheets for every level</div>
+        <div class="highlight">Consistent roster and report-card details</div>
+        <div class="highlight">Lower operating costs behind the scenes</div>
+      </div>
+
+      <section class="section">
+        <div class="section-heading">
+          <div class="section-number">1</div>
+          <div><h2>Easier CSV Imports</h2><p class="section-lead">One streamlined flow with less repetition and clearer choices.</p></div>
+        </div>
+        <ul>
+          <li>Uploaded information stays available while working with a session.</li>
+          <li>Locations can be adjusted without uploading the same file again.</li>
+          <li>Included Raw Locations are selected from a dropdown built from the uploaded file.</li>
+          <li>Duplicate and unnecessary upload fields have been removed.</li>
+          <li>Combined locations, mini sessions, waitlists, and varied schedules are handled more consistently.</li>
+          <li>Successful imports move directly into Manage Sessions.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div class="section-number">2</div>
+          <div><h2>Clearer Session Management</h2><p class="section-lead">Common session tasks are easier to find, review, and complete.</p></div>
+        </div>
+        <ul>
+          <li>Creating, selecting, reviewing, and editing sessions follows a more focused layout.</li>
+          <li>Session dates, week labels, and mini-session details are displayed consistently.</li>
+          <li>Imported information stays connected when session locations change.</li>
+          <li>Full-time and part-time session views behave more consistently.</li>
+          <li>Signing out returns directly to the login page.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div class="section-number">3</div>
+          <div><h2>More Powerful Masterlists</h2><p class="section-lead">More ways to organize students, with a preview of the finished document.</p></div>
+        </div>
+        <ul>
+          <li>Student rows appear correctly in both the live preview and final document.</li>
+          <li>Age has its own centered column.</li>
+          <li>Font size, borders, headings, alignment, and bold styling are adjustable.</li>
+          <li>Column sizing is more consistent and easier to read.</li>
+          <li>Option groups are compact, scrollable, and independently collapsible.</li>
+          <li>Schematic Coverpage settings appear first and stay separate from other formatting choices.</li>
+        </ul>
+        <div class="choice-grid">
+          <div class="choice"><strong>Class &amp; Time</strong>Keeps students organized under their scheduled classes.</div>
+          <div class="choice"><strong>Alphabetical</strong>Combines students into A–Z sections, sorted by first or last name.</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div class="section-number">4</div>
+          <div><h2>Better Schematic Planning</h2><p class="section-lead">Review and fine-tune the final layout before printing.</p></div>
+        </div>
+        <ul>
+          <li>Live preview shows the schematic before printing.</li>
+          <li>Portrait and landscape layouts are supported.</li>
+          <li>Scale can be adjusted from 60% to 120%.</li>
+          <li>Instructor names can be highlighted for individual packets.</li>
+          <li>One cover can be prepared for each instructor.</li>
+          <li>Student totals and class capacity remain visible at a glance.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div class="section-number">5</div>
+          <div><h2>Improved Attendance Sheets</h2><p class="section-lead">The familiar class-specific designs are preserved across all 23 supported lesson templates.</p></div>
+        </div>
+        <ul>
+          <li>Every level retains its own skills, headings, and assessment content.</li>
+          <li>Front and back pages stay in their intended order.</li>
+          <li>Paired and odd class packets remain complete and correctly arranged.</li>
+          <li>Private-lesson reference content is preserved and fits correctly.</li>
+          <li>Day labels, line breaks, and page breaks are easier to read.</li>
+          <li>Level-edited classes use the correct attendance template.</li>
+          <li>Instructor packets can include schematic covers and blank backs.</li>
+          <li>Sheets are always assembled from current roster information.</li>
+        </ul>
+        <div class="note">Attendance opens in the familiar Chrome or Edge print dialog, where staff can print normally or choose <strong>Save as PDF</strong>.</div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div class="section-number">6</div>
+          <div><h2>Consistent Rosters and Level Changes</h2><p class="section-lead">Updates now carry through reliably from roster review to final documents.</p></div>
+        </div>
+        <ul>
+          <li>Whole-class and individual-student level edits are supported.</li>
+          <li>Changing a level no longer unexpectedly changes roster order.</li>
+          <li>Updated levels appear consistently in rosters, attendance sheets, and report cards.</li>
+          <li>Related level edits stay together when attendance materials are prepared.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div class="section-number">7</div>
+          <div><h2>Refined Reports and Printing</h2><p class="section-lead">Documents are more consistent, while print controls are easier to understand.</p></div>
+        </div>
+        <ul>
+          <li>Previews and printed documents use the same information and formatting.</li>
+          <li>Session reports retain their staff, lesson, safety, facility, feedback, and project sections.</li>
+          <li>Blank pages, rotated covers, and combined packets keep the correct size and orientation.</li>
+          <li>Document titles and filenames are clearer and more consistent.</li>
+          <li>Popup-blocked printing offers a clearer retry experience.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div class="section-number">8</div>
+          <div><h2>A Smoother Everyday Experience</h2><p class="section-lead">Small refinements reduce interruptions and make everyday work feel more polished.</p></div>
+        </div>
+        <ul>
+          <li>Disruptive browser alerts have been replaced with cleaner in-app feedback.</li>
+          <li>Print choices are grouped logically and are easier to scan.</li>
+          <li>Additional safeguards improve reliability across imports, sessions, rosters, attendance, and reports.</li>
+          <li>The service can pause while idle to lower running costs and resume automatically when needed.</li>
+        </ul>
+        <div class="note">The first action after a long idle period may take a moment while the service wakes up. Following actions should respond normally.</div>
+      </section>
+
+      <div class="closing">
+        <h2>In short</h2>
+        <p>This update makes Deck Supervisor easier to navigate, reduces repeated work, gives staff more control over printed materials, and keeps roster information consistent from import through final reports.</p>
+      </div>
+    </main>
+
+    <footer>
+      <span>Deck Supervisor</span>
+      <span>Main Port Release</span>
+    </footer>
+  </article>
+</body>
+</html>
