@@ -78,8 +78,13 @@ describe('MasterlistOptionsModal', () => {
   it('opens schematic cover options as their own group and minimizes the other groups', () => {
     renderModal(classTimeOptions, true)
 
+    const coverGroupButton = screen.getByRole('button', { name: 'Schematic Coverpage' })
+    expect(
+      coverGroupButton.compareDocumentPosition(screen.getByText('Format Options'))
+        & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
     expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Schematic Coverpage' }))
+    fireEvent.click(coverGroupButton)
 
     expect(screen.queryByLabelText('Masterlist layout')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Format Options' })).toBeInTheDocument()

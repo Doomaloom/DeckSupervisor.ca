@@ -106,48 +106,6 @@ function MasterlistOptionsModal({
       <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
           {coverGroupOpen ? (
-            <MinimizedOptionsGroup title="Format Options" onExpand={() => setCoverGroupOpen(false)} />
-          ) : (
-            <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
-              <legend className="px-2 text-xs font-semibold">Format Options</legend>
-              <MasterlistLayoutControls
-                layout={formatOptions.layout}
-                alphabeticalNameBasis={formatOptions.alphabetical_name_basis}
-                onChangeLayout={onChangeLayout}
-                onChangeAlphabeticalNameBasis={onChangeAlphabeticalNameBasis}
-                compact
-              />
-              {formatOptionItems
-                .filter(option => formatOptions.layout === 'class-time' || option.key === 'borders')
-                .map(option => (
-                  <label
-                    key={option.key}
-                    className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formatOptions[option.key]}
-                      onChange={() => onToggleFormat(option.key)}
-                    />
-                    {option.label}
-                  </label>
-                ))}
-              <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
-                Font Size
-                <input
-                  type="number"
-                  min={masterlistFontSizeMin}
-                  max={masterlistFontSizeMax}
-                  step={1}
-                  className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
-                  value={formatOptions.font_size}
-                  onChange={event => onChangeFontSize(event.target.value)}
-                />
-              </label>
-            </fieldset>
-          )}
-
-          {coverGroupOpen ? (
             <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
               <legend className="px-2 text-xs font-semibold">Schematic Coverpage</legend>
               <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
@@ -192,6 +150,48 @@ function MasterlistOptionsModal({
               title="Schematic Coverpage"
               onExpand={() => setCoverGroupOpen(true)}
             />
+          )}
+
+          {coverGroupOpen ? (
+            <MinimizedOptionsGroup title="Format Options" onExpand={() => setCoverGroupOpen(false)} />
+          ) : (
+            <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+              <legend className="px-2 text-xs font-semibold">Format Options</legend>
+              <MasterlistLayoutControls
+                layout={formatOptions.layout}
+                alphabeticalNameBasis={formatOptions.alphabetical_name_basis}
+                onChangeLayout={onChangeLayout}
+                onChangeAlphabeticalNameBasis={onChangeAlphabeticalNameBasis}
+                compact
+              />
+              {formatOptionItems
+                .filter(option => formatOptions.layout === 'class-time' || option.key === 'borders')
+                .map(option => (
+                  <label
+                    key={option.key}
+                    className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formatOptions[option.key]}
+                      onChange={() => onToggleFormat(option.key)}
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
+                Font Size
+                <input
+                  type="number"
+                  min={masterlistFontSizeMin}
+                  max={masterlistFontSizeMax}
+                  step={1}
+                  className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
+                  value={formatOptions.font_size}
+                  onChange={event => onChangeFontSize(event.target.value)}
+                />
+              </label>
+            </fieldset>
           )}
 
           {formatOptions.layout === 'class-time' ? (
