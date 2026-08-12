@@ -369,9 +369,7 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
         matchedSession ? matchedSession.ownedByUser : !isGuest,
       )
 
-      const successLabel = matchedSession ? matchedSession.label : getCandidateLabel(candidate)
       closeModal()
-      showAppNotice(`Roster uploaded for ${successLabel}.`, 'success')
       if (accountType !== 'full_time') {
         navigate('/manage-sessions')
       }
