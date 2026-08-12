@@ -52,6 +52,7 @@ import type {
 import { useAuth } from '../../app/AuthContext'
 import { useCurrentSession } from '../../app/useCurrentSession'
 import { fetchCsvAnalyze } from '../../lib/serverApi'
+import { showAppNotice } from '../../lib/appNotice'
 
 type FullTimeRosterItem = {
     day: string
@@ -594,7 +595,7 @@ function RostersPage() {
         } satisfies FullTimeRequestEntry
 
         if (!nextEntry.firstName || !nextEntry.lastName || !nextEntry.phone || !nextEntry.instructor) {
-            alert('Enter first name, last name, phone number, and instructor before adding a request.')
+            showAppNotice('Enter first name, last name, phone number, and instructor before adding a request.', 'error')
             return
         }
 
@@ -686,7 +687,7 @@ function RostersPage() {
             } satisfies FullTimeRequestEntry))
 
             if (imported.length === 0) {
-                alert('The CSV did not contain any request rows to import.')
+                showAppNotice('The CSV did not contain any request rows to import.', 'error')
                 return
             }
 
@@ -696,7 +697,7 @@ function RostersPage() {
                 return next
             })
         } catch (error) {
-            alert(error instanceof Error ? error.message : 'Failed to import the requests CSV.')
+            showAppNotice(error instanceof Error ? error.message : 'Failed to import the requests CSV.', 'error')
         }
     }
 

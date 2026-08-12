@@ -15,6 +15,7 @@ import {
 import { ensureCachedSchematicPdf } from '../../lib/printPdfCache'
 import { getStorageScope } from '../../lib/storageScope'
 import { getCurrentSessionId } from '../../lib/sessionStorage'
+import { showAppNotice } from '../../lib/appNotice'
 import { openAttendancePrintWindow } from '../attendance-print/openAttendancePrintWindow'
 import { buildAttendancePrintItems, buildCustomRosterGroups, buildRosterGroups } from '../rosters/utils'
 import { printOptions } from './constants'
@@ -590,11 +591,11 @@ function PrintPage() {
 
   const handlePrintSchematic = async () => {
     if (!selectedDay) {
-      alert('Please select a day before printing the schematic.')
+      showAppNotice('Please select a day before printing the schematic.', 'error')
       return
     }
     if (schematicPreview.columns.length === 0) {
-      alert('No schematic data found for the selected day.')
+      showAppNotice('No schematic data found for the selected day.', 'error')
       return
     }
 
@@ -677,7 +678,7 @@ function PrintPage() {
         error instanceof Error && error.message
           ? error.message
           : 'Unable to generate the schematic PDF. Please try again.'
-      alert(message)
+      showAppNotice(message, 'error')
       printWindow?.close()
     }
   }
@@ -730,13 +731,13 @@ function PrintPage() {
 
   const handlePrintAllInstructorSheets = async () => {
     if (!selectedDay) {
-      alert('Please select a day before printing instructor sheets.')
+      showAppNotice('Please select a day before printing instructor sheets.', 'error')
       return
     }
 
     const rosterGroups = buildRosterGroupsForDay(selectedDay)
     if (rosterGroups.length === 0) {
-      alert('No roster data found for the selected day.')
+      showAppNotice('No roster data found for the selected day.', 'error')
       return
     }
 
@@ -757,7 +758,7 @@ function PrintPage() {
           : Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b))
 
       if (orderedNames.length === 0) {
-        alert('No instructor sheets available to print.')
+        showAppNotice('No instructor sheets available to print.', 'error')
         printWindow?.close()
         return
       }
@@ -780,7 +781,7 @@ function PrintPage() {
         error instanceof Error && error.message
           ? error.message
           : 'Unable to generate instructor sheets. Please try again.'
-      alert(message)
+      showAppNotice(message, 'error')
       printWindow?.close()
     } finally {
       setIsPrintingAllInstructors(false)
@@ -789,18 +790,18 @@ function PrintPage() {
 
   const handlePrintInstructorSheet = async (name: string) => {
     if (!selectedDay) {
-      alert('Please select a day before printing instructor sheets.')
+      showAppNotice('Please select a day before printing instructor sheets.', 'error')
       return
     }
 
     if (!name) {
-      alert('Select an instructor to print.')
+      showAppNotice('Select an instructor to print.', 'error')
       return
     }
 
     const rosterGroups = buildRosterGroupsForDay(selectedDay)
     if (rosterGroups.length === 0) {
-      alert('No roster data found for the selected day.')
+      showAppNotice('No roster data found for the selected day.', 'error')
       return
     }
 
@@ -839,7 +840,7 @@ function PrintPage() {
         error instanceof Error && error.message
           ? error.message
           : 'Unable to generate instructor sheets. Please try again.'
-      alert(message)
+      showAppNotice(message, 'error')
       printWindow?.close()
     } finally {
       setBusyInstructors(current => ({
@@ -851,13 +852,13 @@ function PrintPage() {
 
   const handlePrintMasterlist = async () => {
     if (!selectedDay) {
-      alert('Please select a day before printing the masterlist.')
+      showAppNotice('Please select a day before printing the masterlist.', 'error')
       return
     }
 
     const rosterGroups = buildRosterGroupsForDay(selectedDay)
     if (rosterGroups.length === 0) {
-      alert('No roster data found for the selected day.')
+      showAppNotice('No roster data found for the selected day.', 'error')
       return
     }
 
@@ -934,7 +935,7 @@ function PrintPage() {
         error instanceof Error && error.message
           ? error.message
           : 'Unable to generate masterlist. Please try again.'
-      alert(message)
+      showAppNotice(message, 'error')
       printWindow?.close()
     }
   }
@@ -975,18 +976,18 @@ function PrintPage() {
 
   const handlePrintDay1 = async () => {
     if (!selectedDay) {
-      alert('Please select a day before printing Day 1 materials.')
+      showAppNotice('Please select a day before printing Day 1 materials.', 'error')
       return
     }
 
     if (schematicPreview.columns.length === 0) {
-      alert('No schematic data found for the selected day.')
+      showAppNotice('No schematic data found for the selected day.', 'error')
       return
     }
 
     const rosterGroups = buildRosterGroupsForDay(selectedDay)
     if (rosterGroups.length === 0) {
-      alert('No roster data found for the selected day.')
+      showAppNotice('No roster data found for the selected day.', 'error')
       return
     }
 
@@ -997,7 +998,7 @@ function PrintPage() {
         : Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b))
 
     if (orderedNames.length === 0) {
-      alert('No instructor sheets available to print.')
+      showAppNotice('No instructor sheets available to print.', 'error')
       return
     }
 
@@ -1053,10 +1054,11 @@ function PrintPage() {
     } catch (error) {
       console.error(error)
       printWindows.forEach(windowRef => windowRef?.close())
-      alert(
+      showAppNotice(
         error instanceof Error && error.message
           ? error.message
           : 'Unable to generate Day 1 print materials.',
+        'error',
       )
     }
   }

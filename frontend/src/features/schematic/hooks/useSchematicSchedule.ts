@@ -23,6 +23,7 @@ import { normalizeCourseCodeForCompare } from '../utils/courseCode'
 import type { StoredCourseLayout } from '../utils/layout'
 import { useSchematicBoard } from './useSchematicBoard'
 import { buildTimeLabels } from '../utils/time'
+import { showAppNotice } from '../../../lib/appNotice'
 
 export function useSchematicSchedule(selectedDay: string | null) {
     const { access, session: currentSession, sessionId } = useCurrentSession()
@@ -160,11 +161,11 @@ export function useSchematicSchedule(selectedDay: string | null) {
 
     const handleSaveSchedule = async () => {
         if (!selectedDay) {
-            alert('Please select a day first.')
+            showAppNotice('Please select a day first.', 'error')
             return
         }
         if (currentSession && access.mode !== 'owner') {
-            alert('This schematic is view-only for shared sessions.')
+            showAppNotice('This schematic is view-only for shared sessions.', 'info')
             return
         }
         const codes = columns.map(column => column.map(course => course.code).join(','))
@@ -209,7 +210,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
             try {
                 await upsertSchematic(sessionId, nextRemoteSchedule)
             } catch (error) {
-                alert(`Failed to save schedule: ${error instanceof Error ? error.message : 'Unknown error'}`)
+                showAppNotice(`Failed to save schedule: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
                 return
             }
 
@@ -225,7 +226,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
                 session: currentSession,
             })
         }
-        alert('Schedule saved successfully!')
+        showAppNotice('Schedule saved successfully!', 'success')
     }
 
     return {

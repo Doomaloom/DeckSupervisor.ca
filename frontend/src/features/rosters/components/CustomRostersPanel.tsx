@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { extractEndTime, extractStartTime } from '../../../lib/time'
+import { showAppNotice } from '../../../lib/appNotice'
 import type { CustomRoster } from '../../../types/app'
 import type { RosterGroup } from '../types'
 import { buildCustomRosterGroups } from '../utils'
@@ -123,15 +124,15 @@ function CustomRostersPanel({
 
     const handleCreateCustomRoster = () => {
         if (!newLevel) {
-            alert('Please select a level for the new class.')
+            showAppNotice('Please select a level for the new class.', 'error')
             return
         }
         if (selectedSourceCodes.length === 0) {
-            alert('Please choose at least one source class.')
+            showAppNotice('Please choose at least one source class.', 'error')
             return
         }
         if (selectedStudentIds.length === 0) {
-            alert('Please select at least one student.')
+            showAppNotice('Please select at least one student.', 'error')
             return
         }
 

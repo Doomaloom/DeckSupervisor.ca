@@ -4,6 +4,7 @@ import { buildAttendancePrintItems } from '../utils'
 import { useCurrentSession } from '../../../app/useCurrentSession'
 import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
 import type { RosterGroup } from '../types'
+import { showAppNotice } from '../../../lib/appNotice'
 
 export function useRosterPrint() {
     const { session: currentSession } = useCurrentSession()
@@ -42,7 +43,7 @@ export function useRosterPrint() {
             if (result.status === 'failed') throw result.error
         } catch (error) {
             console.error(error)
-            alert('Unable to prepare attendance sheets. Please try again.')
+            showAppNotice('Unable to prepare attendance sheets. Please try again.', 'error')
             printWindow?.close()
         }
     }

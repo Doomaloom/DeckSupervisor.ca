@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { showAppNotice } from '../../../lib/appNotice'
 import type { Course, DragState } from '../types'
 import { getLockedInstructorForColumn, createRequestAwareLayout, type StoredCourseLayout } from '../utils/layout'
 import { canPlaceCourses, canReplaceByStart, canSwapSingleCourses, findContiguousSwapIndices } from '../utils/drag'
@@ -269,7 +270,7 @@ export function useSchematicBoard({
     const setInstructorAt = (index: number, value: string) => {
         const lockedInstructor = getLockedInstructorForColumn(columns[index] ?? [])
         if (lockedInstructor && value !== lockedInstructor) {
-            alert(`This column is locked to ${lockedInstructor} because it contains a requested class.`)
+            showAppNotice(`This column is locked to ${lockedInstructor} because it contains a requested class.`, 'info')
             return
         }
         setInstructors(current => {

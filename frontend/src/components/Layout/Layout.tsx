@@ -33,6 +33,7 @@ import {
 } from '../../lib/storage'
 import { prefetchSchematicPdfs } from '../../features/print/utils/printCachePrefetch'
 import type { StoredCourseLayout } from '../../features/schematic/utils/layout'
+import AppNoticeBanner from '../AppNoticeBanner'
 
 type LayoutProps = {
     children: React.ReactNode
@@ -315,8 +316,9 @@ function Layout({ children }: LayoutProps) {
     if (isPlannerPopout) {
         return (
             <div id="layout-popout-shell" data-component="layout-popout-shell" className="flex h-screen overflow-hidden bg-bg">
-                <main id="layout-popout-main" data-component="layout-popout-main" className="flex min-h-0 flex-1 overflow-y-auto p-6">
-                    {children}
+                <main id="layout-popout-main" data-component="layout-popout-main" className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
+                    <AppNoticeBanner />
+                    <div className="flex min-h-0 flex-1">{children}</div>
                 </main>
 
                 {needsProfile ? (
@@ -488,8 +490,9 @@ function Layout({ children }: LayoutProps) {
 
             </aside>
 
-            <main id="layout-main" data-component="layout-main" className="flex min-h-0 flex-1 overflow-y-auto p-8">
-                {children}
+            <main id="layout-main" data-component="layout-main" className="flex min-h-0 flex-1 flex-col overflow-y-auto p-8">
+                <AppNoticeBanner />
+                <div className="flex min-h-0 flex-1">{children}</div>
             </main>
 
             {needsProfile ? (

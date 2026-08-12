@@ -1,6 +1,7 @@
 import { setStudentsForDay, updateStudentForDay } from '../../../lib/storage'
 import { upsertRosterLevelEdit, upsertRosterStudentLevelEdit } from '../../../lib/rosterEditsApi'
 import type { Student } from '../../../types/app'
+import { showAppNotice } from '../../../lib/appNotice'
 
 type UseRosterEditsParams = {
     selectedDay: string
@@ -37,7 +38,7 @@ export function useRosterEdits({
             await upsertRosterLevelEdit(sessionId, currentUserId, code, level)
         } catch (error) {
             console.error('Failed to save roster level edit', error)
-            alert(`Failed to save roster level edit: ${error instanceof Error ? error.message : 'Unknown error'}`)
+            showAppNotice(`Failed to save roster level edit: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
         }
     }
 
@@ -59,7 +60,7 @@ export function useRosterEdits({
             await result
         } catch (error) {
             console.error('Failed to save roster student level edit', error)
-            alert(`Failed to save student level edit: ${error instanceof Error ? error.message : 'Unknown error'}`)
+            showAppNotice(`Failed to save student level edit: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
         }
     }
 

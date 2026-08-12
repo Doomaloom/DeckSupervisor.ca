@@ -3,6 +3,7 @@ import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { createTermKey, formatTermLabel, useCurrentTerm } from '../../app/useCurrentTerm'
 import { getYearFromDate } from '../../shared/session/sessionLabels'
 import { fetchTeamSessions } from '../../lib/serverApi'
+import { showAppNotice } from '../../lib/appNotice'
 
 type TeamSessionRow = {
   id: string
@@ -174,7 +175,7 @@ function FullTimerToolsPage() {
 
   const handleGenerate = async () => {
     if (!selectedFile) {
-      alert('Please upload the schematic maker CSV file.')
+      showAppNotice('Please upload the schematic maker CSV file.', 'error')
       return
     }
 
@@ -209,7 +210,7 @@ function FullTimerToolsPage() {
       setLastFilename(filename)
     } catch (error) {
       console.error(error)
-      alert('Unable to generate the schematic maker output. Please try again.')
+      showAppNotice('Unable to generate the schematic maker output. Please try again.', 'error')
     } finally {
       setIsGenerating(false)
     }

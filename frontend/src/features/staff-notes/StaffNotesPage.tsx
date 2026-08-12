@@ -4,6 +4,7 @@ import { useCurrentSession } from '../../app/useCurrentSession'
 import { useCurrentTeam } from '../../app/useCurrentTeam'
 import { useCurrentTerm } from '../../app/useCurrentTerm'
 import { getCurrentSessionId } from '../../lib/sessionStorage'
+import { showAppNotice } from '../../lib/appNotice'
 import {
   createSessionNote,
   deleteSessionNote,
@@ -526,7 +527,10 @@ function StaffNotesPage() {
         ])
       } catch (error) {
         console.error('Failed to add note', error)
-        alert(`Failed to add note: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        showAppNotice(
+          `Failed to add note: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'error',
+        )
         return
       }
     }
@@ -588,7 +592,10 @@ function StaffNotesPage() {
         ])
       } catch (error) {
         console.error('Failed to add todo', error)
-        alert(`Failed to add todo: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        showAppNotice(
+          `Failed to add todo: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'error',
+        )
         return
       }
     }

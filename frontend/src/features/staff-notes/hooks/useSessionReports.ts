@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabaseClient'
+import { showAppNotice } from '../../../lib/appNotice'
 import type { ReportItem, SessionReportData, TabKey } from '../types'
 import {
   createEmptyReportData,
@@ -277,7 +278,7 @@ export function useSessionReports({
       return
     }
     if (!supabase) {
-      alert('Supabase is not configured for browser report saves.')
+      showAppNotice('Supabase is not configured for browser report saves.', 'error')
       return
     }
 
@@ -294,7 +295,7 @@ export function useSessionReports({
 
     if (error || !data) {
       console.error('Failed to create report', error)
-      alert(`Failed to create report: ${error?.message ?? 'Unknown error'}`)
+      showAppNotice(`Failed to create report: ${error?.message ?? 'Unknown error'}`, 'error')
       return
     }
 
@@ -346,14 +347,14 @@ export function useSessionReports({
     }
 
     if (!supabase) {
-      alert('Supabase is not configured for browser report saves.')
+      showAppNotice('Supabase is not configured for browser report saves.', 'error')
       return
     }
 
     const { error } = await supabase.from('session_reports').delete().eq('id', selectedReport.id)
     if (error) {
       console.error('Failed to delete report', error)
-      alert(`Failed to delete report: ${error.message}`)
+      showAppNotice(`Failed to delete report: ${error.message}`, 'error')
       return
     }
 
@@ -443,7 +444,7 @@ export function useSessionReports({
     } catch (error) {
       console.error(error)
       const message = error instanceof Error ? error.message : 'Failed to export report PDF.'
-      alert(message)
+      showAppNotice(message, 'error')
     } finally {
       setIsExportingReport(false)
     }

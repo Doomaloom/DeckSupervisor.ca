@@ -23,6 +23,7 @@ import {
 } from '../lib/sessionStorage'
 import type { ClassRoster, CsvMatchedSession, CsvSessionCandidate, ExtractedClass, InstructorEntry } from '../types/app'
 import CsvSessionImportModal from '../components/CsvSessionImportModal'
+import { showAppNotice } from '../lib/appNotice'
 
 type CsvImportFlowContextValue = {
   requestCsvFile: () => void
@@ -131,7 +132,7 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
 
   const requestCsvFile = () => {
     if (accountType === 'full_time' && !currentTeamId) {
-      alert('Select a team before uploading a roster CSV.')
+      showAppNotice('Select a team before uploading a roster CSV.', 'error')
       return
     }
     inputRef.current?.click()
@@ -291,8 +292,9 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
     })
 
     if (result.status === 'blocked_unassigned') {
-      alert(
+      showAppNotice(
         'Roster uploaded. Report card totals were not synced because some students are missing instructor assignments.',
+        'info',
       )
     }
   }
@@ -369,7 +371,7 @@ export function CsvImportFlowProvider({ children }: { children: React.ReactNode 
 
       const successLabel = matchedSession ? matchedSession.label : getCandidateLabel(candidate)
       closeModal()
-      alert(`Roster uploaded for ${successLabel}.`)
+      showAppNotice(`Roster uploaded for ${successLabel}.`, 'success')
       if (accountType !== 'full_time') {
         navigate('/manage-sessions')
       }
