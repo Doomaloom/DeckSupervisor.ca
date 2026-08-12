@@ -20,7 +20,7 @@ const classTimeOptions: FormatOptions = {
 function renderModal(formatOptions: FormatOptions, schematicCoverPage = false) {
   const onChangeLayout = vi.fn()
   const onChangeAlphabeticalNameBasis = vi.fn()
-  customRender(
+  const view = customRender(
     <MasterlistOptionsModal
       open
       extras={{ schematicCoverPage }}
@@ -45,7 +45,7 @@ function renderModal(formatOptions: FormatOptions, schematicCoverPage = false) {
       onPrint={vi.fn()}
     />,
   )
-  return { onChangeLayout, onChangeAlphabeticalNameBasis }
+  return { onChangeLayout, onChangeAlphabeticalNameBasis, view }
 }
 
 describe('MasterlistOptionsModal', () => {
@@ -100,5 +100,30 @@ describe('MasterlistOptionsModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Format Options' }))
     expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
     expect(screen.queryByText('Cover Orientation')).not.toBeInTheDocument()
+  })
+
+  it('allows every option group to minimize independently', () => {
+    renderModal(classTimeOptions)
+
+    for (const title of ['Format Options', 'Time Header Style', 'Course Header Style']) {
+      const groupButton = screen.getByRole('button', { name: title })
+      expect(groupButton).toHaveAttribute('aria-expanded', 'true')
+      fireEvent.click(groupButton)
+      expect(groupButton).toHaveAttribute('aria-expanded', 'false')
+      expect(groupButton.closest('[data-options-group]')).toHaveClass('h-12')
+      fireEvent.click(groupButton)
+      expect(groupButton).toHaveAttribute('aria-expanded', 'true')
+    }
+  })
+
+  it('uses a fixed-height modal with a scrollable options column', () => {
+    const { view } = renderModal(classTimeOptions)
+    const optionsColumn = view.container.querySelector('[data-component="masterlist-option-groups"]')
+
+    expect(optionsColumn).toHaveClass('overflow-y-auto')
+    expect(optionsColumn?.parentElement?.parentElement).toHaveClass(
+      'h-[min(52rem,calc(100vh-3rem))]',
+      'overflow-hidden',
+    )
   })
 })
