@@ -115,18 +115,10 @@ function MasterlistOptionsModal({
   })
 
   const toggleOptionsGroup = (group: OptionsGroupKey) => {
-    setOpenGroups(current => {
-      if (group === 'cover') {
-        return current.cover
-          ? { cover: false, format: true, time: true, course: true }
-          : { cover: true, format: false, time: false, course: false }
-      }
-      return {
-        ...current,
-        cover: false,
-        [group]: !current[group],
-      }
-    })
+    setOpenGroups(current => ({
+      ...current,
+      [group]: !current[group],
+    }))
   }
 
   if (!open) {

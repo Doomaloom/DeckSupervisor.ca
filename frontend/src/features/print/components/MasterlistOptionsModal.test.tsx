@@ -75,7 +75,7 @@ describe('MasterlistOptionsModal', () => {
     expect(onChangeAlphabeticalNameBasis).toHaveBeenCalledWith('first-name')
   })
 
-  it('opens schematic cover options as their own group and minimizes the other groups', () => {
+  it('opens schematic cover options independently from the other groups', () => {
     renderModal(classTimeOptions, true)
 
     const coverGroupButton = screen.getByRole('button', { name: 'Schematic Coverpage' })
@@ -86,20 +86,20 @@ describe('MasterlistOptionsModal', () => {
     expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
     fireEvent.click(coverGroupButton)
 
-    expect(screen.queryByLabelText('Masterlist layout')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Format Options' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Time Header Style' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Course Header Style' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Format Options' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Time Header Style' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Course Header Style' })).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByText('Include Schematic Coverpage')).toBeInTheDocument()
     expect(screen.getByText('Cover Orientation')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Schematic Coverpage' }))
-    expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Format Options' }))
+    expect(screen.queryByLabelText('Masterlist layout')).not.toBeInTheDocument()
+    expect(screen.getByText('Cover Orientation')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Schematic Coverpage' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Format Options' }))
-    expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
     expect(screen.queryByText('Cover Orientation')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Format Options' })).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('allows every option group to minimize independently', () => {
