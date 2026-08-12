@@ -88,8 +88,8 @@ describe('MasterlistOptionsModal', () => {
 
     expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Format Options' })).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByRole('button', { name: 'Time Header Style' })).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByRole('button', { name: 'Course Header Style' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Time Header Style' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'Course Header Style' })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByText('Include Schematic Coverpage')).toBeInTheDocument()
     expect(screen.getByText('Cover Orientation')).toBeInTheDocument()
 
@@ -105,15 +105,32 @@ describe('MasterlistOptionsModal', () => {
   it('allows every option group to minimize independently', () => {
     renderModal(classTimeOptions)
 
-    for (const title of ['Format Options', 'Time Header Style', 'Course Header Style']) {
+    for (const title of ['Time Header Style', 'Course Header Style']) {
       const groupButton = screen.getByRole('button', { name: title })
+      expect(groupButton).toHaveAttribute('aria-expanded', 'false')
+      fireEvent.click(groupButton)
       expect(groupButton).toHaveAttribute('aria-expanded', 'true')
       fireEvent.click(groupButton)
       expect(groupButton).toHaveAttribute('aria-expanded', 'false')
       expect(groupButton.closest('[data-options-group]')).toHaveClass('h-12')
-      fireEvent.click(groupButton)
-      expect(groupButton).toHaveAttribute('aria-expanded', 'true')
     }
+
+    const formatButton = screen.getByRole('button', { name: 'Format Options' })
+    expect(formatButton).toHaveAttribute('aria-expanded', 'true')
+    fireEvent.click(formatButton)
+    expect(formatButton).toHaveAttribute('aria-expanded', 'false')
+    expect(formatButton.closest('[data-options-group]')).toHaveClass('h-12')
+  })
+
+  it('opens header style groups by default when their enable options are on', () => {
+    renderModal({
+      ...classTimeOptions,
+      time_headers: true,
+      course_headers: true,
+    })
+
+    expect(screen.getByRole('button', { name: 'Time Header Style' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Course Header Style' })).toHaveAttribute('aria-expanded', 'true')
   })
 
   it('uses a fixed-height modal with a scrollable options column', () => {

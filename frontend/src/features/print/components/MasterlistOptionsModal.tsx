@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import type {
   BooleanFormatOptionKey,
   FormatOptions,
@@ -110,9 +110,25 @@ function MasterlistOptionsModal({
   const [openGroups, setOpenGroups] = useState<Record<OptionsGroupKey, boolean>>({
     cover: false,
     format: true,
-    time: true,
-    course: true,
+    time: formatOptions.time_headers,
+    course: formatOptions.course_headers,
   })
+
+  useEffect(() => {
+    setOpenGroups(current => {
+      if (
+        current.time === formatOptions.time_headers
+        && current.course === formatOptions.course_headers
+      ) {
+        return current
+      }
+      return {
+        ...current,
+        time: formatOptions.time_headers,
+        course: formatOptions.course_headers,
+      }
+    })
+  }, [formatOptions.course_headers, formatOptions.time_headers])
 
   const toggleOptionsGroup = (group: OptionsGroupKey) => {
     setOpenGroups(current => ({
