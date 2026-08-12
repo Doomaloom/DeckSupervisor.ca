@@ -106,45 +106,55 @@ function MasterlistOptionsModal({
       <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
           {coverGroupOpen ? (
-            <fieldset className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
-              <legend className="px-2 text-xs font-semibold">Schematic Coverpage</legend>
-              <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
-                <input
-                  type="checkbox"
-                  checked={extras.schematicCoverPage}
-                  onChange={() => onToggle('schematicCoverPage')}
-                />
-                Include Schematic Coverpage
-              </label>
-              {extras.schematicCoverPage ? (
-                <>
-                  <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
-                    Cover Orientation
-                    <select
-                      className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
-                      value={coverOrientation}
-                      onChange={event =>
-                        onSelectCoverOrientation(
-                          event.target.value === 'landscape' ? 'landscape' : 'portrait',
-                        )
-                      }
-                    >
-                      <option value="portrait">Portrait</option>
-                      <option value="landscape">Landscape</option>
-                    </select>
-                  </label>
-                  <SchematicScaleControl
-                    value={schematicScalePercent}
-                    min={scaleMin}
-                    max={scaleMax}
-                    step={scaleStep}
-                    onChange={onChangeSchematicScale}
-                    onReset={onResetSchematicScale}
-                    compact
+            <section className="flex flex-col gap-2 rounded-2xl border-2 border-secondary p-3">
+              <button
+                type="button"
+                className="flex items-center justify-between px-2 text-left text-xs font-semibold text-secondary"
+                aria-expanded="true"
+                onClick={() => setCoverGroupOpen(false)}
+              >
+                <span>Schematic Coverpage</span>
+                <span aria-hidden="true" className="text-base leading-none text-primary">−</span>
+              </button>
+              <div className="flex flex-col gap-2 border-t border-secondary/20 pt-3">
+                <label className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={extras.schematicCoverPage}
+                    onChange={() => onToggle('schematicCoverPage')}
                   />
-                </>
-              ) : null}
-            </fieldset>
+                  Include Schematic Coverpage
+                </label>
+                {extras.schematicCoverPage ? (
+                  <>
+                    <label className="flex flex-col gap-2 rounded-2xl border border-secondary/20 bg-bg px-3 py-2 text-xs font-semibold text-secondary">
+                      Cover Orientation
+                      <select
+                        className="rounded-2xl border-2 border-secondary bg-accent px-3 py-2 text-primary"
+                        value={coverOrientation}
+                        onChange={event =>
+                          onSelectCoverOrientation(
+                            event.target.value === 'landscape' ? 'landscape' : 'portrait',
+                          )
+                        }
+                      >
+                        <option value="portrait">Portrait</option>
+                        <option value="landscape">Landscape</option>
+                      </select>
+                    </label>
+                    <SchematicScaleControl
+                      value={schematicScalePercent}
+                      min={scaleMin}
+                      max={scaleMax}
+                      step={scaleStep}
+                      onChange={onChangeSchematicScale}
+                      onReset={onResetSchematicScale}
+                      compact
+                    />
+                  </>
+                ) : null}
+              </div>
+            </section>
           ) : (
             <MinimizedOptionsGroup
               title="Schematic Coverpage"

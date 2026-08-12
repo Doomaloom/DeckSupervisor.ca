@@ -93,6 +93,10 @@ describe('MasterlistOptionsModal', () => {
     expect(screen.getByText('Include Schematic Coverpage')).toBeInTheDocument()
     expect(screen.getByText('Cover Orientation')).toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole('button', { name: 'Schematic Coverpage' }))
+    expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Schematic Coverpage' }))
     fireEvent.click(screen.getByRole('button', { name: 'Format Options' }))
     expect(screen.getByLabelText('Masterlist layout')).toBeInTheDocument()
     expect(screen.queryByText('Cover Orientation')).not.toBeInTheDocument()
