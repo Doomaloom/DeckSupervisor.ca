@@ -1,4 +1,5 @@
 import { ArrowsPointingOutIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
 import type { PlannerDataset, PlannerShareSession } from '../../../types/app'
 
 type PlannerHeaderProps = {
@@ -17,9 +18,11 @@ type PlannerHeaderProps = {
   shareSession: PlannerShareSession | null
   statusMessage: string
   showPlannedChangesButton: boolean
-  onHandleAddUpload: (file: File | null) => void | Promise<void>
-  onHandleAddEmptyClassesUpload: (file: File | null) => void | Promise<void>
-  onHandleUpload: (file: File | null) => void | Promise<void>
+  onHandleImport: (
+    activitySummaryFile: File,
+    rosterFile: File,
+    mergeWithCurrent: boolean,
+  ) => void | Promise<void>
   onJoinSharedPlanner: () => void | Promise<void>
   onLeaveSharedPlannerSession: () => void | Promise<void>
   onLoadState: (file: File | null) => void | Promise<void>
@@ -51,9 +54,7 @@ function PlannerHeader({
   shareSession,
   statusMessage,
   showPlannedChangesButton,
-  onHandleAddUpload,
-  onHandleAddEmptyClassesUpload,
-  onHandleUpload,
+  onHandleImport,
   onJoinSharedPlanner,
   onLeaveSharedPlannerSession,
   onLoadState,
@@ -68,6 +69,8 @@ function PlannerHeader({
   onStartSharing,
   onStopSharing,
 }: PlannerHeaderProps) {
+  const [activitySummaryFile, setActivitySummaryFile] = useState<File | null>(null)
+  const [rosterFile, setRosterFile] = useState<File | null>(null)
   const facilities = dataset
     ? Array.from(new Set(dataset.sessions.map(session => session.facility))).sort((left, right) =>
         left.localeCompare(right),
@@ -126,51 +129,62 @@ function PlannerHeader({
         </div>
       </div>
       <p className="mt-2 max-w-3xl text-secondary/80">
-        Upload a participant CSV to review classes by day and location, flag cancellations,
-        track calls, offer exact-level alternatives, and optionally add empty classes from a
-        schematic CSV.
+        Upload the matching activity summary and roster exports. The activity summary supplies
+        every class, while the roster attaches participant details.
       </p>
       {!shareCode ? (
         <>
           <div className="mt-5 flex flex-wrap items-center gap-4">
             <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-secondary bg-bg px-5 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-primary">
-              <span>{dataset ? 'Replace Planner CSV' : 'Upload Planner CSV'}</span>
+              <span>{activitySummaryFile ? activitySummaryFile.name : 'Choose Activity Summary CSV'}</span>
               <input
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                 type="file"
                 accept=".csv"
                 onChange={event => {
-                  void onHandleUpload(event.target.files?.[0] ?? null)
+                  setActivitySummaryFile(event.target.files?.[0] ?? null)
                   event.target.value = ''
                 }}
               />
             </label>
+            <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-5 text-sm font-semibold text-primary transition hover:-translate-y-0.5 hover:border-primary hover:bg-primary/10">
+              <span>{rosterFile ? rosterFile.name : 'Choose Roster CSV'}</span>
+              <input
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                type="file"
+                accept=".csv"
+                onChange={event => {
+                  setRosterFile(event.target.files?.[0] ?? null)
+                  event.target.value = ''
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              className="h-12 rounded-2xl bg-primary px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!activitySummaryFile || !rosterFile}
+              onClick={() => {
+                if (activitySummaryFile && rosterFile) {
+                  void onHandleImport(activitySummaryFile, rosterFile, false)
+                }
+              }}
+            >
+              {dataset ? 'Replace Planner Data' : 'Load Planner'}
+            </button>
             {dataset ? (
-              <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-5 text-sm font-semibold text-primary transition hover:-translate-y-0.5 hover:border-primary hover:bg-primary/10">
-                <span>Add CSV</span>
-                <input
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                  type="file"
-                  accept=".csv"
-                  onChange={event => {
-                    void onHandleAddUpload(event.target.files?.[0] ?? null)
-                    event.target.value = ''
-                  }}
-                />
-              </label>
-            ) : null}
-            <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-secondary/40 bg-secondary/5 px-5 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-secondary hover:bg-secondary/10">
-              <span>Add Empty Classes CSV</span>
-              <input
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                type="file"
-                accept=".csv"
-                onChange={event => {
-                  void onHandleAddEmptyClassesUpload(event.target.files?.[0] ?? null)
-                  event.target.value = ''
+              <button
+                type="button"
+                className="h-12 rounded-2xl border border-primary px-5 text-sm font-semibold text-primary transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!activitySummaryFile || !rosterFile}
+                onClick={() => {
+                  if (activitySummaryFile && rosterFile) {
+                    void onHandleImport(activitySummaryFile, rosterFile, true)
+                  }
                 }}
-              />
-            </label>
+              >
+                Add to Planner
+              </button>
+            ) : null}
             {dataset ? (
               <p className="text-sm text-secondary/70">
                 Loaded: <span className="font-semibold text-secondary">{dataset.sourceFileName}</span>

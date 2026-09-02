@@ -65,6 +65,7 @@ func NewRouter() *mux.Router {
 
 	// CSV import and export flows
 	r.HandleFunc("/api/analyzeCSV", handlers.AnalyzeCSV).Methods("POST")
+	r.HandleFunc("/api/session-planner/analyze", handlers.AnalyzeSessionPlannerCSV).Methods("POST")
 
 	// Spreadsheet and ZIP exports remain server-side. PDFs are generated in the SPA.
 	r.HandleFunc("/api/schematic-maker", handlers.SchematicMaker).Methods("POST")

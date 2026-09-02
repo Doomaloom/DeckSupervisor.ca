@@ -358,6 +358,40 @@ export async function fetchCsvAnalyze(
   }
 }
 
+export type SessionPlannerAnalyzeResponse = {
+  success: boolean
+  dataset: PlannerDataset
+  meta: {
+    activitySummaryRows: number
+    rosterRows: number
+    matchedClassCount: number
+    activityOnlyClassCount: number
+    rosterOnlyClassCount: number
+    classCount: number
+    participantCount: number
+    warnings: string[]
+  }
+}
+
+export async function fetchSessionPlannerAnalyze(activitySummaryFile: File, rosterFile: File) {
+  const formData = new FormData()
+  formData.append('activity_summary_file', activitySummaryFile)
+  formData.append('roster_file', rosterFile)
+
+  const response = await fetch('/api/session-planner/analyze', {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(message || 'Failed to analyze session planner CSVs')
+  }
+
+  return (await response.json()) as SessionPlannerAnalyzeResponse
+}
+
 export function fetchOwnedTeams() {
   return request<{ teams: any[] }>('/api/teams/owned')
 }

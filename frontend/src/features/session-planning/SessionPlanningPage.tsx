@@ -15,8 +15,6 @@ import {
   getPlannerMoveTargetLabel,
   loadPlannerDataset,
   mergePlannerDatasets,
-  parseEmptyClassesPlannerCsv,
-  parseSessionPlannerCsv,
   parsePlannerSaveState,
   plannerSaveStateToSharePayload,
   plannerSaveStateToText,
@@ -29,6 +27,7 @@ import {
 } from '../../lib/sessionPlanner'
 import {
   applyPlannerShareSaveState,
+  fetchSessionPlannerAnalyze,
   updatePlannerShareCallRecord,
   updatePlannerShareClassMetadata,
   updatePlannerShareClassLanes,
@@ -127,61 +126,34 @@ function SessionPlanningPage() {
     savePlannerDataset(nextDataset)
   }
 
-  const handleUpload = async (file: File | null) => {
-    if (!file) {
-      return
-    }
+  const handlePlannerImport = async (
+    activitySummaryFile: File,
+    rosterFile: File,
+    mergeWithCurrent: boolean,
+  ) => {
     try {
-      const parsedDataset = parseSessionPlannerCsv(await file.text(), file.name)
-      persistLocalDataset(parsedDataset)
-      setError('')
-      setStatusMessage('')
-      setIsInfoPanelOpen(true)
-      setActiveCallParticipantId('')
-      if (shareCode) {
-        syncQueryParams('')
-      }
-    } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : 'Failed to parse planner CSV.')
-    }
-  }
-
-  const handleAddUpload = async (file: File | null) => {
-    if (!file) {
-      return
-    }
-    try {
-      const parsedDataset = parseSessionPlannerCsv(await file.text(), file.name)
-      const nextDataset = dataset ? mergePlannerDatasets(dataset, parsedDataset) : parsedDataset
+      setStatusMessage('Analyzing activity summary and roster...')
+      const response = await fetchSessionPlannerAnalyze(activitySummaryFile, rosterFile)
+      const nextDataset = mergeWithCurrent && dataset
+        ? mergePlannerDatasets(dataset, response.dataset)
+        : response.dataset
       persistLocalDataset(nextDataset)
       setError('')
+      const summary = `Loaded ${response.meta.classCount} classes and ${response.meta.participantCount} participants.`
+      setStatusMessage([summary, ...response.meta.warnings].join(' '))
+      setIsInfoPanelOpen(true)
+      if (!mergeWithCurrent) {
+        setActiveCallParticipantId('')
+      }
+      if (shareCode) {
+        syncQueryParams('')
+      }
+    } catch (uploadError) {
       setStatusMessage('')
-      setIsInfoPanelOpen(true)
-      if (shareCode) {
-        syncQueryParams('')
-      }
-    } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : 'Failed to merge planner CSV.')
-    }
-  }
-
-  const handleAddEmptyClassesUpload = async (file: File | null) => {
-    if (!file) {
-      return
-    }
-    try {
-      const parsedDataset = parseEmptyClassesPlannerCsv(await file.text(), file.name)
-      const nextDataset = dataset ? mergePlannerDatasets(dataset, parsedDataset) : parsedDataset
-      persistLocalDataset(nextDataset)
-      setError('')
-      setStatusMessage('Empty classes added from the schematic CSV.')
-      setIsInfoPanelOpen(true)
-      if (shareCode) {
-        syncQueryParams('')
-      }
-    } catch (uploadError) {
       setError(
-        uploadError instanceof Error ? uploadError.message : 'Failed to import empty classes CSV.',
+        uploadError instanceof Error
+          ? uploadError.message
+          : 'Failed to import the session planner CSVs.',
       )
     }
   }
@@ -532,9 +504,7 @@ function SessionPlanningPage() {
         shareSession={shareSession}
         statusMessage={statusMessage}
         showPlannedChangesButton={plannedChangeGroups.length > 0}
-          onHandleAddUpload={handleAddUpload}
-          onHandleAddEmptyClassesUpload={handleAddEmptyClassesUpload}
-          onHandleUpload={handleUpload}
+        onHandleImport={handlePlannerImport}
         onJoinSharedPlanner={joinSharedPlanner}
         onLeaveSharedPlannerSession={leaveSharedPlannerSession}
         onLoadState={loadPlannerState}
@@ -560,7 +530,7 @@ function SessionPlanningPage() {
           <p className="text-base text-secondary/80">
             {shareCode
               ? 'Join the shared planner to start collaborating.'
-              : 'Upload a participant CSV to start planning.'}
+              : 'Upload the matching activity summary and roster CSVs to start planning.'}
           </p>
         </div>
       ) : (
