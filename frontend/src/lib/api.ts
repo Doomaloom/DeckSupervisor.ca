@@ -1,3 +1,5 @@
+import { getCurrentSessionId } from './sessionStorage'
+import { setLoadedRosterSession } from './loadedRosterSession'
 import type { ClassRoster, ExtractedClass, ExtractedSession, InstructorEntry, Student } from '../types/app'
 import { setStudentsForDay } from './storage'
 import { normalizeSessionLocationKey } from '../shared/session/sourceLocations'
@@ -75,7 +77,7 @@ function rosterToStudents(rosters: ClassRoster[]): Student[] {
   return students
 }
 
-export function storeProcessedRosters(classes: ClassRoster[]) {
+export function storeProcessedRosters(classes: ClassRoster[], sessionId = getCurrentSessionId()) {
   if (classes.length === 0) {
     return
   }
@@ -87,6 +89,7 @@ export function storeProcessedRosters(classes: ClassRoster[]) {
     return acc
   }, {})
   Object.entries(grouped).forEach(([key, list]) => {
+    setLoadedRosterSession(key, sessionId)
     setStudentsForDay(key, list)
   })
 }

@@ -149,7 +149,7 @@ function refreshImportedSessionDataForSession(
   const hasRosterData = Object.keys(dataset.rostersByCandidate ?? {}).length > 0
   if (hasRosterData) {
     if (derived.rosters.length > 0) {
-      storeProcessedRosters(applyAssignedInstructorsToRosters(target.sessionDay, derived.rosters))
+      storeProcessedRosters(applyAssignedInstructorsToRosters(target.sessionDay, derived.rosters), sessionId)
     } else {
       setStudentsForDay(target.sessionDay, [])
     }

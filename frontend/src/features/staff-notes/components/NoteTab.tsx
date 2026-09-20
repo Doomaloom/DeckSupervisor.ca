@@ -3,6 +3,7 @@ import type { NoteItem } from '../types'
 type NoteTabProps = {
   isSessionReady: boolean
   isEditable: boolean
+  canEditEntry: (createdBy?: string) => boolean
   isFullTime: boolean
   showEmployee: boolean
   instructorNames: string[]
@@ -20,6 +21,7 @@ type NoteTabProps = {
 function NoteTab({
   isSessionReady,
   isEditable,
+  canEditEntry,
   isFullTime,
   showEmployee,
   instructorNames,
@@ -108,7 +110,7 @@ function NoteTab({
                 ) : null}
                 <p className="mt-2 whitespace-pre-wrap text-sm text-secondary">{item.text}</p>
               </div>
-              {isEditable ? (
+              {isEditable && canEditEntry(item.createdBy) ? (
                 <button
                   type="button"
                   className="text-xs font-semibold text-secondary/70 transition hover:text-secondary"

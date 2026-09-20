@@ -4,6 +4,7 @@ export type TabKey = NoteTabKey | 'todo' | ReportTabKey
 
 export type NoteItem = {
   id: string
+  createdBy?: string
   createdAt: string
   text: string
   employeeName?: string
@@ -13,6 +14,7 @@ export type NoteItem = {
 
 export type TodoItem = {
   id: string
+  createdBy?: string
   createdAt: string
   text: string
   done: boolean

@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import DashboardPage from '../features/dashboard/DashboardPage'
 import ManageSessionsPage from '../features/sessions/ManageSessionsPage'
+import DeviceExportPage from '../features/device-export/DeviceExportPage'
 import PrintPage from '../features/print/PrintPage'
 import RostersPage from '../features/rosters/RostersPage'
 import SchematicPage from '../features/schematic/SchematicPage'
@@ -43,6 +44,7 @@ function AppRoutes() {
       <Route path="/team" element={<TeamPage />} />
       <Route path="/" element={<DashboardPage />} />
       <Route path="/manage-sessions" element={<ManageSessionsPage />} />
+      <Route path="/device-exports" element={<DeviceExportPage />} />
       <Route path="/print" element={<PrintPage />} />
       <Route path="/rosters" element={<RostersPage />} />
       <Route path="/schematic" element={<SchematicPage />} />

@@ -51,6 +51,12 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/session-notes/{id}", handlers.UpdateSessionNote).Methods("PATCH")
 	r.HandleFunc("/api/session-notes/{id}", handlers.DeleteSessionNote).Methods("DELETE")
 
+	// Session reports use the same cookie-authenticated, RLS-bound client as notes.
+	r.HandleFunc("/api/session-reports", handlers.SessionReports).Methods("GET")
+	r.HandleFunc("/api/session-reports", handlers.CreateSessionReport).Methods("POST")
+	r.HandleFunc("/api/session-reports/{id}", handlers.UpdateSessionReport).Methods("PATCH")
+	r.HandleFunc("/api/session-reports/{id}", handlers.DeleteSessionReport).Methods("DELETE")
+
 	// Report cards and schematics
 	r.HandleFunc("/api/report-cards/totals", handlers.ReportCardTotals).Methods("GET")
 	r.HandleFunc("/api/report-cards/sync", handlers.SyncReportCards).Methods("POST")

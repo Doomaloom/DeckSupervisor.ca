@@ -7,14 +7,25 @@ FROM golang:${GO_VERSION}-bookworm AS builder
 WORKDIR /src
 
 COPY backend/go.mod backend/go.sum ./backend/
+
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     cd backend && go mod download
 
 COPY backend ./backend
+
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    cd backend && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/server ./cmd/server
+    cd backend && \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64 \
+    go build \
+      -buildvcs=false \
+      -trimpath \
+      -ldflags="-s -w" \
+      -o /out/server \
+      ./cmd/server
 
 FROM debian:bookworm-slim
 

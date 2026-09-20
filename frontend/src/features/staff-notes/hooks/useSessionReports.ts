@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { supabase } from '../../../lib/supabaseClient'
+import { createSessionReport, updateSessionReport, deleteSessionReport } from '../../../lib/serverApi'
 import { showAppNotice } from '../../../lib/appNotice'
 import type { ReportItem, SessionReportData, TabKey } from '../types'
 import {
@@ -115,7 +115,7 @@ export function useSessionReports({
   const canEditSelectedReport =
     Boolean(selectedReport) &&
     (isGuest ||
-      (!isFullTime && Boolean(userId) && (accessMode === 'owner' || selectedReport?.createdBy === userId)))
+      (canWriteDbReports && (accessMode === 'owner' || selectedReport?.createdBy === userId)))
   const isReportInputDisabled = !isSessionReady || !canEditSelectedReport
 
   const updateReportDraft = useCallback(
@@ -142,13 +142,13 @@ export function useSessionReports({
   const persistReport = useCallback(
     async (revisionToSave: number) => {
       if (activeTab !== 'report') {
-        return
+        return true
       }
       if (!sessionId || !selectedReport || !canEditSelectedReport) {
-        return
+        return true
       }
       if (revisionToSave <= lastSavedReportRevision) {
-        return
+        return true
       }
 
       const nextTitle = reportTitle.trim() || 'Untitled report'
@@ -171,29 +171,16 @@ export function useSessionReports({
         saveJson(buildStorageKey(sessionId, 'report'), nextReports)
         setLastSavedReportRevision(previous => Math.max(previous, revisionToSave))
         setReportStatus(`Saved locally at ${new Date(nowIso).toLocaleTimeString()}`)
-        return
+        return true
       }
 
-      if (!supabase) {
-        setReportStatus('Supabase is not configured for browser report saves.')
-        return
-      }
-
-      const { data, error } = await supabase
-        .from('session_reports')
-        .update({
-          title: nextTitle,
-          report_data: reportDraft,
-          updated_at: nowIso,
-        })
-        .eq('id', selectedReport.id)
-        .select('updated_at,title')
-        .single()
-
-      if (error) {
-        console.error('Failed to autosave report', error)
-        setReportStatus(`Autosave failed: ${error.message}`)
-        return
+      let data
+      try {
+        const result = await updateSessionReport(selectedReport.id, { title: nextTitle, report_data: reportDraft })
+        data = result.report
+      } catch (error) {
+        setReportStatus(`Autosave failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        return false
       }
 
       const updatedAt = data?.updated_at ?? nowIso
@@ -214,6 +201,7 @@ export function useSessionReports({
       setReportTitle(data?.title ?? nextTitle)
       setLastSavedReportRevision(previous => Math.max(previous, revisionToSave))
       setReportStatus(`Saved at ${new Date(updatedAt).toLocaleTimeString()}`)
+      return true
     },
     [
       activeTab,
@@ -234,7 +222,7 @@ export function useSessionReports({
         if (reportSaveTimerRef.current !== null) {
           window.clearTimeout(reportSaveTimerRef.current)
         }
-        await persistReport(reportRevision)
+        if (!(await persistReport(reportRevision))) return
         const next = reports.find(item => item.id === id) ?? null
         hydrateReportSelection(next)
       })()
@@ -250,7 +238,7 @@ export function useSessionReports({
     if (reportSaveTimerRef.current !== null) {
       window.clearTimeout(reportSaveTimerRef.current)
     }
-    await persistReport(reportRevision)
+    if (!(await persistReport(reportRevision))) return
 
     const nowIso = new Date().toISOString()
     const title = defaultReportTitle()
@@ -277,25 +265,12 @@ export function useSessionReports({
     if (!userId) {
       return
     }
-    if (!supabase) {
-      showAppNotice('Supabase is not configured for browser report saves.', 'error')
-      return
-    }
-
-    const { data, error } = await supabase
-      .from('session_reports')
-      .insert({
-        session_id: sessionId,
-        created_by: userId,
-        title,
-        report_data: nextReportData,
-      })
-      .select('id,created_by,title,report_data,created_at,updated_at')
-      .single()
-
-    if (error || !data) {
-      console.error('Failed to create report', error)
-      showAppNotice(`Failed to create report: ${error?.message ?? 'Unknown error'}`, 'error')
+    let data
+    try {
+      const result = await createSessionReport({ session_id: sessionId, title, report_data: nextReportData })
+      data = result.report
+    } catch (error) {
+      showAppNotice(`Failed to create report: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
       return
     }
 
@@ -333,7 +308,7 @@ export function useSessionReports({
     if (reportSaveTimerRef.current !== null) {
       window.clearTimeout(reportSaveTimerRef.current)
     }
-    await persistReport(reportRevision)
+    if (!(await persistReport(reportRevision))) return
     if (!confirm('Delete this report? This action cannot be undone.')) {
       return
     }
@@ -346,15 +321,10 @@ export function useSessionReports({
       return
     }
 
-    if (!supabase) {
-      showAppNotice('Supabase is not configured for browser report saves.', 'error')
-      return
-    }
-
-    const { error } = await supabase.from('session_reports').delete().eq('id', selectedReport.id)
-    if (error) {
-      console.error('Failed to delete report', error)
-      showAppNotice(`Failed to delete report: ${error.message}`, 'error')
+    try {
+      await deleteSessionReport(selectedReport.id)
+    } catch (error) {
+      showAppNotice(`Failed to delete report: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
       return
     }
 
@@ -380,7 +350,7 @@ export function useSessionReports({
     if (reportSaveTimerRef.current !== null) {
       window.clearTimeout(reportSaveTimerRef.current)
     }
-    await persistReport(reportRevision)
+    if (!(await persistReport(reportRevision))) return
 
     const normalizedTitle = reportTitle.trim() || selectedReport.title || 'Session Report'
     const strengthWeakness = reportDraft.staff.strengthWeakness

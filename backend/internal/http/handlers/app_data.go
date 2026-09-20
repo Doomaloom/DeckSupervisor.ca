@@ -67,15 +67,6 @@ type shareRow struct {
 	ShareDate        string `json:"share_date"`
 }
 
-type sessionNoteRow struct {
-	ID           string  `json:"id"`
-	CreatedAt    string  `json:"created_at"`
-	NoteType     string  `json:"note_type"`
-	Text         string  `json:"text"`
-	EmployeeName *string `json:"employee_name"`
-	Done         *bool   `json:"done"`
-}
-
 type reportCardRow struct {
 	Instructor          *string `json:"instructor"`
 	NumberOfReportCards *int    `json:"number_of_report_cards"`
@@ -495,87 +486,6 @@ func DeleteSession(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func SessionNotes(w http.ResponseWriter, r *http.Request) {
-	client, err := supabasesvc.NewClientFromRequest(r)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-	sessionID := r.URL.Query().Get("sessionId")
-	if sessionID == "" {
-		http.Error(w, "Missing session id", http.StatusBadRequest)
-		return
-	}
-	query := url.Values{}
-	query.Set("session_id", "eq."+sessionID)
-	query.Set("select", "id,created_at,note_type,text,employee_name,done")
-	query.Set("order", "created_at.desc")
-	var rows []sessionNoteRow
-	if err := client.Get(r.Context(), "/rest/v1/session_notes", query, &rows); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	writeJSON(w, map[string]any{"notes": rows})
-}
-
-func CreateSessionNote(w http.ResponseWriter, r *http.Request) {
-	client, err := supabasesvc.NewClientFromRequest(r)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	payload["created_by"] = client.User.ID
-	var rows []sessionNoteRow
-	if err := client.Post(r.Context(), "/rest/v1/session_notes", nil, payload, "return=representation", &rows); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	writeJSON(w, map[string]any{"note": firstSessionNote(rows)})
-}
-
-func UpdateSessionNote(w http.ResponseWriter, r *http.Request) {
-	client, err := supabasesvc.NewClientFromRequest(r)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-	noteID := mux.Vars(r)["id"]
-	var payload map[string]any
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	query := url.Values{}
-	query.Set("id", "eq."+noteID)
-	var rows []sessionNoteRow
-	if err := client.Patch(r.Context(), "/rest/v1/session_notes", query, payload, "return=representation", &rows); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	writeJSON(w, map[string]any{"note": firstSessionNote(rows)})
-}
-
-func DeleteSessionNote(w http.ResponseWriter, r *http.Request) {
-	client, err := supabasesvc.NewClientFromRequest(r)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-	noteID := mux.Vars(r)["id"]
-	query := url.Values{}
-	query.Set("id", "eq."+noteID)
-	if err := client.Delete(r.Context(), "/rest/v1/session_notes", query, "", nil); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
-}
-
 func ReportCardTotals(w http.ResponseWriter, r *http.Request) {
 	client, err := supabasesvc.NewClientFromRequest(r)
 	if err != nil {
@@ -870,13 +780,6 @@ func firstMap(rows []map[string]any) map[string]any {
 		return nil
 	}
 	return rows[0]
-}
-
-func firstSessionNote(rows []sessionNoteRow) *sessionNoteRow {
-	if len(rows) == 0 {
-		return nil
-	}
-	return &rows[0]
 }
 
 func firstSchematic(rows []schematicRow) *schematicRow {

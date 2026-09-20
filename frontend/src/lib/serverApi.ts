@@ -448,16 +448,67 @@ export function createSessionShare(body: Record<string, unknown>) {
   return request<void>('/api/session-shares', { method: 'POST', body })
 }
 
-export function fetchSessionNotes(sessionId: string) {
-  return request<{ notes: any[] }>(`/api/session-notes?sessionId=${encodeURIComponent(sessionId)}`)
+export type StaffEntryScope = { sessionId: string } | { teamId: string; season: string; year: number }
+
+export type StaffEntry = {
+  id: string
+  session_id: string
+  created_by: string
+  created_at: string
+  author?: { first_name: string; last_name: string; email: string } | null
+  session?: {
+    session_day: string
+    session_season: string | null
+    session_year: number | null
+    start_date: string | null
+    location: string | null
+  } | null
+}
+
+export type SessionNote = StaffEntry & {
+  note_type: string
+  text: string
+  employee_name: string | null
+  done: boolean
+}
+
+export type SessionReport = StaffEntry & {
+  title: string
+  report_data: unknown
+  updated_at: string
+}
+
+function staffScopeQuery(scope: StaffEntryScope | string) {
+  const values = typeof scope === 'string' ? { sessionId: scope } : scope
+  return new URLSearchParams(Object.entries(values).map(([key, value]) => [key, String(value)])).toString()
+}
+
+export function fetchSessionNotes(scope: StaffEntryScope | string) {
+  return request<{ notes: SessionNote[] }>(`/api/session-notes?${staffScopeQuery(scope)}`)
 }
 
 export function createSessionNote(body: Record<string, unknown>) {
-  return request<{ note: any }>('/api/session-notes', { method: 'POST', body })
+  return request<{ note: SessionNote }>('/api/session-notes', { method: 'POST', body })
 }
 
 export function updateSessionNote(id: string, body: Record<string, unknown>) {
-  return request<{ note: any }>(`/api/session-notes/${encodeURIComponent(id)}`, { method: 'PATCH', body })
+  return request<{ note: SessionNote }>(`/api/session-notes/${encodeURIComponent(id)}`, { method: 'PATCH', body })
+}
+
+export function fetchSessionReports(scope: StaffEntryScope) {
+  return request<{ reports: SessionReport[] }>(`/api/session-reports?${staffScopeQuery(scope)}`)
+}
+
+export function createSessionReport(body: { session_id: string; title: string; report_data: unknown }) {
+  return request<{ report: SessionReport }>('/api/session-reports', { method: 'POST', body })
+}
+
+export function updateSessionReport(id: string, body: { title: string; report_data: unknown }) {
+  return request<{ report: SessionReport }>(`/api/session-reports/${encodeURIComponent(id)}`, { method: 'PATCH', body })
+}
+
+export function deleteSessionReport(id: string) {
+  return request<void>(`/api/session-reports/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 
 export function createPlannerShare(body: {

@@ -73,6 +73,8 @@ The app supports:
   - Supabase for shared operational state
   - Scoped local storage for guest and user-specific browser data
 
+For a complete, repeatable RLS update, use [`backend/supabase_rls_reset.sql`](backend/supabase_rls_reset.sql). See [database permissions and application instructions](docs/database-rls.md) before running it.
+
 ### Deployment Topology
 
 - Frontend deployed separately from API

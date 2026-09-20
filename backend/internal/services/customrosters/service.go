@@ -17,6 +17,7 @@ import (
 	"unicode"
 
 	authsvc "cob-aquatics/internal/services/auth"
+	supabasesvc "cob-aquatics/internal/services/supabase"
 )
 
 type Service struct {
@@ -61,10 +62,10 @@ type rosterRow struct {
 
 func NewServiceFromEnv() (*Service, error) {
 	supabaseURL := strings.TrimSpace(os.Getenv("SUPABASE_URL"))
-	serviceRoleKey := strings.TrimSpace(os.Getenv("SUPABASE_SERVICE_ROLE_KEY"))
+	serviceRoleKey, keyErr := supabasesvc.ServiceKeyFromEnv()
 	pepper := strings.TrimSpace(os.Getenv("CUSTOM_ROSTER_PEPPER"))
 
-	if supabaseURL == "" || serviceRoleKey == "" || pepper == "" {
+	if supabaseURL == "" || keyErr != nil || pepper == "" {
 		return nil, errors.New("missing supabase env config")
 	}
 

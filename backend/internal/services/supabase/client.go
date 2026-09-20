@@ -3,6 +3,7 @@ package supabase
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,14 @@ type Client struct {
 	accessToken string
 	User        authsvc.User
 }
+
+// APIError preserves PostgREST's permission status for HTTP handlers.
+type APIError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *APIError) Error() string { return e.Message }
 
 func NewClientFromRequest(r *http.Request) (*Client, error) {
 	authService, err := authsvc.NewServiceFromEnv()
@@ -53,8 +62,8 @@ func NewClientFromRequest(r *http.Request) (*Client, error) {
 
 func NewServiceClientFromEnv() (*Client, error) {
 	supabaseURL := strings.TrimSpace(os.Getenv("SUPABASE_URL"))
-	serviceRoleKey := strings.TrimSpace(os.Getenv("SUPABASE_SERVICE_ROLE_KEY"))
-	if supabaseURL == "" || serviceRoleKey == "" {
+	serviceRoleKey, err := ServiceKeyFromEnv()
+	if supabaseURL == "" || err != nil {
 		return nil, errors.New("missing supabase service env config")
 	}
 
@@ -63,6 +72,33 @@ func NewServiceClientFromEnv() (*Client, error) {
 		apiKey:      serviceRoleKey,
 		httpClient:  &http.Client{Timeout: 15 * time.Second},
 	}, nil
+}
+
+// ServiceKeyFromEnv supports the legacy deployment name, but never treats a
+// publishable/anon key as an administrative credential. Supabase validates the
+// credential itself; decoding the configured JWT here only selects its kind.
+func ServiceKeyFromEnv() (string, error) {
+	for _, name := range []string{"SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_KEY"} {
+		key := strings.TrimSpace(os.Getenv(name))
+		if strings.HasPrefix(key, "sb_secret_") && len(key) > len("sb_secret_") {
+			return key, nil
+		}
+		parts := strings.Split(key, ".")
+		if len(parts) != 3 {
+			continue
+		}
+		payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+		if err != nil {
+			continue
+		}
+		var claims struct {
+			Role string `json:"role"`
+		}
+		if json.Unmarshal(payload, &claims) == nil && claims.Role == "service_role" {
+			return key, nil
+		}
+	}
+	return "", errors.New("missing valid Supabase service-role key")
 }
 
 func (c *Client) Get(ctx context.Context, path string, query url.Values, out any) error {
@@ -135,16 +171,16 @@ func (c *Client) request(
 		var apiErr map[string]any
 		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err == nil {
 			if message, ok := apiErr["message"].(string); ok && strings.TrimSpace(message) != "" {
-				return errors.New(message)
+				return &APIError{StatusCode: resp.StatusCode, Message: message}
 			}
 			if message, ok := apiErr["msg"].(string); ok && strings.TrimSpace(message) != "" {
-				return errors.New(message)
+				return &APIError{StatusCode: resp.StatusCode, Message: message}
 			}
 			if message, ok := apiErr["error"].(string); ok && strings.TrimSpace(message) != "" {
-				return errors.New(message)
+				return &APIError{StatusCode: resp.StatusCode, Message: message}
 			}
 		}
-		return fmt.Errorf("supabase request failed: %s", resp.Status)
+		return &APIError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("supabase request failed: %s", resp.Status)}
 	}
 
 	if out == nil || resp.StatusCode == http.StatusNoContent {

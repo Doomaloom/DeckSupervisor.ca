@@ -8,6 +8,7 @@ import {
     AdjustmentsHorizontalIcon,
     UsersIcon,
     PrinterIcon,
+    ArrowDownTrayIcon,
     ClockIcon,
     UserCircleIcon,
     UserGroupIcon,
@@ -227,6 +228,11 @@ function Layout({ children }: LayoutProps) {
             icon: <CalendarDaysIcon className="h-5 w-5" />,
         },
         {
+            to: '/device-exports',
+            label: 'Device Exports',
+            icon: <ArrowDownTrayIcon className="h-5 w-5" />,
+        },
+        {
             to: '/rosters',
             label: 'Rosters',
             icon: <UsersIcon className="h-5 w-5" />,
@@ -273,6 +279,11 @@ function Layout({ children }: LayoutProps) {
             to: '/schematic',
             label: 'Schematic',
             icon: <CalendarDaysIcon className="h-5 w-5" />,
+        },
+        {
+            to: '/device-exports',
+            label: 'Device Exports',
+            icon: <ArrowDownTrayIcon className="h-5 w-5" />,
         },
         {
             to: '/rosters',
@@ -556,6 +567,7 @@ function getPageTitle(pathname: string) {
         case '/': return 'Home'
         case '/requests': return 'Requests'
         case '/manage-sessions': return 'Manage Sessions'
+        case '/device-exports': return 'Device Exports'
         case '/rosters': return 'Class Rosters'
         case '/schematic': return 'Class Schedule'
         case '/print': return 'Print'

@@ -1,0 +1,27 @@
+{
+  "createdSessionCount": 3,
+  "cleanup": {
+    "results": [
+      {
+        "id": "1beb76f8-9ca1-4c45-b583-b6a5e9f9148b",
+        "status": 204
+      }
+    ],
+    "remainingQaSessions": [],
+    "preservedOtherSessionCount": 3
+  },
+  "exportSummary": {
+    "courses": 22,
+    "swimmers": 22,
+    "containsContactFields": false
+  },
+  "dragPersisted": [
+    22,
+    1
+  ],
+  "signoutSummary": {
+    "guest": true,
+    "rosterCards": 0,
+    "unauthorizedPageErrors": 3
+  }
+}

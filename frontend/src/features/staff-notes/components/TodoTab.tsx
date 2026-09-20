@@ -3,6 +3,7 @@ import type { TodoItem } from '../types'
 type TodoTabProps = {
   isSessionReady: boolean
   isEditable: boolean
+  canEditEntry: (createdBy?: string) => boolean
   todoText: string
   setTodoText: (value: string) => void
   onAddTodo: () => void
@@ -16,6 +17,7 @@ type TodoTabProps = {
 function TodoTab({
   isSessionReady,
   isEditable,
+  canEditEntry,
   todoText,
   setTodoText,
   onAddTodo,
@@ -60,7 +62,7 @@ function TodoTab({
                   type="checkbox"
                   checked={item.done}
                   onChange={() => onToggleTodo(item.id)}
-                  disabled={!isSessionReady}
+                  disabled={!isSessionReady || !canEditEntry(item.createdBy)}
                 />
                 <div>
                   <p
@@ -73,7 +75,7 @@ function TodoTab({
                   <p className="mt-1 text-xs text-secondary/60">{new Date(item.createdAt).toLocaleString()}</p>
                 </div>
               </label>
-              {isEditable ? (
+              {isEditable && canEditEntry(item.createdBy) ? (
                 <button
                   type="button"
                   className="text-xs font-semibold text-secondary/70 transition hover:text-secondary"

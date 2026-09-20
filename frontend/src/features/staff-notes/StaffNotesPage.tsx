@@ -9,15 +9,17 @@ import {
   createSessionNote,
   deleteSessionNote,
   fetchSessionNotes,
+  fetchSessionReports,
+  type StaffEntry,
+  type StaffEntryScope,
   updateSessionNote,
 } from '../../lib/serverApi'
-import { supabase } from '../../lib/supabaseClient'
 import { useSessionInstructors } from '../print/hooks/useSessionInstructors'
 import NoteTab from './components/NoteTab'
 import ReportTab from './components/report/ReportTab'
 import TabBar from './components/TabBar'
 import TodoTab from './components/TodoTab'
-import { formatSessionContext, getSessionYear, normalizeSeason, tabs } from './constants'
+import { formatSessionContext, tabs } from './constants'
 import { useSessionReports } from './hooks/useSessionReports'
 import type { NoteItem, ReportItem, TabKey, TodoItem } from './types'
 import { normalizeReportData } from './utils/reportData'
@@ -155,313 +157,62 @@ function StaffNotesPage() {
       return
     }
 
-    if (isFullTime) {
-      if (!supabase) {
-        setNotes([])
-        setTodos([])
-        clearReports()
-        return
-      }
-      if (!currentTeamId || !currentTerm) {
-        setNotes([])
-        setTodos([])
-        clearReports()
-        return
-      }
-
-      let active = true
-      const loadTeamTermNotes = async () => {
-        const [{ data: teamData, error: teamError }, { data: memberData, error: memberError }, { data: sessionData, error: sessionError }] = await Promise.all([
-          supabase.from('teams').select('owner_id').eq('id', currentTeamId).maybeSingle(),
-          supabase.from('team_members').select('user_id').eq('team_id', currentTeamId),
-          supabase
-            .from('sessions')
-            .select('id,session_day,session_season,session_year,start_date,location')
-            .eq('team_id', currentTeamId),
-        ])
-
-        if (!active) {
-          return
-        }
-
-        if (teamError || memberError || sessionError) {
-          console.error('Failed to load full-time notes scope', teamError ?? memberError ?? sessionError)
-          setNotes([])
-          setTodos([])
-          clearReports()
-          return
-        }
-
-        const scopedSessions = (sessionData ?? []).filter(session => {
-          const season = normalizeSeason(session.session_season)
-          const year = getSessionYear(session.session_year ?? null, session.start_date ?? null)
-          return season === currentTerm.season && year === currentTerm.year
-        })
-
-        if (scopedSessions.length === 0) {
-          setNotes([])
-          setTodos([])
-          clearReports()
-          return
-        }
-
-        const sessionMap = new Map(
-          scopedSessions.map(session => [
-            session.id,
-            formatSessionContext(
-              session.session_day ?? null,
-              session.location ?? null,
-              session.session_season ?? null,
-              session.session_year ?? null,
-              session.start_date ?? null,
-            ),
-          ]),
-        )
-        const sessionIds = scopedSessions.map(session => session.id)
-
-        const allowedAuthorIds = new Set<string>()
-        const ownerId = teamData?.owner_id ?? ''
-        if (ownerId) {
-          allowedAuthorIds.add(ownerId)
-        }
-        ;(memberData ?? []).forEach(row => {
-          const userId = (row.user_id ?? '').trim()
-          if (userId) {
-            allowedAuthorIds.add(userId)
-          }
-        })
-
+    if (isFullTime && (!currentTeamId || !currentTerm)) {
+      setNotes([])
+      setTodos([])
+      clearReports()
+      return
+    }
+    const scope: StaffEntryScope = isFullTime
+      ? { teamId: currentTeamId!, season: currentTerm!.season, year: currentTerm!.year }
+      : { sessionId: sessionId! }
+    let active = true
+    setNotes([])
+    setTodos([])
+    clearReports()
+    const authorName = (row: StaffEntry) => {
+      const author = row.author
+      return author ? `${author.first_name ?? ''} ${author.last_name ?? ''}`.trim() || author.email || 'Unknown author' : 'Unknown author'
+    }
+    const sessionContext = (row: StaffEntry) => row.session
+      ? formatSessionContext(row.session.session_day, row.session.location, row.session.session_season, row.session.session_year, row.session.start_date)
+      : currentSessionContext
+    const loadFromDb = async () => {
+      try {
         if (activeTab === 'report') {
-          const { data: reportData, error: reportError } = await supabase
-            .from('session_reports')
-            .select('id,session_id,created_by,title,report_data,created_at,updated_at')
-            .in('session_id', sessionIds)
-            .order('updated_at', { ascending: false })
-
-          if (!active) {
-            return
-          }
-
-          if (reportError) {
-            console.error('Failed to load full-time reports', reportError)
-            setNotes([])
-            setTodos([])
-            clearReports()
-            return
-          }
-
-          const teamReports = (reportData ?? []).filter(row => allowedAuthorIds.has(row.created_by))
-          if (teamReports.length === 0) {
-            setNotes([])
-            setTodos([])
-            clearReports()
-            return
-          }
-
-          const authorIds = Array.from(new Set(teamReports.map(row => row.created_by).filter(Boolean)))
-          const { data: authorProfiles, error: authorError } = authorIds.length
-            ? await supabase
-                .from('profiles')
-                .select('id,first_name,last_name,email')
-                .in('id', authorIds)
-            : { data: [], error: null }
-
-          if (!active) {
-            return
-          }
-
-          if (authorError) {
-            console.error('Failed to load report author profiles', authorError)
-          }
-
-          const authorNameById = new Map(
-            (authorProfiles ?? []).map(profile => {
-              const fullName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
-              return [profile.id, fullName || profile.email || 'Unknown author']
-            }),
-          )
-
-          const mappedReports: ReportItem[] = teamReports.map(row => ({
+          const { reports: rows } = await fetchSessionReports(scope)
+          if (!active) return
+          setLoadedReports(rows.map(row => ({
             id: row.id,
             createdAt: row.created_at,
             updatedAt: row.updated_at ?? row.created_at,
-            title: row.title ?? 'Untitled report',
-            reportData: normalizeReportData(row.report_data, []),
+            title: row.title || 'Untitled report',
+            reportData: normalizeReportData(row.report_data, isFullTime ? [] : instructorNames),
             createdBy: row.created_by,
-            authorName: authorNameById.get(row.created_by) ?? 'Unknown author',
-            sessionContext: sessionMap.get(row.session_id) ?? undefined,
-          }))
-
-          setLoadedReports(mappedReports)
-          setNotes([])
-          setTodos([])
+            authorName: authorName(row),
+            sessionContext: sessionContext(row) || undefined,
+          })))
           return
         }
-
-        const { data: noteData, error: noteError } = await supabase
-          .from('session_notes')
-          .select('id,session_id,created_by,created_at,note_type,text,employee_name,done')
-          .in('session_id', sessionIds)
-          .order('created_at', { ascending: false })
-
-        if (!active) {
-          return
-        }
-
-        if (noteError) {
-          console.error('Failed to load full-time team notes', noteError)
-          setNotes([])
-          setTodos([])
-          clearReports()
-          return
-        }
-
-        const teamNotes = (noteData ?? []).filter(row => allowedAuthorIds.has(row.created_by))
-        const filteredRows = teamNotes.filter(row => row.note_type === activeTab)
-        if (filteredRows.length === 0) {
-          setNotes([])
-          setTodos([])
-          clearReports()
-          return
-        }
-
-        const authorIds = Array.from(new Set(filteredRows.map(row => row.created_by).filter(Boolean)))
-        const { data: authorProfiles, error: authorError } = authorIds.length
-          ? await supabase
-              .from('profiles')
-              .select('id,first_name,last_name,email')
-              .in('id', authorIds)
-          : { data: [], error: null }
-
-        if (!active) {
-          return
-        }
-
-        if (authorError) {
-          console.error('Failed to load note author profiles', authorError)
-        }
-
-        const authorNameById = new Map(
-          (authorProfiles ?? []).map(profile => {
-            const fullName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
-            return [profile.id, fullName || profile.email || 'Unknown author']
-          }),
-        )
-
-        setNotes(
-          filteredRows.map(row => ({
-            id: row.id,
-            createdAt: row.created_at,
-            text: row.text,
+        const { notes: rows } = await fetchSessionNotes(scope)
+        if (!active) return
+        const filtered = rows.filter(row => row.note_type === activeTab)
+        if (activeTab === 'todo') {
+          setTodos(filtered.map(row => ({ id: row.id, createdAt: row.created_at, createdBy: row.created_by, text: row.text, done: row.done ?? false })))
+        } else {
+          setNotes(filtered.map(row => ({
+            id: row.id, createdAt: row.created_at, createdBy: row.created_by, text: row.text,
             employeeName: row.employee_name ?? undefined,
-            authorName: authorNameById.get(row.created_by) ?? 'Unknown author',
-            sessionContext: sessionMap.get(row.session_id) ?? undefined,
-          })),
-        )
-        setTodos([])
-        clearReports()
-      }
-
-      void loadTeamTermNotes()
-      return () => {
-        active = false
-      }
-    }
-
-    const loadFromDb = async () => {
-      if (!supabase && activeTab === 'report') {
-        setNotes([])
-        setTodos([])
-        clearReports()
-        return
-      }
-      const data = await fetchSessionNotes(sessionId)
-      const rows = data.notes ?? []
-      if (activeTab === 'report') {
-        if (!supabase) {
-          setLoadedReports([])
-          setNotes([])
-          setTodos([])
-          return
+            authorName: isFullTime ? authorName(row) : undefined,
+            sessionContext: isFullTime ? sessionContext(row) || undefined : undefined,
+          })))
         }
-        const { data, error } = await supabase
-          .from('session_reports')
-          .select('id,session_id,created_by,title,report_data,created_at,updated_at')
-          .eq('session_id', sessionId)
-          .order('updated_at', { ascending: false })
-
-        if (error) {
-          console.error('Failed to load reports', error)
-          setNotes([])
-          setTodos([])
-          clearReports()
-          return
-        }
-
-        const reportRows = data ?? []
-        const authorIds = Array.from(new Set(reportRows.map(row => row.created_by).filter(Boolean)))
-        const { data: authorProfiles, error: authorError } = authorIds.length
-          ? await supabase
-              .from('profiles')
-              .select('id,first_name,last_name,email')
-              .in('id', authorIds)
-          : { data: [], error: null }
-
-        if (authorError) {
-          console.error('Failed to load report author profiles', authorError)
-        }
-
-        const authorNameById = new Map(
-          (authorProfiles ?? []).map(profile => {
-            const fullName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
-            return [profile.id, fullName || profile.email || 'Unknown author']
-          }),
-        )
-
-        const mappedReports: ReportItem[] = reportRows.map(row => ({
-          id: row.id,
-          createdAt: row.created_at,
-          updatedAt: row.updated_at ?? row.created_at,
-          title: row.title ?? 'Untitled report',
-          reportData: normalizeReportData(row.report_data, instructorNames),
-          createdBy: row.created_by,
-          authorName: authorNameById.get(row.created_by) ?? 'Unknown author',
-          sessionContext: currentSessionContext || undefined,
-        }))
-
-        setLoadedReports(mappedReports)
-        setNotes([])
-        setTodos([])
-        return
+      } catch (error) {
+        if (active) showAppNotice(`Failed to load ${activeTab === 'report' ? 'reports' : 'notes'}: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
       }
-      if (activeTab === 'todo') {
-        setTodos(
-          rows
-            .filter(row => row.note_type === 'todo')
-            .map(row => ({
-              id: row.id,
-              createdAt: row.created_at,
-              text: row.text,
-              done: row.done ?? false,
-            })),
-        )
-        setNotes([])
-      } else {
-        setNotes(
-          rows
-            .filter(row => row.note_type === activeTab)
-            .map(row => ({
-              id: row.id,
-              createdAt: row.created_at,
-              text: row.text,
-              employeeName: row.employee_name ?? undefined,
-            })),
-        )
-        setTodos([])
-      }
-      clearReports()
     }
     void loadFromDb()
+    return () => { active = false }
   }, [
     activeTab,
     clearReports,
@@ -520,6 +271,7 @@ function StaffNotesPage() {
           {
             id: data.id,
             createdAt: data.created_at,
+            createdBy: data.created_by,
             text: data.text,
             employeeName: data.employee_name ?? undefined,
           },
@@ -538,7 +290,7 @@ function StaffNotesPage() {
     setEmployeeName('')
   }
 
-  const handleDeleteNote = (id: string) => {
+  const handleDeleteNote = async (id: string) => {
     if (!sessionId) {
       return
     }
@@ -548,8 +300,12 @@ function StaffNotesPage() {
       saveJson(buildStorageKey(sessionId, activeTab), next)
       return
     }
-    void deleteSessionNote(id)
-    setNotes(current => current.filter(item => item.id !== id))
+    try {
+      await deleteSessionNote(id)
+      setNotes(current => current.filter(item => item.id !== id))
+    } catch (error) {
+      showAppNotice(`Failed to delete note: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+    }
   }
 
   const handleAddTodo = async () => {
@@ -585,6 +341,7 @@ function StaffNotesPage() {
           {
             id: data.id,
             createdAt: data.created_at,
+            createdBy: data.created_by,
             text: data.text,
             done: data.done ?? false,
           },
@@ -602,7 +359,7 @@ function StaffNotesPage() {
     setTodoText('')
   }
 
-  const handleToggleTodo = (id: string) => {
+  const handleToggleTodo = async (id: string) => {
     if (!sessionId) {
       return
     }
@@ -612,15 +369,17 @@ function StaffNotesPage() {
       saveJson(buildStorageKey(sessionId, activeTab), next)
       return
     }
-    const updated = todos.map(item => (item.id === id ? { ...item, done: !item.done } : item))
-    const target = updated.find(item => item.id === id)
-    if (target) {
-      void updateSessionNote(id, { done: target.done })
+    const target = todos.find(item => item.id === id)
+    if (!target) return
+    try {
+      const { note } = await updateSessionNote(id, { done: !target.done })
+      setTodos(current => current.map(item => item.id === id ? { ...item, done: note.done } : item))
+    } catch (error) {
+      showAppNotice(`Failed to update todo: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
     }
-    setTodos(updated)
   }
 
-  const handleDeleteTodo = (id: string) => {
+  const handleDeleteTodo = async (id: string) => {
     if (!sessionId) {
       return
     }
@@ -630,13 +389,18 @@ function StaffNotesPage() {
       saveJson(buildStorageKey(sessionId, activeTab), next)
       return
     }
-    void deleteSessionNote(id)
-    setTodos(current => current.filter(item => item.id !== id))
+    try {
+      await deleteSessionNote(id)
+      setTodos(current => current.filter(item => item.id !== id))
+    } catch (error) {
+      showAppNotice(`Failed to delete todo: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+    }
   }
 
   const canWriteDbNotes =
     !isFullTime && Boolean(user?.id) && (access.mode === 'owner' || access.mode === 'shared')
   const isEditable = isGuest || canWriteDbNotes
+  const canEditEntry = (createdBy?: string) => isGuest || (canWriteDbNotes && (access.mode === 'owner' || createdBy === user?.id))
 
   const listEmptyLabel =
     activeConfig.type === 'todo'
@@ -677,6 +441,7 @@ function StaffNotesPage() {
               onAddTodo={handleAddTodo}
               isAddTodoDisabled={isAddTodoDisabled}
               todos={todos}
+              canEditEntry={canEditEntry}
               listEmptyLabel={listEmptyLabel}
               onToggleTodo={handleToggleTodo}
               onDeleteTodo={handleDeleteTodo}
@@ -717,6 +482,7 @@ function StaffNotesPage() {
               onAddNote={handleAddNote}
               isAddNoteDisabled={isAddNoteDisabled}
               notes={notes}
+              canEditEntry={canEditEntry}
               listEmptyLabel={listEmptyLabel}
               onDeleteNote={handleDeleteNote}
             />
