@@ -3,7 +3,7 @@ import type { ExtractedClass, Student } from '../../types/app'
 import { sanitizeLevel } from '../rosters/utils'
 
 export type ExportCourse = { code: string; name: string; level: string; startTime: string; location: string; instructor: string; students: Student[]; lessonDates: string[] }
-export type ClassPackage = { schemaVersion: 1; kind: 'rec-tablet-classes'; datasetId: string; instructor: string; courses: Array<{ sourceId: string; name: string; level: string; startTime: string; location: string; lessonDates: string[]; swimmers: Array<{ sourceId: string; name: string; level: string }> }> }
+export type ClassPackage = { schemaVersion: 1; kind: 'rec-tablet-classes'; datasetId: string; instructor: string; courses: Array<{ sourceId: string; name: string; level: string; startTime: string; location: string; lessonDates: string[]; swimmers: Array<{ sourceId: string; name: string; level?: string }> }> }
 export type ExportRegistry = { schemaVersion: 1; kind: 'rec-tablet-export-ids'; sessionId: string; datasetId: string; people: Record<string, { sourceId: string; courseId: string; name: string }>; dates?: Record<string, string[]> }
 const days = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa']
 const limit = 10 * 1024 * 1024
@@ -123,7 +123,11 @@ export async function buildPackage(sessionId: string, instructor: string, course
     for (const student of course.students) {
       if (student.waitlist) continue
       const name = required(student.name, 'Swimmer name')
-      const level = sanitizeLevel(required(student.level || course.level, `Level for ${name}`))
+      const sourceLevel = student.level?.trim() ?? ''
+      const normalizedStudentLevel = sourceLevel ? sanitizeLevel(sourceLevel) : ''
+      const level = course.level === 'SplashPrivate' && (!sourceLevel || normalizedStudentLevel === 'SplashPrivate')
+        ? undefined
+        : sanitizeLevel(required(sourceLevel || course.level, `Level for ${name}`))
       if (level === 'SplashPrivate' || level === 'Splash2') throw new Error(`Choose an actual level for ${name} in Rosters (for example Splash 2A or 2B).`)
       // UUIDs are retained against an exact source signature; row order, display
       // IDs, class times, instructor changes and skill edits cannot change them.
@@ -137,7 +141,7 @@ export async function buildPackage(sessionId: string, instructor: string, course
       }
       const person = registry.people[key]
       if (person.name !== name || person.courseId !== sourceId) throw new Error('The ID backup does not match this roster.')
-      swimmers.push({ sourceId: person.sourceId, name, level })
+      swimmers.push({ sourceId: person.sourceId, name, ...(level ? { level } : {}) })
     }
     if ([...course.location].length > 1000) throw new Error('Class location exceeds 1000 characters.')
     registry.dates = { ...registry.dates, [course.code]: parseDates(course.lessonDates.join('\n')) }

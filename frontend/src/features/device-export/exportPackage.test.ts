@@ -20,6 +20,22 @@ describe('Rec Tablet class packages', () => {
     expect(sam.package.datasetId).toBe(result.package.datasetId)
     expect(sam.package.courses).toHaveLength(1)
   })
+  it('exports private swimmers without an assigned level and preserves later assignments', async () => {
+    const courses = buildCourses(session, classes, students)
+    const privateCourses = structuredClone(courses)
+    privateCourses.find(course => course.code === '004202')!.students[0].level = ''
+    const first = await buildPackage(session.id, 'Alex', privateCourses, newRegistry(session.id))
+    const privatePackage = first.package.courses.find(course => course.sourceId.endsWith(':004202'))!
+    expect(privatePackage.level).toBe('SplashPrivate')
+    expect(privatePackage.swimmers[0]).not.toHaveProperty('level')
+
+    const assigned = structuredClone(privateCourses)
+    assigned.find(course => course.code === '004202')!.students[0].level = 'Splash 2B'
+    const updated = await buildPackage(session.id, 'Alex', assigned, first.registry)
+    const updatedPrivate = updated.package.courses.find(course => course.sourceId.endsWith(':004202'))!
+    expect(updatedPrivate.swimmers[0].sourceId).toBe(privatePackage.swimmers[0].sourceId)
+    expect(updatedPrivate.swimmers[0].level).toBe('Splash2B')
+  })
   it('preserves IDs after row reorder, roster changes, level edits, removal and return', async () => {
     const first = await buildPackage(session.id, 'Alex', buildCourses(session, classes, students), newRegistry(session.id))
     const changed = students.filter(student => student.name !== 'Johnny').reverse().map((student, i) => ({ ...student, id: `new-${i}`, level: student.name === 'Harrold' ? 'Splash2A' : student.level }))
@@ -46,7 +62,7 @@ describe('Rec Tablet class packages', () => {
     expect(next.package.courses[0].sourceId).not.toBe(first.package.courses[0].sourceId)
     expect(next.package.datasetId).not.toBe(first.package.datasetId)
   })
-  it('rejects ambiguous identities, changed source contact, unresolved private levels and invalid dates', async () => {
+  it('rejects ambiguous identities, changed source contact, generic levels and invalid dates', async () => {
     const courses = buildCourses(session, classes, students)
     const first = await buildPackage(session.id, 'Alex', courses, newRegistry(session.id))
     const duplicate = structuredClone(courses)
@@ -54,7 +70,7 @@ describe('Rec Tablet class packages', () => {
     await expect(buildPackage(session.id, 'Alex', duplicate, first.registry)).rejects.toThrow('indistinguishable')
     const contact = structuredClone(courses); contact[0].students[0].phone = 'changed'
     await expect(buildPackage(session.id, 'Alex', contact, first.registry)).rejects.toThrow('Source details changed')
-    const privateClass = structuredClone(courses); privateClass[1].students[0].level = 'Splash Private'
+    const privateClass = structuredClone(courses); privateClass[1].students[0].level = 'Splash2'
     await expect(buildPackage(session.id, 'Alex', privateClass, first.registry)).rejects.toThrow('actual level')
     const invalid = structuredClone(courses); invalid[0].lessonDates = ['2026-02-30']
     await expect(buildPackage(session.id, 'Alex', invalid, first.registry)).rejects.toThrow('Invalid lesson date')

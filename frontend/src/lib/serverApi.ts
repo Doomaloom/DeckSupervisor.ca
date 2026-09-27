@@ -704,3 +704,22 @@ export function upsertRosterLevelEdit(body: Record<string, unknown>) {
 export function upsertRosterStudentLevelEdit(body: Record<string, unknown>) {
   return request<void>('/api/roster-edits/student', { method: 'POST', body })
 }
+
+export type DeviceShareStarted = {
+  id: string
+  hostToken: string
+  codes: Array<{ instructor: string; code: string }>
+  expiresAt: string
+}
+
+export function createDeviceShare(packages: Array<{ instructor: string; package: unknown }>) {
+  return request<DeviceShareStarted>('/api/device-shares', { method: 'POST', body: { packages } })
+}
+
+export function heartbeatDeviceShare(id: string, hostToken: string) {
+  return request<{ expiresAt: string }>(`/api/device-shares/${encodeURIComponent(id)}/heartbeat`, { method: 'POST', body: { hostToken } })
+}
+
+export function closeDeviceShare(id: string, hostToken: string) {
+  return request<void>(`/api/device-shares/${encodeURIComponent(id)}/close`, { method: 'POST', body: { hostToken }, keepalive: true })
+}

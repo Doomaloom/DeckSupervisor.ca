@@ -81,6 +81,12 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/custom-rosters/resolve", handlers.ResolveCustomRosters).Methods("POST")
 	r.HandleFunc("/api/custom-rosters/{id}", handlers.DeleteCustomRoster).Methods("DELETE")
 
+	// Temporary Rec Tablet data sharing
+	r.HandleFunc("/api/device-shares", handlers.CreateDeviceShare).Methods("POST")
+	r.HandleFunc("/api/device-shares/redeem", handlers.RedeemDeviceShare).Methods("POST")
+	r.HandleFunc("/api/device-shares/{id}/heartbeat", handlers.HeartbeatDeviceShare).Methods("POST")
+	r.HandleFunc("/api/device-shares/{id}/close", handlers.CloseDeviceShare).Methods("POST")
+
 	// Planner sharing
 	r.HandleFunc("/api/planner-shares", handlers.CreatePlannerShare).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}", handlers.GetPlannerShare).Methods("GET")
