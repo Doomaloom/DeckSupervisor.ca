@@ -12,7 +12,7 @@ import { useFullTimeSchematicView } from './hooks/useFullTimeSchematicView'
 import { useSchematicSchedule } from './hooks/useSchematicSchedule'
 
 function SchematicPage() {
-    const { accountType } = useAuth()
+    const { accountType, user } = useAuth()
     const { selectedDay, setSelectedDay } = useDay()
     const { access, session } = useCurrentSession()
     const { currentTeam, currentTeamId } = useCurrentTeam()
@@ -130,6 +130,10 @@ function SchematicPage() {
                         </p>
                     </div>
                 </div>
+
+                {fullTimeView.selectedSession?.created_by === user?.id && fullTimeView.selectedSession?.id && (
+                    <AccountLinks key={fullTimeView.selectedSession.id} sessionId={fullTimeView.selectedSession.id} />
+                )}
 
                 {!currentTeamId ? (
                     <div className="rounded-card border-2 border-secondary/30 bg-bg p-4 text-sm font-semibold text-secondary">

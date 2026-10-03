@@ -22,6 +22,7 @@ import { buildTimeLabels, timeToMinutes } from '../utils/time'
 const NO_LOCATION_KEY = '__no_location__'
 
 type TeamSessionRow = {
+    created_by: string
     id: string
     session_day: string
     session_season: string | null
@@ -123,7 +124,7 @@ export function useFullTimeSchematicView(enabled: boolean) {
         const loadSessions = async () => {
             setLoadingSessions(true)
             try {
-                const response = await fetchTeamSessions(currentTeamId, 'id,session_day,session_season,session_year,start_date,location,source_locations,updated_at')
+                const response = await fetchTeamSessions(currentTeamId, 'id,created_by,session_day,session_season,session_year,start_date,location,source_locations,updated_at')
                 if (!active) {
                     return
                 }

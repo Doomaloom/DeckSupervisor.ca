@@ -31,7 +31,7 @@ export function LessonEditor({sessionId,classId,week}: {sessionId: string;classI
  {dirty && <p role="status">Unsaved changes</p>}
  {error && <p role="alert">{error} Your draft is retained.</p>}
  {notice && <p role="status">{notice}</p>}
- <fieldset disabled={saving} className="min-w-0"><div className="overflow-x-auto"><table className="w-full min-w-[620px] border-collapse text-left"><thead><tr>{['Skill','Activity / drill','Pool location','Duration (minutes)','Row actions'].map(h=><th key={h} className="border p-2">{h}</th>)}</tr></thead>
+ <fieldset disabled={saving} className="min-w-0"><p className="text-sm md:hidden">Scroll the activity table sideways to edit pool location, duration, and row order.</p><div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable activity table"><table className="w-full min-w-[620px] border-collapse text-left"><thead><tr>{['Skill','Activity / drill','Pool location','Duration (minutes)','Row actions'].map(h=><th key={h} className="border p-2">{h}</th>)}</tr></thead>
  <tbody>{rows.map((row,i)=><tr key={i}>
  <td className="border p-2"><textarea aria-label={`Skill ${i+1}`} className="w-full border p-1" maxLength={2000} value={row.skill} onChange={e=>edit(i,{skill:e.target.value})}/></td>
  <td className="border p-2"><textarea aria-label={`Activity / drill ${i+1}`} className="w-full border p-1" maxLength={10000} value={row.activity} onChange={e=>edit(i,{activity:e.target.value})}/></td>
