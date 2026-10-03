@@ -1,0 +1,27 @@
+[
+  {
+    "viewport": "desktop",
+    "sameWeekdaySessionsDistinct": true,
+    "reloadPreservesSelection": true,
+    "saveFailurePreservesDraft": true,
+    "unsavedNavigationCancelled": true,
+    "saveReloadPersisted": true,
+    "untouchedWeekNull": true,
+    "guestApiStatus": 401
+  },
+  {
+    "viewport": "mobile",
+    "sameWeekdaySessionsDistinct": true,
+    "reloadPreservesSelection": true,
+    "saveFailurePreservesDraft": true,
+    "unsavedNavigationCancelled": true,
+    "saveReloadPersisted": true,
+    "untouchedWeekNull": true,
+    "guestApiStatus": 401
+  },
+  {
+    "crossAccountPlanStatus": 403,
+    "duplicateNamesIsolated": true,
+    "unlinkedEmpty": true
+  }
+]
