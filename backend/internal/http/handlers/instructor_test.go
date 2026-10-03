@@ -1,0 +1,98 @@
+package handlers_test
+
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"strings"
+	"testing"
+)
+
+func TestInstructorMetadataUsesCallerAndExplicitProjection(t *testing.T) {
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/rest/v1/instructor_assignments":
+			if r.URL.Query().Get("account_id") != "eq."+testUser || r.URL.Query().Get("session_id") != "eq.session-a" {
+				t.Fatal("missing caller/session scope")
+			}
+			if r.URL.Query().Get("select") != "id,name" {
+				t.Fatal("overbroad assignment projection")
+			}
+			io.WriteString(w, `[{"id":"column-a","name":"Alex"}]`)
+		case "/rest/v1/instructor_classes":
+			if r.URL.Query().Get("assignment_id") != "eq.column-a" || r.URL.Query().Get("session_id") != "eq.session-a" {
+				t.Fatal("missing linked column scope")
+			}
+			if r.URL.Query().Get("select") != "id,session_id,assignment_id,code,level,start_time,end_time" {
+				t.Fatal("overbroad class projection")
+			}
+			io.WriteString(w, `[{"id":"class-a","session_id":"session-a","assignment_id":"column-a","code":"A","level":"Swimmer 1","start_time":"09:00","end_time":"09:30"}]`)
+		default:
+			t.Fatalf("unexpected data request: %s", r.URL.Path)
+		}
+	})
+	w := staffRequest("GET", "/api/instructor/sessions/session-a/classes", "", true)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"instructor":"Alex"`) {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+	for _, word := range []string{"student", "roster", "count", "phone", "email", "account_id"} {
+		if strings.Contains(w.Body.String(), word) {
+			t.Fatalf("leaked %s", word)
+		}
+	}
+}
+func TestInstructorDirectRequestsDenied(t *testing.T) {
+	for _, path := range []string{"/api/instructor/sessions", "/api/instructor/sessions/other/classes", "/api/instructor/sessions/other/classes/class/plans/2026-10-05", "/api/sessions/other/instructor-assignments"} {
+		w := staffRequest("GET", path, "", false)
+		if w.Code != 401 {
+			t.Fatalf("guest %s returned %d", path, w.Code)
+		}
+	}
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/rest/v1/rpc/") {
+			t.Fatalf("denied request touched storage: %s", r.URL.Path)
+		}
+		io.WriteString(w, "false")
+	})
+	for _, method := range []string{"GET", "PUT"} {
+		w := staffRequest(method, "/api/instructor/sessions/other/classes/class/plans/2026-10-05", `{"rows":[]}`, true)
+		if w.Code != 403 {
+			t.Fatalf("plan denial %d", w.Code)
+		}
+	}
+	w := staffRequest("PATCH", "/api/sessions/other/instructor-assignments/column", `{"account_id":"forged"}`, true)
+	if w.Code != 403 {
+		t.Fatalf("link denial %d", w.Code)
+	}
+}
+func TestInstructorUnlinkedEmptyAndPlanAttribution(t *testing.T) {
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/rest/v1/instructor_assignments":
+			io.WriteString(w, "[]")
+		case "/rest/v1/rpc/can_plan_class":
+			io.WriteString(w, "true")
+		case "/rest/v1/instructor_plans":
+			var body map[string]any
+			json.NewDecoder(r.Body).Decode(&body)
+			if body["updated_by"] != testUser || body["session_id"] != "session-a" || body["class_id"] != "class-a" {
+				t.Fatalf("bad attribution %v", body)
+			}
+			io.WriteString(w, `[{"rows":[]}]`)
+		default:
+			t.Fatalf("unexpected %s", r.URL.Path)
+		}
+	})
+	w := staffRequest("GET", "/api/instructor/sessions/session-a/classes", "", true)
+	if w.Body.String() != "{\"classes\":[]}\n" {
+		t.Fatalf("empty %s", w.Body)
+	}
+	w = staffRequest("PUT", "/api/instructor/sessions/session-a/classes/class-a/plans/2026-10-05", `{"rows":[]}`, true)
+	if w.Code != 200 {
+		t.Fatalf("save %d %s", w.Code, w.Body)
+	}
+	w = staffRequest("PUT", "/api/instructor/sessions/session-a/classes/class-a/plans/2026-10-05", `{"rows":[],"updated_by":"forged"}`, true)
+	if w.Code != 400 {
+		t.Fatal("accepted forged identity")
+	}
+}

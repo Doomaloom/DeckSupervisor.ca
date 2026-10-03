@@ -1,0 +1,34 @@
+\set ON_ERROR_STOP on
+begin;
+insert into sessions(id,created_by,session_day,start_date,end_date) values('20000000-0000-0000-0000-000000000005','00000000-0000-0000-0000-000000000002','Mo','2026-10-05','2026-10-26');
+update sessions set session_day='Mo',start_date='2026-10-05',end_date='2026-10-26' where id='20000000-0000-0000-0000-000000000004';
+set role authenticated;
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}',true);
+select save_instructor_schematic(sid,'{"assignments":[{"id":"50000000-0000-0000-0000-000000000001","name":"Alex","classes":[{"code":"A","level":"1","start_time":"09:00","end_time":"09:30"}]},{"id":"50000000-0000-0000-0000-000000000002","name":"Alex","classes":[{"code":"B","level":"2","start_time":"09:30","end_time":"10:00"}]}]}') from (values('20000000-0000-0000-0000-000000000004'::uuid),('20000000-0000-0000-0000-000000000005'::uuid)) s(sid);
+update instructor_assignments set account_id=case id when '50000000-0000-0000-0000-000000000001' then '00000000-0000-0000-0000-000000000007'::uuid else '00000000-0000-0000-0000-000000000008'::uuid end;
+reset role;
+create temporary table class_ids as select id,session_id,code from instructor_classes;
+grant select on class_ids to authenticated;
+set role authenticated;
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000007","role":"authenticated"}',true);
+select pg_temp.assert_true((select count(*)=2 and bool_and(code='A') from instructor_classes),'duplicate names cannot grant other column');
+select pg_temp.assert_true((select count(*)=2 from instructor_sessions()),'two same-weekday sessions stay distinct');
+select pg_temp.assert_true((select count(distinct id)=2 from instructor_classes),'same course code different session identity');
+select pg_temp.assert_true((select bool_and(not(to_jsonb(c) ?| array['students','student_count','phone','email'])) from instructor_classes c),'no roster columns in storage');
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}',true);
+-- Reverse column order and rename both columns while retaining UUIDs.
+select save_instructor_schematic('20000000-0000-0000-0000-000000000004','{"assignments":[{"id":"50000000-0000-0000-0000-000000000002","name":"Renamed B","classes":[{"code":"B","level":"2","start_time":"09:30","end_time":"10:00"}]},{"id":"50000000-0000-0000-0000-000000000001","name":"Renamed A","classes":[{"code":"A","level":"1","start_time":"09:00","end_time":"09:30"}]}]}');
+select pg_temp.assert_true((select count(*)=4 from instructor_classes c join class_ids old using(id,session_id,code)),'rename and reordered save retain class IDs');
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000007","role":"authenticated"}',true);
+select pg_temp.assert_true((select count(*)=2 and bool_and(code='A') from instructor_classes),'rename preserves account access');
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}',true);
+update instructor_assignments set account_id=null where session_id='20000000-0000-0000-0000-000000000004' and id='50000000-0000-0000-0000-000000000001';
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000007","role":"authenticated"}',true);
+select pg_temp.assert_true((select count(*)=1 from instructor_classes),'unlink immediately hides one session');
+select pg_temp.assert_true((select count(*)=1 from instructor_sessions()),'reload context after unlink');
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}',true);
+update instructor_assignments set account_id='00000000-0000-0000-0000-000000000008' where session_id='20000000-0000-0000-0000-000000000004' and id='50000000-0000-0000-0000-000000000001';
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000008","role":"authenticated"}',true);
+select pg_temp.assert_true((select count(*)=3 from instructor_classes),'reassignment transfers class access');
+reset role;
+rollback;
