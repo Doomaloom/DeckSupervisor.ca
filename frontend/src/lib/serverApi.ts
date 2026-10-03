@@ -683,7 +683,7 @@ export function fetchSchematics(sessionIds: string[]) {
   )
 }
 
-export function upsertSchematic(sessionId: string, data: { codes: string[]; instructors: string[] }) {
+export function upsertSchematic(sessionId: string, data: { codes: string[]; instructors: string[]; assignmentIds?: string[]; assignments?: unknown[] }) {
   return request<{ schematic: any }>(`/api/schematics/${encodeURIComponent(sessionId)}`, {
     method: 'PUT',
     body: { data },
@@ -722,4 +722,12 @@ export function heartbeatDeviceShare(id: string, hostToken: string) {
 
 export function closeDeviceShare(id: string, hostToken: string) {
   return request<void>(`/api/device-shares/${encodeURIComponent(id)}/close`, { method: 'POST', body: { hostToken }, keepalive: true })
+}
+
+export type InstructorAssignment = { id: string; name: string; account_id: string | null }
+export function fetchInstructorAssignments(sessionId: string) {
+ return request<{assignments: InstructorAssignment[]}>(`/api/sessions/${encodeURIComponent(sessionId)}/instructor-assignments`)
+}
+export function linkInstructorAssignment(sessionId: string, id: string, account_id: string | null) {
+ return request<{assignments: InstructorAssignment[]}>(`/api/sessions/${encodeURIComponent(sessionId)}/instructor-assignments/${encodeURIComponent(id)}`, {method:'PATCH',body:{account_id}})
 }

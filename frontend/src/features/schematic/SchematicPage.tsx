@@ -1,3 +1,4 @@
+import AccountLinks from './components/AccountLinks'
 import React from 'react'
 import { useAuth } from '../../app/AuthContext'
 import { useDay } from '../../app/DayContext'
@@ -240,6 +241,7 @@ function SchematicPage() {
                 onCourseDragStart={isReadOnly ? () => {} : handleDragStart}
             />
 
+            {access.mode === 'owner' && session?.id && <AccountLinks key={session.id} sessionId={session.id} />}
             <div className="flex justify-center">
                 <button
                     className="rounded-2xl bg-primary px-6 py-3 text-white transition hover:-translate-y-0.5 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"

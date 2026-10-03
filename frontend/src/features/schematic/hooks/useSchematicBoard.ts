@@ -57,6 +57,7 @@ export function useSchematicBoard({
     allowStoredEmptyColumns = true,
 }: UseSchematicBoardArgs) {
     const [columns, setColumns] = useState<Course[][]>([])
+    const [assignmentIds, setAssignmentIds] = useState<string[]>([])
     const [instructors, setInstructors] = useState<string[]>([])
     const [lockedInstructors, setLockedInstructors] = useState<string[]>([])
     const [dragged, setDragged] = useState<DragState | null>(null)
@@ -75,6 +76,7 @@ export function useSchematicBoard({
             layout.instructors.push('')
             layout.lockedInstructors.push('')
         }
+        setAssignmentIds(layout.columns.map((_, index) => storedLayout?.assignmentIds?.[index] ?? crypto.randomUUID()))
         setColumns(layout.columns)
         setInstructors(layout.instructors)
         setLockedInstructors(layout.lockedInstructors)
@@ -250,6 +252,7 @@ export function useSchematicBoard({
     }
 
     const addTemporaryColumn = () => {
+        setAssignmentIds(current => [...current, crypto.randomUUID()])
         setColumns(current => [...current, []])
         setInstructors(current => [...current, ''])
         setLockedInstructors(current => [...current, ''])
@@ -261,6 +264,7 @@ export function useSchematicBoard({
             .map((column, index) => ({ column, index }))
             .filter(({ column }) => column.length > 0)
             .map(({ index }) => index)
+        setAssignmentIds(keepIndices.map(index => assignmentIds[index]))
         setColumns(keepIndices.map(index => columns[index]))
         setInstructors(keepIndices.map(index => instructors[index] ?? ''))
         setLockedInstructors(keepIndices.map(index => lockedInstructors[index] ?? ''))
@@ -281,6 +285,7 @@ export function useSchematicBoard({
     }
 
     return {
+        assignmentIds,
         columns,
         instructors,
         lockedInstructors,

@@ -4,6 +4,7 @@ import { coursesOverlap } from './courses'
 import { canPlaceCourses } from './drag'
 
 export type StoredCourseLayout = {
+    assignmentIds?: string[]
     codes: string[]
     instructors: string[]
 }

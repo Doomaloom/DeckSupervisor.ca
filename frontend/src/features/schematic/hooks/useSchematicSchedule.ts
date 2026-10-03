@@ -124,9 +124,10 @@ export function useSchematicSchedule(selectedDay: string | null) {
             if (!active) {
                 return
             }
-            const dataValue = response.schematic?.data as { codes?: string[]; instructors?: string[] } | undefined
+            const dataValue = response.schematic?.data as { codes?: string[]; instructors?: string[]; assignmentIds?: string[] } | undefined
             if (dataValue?.codes?.length) {
                 setRemoteSchedule({
+                    assignmentIds: dataValue.assignmentIds,
                     codes: dataValue.codes ?? [],
                     instructors: dataValue.instructors ?? [],
                 })
@@ -142,6 +143,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
 
     const storedLayout = access.mode === 'guest' ? getScheduleForDay(selectedDay ?? '') : remoteSchedule
     const {
+        assignmentIds,
         columns,
         instructors,
         lockedInstructors,
@@ -204,6 +206,12 @@ export function useSchematicSchedule(selectedDay: string | null) {
 
         if (access.mode === 'owner' && currentSession && sessionId) {
             const nextRemoteSchedule = {
+                assignmentIds,
+                assignments: columns.map((column, index) => ({
+                    id: assignmentIds[index], name: instructors[index] ?? '',
+                    classes: column.map(course => ({code: course.code, level: course.level,
+                        start_time: course.startTime, end_time: course.endTime})),
+                })),
                 codes,
                 instructors,
             }

@@ -628,20 +628,11 @@ func UpsertSchematic(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	body := map[string]any{
-		"session_id": sessionID,
-		"created_by": client.User.ID,
-		"data":       payload.Data,
-		"updated_at": time.Now().UTC().Format(time.RFC3339),
-	}
-	query := url.Values{}
-	query.Set("on_conflict", "session_id")
-	var rows []schematicRow
-	if err := client.Post(r.Context(), "/rest/v1/schematics", query, body, "resolution=merge-duplicates,return=representation", &rows); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := client.RPC(r.Context(), "save_instructor_schematic", map[string]any{"p_session": sessionID, "p_data": payload.Data}, nil); err != nil {
+		http.Error(w, "Unable to save schematic", http.StatusBadRequest)
 		return
 	}
-	writeJSON(w, map[string]any{"schematic": firstSchematic(rows)})
+	writeJSON(w, map[string]any{"schematic": schematicRow{SessionID: sessionID, Data: payload.Data}})
 }
 
 func GetRosterEdits(w http.ResponseWriter, r *http.Request) {
