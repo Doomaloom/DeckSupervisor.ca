@@ -5,7 +5,7 @@ import { fetchInstructorSessions,fetchInstructorClasses,type InstructorSession,t
 export function sessionLabel(s: InstructorSession) {
  return [s.session_day,s.session_season,s.session_year,s.location,s.start_date,s.end_date].filter(Boolean).join(' · ')
 }
-export default function useInstructorClasses() {
+export default function useInstructorClasses(preferredSession?: string) {
  const {user}=useAuth()
  const [sessions,setSessions]=useState<InstructorSession[]>([])
  const [sessionId,setSessionId]=useState('')
@@ -16,9 +16,9 @@ export default function useInstructorClasses() {
  useEffect(()=>{
   let active=true;setSessions([]);setSessionId('');setClasses([]);setError('');setLoading(true)
   if(!user){setLoading(false);return}
-  fetchInstructorSessions().then(r=>{if(active){setSessions(r.sessions);const stored=sessionStorage.getItem(`instructor-session:${user.id}`);setSessionId(r.sessions.some(s=>s.id===stored)?stored!:r.sessions[0]?.id||'');if(!r.sessions.length)setLoading(false)}}).catch(e=>{if(active){setError(e.message);setLoading(false)}})
+  fetchInstructorSessions().then(r=>{if(active){setSessions(r.sessions);const stored=preferredSession || sessionStorage.getItem(`instructor-session:${user.id}`);setSessionId(r.sessions.some(s=>s.id===stored)?stored!:r.sessions[0]?.id||'');if(!r.sessions.length)setLoading(false)}}).catch(e=>{if(active){setError(e.message);setLoading(false)}})
   return()=>{active=false}
- },[user?.id,retry])
+ },[user?.id,retry,preferredSession])
  useEffect(()=>{
   let active=true;setClasses([])
   if(!sessionId)return

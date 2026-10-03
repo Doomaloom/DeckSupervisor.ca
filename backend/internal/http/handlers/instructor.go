@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"regexp"
 
 	supabasesvc "cob-aquatics/internal/services/supabase"
 	"github.com/gorilla/mux"
@@ -93,4 +94,60 @@ func InstructorAssignments(w http.ResponseWriter, r *http.Request) {
 		rows = []map[string]any{}
 	}
 	writeJSON(w, map[string]any{"assignments": rows})
+}
+
+var poolLocationPattern = regexp.MustCompile(`^(Lane( [1-9][0-9]?)?|Shallow end|Deep end)$`)
+
+type lessonRow struct {
+	Skill    string `json:"skill"`
+	Activity string `json:"activity"`
+	Location string `json:"location"`
+	Duration int    `json:"duration"`
+}
+
+func InstructorPlan(w http.ResponseWriter, r *http.Request) {
+	c, err := supabasesvc.NewClientFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
+	v := mux.Vars(r)
+	sid, cid, week := v["sessionId"], v["classId"], v["week"]
+	var allowed bool
+	if err = c.RPC(r.Context(), "can_plan_class", map[string]any{"p_session": sid, "p_class": cid, "p_week": week}, &allowed); err != nil || !allowed {
+		http.Error(w, "Class or week unavailable", 403)
+		return
+	}
+	q := url.Values{"session_id": {"eq." + sid}, "class_id": {"eq." + cid}, "week": {"eq." + week}, "select": {"session_id,class_id,week,rows,updated_at"}}
+	var plans []map[string]any
+	if r.Method == "PUT" {
+		var body struct {
+			Rows []lessonRow `json:"rows"`
+		}
+		decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 3<<20))
+		decoder.DisallowUnknownFields()
+		if decoder.Decode(&body) != nil || body.Rows == nil || len(body.Rows) > 200 {
+			http.Error(w, "Invalid activity rows", 400)
+			return
+		}
+		for _, row := range body.Rows {
+			if len(row.Skill) > 2000 || len(row.Activity) > 10000 || row.Duration < 1 || row.Duration > 240 || !poolLocationPattern.MatchString(row.Location) {
+				http.Error(w, "Invalid activity row", 400)
+				return
+			}
+		}
+		q = url.Values{"on_conflict": {"session_id,class_id,week"}, "select": {"session_id,class_id,week,rows,updated_at"}}
+		err = c.Post(r.Context(), "/rest/v1/instructor_plans", q, map[string]any{"session_id": sid, "class_id": cid, "week": week, "rows": body.Rows, "updated_by": c.User.ID}, "resolution=merge-duplicates,return=representation", &plans)
+	} else {
+		err = c.Get(r.Context(), "/rest/v1/instructor_plans", q, &plans)
+	}
+	if err != nil {
+		http.Error(w, "Unable to load or save plan", 400)
+		return
+	}
+	var plan any
+	if len(plans) > 0 {
+		plan = plans[0]
+	}
+	writeJSON(w, map[string]any{"plan": plan})
 }

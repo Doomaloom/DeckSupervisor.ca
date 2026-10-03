@@ -51,18 +51,27 @@ begin
   end loop;
  end loop;
 end $$;
+-- Session dates are local calendar dates in America/Toronto, not UTC instants.
+create or replace function public.instructor_weeks(p_start date,p_end date,p_day text)
+returns table(week date) language sql immutable set search_path=public as $$
+ select distinct date_trunc('week',d)::date
+ from generate_series(p_start::timestamp,p_end::timestamp,interval '1 day') d
+ where trim(to_char(d,'Day'))=p_day
+ or (array['Mo','Tu','We','Th','Fr','Sa','Su'])[extract(isodow from d)::int]=any(string_to_array(p_day,','))
+ or (p_day like 'Mini Session %' and extract(isodow from d)<=5)
+ order by 1
+$$;
 -- Links never grant access to sessions or schematics. This function returns only session context.
 create or replace function public.instructor_sessions()
 returns table(id uuid,session_day text,session_season text,session_year integer,location text,start_date date,end_date date,weeks jsonb)
 language sql stable security definer set search_path=public as $$
  select s.id,s.session_day,s.session_season,s.session_year,s.location,s.start_date,s.end_date,
- coalesce((select jsonb_agg(w.week order by w.week) from (
- select distinct date_trunc('week',d)::date::text as week
- from generate_series(s.start_date::timestamp,s.end_date::timestamp,interval '1 day') d
- where trim(to_char(d,'Day'))=s.session_day) w),'[]'::jsonb)
+ coalesce((select jsonb_agg(w.week::text order by w.week) from instructor_weeks(s.start_date,s.end_date,s.session_day) w),'[]'::jsonb)
  from sessions s where exists(select 1 from instructor_assignments a
  where a.session_id=s.id and a.active and a.account_id=auth.uid()) order by s.start_date,s.id
 $$;
+revoke all on function public.instructor_weeks(date,date,text) from public,anon;
+grant execute on function public.instructor_weeks(date,date,text) to authenticated;
 revoke all on function public.save_instructor_schematic(uuid,jsonb),public.instructor_sessions() from public,anon;
 grant execute on function public.save_instructor_schematic(uuid,jsonb),public.instructor_sessions() to authenticated;
 commit;

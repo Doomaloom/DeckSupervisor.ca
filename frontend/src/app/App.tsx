@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, useLocation } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, useLocation } from 'react-router-dom'
 import InstructorLayout from '../features/instructor/InstructorLayout'
 import Layout from '../components/Layout/Layout'
 import { CsvImportFlowProvider } from './CsvImportFlowContext'
@@ -11,12 +11,6 @@ function Workspace() {
  return <CsvImportFlowProvider><Layout><AppRoutes /></Layout></CsvImportFlowProvider>
 }
 
-function App() {
-  return (
-    <Router>
-      <Workspace />
-    </Router>
-  )
-}
-
+const router=createBrowserRouter([{path:'*',element:<Workspace />}])
+function App() { return <RouterProvider router={router} /> }
 export default App

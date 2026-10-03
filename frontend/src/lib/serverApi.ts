@@ -747,3 +747,12 @@ export function fetchInstructorSessions() {
 export function fetchInstructorClasses(sessionId: string) {
  return request<{classes: InstructorClass[]}>(`/api/instructor/sessions/${encodeURIComponent(sessionId)}/classes`)
 }
+
+export type LessonRow = {skill: string; activity: string; location: string; duration: number}
+export type LessonPlan = {session_id: string; class_id: string; week: string; rows: LessonRow[]; updated_at: string}
+export function fetchLessonPlan(session: string, classId: string, week: string) {
+ return request<{plan: LessonPlan | null}>(`/api/instructor/sessions/${encodeURIComponent(session)}/classes/${encodeURIComponent(classId)}/plans/${encodeURIComponent(week)}`)
+}
+export function saveLessonPlan(session: string, classId: string, week: string, rows: LessonRow[]) {
+ return request<{plan: LessonPlan}>(`/api/instructor/sessions/${encodeURIComponent(session)}/classes/${encodeURIComponent(classId)}/plans/${encodeURIComponent(week)}`,{method:'PUT',body:{rows}})
+}

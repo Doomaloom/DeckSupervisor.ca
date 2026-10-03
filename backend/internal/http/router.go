@@ -107,6 +107,8 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/sessions/{sessionId}/instructor-assignments", handlers.InstructorAssignments).Methods("GET")
 	r.HandleFunc("/api/sessions/{sessionId}/instructor-assignments/{assignmentId}", handlers.InstructorAssignments).Methods("PATCH")
 
+	r.HandleFunc("/api/instructor/sessions/{sessionId}/classes/{classId}/plans/{week}", handlers.InstructorPlan).Methods("GET", "PUT")
+
 	// Health
 	r.HandleFunc("/api/health", handlers.Health).Methods("GET")
 	return r

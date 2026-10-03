@@ -1,3 +1,4 @@
+import LessonPlans from '../features/instructor/LessonPlans'
 import MyClasses from '../features/instructor/MyClasses'
 import InstructorPlaceholder from '../features/instructor/InstructorPlaceholder'
 import { Routes, Route } from 'react-router-dom'
@@ -42,7 +43,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/instructor" element={<MyClasses />} />
-      <Route path="/instructor/lesson-plans" element={<InstructorPlaceholder title="Lesson Plans" />} />
+      <Route path="/instructor/lesson-plans" element={<LessonPlans />} />
       <Route path="/instructor/attendance" element={<InstructorPlaceholder title="Attendance" />} />
       <Route path="/instructor/print" element={<InstructorPlaceholder title="Print" />} />
       <Route path="/sign-in" element={<SignInPage />} />
