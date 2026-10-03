@@ -42,6 +42,14 @@ func NewClientFromRequest(r *http.Request) (*Client, error) {
 		return nil, errors.New("unauthorized")
 	}
 
+	return NewClientForSession(session)
+}
+
+// Used only after the auth provider verifies a session. No service-role credential.
+func NewClientForSession(session *authsvc.Session) (*Client, error) {
+	if session == nil || session.User.ID == "" || session.AccessToken == "" {
+		return nil, errors.New("unauthorized")
+	}
 	supabaseURL := strings.TrimSpace(os.Getenv("SUPABASE_URL"))
 	anonKey := strings.TrimSpace(os.Getenv("SUPABASE_ANON_KEY"))
 	if anonKey == "" {

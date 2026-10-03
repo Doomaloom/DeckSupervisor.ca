@@ -121,3 +121,19 @@ export async function signOut() {
     setSession(null)
   }
 }
+
+export async function requestPasswordRecovery(email: string) {
+ return requestAuth('/api/auth/recovery/request',{method:'POST',body:JSON.stringify({email})})
+}
+export async function verifyPasswordRecovery(token_hash: string) {
+ await requestAuth('/api/auth/recovery/verify',{method:'POST',body:JSON.stringify({token_hash})})
+}
+export async function passwordRecoveryStatus() {
+ await requestAuth('/api/auth/recovery/status',{method:'GET'})
+}
+export async function resetRecoveredPassword(password: string,confirm_password: string) {
+ const result=await requestAuth('/api/auth/recovery/reset',{method:'POST',body:JSON.stringify({password,confirm_password})})
+ if(currentSession?.user.id)sessionStorage.removeItem(`instructor-session:${currentSession.user.id}`)
+ setSession(null)
+ return result
+}

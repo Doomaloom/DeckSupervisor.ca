@@ -1,3 +1,5 @@
+import ForgotPasswordPage from '../features/auth/ForgotPasswordPage'
+import ResetPasswordPage from '../features/auth/ResetPasswordPage'
 import PrintPlans from '../features/instructor/PrintPlans'
 import LessonPlans from '../features/instructor/LessonPlans'
 import MyClasses from '../features/instructor/MyClasses'
@@ -43,6 +45,8 @@ function RequireFullTime({ children }: { children: JSX.Element }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/instructor" element={<MyClasses />} />
       <Route path="/instructor/lesson-plans" element={<LessonPlans />} />
       <Route path="/instructor/attendance" element={<InstructorPlaceholder title="Attendance" />} />

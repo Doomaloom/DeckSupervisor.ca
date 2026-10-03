@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
 
 function SignInPage() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const { isGuest, signIn, signUp, user } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -51,6 +52,7 @@ function SignInPage() {
     <div id="sign-in-page" data-component="sign-in-page" className="mx-auto flex w-full max-w-xl flex-col gap-6">
       <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
         <h2 className="text-xl font-semibold">Sign in</h2>
+        {params.get('reset') === 'success' && <p role="status">Password reset. Sign in with your new password.</p>}
         <p className="mt-2 text-sm text-secondary/70">Use email + password to access your account.</p>
         <div className="mt-6 pt-2">
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -87,6 +89,7 @@ function SignInPage() {
             >
               {isSignUp ? 'Already have an account? Sign in' : 'New here? Create an account'}
             </button>
+          <Link to="/forgot-password">Forgot password?</Link>
           </form>
         </div>
       </div>

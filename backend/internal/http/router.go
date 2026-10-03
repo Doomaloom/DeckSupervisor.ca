@@ -16,6 +16,11 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/account", handlers.AccountData).Methods("GET")
 	r.HandleFunc("/api/profile", handlers.UpdateProfile).Methods("PUT")
 
+	r.HandleFunc("/api/auth/recovery/request", handlers.RequestPasswordRecovery).Methods("POST")
+	r.HandleFunc("/api/auth/recovery/verify", handlers.VerifyPasswordRecovery).Methods("POST")
+	r.HandleFunc("/api/auth/recovery/status", handlers.PasswordRecoveryStatus).Methods("GET")
+	r.HandleFunc("/api/auth/recovery/reset", handlers.ResetRecoveredPassword).Methods("POST")
+
 	// Teams, memberships, and invites
 	r.HandleFunc("/api/teams/current", handlers.CurrentTeams).Methods("GET")
 	r.HandleFunc("/api/request-assignments", handlers.GetRequestAssignments).Methods("GET")
