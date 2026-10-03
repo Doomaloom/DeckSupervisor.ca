@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   bootstrapAuthSession,
   onAuthSessionChanged,
@@ -21,6 +21,7 @@ export type Profile = {
 }
 
 type AuthContextValue = {
+  workflowCapabilities: {instructor: boolean; supervisor: boolean}
   session: BrowserSession | null
   user: AuthUser | null
   profile: Profile | null
@@ -43,8 +44,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [profileResolved, setProfileResolved] = useState(false)
+  const profileGeneration = useRef(0)
 
   const loadProfile = useCallback(async (activeUser: AuthUser | null) => {
+    const generation = ++profileGeneration.current
+    setProfile(null)
     if (!activeUser) {
       setProfile(null)
       setProfileResolved(true)
@@ -53,12 +57,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfileResolved(false)
     try {
       const data = await fetchAccountData()
-      setProfile(data.profile)
+      if (generation === profileGeneration.current) setProfile(data.profile)
     } catch (error) {
       console.error('Failed to load profile', error)
-      setProfile(null)
+      if (generation === profileGeneration.current) setProfile(null)
     } finally {
-      setProfileResolved(true)
+      if (generation === profileGeneration.current) setProfileResolved(true)
     }
   }, [])
 
@@ -149,6 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   const signOut = useCallback(async () => {
+    profileGeneration.current += 1
     await signOutFromBackend()
     setSession(null)
     setUser(null)
@@ -159,6 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AuthContextValue>(
     () => ({
+      workflowCapabilities: {instructor: Boolean(user && profile && ['part_time','full_time'].includes(profile.account_type)), supervisor: Boolean(user && profile && ['part_time','full_time'].includes(profile.account_type))},
       session,
       user,
       profile,

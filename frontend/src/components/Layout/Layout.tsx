@@ -372,6 +372,7 @@ function Layout({ children }: LayoutProps) {
                                     >
                                         Save Profile
                                     </button>
+                                    <Link to="/instructor">Instructor View</Link>
                                     <button
                                         type="button"
                                         className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
@@ -488,13 +489,16 @@ function Layout({ children }: LayoutProps) {
                                 Sign In
                             </Link>
                         ) : (
+                            <>
+                            <Link to="/instructor" className="text-center font-semibold">Instructor View</Link>
                             <button
                                 type="button"
                                 className="rounded-2xl border border-secondary/40 px-3 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
                                 onClick={async () => { await signOut(); navigate('/sign-in') }}
                             >
-                                Sign Out
+                                Logout
                             </button>
+                            </>
                         )}
                     </div>
                 )}
@@ -546,6 +550,7 @@ function Layout({ children }: LayoutProps) {
                                 >
                                     Save Profile
                                 </button>
+                                <Link to="/instructor">Instructor View</Link>
                                 <button
                                     type="button"
                                     className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"

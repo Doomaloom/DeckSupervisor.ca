@@ -41,6 +41,7 @@ async function request<T>(path: string, options?: RequestOptions): Promise<T> {
 }
 
 export type AccountDataResponse = {
+  workflow_capabilities: {instructor: boolean; supervisor: boolean}
   profile: {
     id: string
     email: string

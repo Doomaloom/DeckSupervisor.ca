@@ -121,9 +121,10 @@ func AccountData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, map[string]any{
-		"profile":     profile,
-		"invites":     invites,
-		"memberships": memberships,
+		"profile":               profile,
+		"workflow_capabilities": map[string]bool{"instructor": profile.AccountType == "part_time" || profile.AccountType == "full_time", "supervisor": profile.AccountType == "part_time" || profile.AccountType == "full_time"},
+		"invites":               invites,
+		"memberships":           memberships,
 	})
 }
 

@@ -1,3 +1,4 @@
+import InstructorPlaceholder from '../features/instructor/InstructorPlaceholder'
 import { Routes, Route } from 'react-router-dom'
 import DashboardPage from '../features/dashboard/DashboardPage'
 import ManageSessionsPage from '../features/sessions/ManageSessionsPage'
@@ -39,6 +40,10 @@ function RequireFullTime({ children }: { children: JSX.Element }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/instructor" element={<InstructorPlaceholder title="My Classes" />} />
+      <Route path="/instructor/lesson-plans" element={<InstructorPlaceholder title="Lesson Plans" />} />
+      <Route path="/instructor/attendance" element={<InstructorPlaceholder title="Attendance" />} />
+      <Route path="/instructor/print" element={<InstructorPlaceholder title="Print" />} />
       <Route path="/sign-in" element={<SignInPage />} />
       <Route path="/account" element={<AccountPage />} />
       <Route path="/team" element={<TeamPage />} />
