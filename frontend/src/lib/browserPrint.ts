@@ -235,8 +235,8 @@ export function openPdfPrintDialog(
   return true
 }
 
-export function openPdfPreview(pdfBlob: Blob, options?: PdfWindowOptions | string) {
-  return Boolean(mountPdfViewer(pdfBlob, undefined, options, 'Open PDF'))
+export function openPdfPreview(pdfBlob: Blob, options?: PdfWindowOptions | string, existingWindow?: Window | null) {
+  return Boolean(mountPdfViewer(pdfBlob, existingWindow, options, 'Open PDF'))
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

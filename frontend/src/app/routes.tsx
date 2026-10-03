@@ -1,3 +1,4 @@
+import PrintPlans from '../features/instructor/PrintPlans'
 import LessonPlans from '../features/instructor/LessonPlans'
 import MyClasses from '../features/instructor/MyClasses'
 import InstructorPlaceholder from '../features/instructor/InstructorPlaceholder'
@@ -45,7 +46,7 @@ function AppRoutes() {
       <Route path="/instructor" element={<MyClasses />} />
       <Route path="/instructor/lesson-plans" element={<LessonPlans />} />
       <Route path="/instructor/attendance" element={<InstructorPlaceholder title="Attendance" />} />
-      <Route path="/instructor/print" element={<InstructorPlaceholder title="Print" />} />
+      <Route path="/instructor/print" element={<PrintPlans />} />
       <Route path="/sign-in" element={<SignInPage />} />
       <Route path="/account" element={<AccountPage />} />
       <Route path="/team" element={<TeamPage />} />
