@@ -732,3 +732,18 @@ export function fetchInstructorAssignments(sessionId: string) {
 export function linkInstructorAssignment(sessionId: string, id: string, account_id: string | null) {
  return request<{assignments: InstructorAssignment[]}>(`/api/sessions/${encodeURIComponent(sessionId)}/instructor-assignments/${encodeURIComponent(id)}`, {method:'PATCH',body:{account_id}})
 }
+
+export type InstructorSession = {
+ id: string; session_day: string; session_season: string | null; session_year: number | null;
+ location: string | null; start_date: string | null; end_date: string | null; weeks: string[]
+}
+export type InstructorClass = {
+ id: string; session_id: string; assignment_id: string; instructor: string; code: string;
+ level: string; start_time: string; end_time: string
+}
+export function fetchInstructorSessions() {
+ return request<{sessions: InstructorSession[]}>('/api/instructor/sessions')
+}
+export function fetchInstructorClasses(sessionId: string) {
+ return request<{classes: InstructorClass[]}>(`/api/instructor/sessions/${encodeURIComponent(sessionId)}/classes`)
+}

@@ -154,13 +154,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     profileGeneration.current += 1
+    if (user) sessionStorage.removeItem(`instructor-session:${user.id}`)
     await signOutFromBackend()
     setSession(null)
     setUser(null)
     setProfile(null)
     setProfileResolved(true)
     setStorageScope('guest')
-  }, [])
+  }, [user])
 
   const value = useMemo<AuthContextValue>(
     () => ({

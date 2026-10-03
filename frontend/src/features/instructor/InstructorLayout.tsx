@@ -18,6 +18,6 @@ export default function InstructorLayout({children}: {children: ReactNode}) {
  {workflowCapabilities.supervisor && <Link to="/">Supervisor View</Link>}
  <button className="text-left" onClick={async()=>{await signOut();navigate('/sign-in')}}>Logout</button>
  </div>
- </aside><main className="min-w-0 flex-1 p-4 md:p-8">{children}</main>
+ </aside><main key={user.id} className="min-w-0 flex-1 p-4 md:p-8">{children}</main>
  </div>
 }
