@@ -1,3 +1,4 @@
+import { Notice, EmptyState, ActionButton } from '../../general-components'
 import {useEffect,useRef,useState} from 'react'
 import {fetchLessonPlan,type InstructorSession,type InstructorClass,type LessonPlan} from '../../lib/serverApi'
 import {openPrintWindow,openPdfPreview,openPdfPrintDialog} from '../../lib/browserPrint'
@@ -25,9 +26,9 @@ export function SavedPlanPrint({session,course,week}: {session: InstructorSessio
  }
  return <div className="flex flex-col gap-3">
  {loading && <p role="status">Loading saved lesson plan…</p>}
- {error && <p role="alert">{error} <button onClick={()=>setRetry(v=>v+1)}>Retry</button></p>}
- {!loading && !error && !plan && <p>No saved lesson plan for this week. Printing creates no plan.</p>}
- {plan && <><p>Print uses the saved lesson plan. Save editor changes before printing.</p><div className="flex gap-3"><button disabled={busy} className="rounded border p-2" onClick={()=>void showPdf(false)}>Preview PDF</button><button disabled={busy} className="rounded bg-primary p-2 text-white" onClick={()=>void showPdf(true)}>Print PDF</button></div></>}
+ {error && <Notice tone="danger" role="alert">{error} <ActionButton onClick={()=>setRetry(v=>v+1)}>Retry</ActionButton></Notice>}
+ {!loading && !error && !plan && <EmptyState>No saved lesson plan for this week. Printing creates no plan.</EmptyState>}
+ {plan && <><p>Print uses the saved lesson plan. Save editor changes before printing.</p><div className="flex flex-wrap gap-3"><ActionButton disabled={busy}  onClick={()=>void showPdf(false)}>Preview PDF</ActionButton><ActionButton disabled={busy}  variant="primary" onClick={()=>void showPdf(true)}>Print PDF</ActionButton></div></>}
  </div>
 }
 export default function PrintPlans(){return <PlanSelection title="Print">{(s,c,w)=><SavedPlanPrint key={`${s.id}:${c.id}:${w}`} session={s} course={c} week={w}/>}</PlanSelection>}

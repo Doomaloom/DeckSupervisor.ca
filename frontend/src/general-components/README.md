@@ -94,6 +94,7 @@ export function EditItemModal({
 - `SelectableCard`
 - `SegmentedTabs`
 - `TextInput`
+- `Select` — native select attributes with the same rounded, blue-bordered field style
 - `Textarea`
 - `cn`
 - `generalTheme`

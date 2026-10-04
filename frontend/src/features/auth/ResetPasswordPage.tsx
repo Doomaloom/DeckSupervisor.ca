@@ -1,3 +1,4 @@
+import { PageShell, Card, Notice, TextInput, ActionButton } from '../../general-components'
 import {useEffect,useState} from 'react'
 import {Link,useNavigate,useSearchParams} from 'react-router-dom'
 import {passwordRecoveryStatus,resetRecoveredPassword,verifyPasswordRecovery} from '../../lib/authClient'
@@ -14,8 +15,8 @@ export default function ResetPasswordPage(){
   passwordRecoveryStatus().then(()=>{if(active)setVerified(true)}).catch(()=>{if(active)setError(invalid)}).finally(()=>{if(active)setChecking(false)})
   return()=>{active=false}
  },[hash,params,verified])
- return <main className="mx-auto flex max-w-xl flex-col gap-4 rounded-card border bg-accent p-6 text-secondary">
- <h1 className="text-2xl font-semibold">Reset password</h1><p>Set and confirm a new password that meets your account's password requirements.</p>
+ return <PageShell maxWidth="xl"><Card className="flex flex-col gap-4">
+ <h1 className="text-xl font-semibold">Reset password</h1><p>Set and confirm a new password that meets your account's password requirements.</p>
  {checking?<p role="status">Checking recovery session…</p>:<form className="flex flex-col gap-4" onSubmit={async e=>{
   e.preventDefault();setError('')
   if(password!==confirm){setError('Passwords must match.');return}
@@ -25,11 +26,11 @@ export default function ResetPasswordPage(){
    await resetRecoveredPassword(password,confirm);navigate('/sign-in?reset=success',{replace:true})
   }catch(e){setError(e instanceof Error?e.message:invalid)}finally{setBusy(false)}
  }}>
- <label>New password <input className="w-full rounded border p-2" type="password" autoComplete="new-password" minLength={6} maxLength={1024} required value={password} onChange={e=>setPassword(e.target.value)}/></label>
- <label>Confirm password <input className="w-full rounded border p-2" type="password" autoComplete="new-password" minLength={6} maxLength={1024} required value={confirm} onChange={e=>setConfirm(e.target.value)}/></label>
- <button className="rounded bg-primary p-3 text-white" disabled={busy}>{busy?'Resetting…':'Reset password'}</button>
+ <label className="flex flex-col gap-2 text-sm font-semibold">New password <TextInput className="w-full" type="password" autoComplete="new-password" minLength={6} maxLength={1024} required value={password} onChange={e=>setPassword(e.target.value)}/></label>
+ <label className="flex flex-col gap-2 text-sm font-semibold">Confirm password <TextInput className="w-full" type="password" autoComplete="new-password" minLength={6} maxLength={1024} required value={confirm} onChange={e=>setConfirm(e.target.value)}/></label>
+ <ActionButton type="submit" variant="primary"  disabled={busy}>{busy?'Resetting…':'Reset password'}</ActionButton>
  </form>}
- {error && <p role="alert">{error}</p>}
- <Link to="/forgot-password">Request another reset email</Link><Link to="/sign-in">Back to sign in</Link>
- </main>
+ {error && <Notice tone="danger" role="alert">{error}</Notice>}
+ <Link className="text-sm font-semibold text-secondary/70 transition hover:text-secondary" to="/forgot-password">Request another reset email</Link><Link className="text-sm font-semibold text-secondary/70 transition hover:text-secondary" to="/sign-in">Back to sign in</Link>
+ </Card></PageShell>
 }

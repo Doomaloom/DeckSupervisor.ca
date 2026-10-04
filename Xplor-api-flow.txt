@@ -1,0 +1,6 @@
+call clients for client id
+call clients/id/instances for instance
+call ------- /id/documents for document id
+call ------- /id/documents/id for csv
+screenshots taken
+need to try to curl and see what happens

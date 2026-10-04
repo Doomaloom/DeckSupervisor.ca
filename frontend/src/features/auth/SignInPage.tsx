@@ -52,7 +52,7 @@ function SignInPage() {
     <div id="sign-in-page" data-component="sign-in-page" className="mx-auto flex w-full max-w-xl flex-col gap-6">
       <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
         <h2 className="text-xl font-semibold">Sign in</h2>
-        {params.get('reset') === 'success' && <p role="status">Password reset. Sign in with your new password.</p>}
+        {params.get('reset') === 'success' && <p className="mt-3 rounded-2xl border border-primary/30 bg-bg px-4 py-3 text-sm font-semibold text-primary" role="status">Password reset. Sign in with your new password.</p>}
         <p className="mt-2 text-sm text-secondary/70">Use email + password to access your account.</p>
         <div className="mt-6 pt-2">
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -89,7 +89,7 @@ function SignInPage() {
             >
               {isSignUp ? 'Already have an account? Sign in' : 'New here? Create an account'}
             </button>
-          <Link to="/forgot-password">Forgot password?</Link>
+          <Link className="text-center text-sm font-semibold text-secondary/70 transition hover:text-secondary" to="/forgot-password">Forgot password?</Link>
           </form>
         </div>
       </div>

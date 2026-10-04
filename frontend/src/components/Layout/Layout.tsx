@@ -372,7 +372,7 @@ function Layout({ children }: LayoutProps) {
                                     >
                                         Save Profile
                                     </button>
-                                    <Link to="/instructor">Instructor View</Link>
+                                    <Link className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-bg" to="/instructor">Instructor View</Link>
                                     <button
                                         type="button"
                                         className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
@@ -490,7 +490,7 @@ function Layout({ children }: LayoutProps) {
                             </Link>
                         ) : (
                             <>
-                            <Link to="/instructor" className="text-center font-semibold">Instructor View</Link>
+                            <Link to="/instructor" className="rounded-2xl bg-white/10 px-3 py-2 text-center text-sm font-semibold text-accent transition hover:bg-accent hover:text-secondary">Instructor View</Link>
                             <button
                                 type="button"
                                 className="rounded-2xl border border-secondary/40 px-3 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
@@ -550,7 +550,7 @@ function Layout({ children }: LayoutProps) {
                                 >
                                     Save Profile
                                 </button>
-                                <Link to="/instructor">Instructor View</Link>
+                                <Link className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:bg-bg" to="/instructor">Instructor View</Link>
                                 <button
                                     type="button"
                                     className="rounded-2xl border border-secondary/40 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"

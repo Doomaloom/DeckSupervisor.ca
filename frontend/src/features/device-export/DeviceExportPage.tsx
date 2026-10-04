@@ -1,3 +1,4 @@
+import { Notice, Select, TextInput, Textarea, ActionButton } from '../../general-components'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
@@ -12,8 +13,6 @@ import { downloadJSON, exportFilename, loadRegistry, restoreRegistry, saveRegist
 import { closeDeviceShare, createDeviceShare, heartbeatDeviceShare, type DeviceShareStarted } from '../../lib/serverApi'
 
 const panel = 'rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md'
-const button = 'rounded-lg bg-secondary px-4 py-2 font-semibold text-accent disabled:cursor-not-allowed disabled:opacity-40'
-const field = 'rounded-lg border border-secondary/30 bg-white px-3 py-2 text-secondary'
 const message = (error: unknown) => error instanceof Error ? error.message : 'Unable to prepare the export. Please try again.'
 
 export default function DeviceExportPage() {
@@ -146,34 +145,34 @@ function ExportSession({ session, isGuest, scope }: { session: SessionRecord; is
       <p className="mt-3 font-semibold">{session.session_day} · {session.session_season} {session.session_year} · {session.location}</p>
       <p>{session.start_date} – {session.end_date}</p>
     </section>
-    {error && <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-900" role="alert">{error}</div>}
-    {notice && <div className="rounded-lg border border-green-300 bg-green-50 p-4 text-green-900" role="status">{notice}</div>}
+    {error && <Notice tone="danger" role="alert">{error}</Notice>}
+    {notice && <Notice tone="success" role="status">{notice}</Notice>}
     <section className={panel}>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <label className="flex min-w-56 flex-col gap-2 font-semibold">Instructor<select className={field} value={instructor} disabled={loading || busy || shareBusy || !!shareSession} onChange={event => { setInstructor(event.target.value); setError(''); setNotice('') }}><option value="">Choose an instructor</option>{instructors.map(name => <option key={name}>{name}</option>)}</select></label>
-        <button className={button} disabled={busy || shareBusy || !!shareSession || loading} onClick={() => setRevision(value => value + 1)}>Refresh loaded data</button>
+        <label className="flex min-w-0 max-w-full flex-col gap-2 text-sm font-semibold">Instructor<Select value={instructor} disabled={loading || busy || shareBusy || !!shareSession} onChange={event => { setInstructor(event.target.value); setError(''); setNotice('') }}><option value="">Choose an instructor</option>{instructors.map(name => <option key={name}>{name}</option>)}</Select></label>
+        <ActionButton disabled={busy || shareBusy || !!shareSession || loading} onClick={() => setRevision(value => value + 1)}>Refresh loaded data</ActionButton>
       </div>
       {loading ? <p className="mt-4" role="status">Loading classes and saved assignments…</p> : <>
         {!courses.length && <p className="mt-4">No classes are available for this session. <Link className="underline" to="/rosters">Check the loaded rosters.</Link></p>}
-        {unassigned.length > 0 && <p className="mt-4 text-amber-900">{unassigned.length} unassigned classes will not be exported: {unassigned.map(course => course.code).join(', ')}. Assign them in Schematic or Rosters.</p>}
+        {unassigned.length > 0 && <p className="mt-4 text-header">{unassigned.length} unassigned classes will not be exported: {unassigned.map(course => course.code).join(', ')}. Assign them in Schematic or Rosters.</p>}
         {!!selected.length && <>
           <p className="mt-5 font-semibold">{selected.length} classes · {selected.reduce((count, course) => count + course.students.length, 0)} enrolled swimmers</p>
           <p className="mt-2 text-sm">Review dates for each class, including holidays and cancellations. Dates start from the session schedule; edit them below using YYYY-MM-DD, one per line. Waitlisted swimmers and contact details are excluded.</p>
-          <div className="mt-4 flex flex-col gap-3">{selected.map(course => <details key={course.code} className="rounded-lg border border-secondary/20 bg-white p-4">
+          <div className="mt-4 flex flex-col gap-3">{selected.map(course => <details key={course.code} className="rounded-2xl border border-secondary/20 bg-bg p-4">
             <summary className="cursor-pointer font-semibold">{course.startTime} · {course.name} · {course.code} · {course.students.length} swimmers</summary>
             <p className="my-2 text-sm">{course.location} · {course.level}</p>
             <ul className="mb-3 list-inside list-disc text-sm">{course.students.map((student, i) => <li key={`${student.id}:${i}`}>{student.name} — {student.level || course.level}</li>)}</ul>
-            <label className="flex flex-col gap-2">Lesson dates for {course.code}<textarea aria-label={`Lesson dates for ${course.code}`} disabled={busy || shareBusy || !!shareSession} className={`${field} min-h-32 font-mono`} value={dateText(course)} onChange={event => { setDates(value => ({ ...value, [course.code]: event.target.value })) }} /></label>
+            <label className="flex flex-col gap-2">Lesson dates for {course.code}<Textarea aria-label={`Lesson dates for ${course.code}`} disabled={busy || shareBusy || !!shareSession} className="min-h-32 font-mono" value={dateText(course)} onChange={event => { setDates(value => ({ ...value, [course.code]: event.target.value })) }} /></label>
           </details>)}</div>
         </>}
-        <button className={button + ' mt-4'} disabled={!selected.length || busy || shareBusy || !!shareSession || loading} onClick={() => void exportClasses()}>{busy ? 'Preparing export…' : 'Download instructor classes'}</button>
-        <div className="mt-5 border-t border-secondary/20 pt-5"><h3 className="text-lg font-semibold">Temporary session sharing</h3><p className="my-2 text-sm">You can review instructor rosters and lesson dates above before starting. Each code downloads that instructor’s package. Sharing ends when you end it or leave this page.</p>{shareSession ? <><div className="my-4 grid gap-2 sm:grid-cols-2">{shareSession.codes.map(item => <div key={item.instructor} className="rounded-lg border border-secondary/20 bg-white p-3"><span className="font-semibold">{item.instructor}</span><span className="float-right font-mono text-xl tracking-widest">{item.code}</span></div>)}</div><button className={button} disabled={shareBusy} onClick={() => void endShare()}>{shareBusy ? 'Ending…' : 'End Sharing'}</button></> : <button className={button + ' mt-3'} disabled={shareBusy || busy || loading || !instructors.length} onClick={() => void startShare()}>{shareBusy ? 'Starting session…' : 'Start Session and Create Codes'}</button>}</div>
+        <ActionButton className="mt-4" disabled={!selected.length || busy || shareBusy || !!shareSession || loading} onClick={() => void exportClasses()}>{busy ? 'Preparing export…' : 'Download instructor classes'}</ActionButton>
+        <div className="mt-5 border-t border-secondary/20 pt-5"><h3 className="text-lg font-semibold">Temporary session sharing</h3><p className="my-2 text-sm">You can review instructor rosters and lesson dates above before starting. Each code downloads that instructor’s package. Sharing ends when you end it or leave this page.</p>{shareSession ? <><div className="my-4 grid gap-2 sm:grid-cols-2">{shareSession.codes.map(item => <div key={item.instructor} className="rounded-2xl border border-secondary/20 bg-bg p-3"><span className="font-semibold">{item.instructor}</span><span className="float-right font-mono text-xl tracking-widest">{item.code}</span></div>)}</div><ActionButton disabled={shareBusy} onClick={() => void endShare()}>{shareBusy ? 'Ending…' : 'End Sharing'}</ActionButton></> : <ActionButton className="mt-3" disabled={shareBusy || busy || loading || !instructors.length} onClick={() => void startShare()}>{shareBusy ? 'Starting session…' : 'Start Session and Create Codes'}</ActionButton>}</div>
       </>}
     </section>
     <section className={panel}>
       <h3 className="text-lg font-semibold">Keep IDs for repeat exports</h3>
       <p className="my-3 text-sm">This browser saves export IDs so reordering rosters or editing skill levels keeps device progress attached to the same enrollment. Save a backup after exports. Restore it before exporting this session from another browser or after clearing browser data. The backup contains swimmer names and matching signatures; keep it with your class files.</p>
-      <div className="flex flex-wrap items-center gap-4"><button className={button} disabled={busy || shareBusy || !!shareSession} onClick={backup}>Download ID backup</button><label className="flex flex-col gap-2 text-sm">Restore ID backup<input type="file" accept=".json,application/json" disabled={busy || shareBusy || !!shareSession} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void restore(file) }} /></label></div>
+      <div className="flex flex-wrap items-center gap-4"><ActionButton disabled={busy || shareBusy || !!shareSession} onClick={backup}>Download ID backup</ActionButton><label className="flex min-w-0 max-w-full flex-col gap-2 text-sm">Restore ID backup<TextInput className="w-full min-w-0" type="file" accept=".json,application/json" disabled={busy || shareBusy || !!shareSession} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void restore(file) }} /></label></div>
     </section>
   </div>
 }

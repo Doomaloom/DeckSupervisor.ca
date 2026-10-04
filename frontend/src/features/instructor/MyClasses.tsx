@@ -1,3 +1,4 @@
+import { Notice, EmptyState, PageShell, Card, Select, ActionButton } from '../../general-components'
 import { Link } from 'react-router-dom'
 import useInstructorClasses,{sessionLabel} from './useInstructorClasses'
 import TimeRail from '../schematic/components/TimeRail'
@@ -11,12 +12,12 @@ export default function MyClasses() {
  const clock=(minutes: number)=>`${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`
  const labels=buildTimeLabels(clock(start),clock(end))
  const assignments=Array.from(new Set(classes.map(c=>c.assignment_id)))
- return <section className="flex flex-col gap-4">
+ return <PageShell><Card className="flex min-w-0 flex-col gap-6">
  <h2 className="text-2xl font-semibold">My Classes</h2>
- {sessions.length>0 && <label>Session <select aria-label="Session" className="max-w-full border p-2" value={sessionId} onChange={e=>selectSession(e.target.value)}>{sessions.map(s=><option key={s.id} value={s.id}>{sessionLabel(s)}</option>)}</select></label>}
+ {sessions.length>0 && <label className="flex min-w-0 flex-col gap-2 text-sm font-semibold">Session <Select aria-label="Session" className="max-w-full" value={sessionId} onChange={e=>selectSession(e.target.value)}>{sessions.map(s=><option key={s.id} value={s.id}>{sessionLabel(s)}</option>)}</Select></label>}
  {loading && <p role="status">Loading linked classes…</p>}
- {error && <div role="alert">{error} <button onClick={refresh}>Retry</button></div>}
- {!loading && !error && !classes.length && <p>No classes are linked to your account for this session. Ask your supervisor to link your staff account to a saved schematic column.</p>}
+ {error && <Notice tone="danger" role="alert">{error} <ActionButton onClick={refresh}>Retry</ActionButton></Notice>}
+ {!loading && !error && !classes.length && <EmptyState>No classes are linked to your account for this session. Ask your supervisor to link your staff account to a saved schematic column.</EmptyState>}
  {!loading && !error && classes.length>0 && <>
  <p>{session && sessionLabel(session)}</p>
  <div className="flex overflow-x-auto border border-black bg-white text-black" aria-label="Your class schematic">
@@ -28,5 +29,5 @@ export default function MyClasses() {
  {classes.filter(c=>c.assignment_id===id).map(c=><Link key={c.id} to={`/instructor/lesson-plans?session=${encodeURIComponent(c.session_id)}&class=${encodeURIComponent(c.id)}`} aria-label={`Plan ${c.level}, ${c.start_time.slice(0,5)} to ${c.end_time.slice(0,5)}, ${c.code}`} className="absolute left-0 right-0 flex flex-col justify-center overflow-auto border border-black bg-accent p-2 text-sm hover:bg-white focus:ring-2 focus:ring-primary" style={{top:`${(timeToMinutes(c.start_time)-start)/SLOT_MINUTES*SLOT_HEIGHT_REM}rem`,height:`${(timeToMinutes(c.end_time)-timeToMinutes(c.start_time))/SLOT_MINUTES*SLOT_HEIGHT_REM}rem`}}><strong>{c.level}</strong><span>{c.start_time.slice(0,5)}–{c.end_time.slice(0,5)}</span><span>{c.code}</span></Link>)}
  </div></div>)}
  </div></>}
- </section>
+ </Card></PageShell>
 }
