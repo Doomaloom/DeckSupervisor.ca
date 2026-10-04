@@ -1,22 +1,23 @@
-import { render,screen,waitFor } from '@testing-library/react'
+import { render,screen,waitFor,within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter,RouterProvider } from 'react-router-dom'
 import {beforeEach,expect,it,vi} from 'vitest'
 import {LessonEditor} from './LessonPlans'
+import {curriculumLevels} from './lessonSkills'
 const api=vi.hoisted(()=>({fetchLessonPlan:vi.fn(),saveLessonPlan:vi.fn()}))
 vi.mock('../../lib/serverApi',()=>api)
 beforeEach(()=>{api.fetchLessonPlan.mockReset().mockResolvedValue({plan:null});api.saveLessonPlan.mockReset()})
-function setup(){return render(<RouterProvider router={createMemoryRouter([{path:'/',element:<LessonEditor sessionId="s" classId="c" week="2026-10-05"/>}])}/>)}
+function setup(level="Splash 1"){return render(<RouterProvider router={createMemoryRouter([{path:'/',element:<LessonEditor sessionId="s" classId="c" week="2026-10-05" level={level}/>}])}/>)}
 it('keeps untouched plans null and retains drafts on save failure',async()=>{
  const user=userEvent.setup();setup()
  await screen.findByText(/No lesson plan saved/)
  expect(api.saveLessonPlan).not.toHaveBeenCalled()
  await user.click(screen.getByRole('button',{name:'Add activity'}))
- await user.type(screen.getByLabelText('Skill 1'),'Floating')
+ await user.selectOptions(screen.getByLabelText('Skill 1'),'Enter and Exit Shallow Water')
  api.saveLessonPlan.mockRejectedValueOnce(new Error('Offline'))
  await user.click(screen.getByRole('button',{name:'Save'}))
  expect(await screen.findByRole('alert')).toHaveTextContent('Your draft is retained')
- expect(screen.getByLabelText('Skill 1')).toHaveValue('Floating')
+ expect(screen.getByLabelText('Skill 1')).toHaveValue('Enter and Exit Shallow Water')
  api.saveLessonPlan.mockImplementation(async(_s,_c,_w,rows)=>({plan:{rows}}))
  await user.click(screen.getByRole('button',{name:'Save'}))
  expect(await screen.findByText('Lesson plan saved.')).toBeVisible()
@@ -30,5 +31,66 @@ it('reorders and removes rows before explicit save',async()=>{
  await user.click(screen.getByRole('button',{name:'Delete row 2'}))
  api.saveLessonPlan.mockImplementation(async(_s,_c,_w,rows)=>({plan:{rows}}))
  await user.click(screen.getByRole('button',{name:'Save'}))
- await waitFor(()=>expect(api.saveLessonPlan).toHaveBeenCalledWith('s','c','2026-10-05',[{skill:'Second',activity:'B',location:'Deep end',duration:10}]))
+ await waitFor(()=>expect(api.saveLessonPlan).toHaveBeenCalledWith('s','c','2026-10-05',[{skill:'Second',activity:'B',location:'Deep end',duration:10}],null))
+})
+it('offers only the class level skills in catalog order',async()=>{
+ const user=userEvent.setup();setup('Splash 2A')
+ await screen.findByText(/No lesson plan saved/)
+ await user.click(screen.getByRole('button',{name:'Add activity'}))
+ const select=screen.getByRole('combobox',{name:'Skill 1'})
+ expect(within(select).getAllByRole('option').map(option=>option.textContent)).toEqual(['Select skill',...curriculumLevels.find(l=>l.id==='Splash2A')!.skills.map(s=>s.name)])
+ expect(screen.queryByLabelText('Curriculum level')).not.toBeInTheDocument()
+})
+it('requires a plan level for private classes, preserves rows on changes, and restores the saved level',async()=>{
+ const user=userEvent.setup()
+ api.fetchLessonPlan.mockResolvedValue({plan:{curriculum_level:'Splash1',rows:[{skill:'Enter and Exit Shallow Water',activity:'Practice',location:'Lane',duration:5}]}})
+ const view=setup('Splash Private')
+ expect(await screen.findByLabelText('Curriculum level')).toHaveValue('Splash1')
+ await user.selectOptions(screen.getByLabelText('Curriculum level'),'Splash2A')
+ expect(screen.getByText('Unsaved changes')).toBeVisible()
+ expect(screen.getByLabelText('Skill 1')).toHaveValue('Enter and Exit Shallow Water')
+ expect(screen.getByLabelText('Activity / drill 1')).toHaveValue('Practice')
+ const skill=curriculumLevels.find(l=>l.id==='Splash2A')!.skills[0].name
+ await user.selectOptions(screen.getByLabelText('Skill 1'),skill)
+ const plan={curriculum_level:'Splash2A',rows:[{skill,activity:'Practice',location:'Lane',duration:5}]}
+ api.saveLessonPlan.mockResolvedValue({plan})
+ await user.click(screen.getByRole('button',{name:'Save'}))
+ await screen.findByText('Lesson plan saved.')
+ expect(api.saveLessonPlan).toHaveBeenCalledWith('s','c','2026-10-05',plan.rows,'Splash2A')
+ expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument()
+ view.unmount();api.fetchLessonPlan.mockResolvedValue({plan});setup('Splash Private')
+ expect(await screen.findByLabelText('Curriculum level')).toHaveValue('Splash2A')
+ expect(screen.getByLabelText('Skill 1')).toHaveValue(skill)
+})
+it.each(['Splash Private','Unknown level',''])('waits for curriculum choice for %s and retains a level-only draft after save failure',async level=>{
+ const user=userEvent.setup();setup(level)
+ await screen.findByText(/No lesson plan saved/)
+ await user.click(screen.getByRole('button',{name:'Add activity'}))
+ expect(screen.getByLabelText('Skill 1')).toBeDisabled()
+ const levels=within(screen.getByLabelText('Curriculum level')).getAllByRole('option')
+ expect(levels.map(l=>(l as HTMLOptionElement).value)).not.toContain('SplashPrivate')
+ await user.selectOptions(screen.getByLabelText('Curriculum level'),'LittleSplash1')
+ expect(screen.getByLabelText('Skill 1')).toBeEnabled()
+ await user.click(screen.getByRole('button',{name:'Delete row 1'}))
+ api.saveLessonPlan.mockRejectedValueOnce(new Error('Offline'))
+ await user.click(screen.getByRole('button',{name:'Save'}))
+ expect(await screen.findByRole('alert')).toHaveTextContent('Your draft is retained')
+ expect(screen.getByLabelText('Curriculum level')).toHaveValue('LittleSplash1')
+ expect(screen.getByText('Unsaved changes')).toBeVisible()
+})
+it('guards navigation when only the private curriculum level has changed',async()=>{
+ const user=userEvent.setup()
+ const router=createMemoryRouter([{path:'/',element:<LessonEditor sessionId="s" classId="c" week="2026-10-05" level="Splash Private"/>},{path:'/away',element:<p>Another page</p>}])
+ render(<RouterProvider router={router}/>)
+ await screen.findByLabelText('Curriculum level')
+ await user.selectOptions(screen.getByLabelText('Curriculum level'),'Splash1')
+ const confirm=vi.spyOn(window,'confirm').mockReturnValue(false)
+ try {
+  await router.navigate('/away')
+  await waitFor(()=>expect(confirm).toHaveBeenCalledWith('Discard unsaved lesson plan changes?'))
+  expect(screen.getByLabelText('Curriculum level')).toHaveValue('Splash1')
+  confirm.mockReturnValue(true)
+  await router.navigate('/away')
+  expect(await screen.findByText('Another page')).toBeVisible()
+ } finally {confirm.mockRestore()}
 })

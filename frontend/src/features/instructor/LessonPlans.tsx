@@ -2,10 +2,16 @@ import { useEffect,useRef,useState } from 'react'
 import { useBlocker } from 'react-router-dom'
 import {fetchLessonPlan,saveLessonPlan,type LessonRow} from '../../lib/serverApi'
 import PlanSelection from './PlanSelection'
+import {curriculumLevels,findCurriculumLevel} from './lessonSkills'
 
-export function LessonEditor({sessionId,classId,week}: {sessionId: string;classId: string;week: string}) {
+export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;classId: string;week: string;level: string}) {
  const [rows,setRows]=useState<LessonRow[]>([])
  const [saved,setSaved]=useState<LessonRow[]>([])
+ const assignedLevel=findCurriculumLevel(level)
+ const [curriculumLevel,setCurriculumLevel]=useState('')
+ const [savedCurriculumLevel,setSavedCurriculumLevel]=useState('')
+ const selectedLevel=assignedLevel || curriculumLevels.find(l=>l.id===curriculumLevel)
+ const skills=selectedLevel?.skills || []
  const [missing,setMissing]=useState(true)
  const [loading,setLoading]=useState(true)
  const [saving,setSaving]=useState(false)
@@ -13,12 +19,12 @@ export function LessonEditor({sessionId,classId,week}: {sessionId: string;classI
  const [notice,setNotice]=useState('')
  const [retry,setRetry]=useState(0)
  const active=useRef(true)
- const dirty=JSON.stringify(rows)!==JSON.stringify(saved)
+ const dirty=JSON.stringify(rows)!==JSON.stringify(saved) || (!assignedLevel && curriculumLevel!==savedCurriculumLevel)
  const blocker=useBlocker(dirty)
  useEffect(()=>{if(blocker.state==='blocked'){if(window.confirm('Discard unsaved lesson plan changes?'))blocker.proceed();else blocker.reset()}},[blocker])
  useEffect(()=>{
   active.current=true;let current=true;setLoading(true);setError('')
-  fetchLessonPlan(sessionId,classId,week).then(r=>{if(current){setRows(r.plan?.rows||[]);setSaved(r.plan?.rows||[]);setMissing(!r.plan);setLoading(false)}}).catch(e=>{if(current){setError(e.message);setLoading(false)}})
+  fetchLessonPlan(sessionId,classId,week).then(r=>{if(current){setRows(r.plan?.rows||[]);setSaved(r.plan?.rows||[]);setCurriculumLevel(r.plan?.curriculum_level||'');setSavedCurriculumLevel(r.plan?.curriculum_level||'');setMissing(!r.plan);setLoading(false)}}).catch(e=>{if(current){setError(e.message);setLoading(false)}})
   return()=>{current=false;active.current=false}
  },[sessionId,classId,week,retry])
  useEffect(()=>{window.dispatchEvent(new CustomEvent('instructor-draft',{detail:dirty}));const unload=(e: BeforeUnloadEvent)=>{if(dirty){e.preventDefault();e.returnValue=''}};window.addEventListener('beforeunload',unload);return()=>{window.removeEventListener('beforeunload',unload);window.dispatchEvent(new CustomEvent('instructor-draft',{detail:false}))}},[dirty])
@@ -26,14 +32,16 @@ export function LessonEditor({sessionId,classId,week}: {sessionId: string;classI
  function move(i: number,direction: number){setRows(current=>{const next=[...current];[next[i],next[i+direction]]=[next[i+direction],next[i]];return next})}
  if(loading)return <p role="status">Loading saved lesson plan…</p>
  if(error && !dirty && !rows.length)return <div role="alert">{error} <button onClick={()=>setRetry(v=>v+1)}>Retry</button></div>
- return <form className="flex flex-col gap-4" onSubmit={async e=>{e.preventDefault();setSaving(true);setError('');setNotice('');try{const result=await saveLessonPlan(sessionId,classId,week,rows);if(active.current){setSaved(result.plan.rows);setMissing(false);setNotice('Lesson plan saved.')}}catch(e){if(active.current)setError(e instanceof Error?e.message:'Save failed. Your draft is retained.')}finally{if(active.current)setSaving(false)}}}>
+ return <form className="flex flex-col gap-4" onSubmit={async e=>{e.preventDefault();setSaving(true);setError('');setNotice('');try{const result=await saveLessonPlan(sessionId,classId,week,rows,assignedLevel?null:curriculumLevel||null);if(active.current){setSaved(result.plan.rows);setSavedCurriculumLevel(result.plan.curriculum_level||'');setMissing(false);setNotice('Lesson plan saved.')}}catch(e){if(active.current)setError(e instanceof Error?e.message:'Save failed. Your draft is retained.')}finally{if(active.current)setSaving(false)}}}>
  {missing && <p>No lesson plan saved for this week. Opening this editor creates no record.</p>}
  {dirty && <p role="status">Unsaved changes</p>}
  {error && <p role="alert">{error} Your draft is retained.</p>}
  {notice && <p role="status">{notice}</p>}
- <fieldset disabled={saving} className="min-w-0"><p className="text-sm md:hidden">Scroll the activity table sideways to edit pool location, duration, and row order.</p><div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable activity table"><table className="w-full min-w-[620px] border-collapse text-left"><thead><tr>{['Skill','Activity / drill','Pool location','Duration (minutes)','Row actions'].map(h=><th key={h} className="border p-2">{h}</th>)}</tr></thead>
+ <fieldset disabled={saving} className="min-w-0">
+ {!assignedLevel && <label className="mb-4 flex flex-col gap-1">Curriculum level <select aria-label="Curriculum level" required className="max-w-full border p-2" value={curriculumLevel} onChange={e=>{setNotice('');setCurriculumLevel(e.target.value)}}><option value="">Select curriculum level</option>{curriculumLevels.map(l=><option key={l.id} value={l.id}>{l.name}</option>)}</select></label>}
+ <p className="text-sm md:hidden">Scroll the activity table sideways to edit pool location, duration, and row order.</p><div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable activity table"><table className="w-full min-w-[620px] border-collapse text-left"><thead><tr>{['Skill','Activity / drill','Pool location','Duration (minutes)','Row actions'].map(h=><th key={h} className="border p-2">{h}</th>)}</tr></thead>
  <tbody>{rows.map((row,i)=><tr key={i}>
- <td className="border p-2"><textarea aria-label={`Skill ${i+1}`} className="w-full border p-1" maxLength={2000} value={row.skill} onChange={e=>edit(i,{skill:e.target.value})}/></td>
+ <td className="border p-2"><select aria-label={`Skill ${i+1}`} className="w-full min-w-40 max-w-xs border p-1" disabled={!selectedLevel} value={row.skill} onChange={e=>edit(i,{skill:e.target.value})}><option value="">{selectedLevel?'Select skill':'Choose curriculum level first'}</option>{row.skill && !skills.some(skill=>skill.name===row.skill) && <option value={row.skill}>{row.skill} (saved skill)</option>}{skills.map(skill=><option key={skill.id} value={skill.name}>{skill.name}</option>)}</select></td>
  <td className="border p-2"><textarea aria-label={`Activity / drill ${i+1}`} className="w-full border p-1" maxLength={10000} value={row.activity} onChange={e=>edit(i,{activity:e.target.value})}/></td>
  <td className="border p-2"><select aria-label={`Pool location ${i+1}`} value={row.location.startsWith('Lane')?'Lane':row.location} onChange={e=>edit(i,{location:e.target.value})}><option>Lane</option><option>Shallow end</option><option>Deep end</option></select>{row.location.startsWith('Lane') && <input aria-label={`Lane number ${i+1}`} className="w-20 border p-1" type="number" min={1} max={99} placeholder="Optional" value={row.location.split(' ')[1]||''} onChange={e=>edit(i,{location:e.target.value?`Lane ${e.target.value}`:'Lane'})}/>}</td>
  <td className="border p-2"><input className="w-20 border p-1" aria-label={`Duration (minutes) ${i+1}`} type="number" min={1} max={240} step={1} required value={row.duration} onChange={e=>edit(i,{duration:Number(e.target.value)})}/></td>
@@ -43,4 +51,4 @@ export function LessonEditor({sessionId,classId,week}: {sessionId: string;classI
  <button type="submit" className="ml-3 rounded bg-primary p-2 text-white">{saving?'Saving…':'Save'}</button></fieldset>
  </form>
 }
-export default function LessonPlans(){return <PlanSelection title="Lesson Plans">{(s,c,w)=><LessonEditor key={`${s.id}:${c.id}:${w}`} sessionId={s.id} classId={c.id} week={w}/>}</PlanSelection>}
+export default function LessonPlans(){return <PlanSelection title="Lesson Plans">{(s,c,w)=><LessonEditor key={`${s.id}:${c.id}:${w}`} sessionId={s.id} classId={c.id} week={w} level={c.level}/>}</PlanSelection>}
