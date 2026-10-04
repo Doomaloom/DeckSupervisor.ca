@@ -17,7 +17,7 @@ export type SessionRecord = {
   source_locations: string[]
   session_start_time24: string | null
   session_end_time24: string | null
-  instructors: { name: string }[]
+  instructors: { id?: string; name: string }[]
 }
 
 export type SessionAccess = {

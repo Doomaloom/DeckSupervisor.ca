@@ -7,12 +7,13 @@ import TimeRail from './TimeRail'
 type SchematicBoardProps = {
     columns: Course[][]
     instructors: string[]
+    instructorIds?: (string | null)[]
     lockedInstructors?: string[]
     selectedCourseCodes?: string[]
     timeLabels: string[]
     scheduleHeightRem: number
     scheduleStartMinutes: number
-    instructorOptions: string[]
+    instructorOptions: (string | { id: string; name: string; label: string })[]
     sessionLabel: string
     readOnly?: boolean
     onInstructorChange: (columnIndex: number, value: string) => void
@@ -25,6 +26,7 @@ type SchematicBoardProps = {
 function SchematicBoard({
     columns,
     instructors,
+    instructorIds,
     lockedInstructors = [],
     selectedCourseCodes = [],
     timeLabels,
@@ -76,6 +78,7 @@ function SchematicBoard({
                                     column={column}
                                     columnIndex={columnIndex}
                                     instructor={instructors[columnIndex] ?? ''}
+                                    instructorId={instructorIds?.[columnIndex]}
                                     lockedInstructor={lockedInstructors[columnIndex] ?? ''}
                                     selectedCourseCodes={selectedCourseCodes}
                                     instructorOptions={instructorOptions}

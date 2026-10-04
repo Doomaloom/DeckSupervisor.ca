@@ -64,16 +64,32 @@ The [September 20 part-time QA report](../backend/tests/part_time_qa.md) records
 
 References: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [PostgreSQL CREATE POLICY](https://www.postgresql.org/docs/current/sql-createpolicy.html), [PostgreSQL CREATE FUNCTION](https://www.postgresql.org/docs/current/sql-createfunction.html).
 
-## Instructor account search
+## Session instructor roster and autosave
 
-After the base schema and `supabase_rls_reset.sql` are installed, apply the entire
-`backend/supabase_instructor.sql` in the SQL Editor as `postgres`. For existing
-instructor installations, rerun that file before deploying the updated API and
-frontend. It is transactional and repeatable and preserves saved links and plans.
-The update adds session-owner account search, linked-account display, and validation
-that new links target part-time accounts. Existing full-time links remain readable
-and can be unlinked. No team membership or invitation is created by linking.
+After the base schema and `supabase_rls_reset.sql` are installed, apply
+`backend/supabase_instructor.sql`, then `backend/supabase_lesson_plans.sql` and
+any lesson-plan extensions used by the installation, then the entire
+`backend/supabase_session_instructors.sql` as `postgres`. Deploy the updated API
+and frontend after the database update. When rerunning the earlier instructor
+script, rerun the session instructor script afterward: it replaces schematic
+saving with the roster-aware implementation.
 
-Instructor account links are managed on **Manage Sessions**. Save the schematic
-first to publish its columns, then refresh saved columns and search staff by name
-or email. Account links save independently of the session details form.
+The session instructor upgrade is transactional and repeatable. It migrates active
+saved column links, including legacy full-time accounts, into ordered instructor
+rows. Unique matching session names share their saved column row; ambiguous duplicate
+names remain separate. Existing class IDs, timetable positions, links, and lesson
+plans are preserved. Existing full-time links can be retained or cleared; new links
+must target part-time accounts. No team invitation or membership is created.
+
+**Manage Sessions** has Session Details and Session Instructors. The instructor
+count permits zero and preserves unnamed rows. Name, count, and account selection
+changes autosave together with valid session details after an 800 ms pause.
+**Save Changes** saves immediately or retries a failed save. Decreasing the count
+removes trailing rows; populated removals require confirmation. Associated columns
+remain in place with no instructor, and their saved lesson plans remain available
+when a new instructor is assigned. Instructors can be linked before a schematic
+exists. The schematic selects instructors by stable roster identity.
+
+Owners can read the roster and search part-time accounts by name or email,
+including existing team members and pending invitees. Shared viewers cannot read
+account details or change the roster. Guest names save locally without account links.

@@ -84,7 +84,7 @@ func InstructorAssignments(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		q.Set("id", "eq."+mux.Vars(r)["assignmentId"])
-		err = c.Patch(r.Context(), "/rest/v1/instructor_assignments", q, map[string]any{"account_id": body.AccountID}, "return=representation", &rows)
+		err = c.RPC(r.Context(), "link_session_instructor_assignment", map[string]any{"p_session": sid, "p_assignment": mux.Vars(r)["assignmentId"], "p_account": body.AccountID}, &rows)
 	} else {
 		err = c.RPC(r.Context(), "instructor_assignment_accounts", map[string]any{"p_session": sid}, &rows)
 	}
@@ -181,4 +181,27 @@ func InstructorPlan(w http.ResponseWriter, r *http.Request) {
 		plan = plans[0]
 	}
 	writeJSON(w, map[string]any{"plan": plan})
+}
+
+func SessionInstructorRoster(w http.ResponseWriter, r *http.Request) {
+	c, err := supabasesvc.NewClientFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	sid := mux.Vars(r)["sessionId"]
+	var allowed bool
+	if err = c.RPC(r.Context(), "can_edit_session", map[string]any{"p_session_id": sid, "p_uid": c.User.ID}, &allowed); err != nil || !allowed {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	rows := []map[string]any{}
+	if err = c.RPC(r.Context(), "session_instructor_roster", map[string]any{"p_session": sid}, &rows); err != nil {
+		http.Error(w, "Unable to load session instructors", http.StatusBadRequest)
+		return
+	}
+	if rows == nil {
+		rows = []map[string]any{}
+	}
+	writeJSON(w, map[string]any{"instructors": rows})
 }

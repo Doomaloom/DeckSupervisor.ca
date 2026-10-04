@@ -55,6 +55,8 @@ export type Student = {
 }
 
 export type ScheduleConfig = {
+    assignmentIds?: string[]
+    instructorIds?: (string | null)[]
     instructors: string[]
     codes: string[]
 }

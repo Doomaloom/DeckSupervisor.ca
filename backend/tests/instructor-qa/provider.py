@@ -40,10 +40,13 @@ class Handler(BaseHTTPRequestHandler):
    if u.path.startswith('/rest/v1/rpc/'):
     name=u.path.rsplit('/',1)[1]
     if name=='instructor_sessions':return self.send(db("select coalesce(jsonb_agg(to_jsonb(r)),'[]') from instructor_sessions() r",user))
-    if name in {'instructor_assignment_accounts','search_linkable_part_time_profiles'}:
+    if name in {'instructor_assignment_accounts','search_linkable_part_time_profiles','session_instructor_roster','link_session_instructor_assignment'}:
      args=quote(body['p_session'])
      if name=='search_linkable_part_time_profiles':args+=','+quote(body['p_query'])+','+str(int(body['p_limit']))
+     if name=='link_session_instructor_assignment':args+=','+quote(body['p_assignment'])+','+(quote(body['p_account']) if body['p_account'] is not None else 'null')
      return self.send(db("select coalesce(jsonb_agg(to_jsonb(r)),'[]') from "+ident(name)+'('+args+') r',user))
+    if name=='save_session_with_instructors':
+     return self.send(db('select save_session_with_instructors('+quote(body['p_session'])+','+quote(json.dumps(body['p_fields']))+','+quote(json.dumps(body['p_roster']))+')',user))
     functions={'can_edit_session':['p_session_id','p_uid'],'can_plan_class':['p_session','p_class','p_week'],'save_instructor_schematic':['p_session','p_data']}
     if name not in functions:raise ValueError('Unsupported test RPC')
     args=','.join(quote(json.dumps(body[k]) if isinstance(body[k],dict) else body[k]) for k in functions[name])

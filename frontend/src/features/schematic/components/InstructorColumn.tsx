@@ -8,9 +8,10 @@ type InstructorColumnProps = {
     column: Course[]
     columnIndex: number
     instructor: string
+    instructorId?: string | null
     lockedInstructor?: string
     selectedCourseCodes?: string[]
-    instructorOptions: string[]
+    instructorOptions: (string | { id: string; name: string; label: string })[]
     scheduleHeightRem: number
     scheduleStartMinutes: number
     readOnly?: boolean
@@ -25,6 +26,7 @@ function InstructorColumn({
     column,
     columnIndex,
     instructor,
+    instructorId,
     lockedInstructor,
     selectedCourseCodes = [],
     instructorOptions,
@@ -53,13 +55,13 @@ function InstructorColumn({
                 ) : (
                     <select
                         className="w-full rounded-none border border-black bg-white px-2 py-1 text-sm text-black"
-                        value={instructor}
+                        value={instructorId === undefined ? instructor : instructorId ?? ''}
                         onChange={event => onInstructorChange(columnIndex, event.target.value)}
                     >
                         <option value="">{`Instructor ${columnIndex + 1}`}</option>
-                        {instructorOptions.map(name => (
-                            <option key={`${columnIndex}-${name}`} value={name}>
-                                {name}
+                        {instructorOptions.map(option => (
+                            <option key={typeof option === 'string' ? option : option.id} value={typeof option === 'string' ? option : option.id}>
+                                {typeof option === 'string' ? option : option.label}
                             </option>
                         ))}
                     </select>

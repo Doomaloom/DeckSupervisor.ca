@@ -49,28 +49,44 @@ type UseSchematicBoardArgs = {
     courses: Course[]
     storedLayout?: StoredCourseLayout | null
     allowStoredEmptyColumns?: boolean
+    instructorRoster?: { id: string; name: string }[]
 }
 
 export function useSchematicBoard({
     courses,
     storedLayout = null,
     allowStoredEmptyColumns = true,
+    instructorRoster,
 }: UseSchematicBoardArgs) {
     const [columns, setColumns] = useState<Course[][]>([])
     const [assignmentIds, setAssignmentIds] = useState<string[]>([])
     const [instructors, setInstructors] = useState<string[]>([])
+    const [instructorIds, setInstructorIds] = useState<(string | null)[]>([])
     const [lockedInstructors, setLockedInstructors] = useState<string[]>([])
     const [dragged, setDragged] = useState<DragState | null>(null)
     const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>([])
     const [extraEmptyColumns, setExtraEmptyColumns] = useState(0)
-    const storedLayoutKey = `${(storedLayout?.codes ?? []).join('\u0001')}::${(storedLayout?.instructors ?? []).join('\u0001')}`
+    const storedLayoutKey = `${(storedLayout?.codes ?? []).join('\u0001')}::${(storedLayout?.instructors ?? []).join('\u0001')}::${(storedLayout?.instructorIds ?? []).join('\u0001')}`
 
     useEffect(() => {
         setExtraEmptyColumns(0)
     }, [allowStoredEmptyColumns, storedLayoutKey])
 
     useEffect(() => {
-        const layout = createRequestAwareLayout(courses, storedLayout)
+        const storedInstructorByCode = new Map((storedLayout?.codes ?? []).flatMap((codes, index) =>
+            codes.split(',').filter(Boolean).map(code => [code, storedLayout?.instructorIds?.[index]] as const)))
+        const effectiveCourses = instructorRoster ? courses.map(course => {
+            const storedId = storedInstructorByCode.get(course.code)
+            if (storedId !== undefined) {
+                const row = instructorRoster.find(entry => entry.id === storedId)
+                return row && course.isLockedToInstructor
+                    ? { ...course, assignedInstructor: row.name }
+                    : { ...course, assignedInstructor: '', isLockedToInstructor: false }
+            }
+            const matches = instructorRoster.filter(row => row.name && row.name === course.assignedInstructor)
+            return matches.length !== 1 ? { ...course, assignedInstructor: '', isLockedToInstructor: false } : course
+        }) : courses
+        const layout = createRequestAwareLayout(effectiveCourses, storedLayout)
         for (let index = 0; index < extraEmptyColumns; index += 1) {
             layout.columns.push([])
             layout.instructors.push('')
@@ -78,9 +94,15 @@ export function useSchematicBoard({
         }
         setAssignmentIds(layout.columns.map((_, index) => storedLayout?.assignmentIds?.[index] ?? crypto.randomUUID()))
         setColumns(layout.columns)
-        setInstructors(layout.instructors)
+        const ids = layout.columns.map((_, index) => {
+            if (storedLayout?.instructorIds && index < storedLayout.instructorIds.length) return storedLayout.instructorIds[index]
+            const matches = instructorRoster?.filter(row => row.name && row.name === layout.instructors[index]) ?? []
+            return matches.length === 1 ? matches[0].id : null
+        })
+        setInstructorIds(ids)
+        setInstructors(instructorRoster ? ids.map(id => instructorRoster.find(row => row.id === id)?.name ?? '') : layout.instructors)
         setLockedInstructors(layout.lockedInstructors)
-    }, [courses, extraEmptyColumns, storedLayout, storedLayoutKey])
+    }, [courses, extraEmptyColumns, storedLayout, storedLayoutKey, instructorRoster])
 
     useEffect(() => {
         setSelectedCourseCodes(current => current.filter(code => courses.some(course => course.code === code)))
@@ -255,6 +277,7 @@ export function useSchematicBoard({
         setAssignmentIds(current => [...current, crypto.randomUUID()])
         setColumns(current => [...current, []])
         setInstructors(current => [...current, ''])
+        setInstructorIds(current => [...current, null])
         setLockedInstructors(current => [...current, ''])
         setExtraEmptyColumns(current => current + 1)
     }
@@ -267,25 +290,29 @@ export function useSchematicBoard({
         setAssignmentIds(keepIndices.map(index => assignmentIds[index]))
         setColumns(keepIndices.map(index => columns[index]))
         setInstructors(keepIndices.map(index => instructors[index] ?? ''))
+        setInstructorIds(keepIndices.map(index => instructorIds[index] ?? null))
         setLockedInstructors(keepIndices.map(index => lockedInstructors[index] ?? ''))
         setExtraEmptyColumns(0)
     }
 
     const setInstructorAt = (index: number, value: string) => {
+        const name = instructorRoster ? instructorRoster.find(row => row.id === value)?.name ?? '' : value
         const lockedInstructor = getLockedInstructorForColumn(columns[index] ?? [])
-        if (lockedInstructor && value !== lockedInstructor) {
+        if (lockedInstructor && name !== lockedInstructor) {
             showAppNotice(`This column is locked to ${lockedInstructor} because it contains a requested class.`, 'info')
             return
         }
         setInstructors(current => {
             const next = [...current]
-            next[index] = lockedInstructor || value
+            next[index] = lockedInstructor || name
             return next
         })
+        setInstructorIds(current => current.map((id, i) => i === index ? value || null : id))
     }
 
     return {
         assignmentIds,
+        instructorIds,
         columns,
         instructors,
         lockedInstructors,

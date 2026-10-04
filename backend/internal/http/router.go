@@ -109,6 +109,7 @@ func NewRouter() *mux.Router {
 
 	r.HandleFunc("/api/instructor/sessions", handlers.InstructorSessions).Methods("GET")
 	r.HandleFunc("/api/instructor/sessions/{sessionId}/classes", handlers.InstructorClasses).Methods("GET")
+	r.HandleFunc("/api/sessions/{sessionId}/instructors", handlers.SessionInstructorRoster).Methods("GET")
 	r.HandleFunc("/api/sessions/{sessionId}/linkable-profiles", handlers.SearchLinkableProfiles).Methods("GET")
 	r.HandleFunc("/api/sessions/{sessionId}/instructor-assignments", handlers.InstructorAssignments).Methods("GET")
 	r.HandleFunc("/api/sessions/{sessionId}/instructor-assignments/{assignmentId}", handlers.InstructorAssignments).Methods("PATCH")

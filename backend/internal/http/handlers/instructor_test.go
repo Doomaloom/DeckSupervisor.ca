@@ -42,7 +42,7 @@ func TestInstructorMetadataUsesCallerAndExplicitProjection(t *testing.T) {
 	}
 }
 func TestInstructorDirectRequestsDenied(t *testing.T) {
-	for _, path := range []string{"/api/instructor/sessions", "/api/instructor/sessions/other/classes", "/api/instructor/sessions/other/classes/class/plans/2026-10-05", "/api/sessions/other/instructor-assignments", "/api/sessions/other/linkable-profiles?q=Alex"} {
+	for _, path := range []string{"/api/instructor/sessions", "/api/instructor/sessions/other/classes", "/api/instructor/sessions/other/classes/class/plans/2026-10-05", "/api/sessions/other/instructor-assignments", "/api/sessions/other/linkable-profiles?q=Alex", "/api/sessions/other/instructors"} {
 		w := staffRequest("GET", path, "", false)
 		if w.Code != 401 {
 			t.Fatalf("guest %s returned %d", path, w.Code)
@@ -205,6 +205,79 @@ func TestInstructorPlanCurriculumRoundTrip(t *testing.T) {
 		w := staffRequest("PUT", path, `{"rows":[],"curriculum_level":"`+level+`"}`, true)
 		if w.Code != 400 {
 			t.Fatalf("accepted invalid level %q: %d", level, w.Code)
+		}
+	}
+}
+
+func TestSessionRosterReadAndCombinedSaveUseOwnerScope(t *testing.T) {
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/rest/v1/profiles" {
+			io.WriteString(w, `[{"id":"`+testUser+`","first_name":"Owner","last_name":"Staff","account_type":"part_time"}]`)
+			return
+		}
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		switch r.URL.Path {
+		case "/rest/v1/rpc/can_edit_session":
+			if body["p_session_id"] != "session-a" || body["p_uid"] != testUser {
+				t.Fatalf("permission scope %v", body)
+			}
+			io.WriteString(w, "true")
+		case "/rest/v1/rpc/session_instructor_roster":
+			if body["p_session"] != "session-a" {
+				t.Fatal("missing session scope")
+			}
+			io.WriteString(w, `[{"id":"row-a","name":"Alex","account_id":null,"account":null,"class_count":0}]`)
+		case "/rest/v1/rpc/save_session_with_instructors":
+			fields := body["p_fields"].(map[string]any)
+			if body["p_session"] != "session-a" || fields["location"] != "Pool B" {
+				t.Fatalf("wrong combined save %v", body)
+			}
+			if _, ok := fields["instructor_roster"]; ok {
+				t.Fatal("roster leaked into session fields")
+			}
+			if _, ok := fields["instructors"]; ok {
+				t.Fatal("legacy name projection passed as writable fields")
+			}
+			roster := body["p_roster"].([]any)
+			if len(roster) != 1 || roster[0].(map[string]any)["name"] != "" {
+				t.Fatal("blank row lost")
+			}
+			io.WriteString(w, `{"id":"session-a","location":"Pool B","instructors":[{"id":"row-a","name":""}]}`)
+		default:
+			t.Fatalf("unexpected request %s", r.URL.Path)
+		}
+	})
+	w := staffRequest("GET", "/api/sessions/session-a/instructors", "", true)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"class_count":0`) {
+		t.Fatalf("roster %d %s", w.Code, w.Body)
+	}
+	w = staffRequest("PATCH", "/api/sessions/session-a", `{"location":"Pool B","instructors":[{"name":"Old"}],"instructor_roster":[{"id":"row-a","name":"","account_id":null}]}`, true)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"location":"Pool B"`) {
+		t.Fatalf("combined save %d %s", w.Code, w.Body)
+	}
+}
+
+func TestSessionRosterRequestsDenyNonOwnersBeforeStorage(t *testing.T) {
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/rest/v1/profiles":
+			io.WriteString(w, `[{"id":"`+testUser+`","account_type":"part_time"}]`)
+		case "/rest/v1/rpc/can_edit_session":
+			io.WriteString(w, "false")
+		default:
+			t.Fatalf("unauthorized storage call %s", r.URL.Path)
+		}
+	})
+	for _, request := range []struct{ method, path, body string }{
+		{"GET", "/api/sessions/other/instructors", ""},
+		{"PATCH", "/api/sessions/other", `{"instructor_roster":[]}`},
+	} {
+		w := staffRequest(request.method, request.path, request.body, true)
+		if w.Code != 403 {
+			t.Fatalf("nonowner %s %d %s", request.path, w.Code, w.Body)
 		}
 	}
 }

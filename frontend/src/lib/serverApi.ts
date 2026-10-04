@@ -138,7 +138,7 @@ export function fetchCurrentSession(sessionId: string) {
       source_locations: string[]
       session_start_time24: string | null
       session_end_time24: string | null
-      instructors: { name: string }[]
+      instructors: { id?: string; name: string }[]
     } | null
     access: {
       mode: 'guest' | 'owner' | 'shared' | 'none'
@@ -686,7 +686,7 @@ export function fetchSchematics(sessionIds: string[]) {
   )
 }
 
-export function upsertSchematic(sessionId: string, data: { codes: string[]; instructors: string[]; assignmentIds?: string[]; assignments?: unknown[] }) {
+export function upsertSchematic(sessionId: string, data: { codes: string[]; instructors: string[]; assignmentIds?: string[]; instructorIds?: (string | null)[]; assignments?: unknown[] }) {
   return request<{ schematic: any }>(`/api/schematics/${encodeURIComponent(sessionId)}`, {
     method: 'PUT',
     body: { data },
@@ -761,4 +761,15 @@ export function fetchLessonPlan(session: string, classId: string, week: string) 
 }
 export function saveLessonPlan(session: string, classId: string, week: string, rows: LessonRow[], curriculumLevel?: string | null) {
  return request<{plan: LessonPlan}>(`/api/instructor/sessions/${encodeURIComponent(session)}/classes/${encodeURIComponent(classId)}/plans/${encodeURIComponent(week)}`,{method:'PUT',body:{rows,...(curriculumLevel !== undefined ? {curriculum_level:curriculumLevel} : {})}})
+}
+
+export type SessionInstructor = {
+ id: string
+ name: string
+ account_id: string | null
+ account: AccountProfile | null
+ class_count: number
+}
+export function fetchSessionInstructors(sessionId: string) {
+ return request<{ instructors: SessionInstructor[] }>(`/api/sessions/${encodeURIComponent(sessionId)}/instructors`)
 }

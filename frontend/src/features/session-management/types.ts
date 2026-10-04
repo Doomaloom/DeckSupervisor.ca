@@ -1,6 +1,6 @@
 import type { SessionIdentityCriteria } from '../../shared/session/sessionTimeInference'
 
-export type InstructorEntry = { name: string }
+export type InstructorEntry = { id?: string; name: string }
 
 export const NO_TEAM_VALUE = '__no_team__'
 export const SESSION_SEASON_OPTIONS = ['Winter', 'Spring', 'Summer', 'Fall']

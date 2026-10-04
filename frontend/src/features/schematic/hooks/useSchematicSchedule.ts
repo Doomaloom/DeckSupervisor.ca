@@ -104,14 +104,14 @@ export function useSchematicSchedule(selectedDay: string | null) {
         return buildTimeLabels(earliest, latest)
     }, [courses])
     const scheduleHeightRem = Math.max(timeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
-    const instructorOptions = useMemo(() => {
-        return (
-            currentSession?.instructors
-                ?.map(instructor => instructor.name.trim())
-                .filter(Boolean)
-                .sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' })) ?? []
-        )
-    }, [currentSession])
+    const instructorRoster = useMemo(() => currentSession?.instructors.map((row, index) => ({
+        id: row.id ?? `legacy-${index}`, name: row.name,
+    })), [currentSession?.instructors])
+    const instructorOptions = useMemo(() => instructorRoster?.map((row, index) => ({
+        id: row.id, name: row.name,
+        label: !row.name.trim() ? `Instructor ${index + 1}` : instructorRoster.filter(other => other.name === row.name).length > 1
+            ? `${row.name} (Instructor ${index + 1})` : row.name,
+    })) ?? [], [instructorRoster])
 
     useEffect(() => {
         if (access.mode === 'guest' || !sessionId || !currentSession) {
@@ -124,9 +124,10 @@ export function useSchematicSchedule(selectedDay: string | null) {
             if (!active) {
                 return
             }
-            const dataValue = response.schematic?.data as { codes?: string[]; instructors?: string[]; assignmentIds?: string[] } | undefined
+            const dataValue = response.schematic?.data as StoredCourseLayout | undefined | undefined
             if (dataValue?.codes?.length) {
                 setRemoteSchedule({
+                    instructorIds: dataValue.instructorIds,
                     assignmentIds: dataValue.assignmentIds,
                     codes: dataValue.codes ?? [],
                     instructors: dataValue.instructors ?? [],
@@ -144,6 +145,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
     const storedLayout = access.mode === 'guest' ? getScheduleForDay(selectedDay ?? '') : remoteSchedule
     const {
         assignmentIds,
+        instructorIds,
         columns,
         instructors,
         lockedInstructors,
@@ -159,6 +161,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
         courses,
         storedLayout,
         allowStoredEmptyColumns: true,
+        instructorRoster,
     })
 
     const handleSaveSchedule = async () => {
@@ -166,12 +169,13 @@ export function useSchematicSchedule(selectedDay: string | null) {
             showAppNotice('Please select a day first.', 'error')
             return
         }
-        if (currentSession && access.mode !== 'owner') {
+        if (currentSession && access.mode !== 'owner' && access.mode !== 'guest') {
             showAppNotice('This schematic is view-only for shared sessions.', 'info')
             return
         }
         const codes = columns.map(column => column.map(course => course.code).join(','))
         setScheduleForDay(selectedDay, {
+            assignmentIds, instructorIds,
             instructors,
             codes,
         })
@@ -198,17 +202,15 @@ export function useSchematicSchedule(selectedDay: string | null) {
         const dayStudents = getStudentsForDay(selectedDay)
         const updated = dayStudents.map(student => {
             const instructor = instructorByCode.get(student.code)
-            if (!instructor) {
-                return student
-            }
-            return { ...student, instructor }
+            return { ...student, instructor: instructor ?? '' }
         })
 
         if (access.mode === 'owner' && currentSession && sessionId) {
             const nextRemoteSchedule = {
                 assignmentIds,
+                instructorIds,
                 assignments: columns.map((column, index) => ({
-                    id: assignmentIds[index], name: instructors[index] ?? '',
+                    id: assignmentIds[index], name: instructors[index] ?? '', instructor_id: instructorIds[index] ?? null,
                     classes: column.map(course => ({code: course.code, level: course.level,
                         start_time: course.startTime, end_time: course.endTime})),
                 })),
@@ -238,6 +240,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
     }
 
     return {
+        instructorIds,
         columns,
         instructors,
         lockedInstructors,

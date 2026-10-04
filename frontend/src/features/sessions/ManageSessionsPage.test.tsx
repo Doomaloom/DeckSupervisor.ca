@@ -21,8 +21,6 @@ vi.mock('../session-management/hooks/useManageSessionForm', () => ({
   useManageSessionForm: mocks.useManageSessionForm,
 }))
 
-vi.mock('../session-management/components/AccountLinks', () => ({ default: ({ sessionId }: { sessionId: string }) => <section aria-label="Instructor account links">Links for {sessionId}</section> }))
-
 describe('ManageSessionsPage', () => {
   beforeEach(() => {
     mocks.useAuth.mockReset()
@@ -57,6 +55,7 @@ describe('ManageSessionsPage', () => {
         instructors: [{ name: 'Alex' }],
       },
       access: { mode: 'shared' },
+      editInstructors: [{ id: 'instructor-a', name: 'Alex', account_id: null, account: null, class_count: 0 }],
       teamName: 'Sharks',
     })
 
@@ -103,7 +102,11 @@ describe('ManageSessionsPage', () => {
       editSessionEndTime24: '11:00',
       editLocation: 'Main Pool',
       editSourceLocations: ['Main Pool'],
-      editInstructors: [{ name: 'Alex' }],
+      editInstructors: [{ id: 'instructor-a', name: 'Alex', account_id: null, account: null, class_count: 0 }],
+      setInstructorCount: vi.fn(),
+      updateInstructorAccount: vi.fn(),
+      instructorsLoading: false,
+      saveStatus: 'Saved',
       editRosterFile: null,
       editRosterFileName: 'roster.csv',
       editMessage: '',
@@ -133,8 +136,9 @@ describe('ManageSessionsPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save Changes' }))
     await user.click(screen.getByRole('button', { name: 'Delete Session' }))
 
-    expect(screen.getByRole('region', { name: 'Instructor account links' })).toHaveTextContent('Links for db-1')
-    expect(screen.getByRole('region', { name: 'Instructor account links' }).closest('form')).toBeNull()
+    expect(screen.getByRole('region', { name: 'Session Instructors' })).toBeVisible()
+    expect(screen.getByLabelText('Instructor 1 name')).toHaveValue('Alex')
+    expect(screen.getByRole('region', { name: 'Session Instructors' }).closest('form')).toBe(screen.getByRole('button', { name: 'Save Changes' }).closest('form'))
     expect(handleUpdateSession).toHaveBeenCalledTimes(1)
     expect(handleDeleteSession).toHaveBeenCalledTimes(1)
     mocks.useAuth.mockReturnValue({ isGuest: true })

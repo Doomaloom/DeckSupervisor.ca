@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../app/AuthContext'
 import { createTermKey } from '../../../app/useCurrentTerm'
-import { useCurrentSession } from '../../../app/useCurrentSession'
+import { useCurrentSession, type SessionRecord } from '../../../app/useCurrentSession'
 import { useCurrentTeam } from '../../../app/useCurrentTeam'
 import {
   getExtractedClassesForScope,
@@ -24,11 +24,18 @@ import {
   getInstructorCoursesForDay,
   getScheduleForDay,
   setStudentsForDay,
+  getStudentsForDay,
+  setScheduleForDay,
+  setInstructorCoursesForDay,
+  setInstructorsForDay,
 } from '../../../lib/storage'
 import {
   deleteSession,
   fetchCurrentTeams,
   fetchMySessions,
+  fetchSessionInstructors,
+  type SessionInstructor,
+  type AccountProfile,
   updateSession,
 } from '../../../lib/serverApi'
 import { formatSessionTermLabel, getYearFromDate, resolveSessionYear } from '../../../shared/session/sessionLabels'
@@ -38,7 +45,9 @@ import {
   normalizeSessionLocationKey,
   normalizeSessionLocations,
 } from '../../../shared/session/sourceLocations'
-import { NO_TEAM_VALUE, SESSION_SEASON_OPTIONS, type InstructorEntry, type LocalSessionEntry } from '../types'
+import { reconcileGuestInstructorRoster } from '../utils/guestInstructorRoster'
+import { useSessionAutosave } from './useSessionAutosave'
+import { NO_TEAM_VALUE, SESSION_SEASON_OPTIONS, type LocalSessionEntry } from '../types'
 import { buildSessionIdentityCriteria, resolveDisplayAndSourceLocations } from '../utils/sessionIdentity'
 import type { ClassRoster } from '../../../types/app'
 
@@ -187,12 +196,22 @@ export function useManageSessionForm({
   const [editSourceLocations, setEditSourceLocations] = useState<string[]>([])
   const [availableLocations, setAvailableLocations] = useState<string[]>([])
   const [teamName, setTeamName] = useState('')
-  const [editInstructors, setEditInstructors] = useState<InstructorEntry[]>([{ name: '' }])
+  const [editInstructors, setEditInstructors] = useState<SessionInstructor[]>([])
+  const persistedInstructors = useRef<SessionInstructor[]>([])
+  const [instructorsLoadedFor, setInstructorsLoadedFor] = useState('')
+  const [instructorLoadError, setInstructorLoadError] = useState('')
+  const [rosterLoadVersion, setRosterLoadVersion] = useState(0)
+  const activeScope = useRef({ id: currentSessionId, generation: 0 })
+  if (activeScope.current.id !== currentSessionId) activeScope.current = { id: currentSessionId, generation: activeScope.current.generation + 1 }
+  const persistedSession = useRef<SessionRecord | null>(null)
   const [editRosterFile, setEditRosterFile] = useState<File | null>(null)
   const [editRosterFileName, setEditRosterFileName] = useState<string | undefined>(undefined)
   const [editMessage, setEditMessage] = useState('')
   const [editMessageTone, setEditMessageTone] = useState<'success' | 'error'>('success')
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const mounted = useRef(false)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const [ownedSessions, setOwnedSessions] = useState<OwnedSessionRow[]>([])
   const lastLoadedSessionIdRef = useRef('')
   const inferredTimesSessionIdRef = useRef('')
@@ -204,25 +223,22 @@ export function useManageSessionForm({
     return currentSessionRecord
   }, [currentSessionId, currentSessionRecord, isGuest, scopeVersion])
 
-  const addEditInstructor = () => {
-    setEditInstructors(current => [...current, { name: '' }])
+  const makeInstructor = (name = '', id: string = crypto.randomUUID()): SessionInstructor => ({ id, name, account_id: null, account: null, class_count: 0 })
+  const setInstructorCount = (count: number) => {
+    if (!Number.isSafeInteger(count) || count < 0) return false
+    const removed = editInstructors.slice(count)
+    if (removed.some(row => row.name.trim() || row.account_id || row.class_count) &&
+      !window.confirm(`Remove ${removed.length} instructor row(s)? Their scheduled classes will stay in unnamed columns and linked accounts will lose access to those classes. Lesson plans will be preserved.`)) return false
+    setEditInstructors(current => count <= current.length ? current.slice(0, count) : [
+      ...current, ...Array.from({ length: count - current.length }, () => makeInstructor()),
+    ])
+    return true
   }
-
-  const removeEditInstructor = (index: number) => {
-    setEditInstructors(current => {
-      if (current.length === 1) {
-        return [{ name: '' }]
-      }
-      return current.filter((_, i) => i !== index)
-    })
+  const updateEditInstructor = (index: number, name: string) => {
+    setEditInstructors(current => current.map((row, i) => i === index ? { ...row, name } : row))
   }
-
-  const updateEditInstructor = (index: number, value: string) => {
-    setEditInstructors(current => {
-      const next = [...current]
-      next[index] = { name: value }
-      return next
-    })
+  const updateInstructorAccount = (id: string, account: AccountProfile | null) => {
+    setEditInstructors(current => current.map(row => row.id === id ? { ...row, account, account_id: account?.id ?? null } : row))
   }
 
   useEffect(() => {
@@ -233,7 +249,9 @@ export function useManageSessionForm({
       ? (currentSession as LocalSessionEntry).id
       : currentSessionRecord?.id ?? ''
     const didSessionChange = loadedSessionId !== lastLoadedSessionIdRef.current
+    if (loadedSessionId !== currentSessionId || !didSessionChange) return
     lastLoadedSessionIdRef.current = loadedSessionId
+    setIsSaving(false)
     if (isGuest) {
       const localSession = currentSession as LocalSessionEntry
       setEditSessionDay(localSession.sessionDay)
@@ -248,7 +266,10 @@ export function useManageSessionForm({
       setEditSourceLocations(
         normalizeSessionLocations(localSession.sourceLocations ?? [localSession.location ?? '']),
       )
-      setEditInstructors(localSession.instructors.length ? localSession.instructors : [{ name: '' }])
+      const roster = localSession.instructors.map(row => makeInstructor(row.name, row.id))
+      persistedInstructors.current = roster
+      setEditInstructors(roster)
+      setInstructorsLoadedFor(loadedSessionId)
       setEditRosterFile(null)
       setEditRosterFileName(localSession.rosterFileName)
       if (didSessionChange) {
@@ -257,6 +278,7 @@ export function useManageSessionForm({
       return
     }
     const dbSession = currentSessionRecord
+    persistedSession.current = dbSession
     setEditSessionDay(dbSession?.session_day ?? '')
     setEditSessionSeason(dbSession?.session_season ?? '')
     const dbYear = dbSession?.session_year
@@ -269,13 +291,26 @@ export function useManageSessionForm({
     setEditSessionEndTime24(dbSession?.session_end_time24 ?? '')
     setEditLocation(dbSession?.location ?? '')
     setEditSourceLocations(getEffectiveSourceLocations(dbSession))
-    setEditInstructors(dbSession?.instructors?.length ? dbSession.instructors : [{ name: '' }])
+    setEditInstructors((dbSession?.instructors ?? []).map(row => makeInstructor(row.name, row.id)))
     setEditRosterFile(null)
     setEditRosterFileName(undefined)
     if (didSessionChange) {
       setEditMessage('')
     }
-  }, [currentSession, currentSessionRecord, isGuest])
+  }, [currentSession, currentSessionRecord, currentSessionId, isGuest])
+
+  useEffect(() => {
+    if (isGuest || !currentSessionRecord || currentSessionRecord.id !== currentSessionId || access.mode !== 'owner') return
+    let active = true
+    setInstructorsLoadedFor('')
+    setInstructorLoadError('')
+    fetchSessionInstructors(currentSessionId).then(response => {
+      if (active) { setEditInstructors(response.instructors); setInstructorsLoadedFor(currentSessionId) }
+    }).catch(error => {
+      if (active) setInstructorLoadError(error instanceof Error ? error.message : 'Unable to load session instructors')
+    })
+    return () => { active = false }
+  }, [currentSessionId, isGuest, access.mode, rosterLoadVersion, currentSessionRecord?.id])
 
   useEffect(() => {
     if (isGuest || !editTeamId || editTeamId === NO_TEAM_VALUE) {
@@ -435,15 +470,19 @@ export function useManageSessionForm({
     void persist()
   }, [access.mode, currentSession, currentSessionId, currentSessionRecord, isGuest, refreshScope])
 
-  const handleUpdateSession = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const saveChanges = async (): Promise<boolean> => {
+    const savingSessionId = currentSessionId
+    const sessionBaseline = persistedSession.current?.id === savingSessionId ? persistedSession.current : currentSessionRecord
+    const savingGeneration = activeScope.current.generation
+    const stillCurrent = () => mounted.current && activeScope.current.generation === savingGeneration
+    if (instructorsLoadedFor !== savingSessionId || (!isGuest && access.mode !== 'owner')) return false
     if (!currentSessionId) {
-      return
+      return false
     }
     if (Boolean(editSessionStartTime24) !== Boolean(editSessionEndTime24)) {
       setEditMessageTone('error')
       setEditMessage('Enter both session start and end time, or leave both blank.')
-      return
+      return false
     }
     const resolvedLocations = resolveDisplayAndSourceLocations({
       location: editLocation,
@@ -452,7 +491,7 @@ export function useManageSessionForm({
     if (resolvedLocations.validationMessage) {
       setEditMessageTone('error')
       setEditMessage(resolvedLocations.validationMessage)
-      return
+      return false
     }
     const sessionYearValue = resolveSessionYear(editSessionYear, editStartDate, editEndDate)
 
@@ -473,7 +512,7 @@ export function useManageSessionForm({
             (currentSession as LocalSessionEntry | null)?.location ?? '',
           ],
         )
-      : getEffectiveSourceLocations(currentSessionRecord)
+      : getEffectiveSourceLocations(sessionBaseline)
 
     const removedLocationKeys = new Set(
       previousSourceLocations
@@ -504,14 +543,14 @@ export function useManageSessionForm({
               sessionEndTime24: (currentSession as LocalSessionEntry).sessionEndTime24 ?? null,
             }
           : null
-        : currentSessionRecord
+        : sessionBaseline
           ? {
-              sessionDay: currentSessionRecord.session_day,
-              sessionSeason: currentSessionRecord.session_season ?? null,
-              sessionYear: currentSessionRecord.session_year ?? null,
-              sourceLocations: getEffectiveSourceLocations(currentSessionRecord),
-              sessionStartTime24: currentSessionRecord.session_start_time24 ?? null,
-              sessionEndTime24: currentSessionRecord.session_end_time24 ?? null,
+              sessionDay: sessionBaseline.session_day,
+              sessionSeason: sessionBaseline.session_season ?? null,
+              sessionYear: sessionBaseline.session_year ?? null,
+              sourceLocations: getEffectiveSourceLocations(sessionBaseline),
+              sessionStartTime24: sessionBaseline.session_start_time24 ?? null,
+              sessionEndTime24: sessionBaseline.session_end_time24 ?? null,
             }
           : null
 
@@ -533,12 +572,23 @@ export function useManageSessionForm({
         if (dependencyMessage) {
           setEditMessageTone('error')
           setEditMessage(dependencyMessage)
-          return
+          return false
         }
       }
     }
     setIsSaving(true)
     if (isGuest) {
+      const local = currentSession as LocalSessionEntry
+      const oldSchedule = getScheduleForDay(local.sessionDay)
+      if (oldSchedule) {
+        const schedule = reconcileGuestInstructorRoster(oldSchedule, persistedInstructors.current, editInstructors)
+        setScheduleForDay(editSessionDay, schedule)
+        const assignments = schedule.codes.map((codes, index) => ({ name: schedule.instructors[index] ?? '', codes: codes.split(',').filter(Boolean) }))
+        setInstructorCoursesForDay(editSessionDay, { instructors: assignments })
+        setInstructorsForDay(editSessionDay, { names: assignments.map(row => row.name), codes: schedule.codes })
+        const namesByCode = new Map(assignments.flatMap(row => row.codes.map(code => [code, row.name] as const)))
+        setStudentsForDay(editSessionDay, getStudentsForDay(local.sessionDay).map(student => ({ ...student, instructor: namesByCode.get(student.code) ?? student.instructor })))
+      }
       const updatedSessions = loadSessions().map(session => {
         if (session.id !== currentSessionId) {
           return session
@@ -554,39 +604,39 @@ export function useManageSessionForm({
           sessionEndTime24: editSessionEndTime24 || null,
           location: resolvedLocations.displayLocation || null,
           sourceLocations: resolvedLocations.sourceLocations,
-          instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
+          instructors: editInstructors.map(({ id, name }) => ({ id, name })),
           rosterFileName: editRosterFile ? editRosterFile.name : editRosterFileName,
         }
       })
       saveSessions(updatedSessions)
+      persistedInstructors.current = editInstructors
       refreshImportedSessionDataForSession(currentSessionId, nextImportTarget)
-      setEditMessageTone('success')
-      setEditMessage('Session updated.')
-      refreshScope()
-      selectSessionAndSyncDay(currentSessionId, editSessionDay)
-      setIsSaving(false)
-      return
+      if (stillCurrent()) {
+        setEditMessageTone('success'); setEditMessage('Session updated.'); refreshScope()
+        selectSessionAndSyncDay(currentSessionId, editSessionDay); setIsSaving(false)
+      }
+      return true
     }
 
     if (!user) {
       setEditMessageTone('error')
       setEditMessage('You must be signed in to update this session.')
       setIsSaving(false)
-      return
+      return false
     }
-    if (!currentSessionRecord) {
+    if (!sessionBaseline) {
       setEditMessageTone('error')
       setEditMessage('Session data is not ready yet. Please try again.')
       setIsSaving(false)
-      return
+      return false
     }
 
-    const previousTeamId = currentSessionRecord.team_id ?? null
-    const previousSessionDay = currentSessionRecord.session_day ?? ''
+    const previousTeamId = sessionBaseline.team_id ?? null
+    const previousSessionDay = sessionBaseline.session_day ?? ''
     const previousSessionLabel = formatSessionTermLabel(
-      currentSessionRecord.session_season,
-      currentSessionRecord.session_year,
-      currentSessionRecord.start_date,
+      sessionBaseline.session_season,
+      sessionBaseline.session_year,
+      sessionBaseline.start_date,
     )
 
     const nextTeamId = editTeamId && editTeamId !== NO_TEAM_VALUE ? editTeamId : null
@@ -605,7 +655,7 @@ export function useManageSessionForm({
     const updateTimestamp = new Date().toISOString()
 
     try {
-      await updateSession(currentSessionId, {
+      const response = await updateSession(currentSessionId, {
         team_id: nextTeamId,
         session_day: editSessionDay,
         session_season: editSessionSeason || null,
@@ -616,7 +666,7 @@ export function useManageSessionForm({
         session_end_time24: editSessionEndTime24 || null,
         location: resolvedLocations.displayLocation || null,
         source_locations: resolvedLocations.sourceLocations,
-        instructors: editInstructors.filter(instructor => instructor.name.trim().length > 0),
+        instructor_roster: editInstructors.map(({ id, name, account_id }) => ({ id, name, account_id })),
         updated_at: updateTimestamp,
         report_card_sync: didReportCardScopeChange
           ? {
@@ -629,19 +679,35 @@ export function useManageSessionForm({
             }
           : undefined,
       })
+      if (stillCurrent()) persistedSession.current = response.session as SessionRecord
     } catch (error) {
+      if (!stillCurrent()) return false
       setEditMessageTone('error')
       setEditMessage(error instanceof Error ? error.message : 'Failed to update session')
       setIsSaving(false)
-      return
+      return false
     }
 
+    if (!stillCurrent()) return true
     refreshImportedSessionDataForSession(currentSessionId, nextImportTarget)
     setEditMessageTone('success')
     setEditMessage('Session updated.')
     selectSessionAndSyncDay(currentSessionId, editSessionDay)
     setIsSaving(false)
+    return true
   }
+
+  const snapshot = JSON.stringify({ editSessionDay, editSessionSeason, editSessionYear, editTeamId,
+    editStartDate, editEndDate, editSessionStartTime24, editSessionEndTime24, editLocation, editSourceLocations,
+    instructors: editInstructors.map(({ id, name, account_id }) => ({ id, name, account_id })),
+    rosterFile: editRosterFile?.name ?? editRosterFileName,
+  })
+  const autosave = useSessionAutosave({
+    sessionId: currentSessionId,
+    enabled: Boolean(!isDeleting && currentSessionId && currentSession?.id === currentSessionId && instructorsLoadedFor === currentSessionId && (isGuest || access.mode === 'owner')),
+    snapshot, save: saveChanges,
+  })
+  const handleUpdateSession = (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); void autosave.flush() }
 
   const handleDeleteSession = async () => {
     if (!currentSessionId) {
@@ -650,6 +716,7 @@ export function useManageSessionForm({
     if (!window.confirm('Delete this session? This action cannot be undone.')) {
       return
     }
+    setIsDeleting(true)
     if (isGuest) {
       const updatedSessions = loadSessions().filter(session => session.id !== currentSessionId)
       saveSessions(updatedSessions)
@@ -666,6 +733,7 @@ export function useManageSessionForm({
     try {
       await deleteSession(currentSessionId)
     } catch (error) {
+      setIsDeleting(false)
       setEditMessage(error instanceof Error ? error.message : 'Failed to delete session')
       return
     }
@@ -806,7 +874,7 @@ export function useManageSessionForm({
     editRosterFileName,
     editMessage,
     editMessageTone,
-    isSaving,
+    isSaving: isSaving || isDeleting,
     overlapWarning,
     setEditSessionDay,
     setEditSessionSeason,
@@ -819,8 +887,13 @@ export function useManageSessionForm({
     setEditLocation,
     setEditSourceLocations,
     setEditRosterFile,
-    addEditInstructor,
-    removeEditInstructor,
+    setInstructorCount,
+    updateInstructorAccount,
+    instructorsLoading: instructorsLoadedFor !== currentSessionId,
+    instructorLoadError,
+    retryLoadInstructors: () => setRosterLoadVersion(value => value + 1),
+    saveStatus: autosave.status,
+    hasUnsavedChanges: autosave.dirty,
     updateEditInstructor,
     handleUpdateSession,
     handleDeleteSession,

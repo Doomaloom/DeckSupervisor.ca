@@ -4,11 +4,12 @@ import type { AccountProfile } from '../../lib/serverApi'
 type Props = {
   label: string
   disabled?: boolean
+  compact?: boolean
   search: (query: string) => Promise<AccountProfile[]>
   renderAction: (profile: AccountProfile) => ReactNode
 }
 
-export default function AccountSearch({ label, disabled = false, search, renderAction }: Props) {
+export default function AccountSearch({ label, disabled = false, compact = false, search, renderAction }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<AccountProfile[]>([])
   const [loading, setLoading] = useState(false)
@@ -42,12 +43,12 @@ export default function AccountSearch({ label, disabled = false, search, renderA
     }
   }
 
-  return <div className="mt-3">
+  return <div className={compact ? '' : 'mt-3'}>
     <div className="flex flex-wrap gap-2">
-      <label className="flex flex-1 flex-col gap-2 text-sm font-semibold">
+      <label className="flex min-w-0 flex-1 basis-48 flex-col gap-2 text-sm font-semibold">
         {label}
         <input
-          className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
+          className="w-full min-w-0 rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
           value={query}
           onChange={event => { setQuery(event.target.value); setResults([]); setSearched(false); setError('') }}
           onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void handleSearch() } }}
@@ -62,7 +63,7 @@ export default function AccountSearch({ label, disabled = false, search, renderA
     </div>
     {error && <p role="alert" className="mt-3 text-sm text-danger">{error}</p>}
     <div className="mt-4 flex flex-col gap-3" aria-live="polite">
-      {!error && !loading && results.length === 0 && <p className="text-sm text-secondary/70">{searched ? 'No accounts found.' : 'No results yet.'}</p>}
+      {!error && !loading && results.length === 0 && (searched || !compact) && <p className="text-sm text-secondary/70">{searched ? 'No accounts found.' : 'No results yet.'}</p>}
       {results.map(profile => <div key={profile.id} className="rounded-2xl border border-secondary/20 bg-bg p-3">
         <p className="font-semibold">{profile.first_name} {profile.last_name}</p>
         <p className="text-xs text-secondary/70">{profile.email}</p>

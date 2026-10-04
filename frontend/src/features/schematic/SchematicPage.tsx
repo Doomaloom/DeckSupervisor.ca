@@ -32,6 +32,7 @@ function SchematicPage() {
     const {
         columns,
         instructors,
+        instructorIds,
         lockedInstructors,
         selectedCourseCodes,
         timeLabels,
@@ -226,6 +227,7 @@ function SchematicPage() {
             <SchematicBoard
                 columns={columns}
                 instructors={instructors}
+                instructorIds={instructorIds}
                 lockedInstructors={lockedInstructors}
                 selectedCourseCodes={selectedCourseCodes}
                 timeLabels={timeLabels}

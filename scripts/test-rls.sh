@@ -25,7 +25,7 @@ fi
 # Explicit connection flags ignore any PGHOST/PGDATABASE set for a real project.
 local_psql=(psql -X -h "$test_root" -p 55439 -U postgres -d postgres -v ON_ERROR_STOP=1 -q)
 if ! "${local_psql[@]}" -f "$repo_root/backend/tests/rls_bootstrap.sql" \
-  -f "$repo_root/backend/tests/rls.sql" -f "$repo_root/backend/tests/rls_instructor.sql" -f "$repo_root/backend/tests/rls_instructor_accounts.sql" -f "$repo_root/backend/tests/rls_lesson_plans.sql" -f "$repo_root/backend/tests/rls_instructor_regression.sql" -f "$repo_root/backend/tests/rls_recovery.sql" >"$test_root/regression.log" 2>&1; then
+  -f "$repo_root/backend/tests/rls.sql" -f "$repo_root/backend/tests/rls_instructor.sql" -f "$repo_root/backend/tests/rls_instructor_accounts.sql" -f "$repo_root/backend/tests/rls_lesson_plans.sql" -f "$repo_root/backend/tests/rls_instructor_regression.sql" -f "$repo_root/backend/tests/rls_session_instructors.sql" -f "$repo_root/backend/tests/rls_recovery.sql" >"$test_root/regression.log" 2>&1; then
   tail -100 "$test_root/regression.log" >&2
   exit 1
 fi

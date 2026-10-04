@@ -5,6 +5,7 @@ import { canPlaceCourses } from './drag'
 
 export type StoredCourseLayout = {
     assignmentIds?: string[]
+    instructorIds?: (string | null)[]
     codes: string[]
     instructors: string[]
 }

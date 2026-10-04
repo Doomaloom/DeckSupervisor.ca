@@ -448,9 +448,27 @@ func UpdateSession(w http.ResponseWriter, r *http.Request) {
 	query.Set("id", "eq."+sessionID)
 	query.Set("created_by", "eq."+profile.ID)
 	var rows []map[string]any
-	if err := client.Patch(r.Context(), "/rest/v1/sessions", query, payload, "return=representation", &rows); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	if roster, hasRoster := payload["instructor_roster"]; hasRoster {
+		var allowed bool
+		if err := client.RPC(r.Context(), "can_edit_session", map[string]any{"p_session_id": sessionID, "p_uid": client.User.ID}, &allowed); err != nil || !allowed {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		delete(payload, "instructor_roster")
+		delete(payload, "instructors")
+		var row map[string]any
+		if err := client.RPC(r.Context(), "save_session_with_instructors", map[string]any{"p_session": sessionID, "p_fields": payload, "p_roster": roster}, &row); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if row != nil {
+			rows = append(rows, row)
+		}
+	} else {
+		if err := client.Patch(r.Context(), "/rest/v1/sessions", query, payload, "return=representation", &rows); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 	if len(rows) == 0 {
 		http.Error(w, "Session update did not apply", http.StatusForbidden)
