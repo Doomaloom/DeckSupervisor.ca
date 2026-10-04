@@ -42,7 +42,7 @@ func TestInstructorMetadataUsesCallerAndExplicitProjection(t *testing.T) {
 	}
 }
 func TestInstructorDirectRequestsDenied(t *testing.T) {
-	for _, path := range []string{"/api/instructor/sessions", "/api/instructor/sessions/other/classes", "/api/instructor/sessions/other/classes/class/plans/2026-10-05", "/api/sessions/other/instructor-assignments"} {
+	for _, path := range []string{"/api/instructor/sessions", "/api/instructor/sessions/other/classes", "/api/instructor/sessions/other/classes/class/plans/2026-10-05", "/api/sessions/other/instructor-assignments", "/api/sessions/other/linkable-profiles?q=Alex"} {
 		w := staffRequest("GET", path, "", false)
 		if w.Code != 401 {
 			t.Fatalf("guest %s returned %d", path, w.Code)
@@ -63,6 +63,73 @@ func TestInstructorDirectRequestsDenied(t *testing.T) {
 	w := staffRequest("PATCH", "/api/sessions/other/instructor-assignments/column", `{"account_id":"forged"}`, true)
 	if w.Code != 403 {
 		t.Fatalf("link denial %d", w.Code)
+	}
+	w = staffRequest("GET", "/api/sessions/other/linkable-profiles?q=Alex", "", true)
+	if w.Code != 403 {
+		t.Fatalf("search denial %d", w.Code)
+	}
+}
+
+func TestInstructorAccountSearchAndDisplayUseSessionScope(t *testing.T) {
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		switch r.URL.Path {
+		case "/rest/v1/rpc/can_edit_session":
+			if body["p_session_id"] != "session-a" || body["p_uid"] != testUser {
+				t.Fatalf("bad permission scope %v", body)
+			}
+			io.WriteString(w, "true")
+		case "/rest/v1/rpc/search_linkable_part_time_profiles":
+			if body["p_session"] != "session-a" || body["p_query"] != "alex@example.invalid" || body["p_limit"] != float64(25) {
+				t.Fatalf("bad search %v", body)
+			}
+			io.WriteString(w, `[{"id":"account-a","first_name":"Alex","last_name":"Staff","email":"alex@example.invalid"}]`)
+		case "/rest/v1/rpc/instructor_assignment_accounts":
+			if body["p_session"] != "session-a" {
+				t.Fatalf("bad assignment scope %v", body)
+			}
+			io.WriteString(w, `[{"id":"column-a","name":"Alex column","account_id":"account-a","account":{"id":"account-a","first_name":"Alex","last_name":"Staff","email":"alex@example.invalid"}}]`)
+		default:
+			t.Fatalf("unexpected account request %s", r.URL.Path)
+		}
+	})
+	w := staffRequest("GET", "/api/sessions/session-a/linkable-profiles?q=%20alex%40example.invalid%20", "", true)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"results":[`) {
+		t.Fatalf("search %d %s", w.Code, w.Body)
+	}
+	w = staffRequest("GET", "/api/sessions/session-a/instructor-assignments", "", true)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"account":{`) {
+		t.Fatalf("display %d %s", w.Code, w.Body)
+	}
+}
+
+func TestInstructorAccountSearchEmptyAndFailure(t *testing.T) {
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/can_edit_session") {
+			io.WriteString(w, "true")
+			return
+		}
+		if !strings.HasSuffix(r.URL.Path, "/search_linkable_part_time_profiles") {
+			t.Fatalf("unexpected %s", r.URL.Path)
+		}
+		var body map[string]any
+		json.NewDecoder(r.Body).Decode(&body)
+		if body["p_query"] == "fail" {
+			http.Error(w, "Unavailable", 500)
+			return
+		}
+		io.WriteString(w, "null")
+	})
+	w := staffRequest("GET", "/api/sessions/session-a/linkable-profiles?q=empty", "", true)
+	if w.Code != 200 || w.Body.String() != "{\"results\":[]}\n" {
+		t.Fatalf("empty %d %s", w.Code, w.Body)
+	}
+	w = staffRequest("GET", "/api/sessions/session-a/linkable-profiles?q=fail", "", true)
+	if w.Code != 400 {
+		t.Fatalf("failure %d %s", w.Code, w.Body)
 	}
 }
 func TestInstructorUnlinkedEmptyAndPlanAttribution(t *testing.T) {

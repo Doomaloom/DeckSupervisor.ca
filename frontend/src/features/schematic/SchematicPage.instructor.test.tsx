@@ -9,9 +9,8 @@ vi.mock('../../app/useCurrentTeam',()=>({useCurrentTeam:()=>({currentTeam:{name:
 vi.mock('../../app/useCurrentTerm',()=>({useCurrentTerm:()=>({currentTerm:{label:'Fall 2026'}})}))
 vi.mock('./hooks/useSchematicSchedule',()=>({useSchematicSchedule:()=>({})}))
 vi.mock('./hooks/useFullTimeSchematicView',()=>({useFullTimeSchematicView:()=>({selectedDay:'Mo',days:[],locationOptions:[],termSessions:[{}],selectedSession:{id:'selected-session',created_by:state.owner},hasDbSchematic:false})}))
-vi.mock('./components/AccountLinks',()=>({default:({sessionId}: {sessionId:string})=><div>Link controls for {sessionId}</div>}))
-it('shows account link controls for full-time session owners',()=>{
- state.owner='owner';render(<SchematicPage/>);expect(screen.getByText('Link controls for selected-session')).toBeVisible()
+it('does not show account link controls on the schematic for owners',()=>{
+ state.owner='owner';render(<SchematicPage/>);expect(screen.queryByRole('region',{name:'Instructor account links'})).not.toBeInTheDocument()
 })
 it('preserves full-time view-only privileges for other owners’ sessions',()=>{
  state.owner='other-owner';render(<SchematicPage/>);expect(screen.queryByText('Link controls for selected-session')).not.toBeInTheDocument()

@@ -1,4 +1,3 @@
-import React from 'react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { customRender, screen } from '../../test/render'
@@ -21,6 +20,8 @@ vi.mock('../session-management/hooks/useCurrentSessionScopeSync', () => ({
 vi.mock('../session-management/hooks/useManageSessionForm', () => ({
   useManageSessionForm: mocks.useManageSessionForm,
 }))
+
+vi.mock('../session-management/components/AccountLinks', () => ({ default: ({ sessionId }: { sessionId: string }) => <section aria-label="Instructor account links">Links for {sessionId}</section> }))
 
 describe('ManageSessionsPage', () => {
   beforeEach(() => {
@@ -62,6 +63,7 @@ describe('ManageSessionsPage', () => {
     customRender(<ManageSessionsPage />)
 
     expect(screen.getByText('You are viewing a shared session. Editing is disabled.')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Instructor account links' })).not.toBeInTheDocument()
   })
 
   it('wires save and delete actions when the current session is editable', async () => {
@@ -126,12 +128,17 @@ describe('ManageSessionsPage', () => {
       handleDeleteSession,
     })
 
-    customRender(<ManageSessionsPage />)
+    const { rerender } = customRender(<ManageSessionsPage />)
 
     await user.click(screen.getByRole('button', { name: 'Save Changes' }))
     await user.click(screen.getByRole('button', { name: 'Delete Session' }))
 
+    expect(screen.getByRole('region', { name: 'Instructor account links' })).toHaveTextContent('Links for db-1')
+    expect(screen.getByRole('region', { name: 'Instructor account links' }).closest('form')).toBeNull()
     expect(handleUpdateSession).toHaveBeenCalledTimes(1)
     expect(handleDeleteSession).toHaveBeenCalledTimes(1)
+    mocks.useAuth.mockReturnValue({ isGuest: true })
+    rerender(<ManageSessionsPage />)
+    expect(screen.queryByRole('region', { name: 'Instructor account links' })).not.toBeInTheDocument()
   })
 })

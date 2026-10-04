@@ -1,4 +1,3 @@
-import AccountLinks from './components/AccountLinks'
 import React from 'react'
 import { useAuth } from '../../app/AuthContext'
 import { useDay } from '../../app/DayContext'
@@ -12,7 +11,7 @@ import { useFullTimeSchematicView } from './hooks/useFullTimeSchematicView'
 import { useSchematicSchedule } from './hooks/useSchematicSchedule'
 
 function SchematicPage() {
-    const { accountType, user } = useAuth()
+    const { accountType } = useAuth()
     const { selectedDay, setSelectedDay } = useDay()
     const { access, session } = useCurrentSession()
     const { currentTeam, currentTeamId } = useCurrentTeam()
@@ -131,9 +130,6 @@ function SchematicPage() {
                     </div>
                 </div>
 
-                {fullTimeView.selectedSession?.created_by === user?.id && fullTimeView.selectedSession?.id && (
-                    <AccountLinks key={fullTimeView.selectedSession.id} sessionId={fullTimeView.selectedSession.id} />
-                )}
 
                 {!currentTeamId ? (
                     <div className="rounded-card border-2 border-secondary/30 bg-bg p-4 text-sm font-semibold text-secondary">
@@ -245,7 +241,6 @@ function SchematicPage() {
                 onCourseDragStart={isReadOnly ? () => {} : handleDragStart}
             />
 
-            {access.mode === 'owner' && session?.id && <AccountLinks key={session.id} sessionId={session.id} />}
             <div className="flex justify-center">
                 <button
                     className="rounded-2xl bg-primary px-6 py-3 text-white transition hover:-translate-y-0.5 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"

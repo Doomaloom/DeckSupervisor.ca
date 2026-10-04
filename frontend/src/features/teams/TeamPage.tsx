@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import AccountSearch from '../../shared/accounts/AccountSearch'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
 import { formatSessionDisplayName } from '../../shared/session/sessionLabels'
@@ -74,8 +75,6 @@ function TeamPage() {
   const [activeTeamId, setActiveTeamId] = useState('')
   const [teamName, setTeamName] = useState('')
   const [locationsInput, setLocationsInput] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<ProfileResult[]>([])
   const [invites, setInvites] = useState<InviteEntry[]>([])
   const [members, setMembers] = useState<MemberEntry[]>([])
   const [loading, setLoading] = useState(false)
@@ -194,26 +193,6 @@ function TeamPage() {
         setLocationsInput((data.available_locations ?? []).join(', '))
         setMessage('Team created.')
       }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim() || !user) {
-      setSearchResults([])
-      return
-    }
-    if (!activeTeamId) {
-      setMessage('Select a team first.')
-      return
-    }
-    setLoading(true)
-    setMessage('')
-    try {
-      const query = searchQuery.trim()
-      const response = await searchInvitableProfiles(activeTeamId, query)
-      setSearchResults((response.results ?? []) as ProfileResult[])
     } finally {
       setLoading(false)
     }
@@ -508,48 +487,26 @@ function TeamPage() {
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             <div>
               <h4 className="text-base font-semibold">Invite by name</h4>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <input
-                  className="flex-1 rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary"
-                  value={searchQuery}
-                  onChange={event => setSearchQuery(event.target.value)}
-                  placeholder="Search first or last name"
-                />
-                <button
-                  type="button"
-                  className="rounded-2xl bg-secondary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
-                  onClick={handleSearch}
-                  disabled={loading}
-                >
-                  Search
-                </button>
-              </div>
-              <div className="mt-4 flex flex-col gap-3">
-                {searchResults.length === 0 ? (
-                  <p className="text-sm text-secondary/70">No results yet.</p>
-                ) : (
-                  searchResults.map(result => {
-                    const alreadyMember = memberIds.has(result.id)
-                    const alreadyInvited = invitedIds.has(result.id)
-                    return (
-                      <div key={result.id} className="rounded-2xl border border-secondary/20 bg-bg p-3">
-                        <p className="font-semibold text-secondary">
-                          {result.first_name} {result.last_name}
-                        </p>
-                        <p className="text-xs text-secondary/70">{result.email}</p>
-                        <button
-                          type="button"
-                          className="mt-2 rounded-lg border border-secondary/40 px-3 py-1 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
-                          onClick={() => void handleInvite(result)}
-                          disabled={loading || alreadyMember || alreadyInvited}
-                        >
-                          {alreadyMember ? 'Already in team' : alreadyInvited ? 'Invite sent' : 'Invite'}
-                        </button>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
+              <AccountSearch
+                key={activeTeamId}
+                label="Search staff to invite"
+                disabled={loading || !activeTeamId}
+                search={async query => (await searchInvitableProfiles(activeTeamId, query)).results}
+                renderAction={result => {
+                  const alreadyMember = memberIds.has(result.id)
+                  const alreadyInvited = invitedIds.has(result.id)
+                  return (
+                    <button
+                      type="button"
+                      className="mt-2 rounded-lg border border-secondary/40 px-3 py-1 text-sm font-semibold text-secondary disabled:opacity-60"
+                      onClick={() => void handleInvite(result)}
+                      disabled={loading || alreadyMember || alreadyInvited}
+                    >
+                      {alreadyMember ? 'Already in team' : alreadyInvited ? 'Invite sent' : 'Invite'}
+                    </button>
+                  )
+                }}
+              />
             </div>
 
             <div>

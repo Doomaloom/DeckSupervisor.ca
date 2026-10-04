@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"cob-aquatics/internal/curriculum"
 	supabasesvc "cob-aquatics/internal/services/supabase"
@@ -85,7 +86,7 @@ func InstructorAssignments(w http.ResponseWriter, r *http.Request) {
 		q.Set("id", "eq."+mux.Vars(r)["assignmentId"])
 		err = c.Patch(r.Context(), "/rest/v1/instructor_assignments", q, map[string]any{"account_id": body.AccountID}, "return=representation", &rows)
 	} else {
-		err = c.Get(r.Context(), "/rest/v1/instructor_assignments", q, &rows)
+		err = c.RPC(r.Context(), "instructor_assignment_accounts", map[string]any{"p_session": sid}, &rows)
 	}
 	if err != nil {
 		http.Error(w, "Unable to update or load account links", 400)
@@ -95,6 +96,30 @@ func InstructorAssignments(w http.ResponseWriter, r *http.Request) {
 		rows = []map[string]any{}
 	}
 	writeJSON(w, map[string]any{"assignments": rows})
+}
+
+// Search is scoped to session ownership, including sessions without a team.
+func SearchLinkableProfiles(w http.ResponseWriter, r *http.Request) {
+	c, err := supabasesvc.NewClientFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	sid := mux.Vars(r)["sessionId"]
+	var allowed bool
+	if err = c.RPC(r.Context(), "can_edit_session", map[string]any{"p_session_id": sid, "p_uid": c.User.ID}, &allowed); err != nil || !allowed {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	rows := []map[string]any{}
+	if err = c.RPC(r.Context(), "search_linkable_part_time_profiles", map[string]any{"p_session": sid, "p_query": strings.TrimSpace(r.URL.Query().Get("q")), "p_limit": 25}, &rows); err != nil {
+		http.Error(w, "Unable to search accounts", http.StatusBadRequest)
+		return
+	}
+	if rows == nil {
+		rows = []map[string]any{}
+	}
+	writeJSON(w, map[string]any{"results": rows})
 }
 
 var poolLocationPattern = regexp.MustCompile(`^(Lane( [1-9][0-9]?)?|Shallow end|Deep end)$`)

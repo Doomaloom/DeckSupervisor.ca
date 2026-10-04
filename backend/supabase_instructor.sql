@@ -74,4 +74,52 @@ revoke all on function public.instructor_weeks(date,date,text) from public,anon;
 grant execute on function public.instructor_weeks(date,date,text) to authenticated;
 revoke all on function public.save_instructor_schematic(uuid,jsonb),public.instructor_sessions() from public,anon;
 grant execute on function public.save_instructor_schematic(uuid,jsonb),public.instructor_sessions() to authenticated;
+-- Session owners can find staff independently of team invitation eligibility.
+create or replace function public.search_linkable_part_time_profiles(
+ p_session uuid, p_query text, p_limit integer default 25
+)
+returns table(id uuid,first_name text,last_name text,email text)
+language sql stable security definer set search_path = '' set row_security = off as $$
+ select p.id,p.first_name,p.last_name,p.email from public.profiles p
+ where public.can_edit_session(p_session,auth.uid())
+ and p.account_type='part_time'
+ and nullif(trim(coalesce(p_query,'')),'') is not null
+ and (p.first_name ilike '%' || trim(p_query) || '%'
+   or p.last_name ilike '%' || trim(p_query) || '%'
+   or p.email ilike '%' || trim(p_query) || '%')
+ order by p.first_name,p.last_name,p.email
+ limit greatest(1,least(coalesce(p_limit,25),50))
+$$;
+-- Profile RLS need not expose the directory to return an owner's linked accounts.
+create or replace function public.instructor_assignment_accounts(p_session uuid)
+returns table(id uuid,name text,account_id uuid,account jsonb)
+language sql stable security definer set search_path = '' set row_security = off as $$
+ select a.id,a.name,a.account_id,
+ case when p.id is null then null else jsonb_build_object(
+  'id',p.id,'first_name',p.first_name,'last_name',p.last_name,'email',p.email) end
+ from public.instructor_assignments a left join public.profiles p on p.id=a.account_id
+ where a.session_id=p_session and a.active and public.can_edit_session(p_session,auth.uid())
+ order by a.id
+$$;
+-- Validate new links even when clients write directly through PostgREST.
+-- Unchanged legacy links and unlinking remain allowed.
+create or replace function public.guard_instructor_account_link()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+ if new.account_id is not null then
+  if tg_op='UPDATE' then
+   if new.account_id is not distinct from old.account_id then return new; end if;
+  end if;
+  if not exists(select 1 from public.profiles p where p.id=new.account_id and p.account_type='part_time') then
+   raise exception 'Instructor links require a part-time account' using errcode='23514';
+  end if;
+ end if;
+ return new;
+end $$;
+drop trigger if exists instructor_account_link_guard on public.instructor_assignments;
+create trigger instructor_account_link_guard before insert or update of account_id on public.instructor_assignments
+ for each row execute function public.guard_instructor_account_link();
+revoke all on function public.guard_instructor_account_link() from public,anon,authenticated;
+revoke all on function public.search_linkable_part_time_profiles(uuid,text,integer),public.instructor_assignment_accounts(uuid) from public,anon;
+grant execute on function public.search_linkable_part_time_profiles(uuid,text,integer),public.instructor_assignment_accounts(uuid) to authenticated;
 commit;

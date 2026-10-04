@@ -417,9 +417,11 @@ export function fetchTeamMembers(teamId: string) {
   return request<{ members: any[] }>(`/api/teams/${encodeURIComponent(teamId)}/members`)
 }
 
+export type AccountProfile = { id: string; first_name: string; last_name: string; email: string }
+
 export function searchInvitableProfiles(teamId: string, query: string) {
   const params = new URLSearchParams({ q: query })
-  return request<{ results: any[] }>(`/api/teams/${encodeURIComponent(teamId)}/invitable-profiles?${params.toString()}`)
+  return request<{ results: AccountProfile[] }>(`/api/teams/${encodeURIComponent(teamId)}/invitable-profiles?${params.toString()}`)
 }
 
 export function createTeamInvite(teamId: string, inviteeId: string) {
@@ -725,7 +727,11 @@ export function closeDeviceShare(id: string, hostToken: string) {
   return request<void>(`/api/device-shares/${encodeURIComponent(id)}/close`, { method: 'POST', body: { hostToken }, keepalive: true })
 }
 
-export type InstructorAssignment = { id: string; name: string; account_id: string | null }
+export function searchLinkableProfiles(sessionId: string, query: string) {
+ const params = new URLSearchParams({ q: query })
+ return request<{ results: AccountProfile[] }>(`/api/sessions/${encodeURIComponent(sessionId)}/linkable-profiles?${params}`)
+}
+export type InstructorAssignment = { id: string; name: string; account_id: string | null; account: AccountProfile | null }
 export function fetchInstructorAssignments(sessionId: string) {
  return request<{assignments: InstructorAssignment[]}>(`/api/sessions/${encodeURIComponent(sessionId)}/instructor-assignments`)
 }

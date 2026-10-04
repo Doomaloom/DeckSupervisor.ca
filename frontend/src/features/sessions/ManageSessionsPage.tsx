@@ -1,3 +1,4 @@
+import AccountLinks from '../session-management/components/AccountLinks'
 import { useAuth } from '../../app/AuthContext'
 import InstructorListEditor from '../session-management/components/InstructorListEditor'
 import SessionFormFields from '../session-management/components/SessionFormFields'
@@ -115,6 +116,9 @@ function ManageSessionsPage() {
             </form>
           )}
         </div>
+      )}
+      {!isGuest && form.access.mode === 'owner' && form.currentSession?.id && (
+        <AccountLinks key={form.currentSession.id} sessionId={form.currentSession.id} />
       )}
     </div>
   )

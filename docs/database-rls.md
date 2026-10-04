@@ -63,3 +63,17 @@ The [September 20 part-time QA report](../backend/tests/part_time_qa.md) records
 
 
 References: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [PostgreSQL CREATE POLICY](https://www.postgresql.org/docs/current/sql-createpolicy.html), [PostgreSQL CREATE FUNCTION](https://www.postgresql.org/docs/current/sql-createfunction.html).
+
+## Instructor account search
+
+After the base schema and `supabase_rls_reset.sql` are installed, apply the entire
+`backend/supabase_instructor.sql` in the SQL Editor as `postgres`. For existing
+instructor installations, rerun that file before deploying the updated API and
+frontend. It is transactional and repeatable and preserves saved links and plans.
+The update adds session-owner account search, linked-account display, and validation
+that new links target part-time accounts. Existing full-time links remain readable
+and can be unlinked. No team membership or invitation is created by linking.
+
+Instructor account links are managed on **Manage Sessions**. Save the schematic
+first to publish its columns, then refresh saved columns and search staff by name
+or email. Account links save independently of the session details form.
