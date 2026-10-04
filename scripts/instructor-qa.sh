@@ -15,7 +15,7 @@ initdb -D "$qa_root/data" -U postgres --auth=trust --no-locale --encoding=UTF8 >
 pg_ctl -D "$qa_root/data" -l "$qa_root/postgres.log" -o "-k $qa_root -p 55440 -c listen_addresses=''" -w start >/dev/null
 psql -X -h "$qa_root" -p 55440 -U postgres -d postgres -v ON_ERROR_STOP=1 -q \
  -f "$qa_repo/backend/tests/rls_bootstrap.sql" -f "$qa_repo/backend/tests/rls.sql" \
- -f "$qa_repo/backend/supabase_instructor.sql" -f "$qa_repo/backend/supabase_lesson_plans.sql" \
+ -f "$qa_repo/backend/supabase_instructor.sql" -f "$qa_repo/backend/supabase_lesson_plans.sql" -f "$qa_repo/backend/supabase_lesson_plan_curriculum.sql" \
  -f "$qa_repo/backend/tests/instructor-qa/fixtures.sql" >"$qa_root/fixture.log" 2>&1
 (cd "$qa_repo/backend"; GOCACHE=/tmp/cob-go-cache go build -o "$qa_root/api" ./cmd/instructor-qa)
 python3 "$qa_repo/backend/tests/instructor-qa/provider.py" "$qa_root" >"$qa_root/provider.log" 2>&1 & qa_children+=("$!")

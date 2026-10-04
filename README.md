@@ -172,3 +172,16 @@ the isolated Go harness without restoring Chromium dependencies to production.
 Run `cd frontend && npm run test:pdf-visual` after producing the current fixture set.
 Failures retain both rasterized pages and a highlighted difference image. Contact sheets
 can be rebuilt with `scripts/pdf-parity/contact-sheets.sh`.
+
+### Lesson plan skill catalog
+
+Instructor lesson plans use the skills extracted by Rec Tablet. To refresh the
+frontend skill options, API level validation, and database level constraint after
+a catalog change, run `npm run generate:lesson-skills` from `frontend` with the
+sibling `rec-tablet` checkout available. Commit the generated files together.
+
+Before deploying the updated lesson-plan API and frontend, apply
+`backend/supabase_lesson_plan_curriculum.sql` after `backend/supabase_lesson_plans.sql`.
+The migration can be reapplied and leaves existing plans with a null curriculum
+level. Private and unrecognized classes choose one curriculum for the weekly plan;
+that choice is saved with the plan. Existing saved skill text is retained.

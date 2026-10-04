@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "generate:lesson-skills": "node scripts/generate-lesson-skills.mjs",
         "build": "vite build",
         "preview": "vite preview",
         "test": "vitest",

@@ -1,6 +1,8 @@
 \set ON_ERROR_STOP on
 \ir ../supabase_lesson_plans.sql
 \ir ../supabase_lesson_plans.sql
+\ir ../supabase_lesson_plan_curriculum.sql
+\ir ../supabase_lesson_plan_curriculum.sql
 begin;
 update sessions set session_day='Mo',start_date='2026-10-05',end_date='2026-10-26' where id='20000000-0000-0000-0000-000000000004';
 insert into instructor_assignments(session_id,id,name,account_id) values('20000000-0000-0000-0000-000000000004','50000000-0000-0000-0000-000000000001','Alex','00000000-0000-0000-0000-000000000007');
@@ -17,6 +19,21 @@ insert into instructor_plans(session_id,class_id,week,rows,updated_by) values
 ('20000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000001','2026-10-12','[]',auth.uid()),
 ('20000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000002','2026-10-05','[]',auth.uid());
 select pg_temp.assert_true((select count(*)=3 from instructor_plans),'independent two-class multiple-week plans');
+update instructor_plans set curriculum_level='Splash2A' where class_id='60000000-0000-0000-0000-000000000001' and week='2026-10-05';
+select pg_temp.assert_true((select curriculum_level='Splash2A' from instructor_plans where class_id='60000000-0000-0000-0000-000000000001' and week='2026-10-05'),'curriculum level persists');
+do $$
+declare invalid_level text;
+begin
+ foreach invalid_level in array array['SplashPrivate','Unknown'] loop
+  begin
+   update instructor_plans set curriculum_level=invalid_level;
+   raise exception 'FAIL: accepted invalid curriculum %', invalid_level;
+  exception when check_violation then
+   raise notice 'PASS: invalid curriculum % denied', invalid_level;
+  end;
+ end loop;
+end $$;
+
 select pg_temp.assert_true((select rows->0->>'activity'='First' and rows->1->>'activity'='Second' from instructor_plans where class_id='60000000-0000-0000-0000-000000000001' and week='2026-10-05'),'row ordering and four columns persist');
 select pg_temp.denied($q$insert into instructor_plans(session_id,class_id,week,rows,updated_by) values('20000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000001','2026-10-06','[]',auth.uid())$q$,'non-Monday denied');
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000008","role":"authenticated"}',true);

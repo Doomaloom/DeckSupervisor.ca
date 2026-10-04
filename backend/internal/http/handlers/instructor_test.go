@@ -96,3 +96,48 @@ func TestInstructorUnlinkedEmptyAndPlanAttribution(t *testing.T) {
 		t.Fatal("accepted forged identity")
 	}
 }
+
+func TestInstructorPlanCurriculumRoundTrip(t *testing.T) {
+	var saved map[string]any
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/rest/v1/rpc/can_plan_class":
+			io.WriteString(w, "true")
+		case "/rest/v1/instructor_plans":
+			if !strings.Contains(r.URL.Query().Get("select"), "curriculum_level") {
+				t.Fatal("missing curriculum projection")
+			}
+			if r.Method == "POST" {
+				if err := json.NewDecoder(r.Body).Decode(&saved); err != nil {
+					t.Fatal(err)
+				}
+			}
+			json.NewEncoder(w).Encode([]map[string]any{saved})
+		default:
+			t.Fatalf("unexpected %s", r.URL.Path)
+		}
+	})
+	path := "/api/instructor/sessions/session-a/classes/class-a/plans/2026-10-05"
+	for _, level := range []string{"Splash2A", "TeenAdult1"} {
+		w := staffRequest("PUT", path, `{"rows":[],"curriculum_level":"`+level+`"}`, true)
+		if w.Code != 200 || saved["curriculum_level"] != level {
+			t.Fatalf("save %d %s", w.Code, w.Body)
+		}
+		w = staffRequest("GET", path, "", true)
+		if w.Code != 200 || !strings.Contains(w.Body.String(), `"curriculum_level":"`+level+`"`) {
+			t.Fatalf("load %d %s", w.Code, w.Body)
+		}
+	}
+	for _, body := range []string{`{"rows":[]}`, `{"rows":[],"curriculum_level":null}`} {
+		w := staffRequest("PUT", path, body, true)
+		if w.Code != 200 {
+			t.Fatalf("legacy/null save %d %s", w.Code, w.Body)
+		}
+	}
+	for _, level := range []string{"", "SplashPrivate", "Splash 1", "Invalid"} {
+		w := staffRequest("PUT", path, `{"rows":[],"curriculum_level":"`+level+`"}`, true)
+		if w.Code != 400 {
+			t.Fatalf("accepted invalid level %q: %d", level, w.Code)
+		}
+	}
+}

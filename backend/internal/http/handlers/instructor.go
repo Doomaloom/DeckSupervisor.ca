@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 
+	"cob-aquatics/internal/curriculum"
 	supabasesvc "cob-aquatics/internal/services/supabase"
 	"github.com/gorilla/mux"
 )
@@ -118,16 +119,21 @@ func InstructorPlan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Class or week unavailable", 403)
 		return
 	}
-	q := url.Values{"session_id": {"eq." + sid}, "class_id": {"eq." + cid}, "week": {"eq." + week}, "select": {"session_id,class_id,week,rows,updated_at"}}
+	q := url.Values{"session_id": {"eq." + sid}, "class_id": {"eq." + cid}, "week": {"eq." + week}, "select": {"session_id,class_id,week,rows,curriculum_level,updated_at"}}
 	var plans []map[string]any
 	if r.Method == "PUT" {
 		var body struct {
-			Rows []lessonRow `json:"rows"`
+			Rows            []lessonRow `json:"rows"`
+			CurriculumLevel *string     `json:"curriculum_level"`
 		}
 		decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 3<<20))
 		decoder.DisallowUnknownFields()
 		if decoder.Decode(&body) != nil || body.Rows == nil || len(body.Rows) > 200 {
 			http.Error(w, "Invalid activity rows", 400)
+			return
+		}
+		if body.CurriculumLevel != nil && !curriculum.SupportsLevel(*body.CurriculumLevel) {
+			http.Error(w, "Invalid curriculum level", 400)
 			return
 		}
 		for _, row := range body.Rows {
@@ -136,8 +142,8 @@ func InstructorPlan(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		q = url.Values{"on_conflict": {"session_id,class_id,week"}, "select": {"session_id,class_id,week,rows,updated_at"}}
-		err = c.Post(r.Context(), "/rest/v1/instructor_plans", q, map[string]any{"session_id": sid, "class_id": cid, "week": week, "rows": body.Rows, "updated_by": c.User.ID}, "resolution=merge-duplicates,return=representation", &plans)
+		q = url.Values{"on_conflict": {"session_id,class_id,week"}, "select": {"session_id,class_id,week,rows,curriculum_level,updated_at"}}
+		err = c.Post(r.Context(), "/rest/v1/instructor_plans", q, map[string]any{"session_id": sid, "class_id": cid, "week": week, "rows": body.Rows, "curriculum_level": body.CurriculumLevel, "updated_by": c.User.ID}, "resolution=merge-duplicates,return=representation", &plans)
 	} else {
 		err = c.Get(r.Context(), "/rest/v1/instructor_plans", q, &plans)
 	}
