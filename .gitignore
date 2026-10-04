@@ -11,6 +11,30 @@ coverage/
 tmp/
 temp/
 
+# Hidden temporary directories and local tool caches
+.tmp/
+.cache/
+.vite/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+
+# Python helpers and local virtual environments
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.pytest_cache/
+.mypy_cache/
+
+# Generated test-run output (checked-in docs/qa evidence stays visible)
+test-results/
+playwright-report/
+.nyc_output/
+
+# Local Codex workspace marker
+/.codex
+
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
