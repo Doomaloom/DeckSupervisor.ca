@@ -1,22 +1,21 @@
 import { Notice, EmptyState, PageShell, Card, Select, ActionButton } from '../../general-components'
 import { useEffect,useState,type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import useInstructorClasses,{sessionLabel} from './useInstructorClasses'
+import useInstructorClasses from './useInstructorClasses'
 import type {InstructorSession,InstructorClass} from '../../lib/serverApi'
 
 export default function PlanSelection({title,children}: {title: string;children: (s: InstructorSession,c: InstructorClass,w: string)=>ReactNode}) {
  const [params]=useSearchParams()
- const state=useInstructorClasses(params.get('session')||undefined)
+ const state=useInstructorClasses()
  const [classId,setClassId]=useState('')
  const [week,setWeek]=useState('')
- useEffect(()=>{if(!state.loading){setClassId(state.classes.some(c=>c.id===params.get('class'))?params.get('class')!:state.classes[0]?.id||'');setWeek(state.session?.weeks[0]||'')}},[state.loading,state.sessionId,params])
+ useEffect(()=>{if(!state.loading){setClassId((!params.get('session') || params.get('session')===state.sessionId) && state.classes.some(c=>c.id===params.get('class'))?params.get('class')!:state.classes[0]?.id||'');setWeek(state.session?.weeks[0]||'')}},[state.loading,state.sessionId,state.classes,state.session,params])
  const selected=state.classes.find(c=>c.id===classId)
  const [dirty,setDirty]=useState(false)
  // Editor signals unsaved changes so changing a selector also prompts.
  useEffect(()=>{const listener=(e: Event)=>setDirty((e as CustomEvent<boolean>).detail);window.addEventListener('instructor-draft',listener);return()=>window.removeEventListener('instructor-draft',listener)},[])
  function change(action:()=>void){if(!dirty || window.confirm('Discard unsaved lesson plan changes?')){setDirty(false);action()}}
  return <PageShell><Card className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2"><h2 className="text-2xl font-semibold lg:col-span-2">{title}</h2>
- {state.sessions.length>0 && <label className="flex min-w-0 flex-col gap-2 text-sm font-semibold lg:col-span-2">Session <Select aria-label="Session" className="max-w-full" value={state.sessionId} onChange={e=>change(()=>state.selectSession(e.target.value))}>{state.sessions.map(s=><option key={s.id} value={s.id}>{sessionLabel(s)}</option>)}</Select></label>}
  {state.loading && <p role="status">Loading linked classes…</p>}
  {state.error && <Notice tone="danger" role="alert">{state.error} <ActionButton onClick={()=>change(state.refresh)}>Retry</ActionButton></Notice>}
  {!state.loading && !state.error && !state.classes.length && <EmptyState>No linked classes. Ask your supervisor to link your account.</EmptyState>}

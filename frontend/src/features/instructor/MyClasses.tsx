@@ -1,4 +1,4 @@
-import { Notice, EmptyState, PageShell, Card, Select, ActionButton } from '../../general-components'
+import { Notice, EmptyState, PageShell, Card, ActionButton } from '../../general-components'
 import { Link } from 'react-router-dom'
 import useInstructorClasses,{sessionLabel} from './useInstructorClasses'
 import TimeRail from '../schematic/components/TimeRail'
@@ -6,7 +6,7 @@ import { HEADER_HEIGHT_REM,SLOT_HEIGHT_REM,SLOT_MINUTES } from '../schematic/con
 import { buildTimeLabels,timeToMinutes } from '../schematic/utils/time'
 
 export default function MyClasses() {
- const {sessions,sessionId,session,classes,loading,error,selectSession,refresh}=useInstructorClasses()
+ const {session,classes,loading,error,refresh}=useInstructorClasses()
  const start=classes.length?Math.floor(Math.min(...classes.map(c=>timeToMinutes(c.start_time)))/SLOT_MINUTES)*SLOT_MINUTES:0
  const end=classes.length?Math.max(...classes.map(c=>timeToMinutes(c.end_time))):0
  const clock=(minutes: number)=>`${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`
@@ -14,7 +14,6 @@ export default function MyClasses() {
  const assignments=Array.from(new Set(classes.map(c=>c.assignment_id)))
  return <PageShell><Card className="flex min-w-0 flex-col gap-6">
  <h2 className="text-2xl font-semibold">My Classes</h2>
- {sessions.length>0 && <label className="flex min-w-0 flex-col gap-2 text-sm font-semibold">Session <Select aria-label="Session" className="max-w-full" value={sessionId} onChange={e=>selectSession(e.target.value)}>{sessions.map(s=><option key={s.id} value={s.id}>{sessionLabel(s)}</option>)}</Select></label>}
  {loading && <p role="status">Loading linked classes…</p>}
  {error && <Notice tone="danger" role="alert">{error} <ActionButton onClick={refresh}>Retry</ActionButton></Notice>}
  {!loading && !error && !classes.length && <EmptyState>No classes are linked to your account for this session. Ask your supervisor to link your staff account to a saved schematic column.</EmptyState>}

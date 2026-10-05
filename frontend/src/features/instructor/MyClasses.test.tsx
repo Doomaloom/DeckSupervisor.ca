@@ -8,7 +8,7 @@ it('renders class metadata and an accessible stable-ID lesson link without roste
  render(<MemoryRouter><MyClasses /></MemoryRouter>)
  expect(screen.getByRole('link',{name:/Plan Swimmer 1/})).toHaveAttribute('href','/instructor/lesson-plans?session=session-a&class=class-a')
  expect(screen.getByText('Alex')).toBeVisible()
- expect(screen.getByRole('combobox',{name:'Session'})).toBeVisible()
+ expect(screen.queryByRole('combobox',{name:'Session'})).not.toBeInTheDocument()
  expect(screen.queryByText(/students|capacity|registered/i)).not.toBeInTheDocument()
 })
 it('explains unlinked assignments',()=>{
