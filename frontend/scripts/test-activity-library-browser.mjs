@@ -9,7 +9,7 @@ const root = resolve(import.meta.dirname, '..')
 const output = resolve(process.argv[2] || '/tmp/activity-library-qa')
 const fixture = '/__activity-library-fixture.tsx'
 const session = { id: 'qa-session', session_day: 'Monday', session_season: 'Fall', session_year: 2026, location: 'QA pool', start_date: '2026-10-05', end_date: '2026-10-26', weeks: ['2026-10-05'] }
-const course = { id: 'qa-class', session_id: session.id, assignment_id: 'qa', instructor: 'Synthetic Instructor', code: 'QA', level: 'Splash 1', start_time: '09:00:00', end_time: '09:30:00' }
+const course = { id: 'qa-class', session_id: session.id, assignment_id: 'qa', instructor: 'Synthetic Instructor', code: 'QA', level: 'Splash Private', start_time: '09:00:00', end_time: '09:30:00' }
 const server = await createServer({ root, server: { host: '127.0.0.1', port: 0 }, appType: 'custom', plugins: [{
   name: 'activity-library-fixture', enforce: 'pre',
   resolveId(id) { if (id === fixture) return fixture },
@@ -69,6 +69,7 @@ try {
     await page.getByText('13-18 years: Interval workout 2', { exact: true }).click()
     await page.screenshot({ path: resolve(output, `${name}-workouts.png`), fullPage: true })
     await page.goto(base + '/instructor/lesson-plans?session=qa-session&class=qa-class')
+    await page.getByLabel('Curriculum level').selectOption('Splash1')
     await page.getByRole('button', { name: 'Add activity', exact: true }).click()
     await page.getByLabel('Skill 1', { exact: true }).selectOption({ label: 'Submerge & exhale ×5' })
     await page.getByLabel('Activity / drill 1', { exact: true }).fill('Existing draft')
@@ -113,6 +114,9 @@ try {
     await page.getByRole('link', { name: 'Lesson Plans', exact: true }).click()
     await page.getByLabel('Activity / drill 1', { exact: true }).waitFor()
     assert.equal(await page.getByLabel('Activity / drill 1', { exact: true }).inputValue(), inserted)
+    assert.equal(await page.getByRole('button', { name: 'Build workout for row 1' }).count(), 0)
+    await page.getByLabel('Curriculum level').selectOption('SplashFitness')
+    await page.getByLabel('Skill 1', { exact: true }).selectOption({ label: 'Workout 300m' })
     await page.getByRole('button', { name: 'Build workout for row 1' }).click()
     const workoutDialog = page.getByRole('dialog', { name: 'Workout builder' })
     await workoutDialog.waitFor()

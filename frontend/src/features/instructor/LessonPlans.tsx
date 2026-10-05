@@ -7,7 +7,7 @@ import {activityText} from '../activity-library/activityLibrary'
 import WorkoutBuilderModal from '../workout-builder/WorkoutBuilderModal'
 import {workoutText} from '../workout-builder/workout'
 import PlanSelection from './PlanSelection'
-import {curriculumLevels,findCurriculumLevel} from './lessonSkills'
+import {curriculumLevels,findCurriculumLevel,isWorkoutSkill} from './lessonSkills'
 
 export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;classId: string;week: string;level: string}) {
  const [workoutRow,setWorkoutRow]=useState<number|null>(null)
@@ -40,6 +40,12 @@ export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;
  },[sessionId,classId,week,retry])
  useEffect(()=>{window.dispatchEvent(new CustomEvent('instructor-draft',{detail:dirty}));const unload=(e: BeforeUnloadEvent)=>{if(dirty){e.preventDefault();e.returnValue=''}};window.addEventListener('beforeunload',unload);return()=>{window.removeEventListener('beforeunload',unload);window.dispatchEvent(new CustomEvent('instructor-draft',{detail:false}))}},[dirty])
  function edit(i: number,patch: Partial<LessonRow>){setNotice('');setRows(current=>current.map((r,index)=>index===i?{...r,...patch}:r))}
+ function changeSkill(i: number,skill: string){
+  if(rows[i].workout && !isWorkoutSkill(skill)){
+   if(!window.confirm('Changing to this skill will convert the workout to text. Continue?'))return
+   edit(i,{skill,workout:undefined})
+  }else edit(i,{skill})
+ }
  function move(from: number,to: number){
   if(from===to || to<0 || to>=rows.length)return
   setNotice('')
@@ -80,8 +86,8 @@ export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;
   setDrag(null)
   e.currentTarget.releasePointerCapture(e.pointerId)
  }} onPointerCancel={()=>setDrag(null)} onLostPointerCapture={()=>setDrag(null)}><svg aria-hidden="true" width="20" height="24" viewBox="0 0 20 24" fill="currentColor">{[6,12,18].flatMap(y=>[7,13].map(x=><circle key={`${x}-${y}`} cx={x} cy={y} r="1.5"/>))}</svg></button></td>
- <td className="border-b border-secondary/20 p-3 align-top"><Select title={row.skill || undefined} aria-label={`Skill ${i+1}`} className="w-full min-w-40 max-w-xs" disabled={!selectedLevel} value={row.skill} onChange={e=>edit(i,{skill:e.target.value})}><option value="">{selectedLevel?'Select skill':'Choose curriculum level first'}</option>{row.skill && !skills.some(skill=>skill.name===row.skill) && <option value={row.skill}>{row.skill} (saved skill)</option>}{skills.map(skill=><option key={skill.id} value={skill.name}>{skill.compactName}</option>)}</Select></td>
- <td className="border-b border-secondary/20 p-3 align-top">{row.workout ? <><p className="whitespace-pre-wrap break-words text-sm" aria-label={`Workout summary ${i+1}`}>{row.activity}</p><div className="mt-2 flex flex-wrap gap-2"><ActionButton size="sm" variant="outline" aria-label={`Edit workout for row ${i+1}`} onClick={()=>setWorkoutRow(i)}>Edit workout</ActionButton><ActionButton size="sm" variant="ghost" aria-label={`Convert workout in row ${i+1} to text`} onClick={()=>{if(window.confirm('Convert this workout to text? Its sets will no longer be editable in the workout builder.'))edit(i,{workout:undefined})}}>Convert to text</ActionButton></div></> : <><Textarea minRowsClassName="min-h-24" aria-label={`Activity / drill ${i+1}`} className="w-full min-w-48" maxLength={10000} value={row.activity} onChange={e=>edit(i,{activity:e.target.value})}/><div className="mt-2 flex flex-wrap gap-2"><ActionButton variant="outline" size="sm" aria-label={`Browse library for row ${i+1}`} onClick={()=>setLibraryRow(i)}>Browse library</ActionButton><ActionButton variant="outline" size="sm" aria-label={`Build workout for row ${i+1}`} onClick={()=>setWorkoutRow(i)}>Build workout</ActionButton></div></>}</td>
+ <td className="border-b border-secondary/20 p-3 align-top"><Select title={row.skill || undefined} aria-label={`Skill ${i+1}`} className="w-full min-w-40 max-w-xs" disabled={!selectedLevel} value={row.skill} onChange={e=>changeSkill(i,e.target.value)}><option value="">{selectedLevel?'Select skill':'Choose curriculum level first'}</option>{row.skill && !skills.some(skill=>skill.name===row.skill) && <option value={row.skill}>{row.skill} (saved skill)</option>}{skills.map(skill=><option key={skill.id} value={skill.name}>{skill.compactName}</option>)}</Select></td>
+ <td className="border-b border-secondary/20 p-3 align-top">{row.workout ? <><p className="whitespace-pre-wrap break-words text-sm" aria-label={`Workout summary ${i+1}`}>{row.activity}</p><div className="mt-2 flex flex-wrap gap-2">{isWorkoutSkill(row.skill) && <ActionButton size="sm" variant="outline" aria-label={`Edit workout for row ${i+1}`} onClick={()=>setWorkoutRow(i)}>Edit workout</ActionButton>}<ActionButton size="sm" variant="ghost" aria-label={`Convert workout in row ${i+1} to text`} onClick={()=>{if(window.confirm('Convert this workout to text? Its sets will no longer be editable in the workout builder.'))edit(i,{workout:undefined})}}>Convert to text</ActionButton></div></> : <><Textarea minRowsClassName="min-h-24" aria-label={`Activity / drill ${i+1}`} className="w-full min-w-48" maxLength={10000} value={row.activity} onChange={e=>edit(i,{activity:e.target.value})}/><div className="mt-2 flex flex-wrap gap-2"><ActionButton variant="outline" size="sm" aria-label={`Browse library for row ${i+1}`} onClick={()=>setLibraryRow(i)}>Browse library</ActionButton>{isWorkoutSkill(row.skill) && <ActionButton variant="outline" size="sm" aria-label={`Build workout for row ${i+1}`} onClick={()=>setWorkoutRow(i)}>Build workout</ActionButton>}</div></>}</td>
  <td className="border-b border-secondary/20 p-3 align-top"><Select aria-label={`Pool location ${i+1}`} value={row.location.startsWith('Lane')?'Lane':row.location} onChange={e=>edit(i,{location:e.target.value})}><option>Lane</option><option>Shallow end</option><option>Deep end</option></Select></td>
  <td className="border-b border-secondary/20 p-3 align-top"><TextInput className="w-24" aria-label={`Duration (minutes) ${i+1}`} type="number" min={1} max={240} step={1} required value={row.duration} onChange={e=>edit(i,{duration:Number(e.target.value)})}/></td>
  <td className="border-b border-secondary/20 p-3 align-top"><ActionButton type="button" variant="danger" aria-label={`Delete row ${i+1}`} onClick={()=>{setNotice('');setRows(current=>current.filter((_,index)=>index!==i))}}>Delete</ActionButton></td>
@@ -92,7 +98,7 @@ export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;
   if(rows[libraryRow].activity.trim() && !window.confirm('Replace this row’s activity text with the selected library activity?'))return
   edit(libraryRow,{activity:activityText(activity)});setLibraryRow(null)
  }}/>}
- {workoutRow!==null && rows[workoutRow] && <WorkoutBuilderModal initialWorkout={rows[workoutRow].workout} onClose={()=>setWorkoutRow(null)} onUse={workout=>{
+ {workoutRow!==null && rows[workoutRow] && isWorkoutSkill(rows[workoutRow].skill) && <WorkoutBuilderModal initialWorkout={rows[workoutRow].workout} onClose={()=>setWorkoutRow(null)} onUse={workout=>{
   if(!rows[workoutRow].workout && rows[workoutRow].activity.trim() && !window.confirm('Replace this row’s activity text with the workout?'))return
   edit(workoutRow,{workout,activity:workoutText(workout)});setWorkoutRow(null)
  }}/>}

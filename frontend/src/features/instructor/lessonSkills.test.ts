@@ -1,7 +1,7 @@
 import {expect,it} from 'vitest'
 import {readFileSync,existsSync} from 'node:fs'
 import {resolve} from 'node:path'
-import {curriculumLevels,findCurriculumLevel} from './lessonSkills'
+import {curriculumLevels,findCurriculumLevel,isWorkoutSkill} from './lessonSkills'
 import levels from './lessonSkills.json'
 
 it.each([
@@ -18,4 +18,13 @@ it.skipIf(!existsSync(sourcePath))('keeps generated curriculum aligned with the 
  const compactTitles=JSON.parse(readFileSync(resolve(sourcePath,'../compact_titles.json'),'utf8'))
  expect(levels).toEqual(source.levels.map(({id,name,skills}: {id:string;name:string;skills:{id:string;name:string}[]})=>({id,name,skills:skills.map(({id,name})=>({id,name,compactName:compactTitles[id] || name}))})))
  expect(curriculumLevels.every(level=>level.skills.length>0)).toBe(true)
+})
+
+it('recognizes workout and workout-design skills across curricula, excluding ordinary and unknown skills',()=>{
+ const workouts=curriculumLevels.flatMap(level=>level.skills).filter(skill=>/\bworkouts?\b/i.test(skill.name))
+ expect(workouts).toHaveLength(6)
+ for(const skill of workouts) expect(isWorkoutSkill(skill.name)).toBe(true)
+ expect(isWorkoutSkill('')).toBe(false)
+ expect(isWorkoutSkill('My invented workout skill')).toBe(false)
+ expect(isWorkoutSkill('Enter and Exit Shallow Water')).toBe(false)
 })

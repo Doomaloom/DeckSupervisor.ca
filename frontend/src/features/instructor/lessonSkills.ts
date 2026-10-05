@@ -8,3 +8,10 @@ export function findCurriculumLevel(value: string) {
   const id = sanitizeLevel(value)
   return curriculumLevels.find(level => level.id.toLowerCase() === id.toLowerCase())
 }
+
+const workoutSkillNames = new Set(curriculumLevels.flatMap(level =>
+  level.skills.filter(skill => /\bworkouts?\b/i.test(skill.name)).map(skill => skill.name)))
+
+export function isWorkoutSkill(name: string) {
+  return workoutSkillNames.has(name)
+}
