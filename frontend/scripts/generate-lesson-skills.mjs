@@ -4,8 +4,9 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises'
 const root = new URL('../../', import.meta.url)
 const source = new URL('../rec-tablet/internal/workflows/swimming/curriculum/catalog.json', root)
 const catalog = JSON.parse(await readFile(source, 'utf8'))
+const compactTitles = JSON.parse(await readFile(new URL('../rec-tablet/internal/workflows/swimming/curriculum/compact_titles.json', root), 'utf8'))
 const levels = catalog.levels.map(({ id, name, skills }) => ({
-  id, name, skills: skills.map(({ id, name }) => ({ id, name })),
+  id, name, skills: skills.map(({ id, name }) => ({ id, name, compactName: compactTitles[id] || name })),
 }))
 await writeFile(new URL('frontend/src/features/instructor/lessonSkills.json', root), JSON.stringify(levels, null, 2) + '\n')
 const supported = levels.filter(level => level.skills.length).map(level => level.id)

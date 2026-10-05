@@ -41,7 +41,7 @@ it('offers only the class level skills in catalog order',async()=>{
  await screen.findByText(/No lesson plan saved/)
  await user.click(screen.getByRole('button',{name:'Add activity'}))
  const select=screen.getByRole('combobox',{name:'Skill 1'})
- expect(within(select).getAllByRole('option').map(option=>option.textContent)).toEqual(['Select skill',...curriculumLevels.find(l=>l.id==='Splash2A')!.skills.map(s=>s.name)])
+ expect(within(select).getAllByRole('option').map(option=>option.textContent)).toEqual(['Select skill',...curriculumLevels.find(l=>l.id==='Splash2A')!.skills.map(s=>s.compactName)])
  expect(screen.queryByLabelText('Curriculum level')).not.toBeInTheDocument()
 })
 it('requires a plan level for private classes, preserves rows on changes, and restores the saved level',async()=>{

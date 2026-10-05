@@ -15,6 +15,7 @@ it.each([
 const sourcePath=resolve(process.cwd(),'../../rec-tablet/internal/workflows/swimming/curriculum/catalog.json')
 it.skipIf(!existsSync(sourcePath))('keeps generated curriculum aligned with the Rectab extraction',()=>{
  const source=JSON.parse(readFileSync(sourcePath,'utf8'))
- expect(levels).toEqual(source.levels.map(({id,name,skills}: {id:string;name:string;skills:{id:string;name:string}[]})=>({id,name,skills:skills.map(({id,name})=>({id,name}))})))
+ const compactTitles=JSON.parse(readFileSync(resolve(sourcePath,'../compact_titles.json'),'utf8'))
+ expect(levels).toEqual(source.levels.map(({id,name,skills}: {id:string;name:string;skills:{id:string;name:string}[]})=>({id,name,skills:skills.map(({id,name})=>({id,name,compactName:compactTitles[id] || name}))})))
  expect(curriculumLevels.every(level=>level.skills.length>0)).toBe(true)
 })
