@@ -52,3 +52,19 @@ npm run build
 ```
 
 The browser check uses a temporary localhost Vite server, synthetic account/API modules, and an isolated headless Chromium context. It never signs into a real account or writes real lesson data. Set `CHROMIUM_PATH` if Chromium is installed elsewhere. Screenshots and results go to the requested output directory.
+
+## Structured workout presets
+
+`../workout-builder/workoutPresets.ts` contains 26 editable section presets from
+scan pages 23–24 (printed pages 59–61): sample warm-up/cool-down, six age-group
+main sets, and the three sections of each of six interval workouts. Age filtering
+is explicit and defaults to All. Rest and send-off timing remain separate. The
+sample warm-up retains both the 4 × 50 m progression and the printed 25/50/75/100 m
+progression; instructors can remove sets if using them as alternatives. Unspecified
+strokes use Choice of stroke and unspecified timing remains empty. Presets are
+cloned into the builder; editing does not alter the reference library.
+
+Run the workout tests alongside the checks above:
+`npm run test:run -- src/features/workout-builder`. The browser script also checks
+workout creation, confirmations, native dialog behavior, saved metadata reopening,
+and conversion to text at desktop and mobile sizes.

@@ -93,3 +93,11 @@ exists. The schematic selects instructors by stable roster identity.
 Owners can read the roster and search part-time accounts by name or email,
 including existing team members and pending invitees. Shared viewers cannot read
 account details or change the roster. Guest names save locally without account links.
+
+Workout builder rollout: apply `backend/supabase_lesson_plan_workouts.sql` after
+`backend/supabase_lesson_plan_curriculum.sql`, before deploying the workout-aware
+API and frontend. It extends the existing row validator to accept optional
+version 1 workout metadata with required warm-up, main-set and cool-down arrays,
+up to 100 sets total, and bounded whole-number distances and timing. Legacy
+text rows and existing ownership policies remain compatible. The migration is
+transactional and safe to reapply.

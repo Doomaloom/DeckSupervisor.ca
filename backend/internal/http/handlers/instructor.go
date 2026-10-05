@@ -125,10 +125,11 @@ func SearchLinkableProfiles(w http.ResponseWriter, r *http.Request) {
 var poolLocationPattern = regexp.MustCompile(`^(Lane( [1-9][0-9]?)?|Shallow end|Deep end)$`)
 
 type lessonRow struct {
-	Skill    string `json:"skill"`
-	Activity string `json:"activity"`
-	Location string `json:"location"`
-	Duration int    `json:"duration"`
+	Skill    string         `json:"skill"`
+	Activity string         `json:"activity"`
+	Location string         `json:"location"`
+	Duration int            `json:"duration"`
+	Workout  *lessonWorkout `json:"workout,omitempty"`
 }
 
 func InstructorPlan(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +163,7 @@ func InstructorPlan(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		for _, row := range body.Rows {
-			if len(row.Skill) > 2000 || len(row.Activity) > 10000 || row.Duration < 1 || row.Duration > 240 || !poolLocationPattern.MatchString(row.Location) {
+			if len(row.Skill) > 2000 || len(row.Activity) > 10000 || row.Duration < 1 || row.Duration > 240 || !poolLocationPattern.MatchString(row.Location) || !validLessonWorkout(row.Workout) {
 				http.Error(w, "Invalid activity row", 400)
 				return
 			}

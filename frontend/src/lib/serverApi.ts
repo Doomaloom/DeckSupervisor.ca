@@ -1,3 +1,4 @@
+import type { Workout } from '../features/workout-builder/workout'
 import type {
   ClassRoster,
   CsvSessionCandidate,
@@ -755,7 +756,7 @@ export function fetchInstructorClasses(sessionId: string) {
  return request<{classes: InstructorClass[]}>(`/api/instructor/sessions/${encodeURIComponent(sessionId)}/classes`)
 }
 
-export type LessonRow = {skill: string; activity: string; location: string; duration: number}
+export type LessonRow = {skill: string; activity: string; location: string; duration: number; workout?: Workout}
 export type LessonPlan = {session_id: string; class_id: string; week: string; rows: LessonRow[]; curriculum_level?: string | null; updated_at: string}
 export function fetchLessonPlan(session: string, classId: string, week: string) {
  return request<{plan: LessonPlan | null}>(`/api/instructor/sessions/${encodeURIComponent(session)}/classes/${encodeURIComponent(classId)}/plans/${encodeURIComponent(week)}`)

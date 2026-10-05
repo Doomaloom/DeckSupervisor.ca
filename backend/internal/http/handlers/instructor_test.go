@@ -281,3 +281,52 @@ func TestSessionRosterRequestsDenyNonOwnersBeforeStorage(t *testing.T) {
 		}
 	}
 }
+
+func TestInstructorWorkoutRoundTripAndValidation(t *testing.T) {
+	var saved map[string]any
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/rest/v1/rpc/can_plan_class":
+			io.WriteString(w, "true")
+		case "/rest/v1/instructor_plans":
+			if r.Method == "POST" {
+				if err := json.NewDecoder(r.Body).Decode(&saved); err != nil {
+					t.Fatal(err)
+				}
+			}
+			json.NewEncoder(w).Encode([]map[string]any{saved})
+		default:
+			t.Fatalf("unexpected %s", r.URL.Path)
+		}
+	})
+	path := "/api/instructor/sessions/session-a/classes/class-a/plans/2026-10-05"
+	set := `{"repetitions":2,"distance":25,"activity":"Front crawl","notes":"Board","timing":{"kind":"interval","seconds":60}}`
+	workout := `{"version":1,"title":"Workout","sections":{"warmUp":[` + set + `],"mainSet":[` + set + `],"coolDown":[` + set + `]}}`
+	body := func(value string) string {
+		return `{"rows":[{"skill":"Float","activity":"Workout summary","location":"Lane","duration":12,"workout":` + value + `}]}`
+	}
+	w := staffRequest("PUT", path, body(workout), true)
+	if w.Code != 200 {
+		t.Fatalf("save %d %s", w.Code, w.Body)
+	}
+	w = staffRequest("GET", path, "", true)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"timing":{"kind":"interval","seconds":60}`) || !strings.Contains(w.Body.String(), `"workout":`) {
+		t.Fatalf("load %d %s", w.Code, w.Body)
+	}
+	for _, invalid := range []string{
+		strings.Replace(workout, `"version":1`, `"version":2`, 1),
+		strings.Replace(workout, `"title":"Workout"`, `"title":" "`, 1),
+		strings.Replace(workout, `"repetitions":2`, `"repetitions":0`, 1),
+		strings.Replace(workout, `"distance":25`, `"distance":1.5`, 1),
+		strings.Replace(workout, `"seconds":60`, `"seconds":3601`, 1),
+		strings.Replace(workout, `"kind":"interval"`, `"kind":"unknown"`, 1),
+		strings.Replace(workout, `"notes":"Board"`, `"notes":"Board","unknown":true`, 1),
+		`{"version":1,"title":"Workout","sections":{"warmUp":[],"mainSet":[` + set + `],"coolDown":[` + set + `]}}`,
+		`{"version":1,"title":"Workout","sections":{"warmUp":[` + strings.Repeat(set+",", 98) + set + `],"mainSet":[` + set + `],"coolDown":[` + set + `]}}`,
+	} {
+		w = staffRequest("PUT", path, body(invalid), true)
+		if w.Code != 400 {
+			t.Fatalf("accepted invalid workout: %d %s", w.Code, w.Body)
+		}
+	}
+}
