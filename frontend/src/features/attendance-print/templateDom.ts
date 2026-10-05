@@ -88,7 +88,7 @@ export function fillAttendanceRoster(root: HTMLElement, roster: AttendancePrintR
     font.append(present, 'resent', root.ownerDocument.createElement('br'))
     const days = root.ownerDocument.createElement('span')
     days.style.color = 'rgb(98, 98, 98)'
-    days.style.fontSize = '11px'
+    days.style.fontSize = '10.5px'
     days.textContent = Array.from({ length: 14 }, (_, day) => `[Day ${day + 1}]`).join(' ')
     font.append(days)
     nameCell.append(font)
