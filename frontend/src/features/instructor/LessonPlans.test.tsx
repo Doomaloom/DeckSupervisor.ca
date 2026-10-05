@@ -1,4 +1,4 @@
-import { render,screen,waitFor,within } from '@testing-library/react'
+import { fireEvent,render,screen,waitFor,within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter,RouterProvider } from 'react-router-dom'
 import {beforeEach,expect,it,vi} from 'vitest'
@@ -26,7 +26,10 @@ it('keeps untouched plans null and retains drafts on save failure',async()=>{
 it('reorders and removes rows before explicit save',async()=>{
  api.fetchLessonPlan.mockResolvedValue({plan:{rows:[{skill:'First',activity:'A',location:'Lane',duration:5},{skill:'Second',activity:'B',location:'Deep end',duration:10}]}})
  const user=userEvent.setup();setup();await screen.findByLabelText('Skill 1')
- await user.click(screen.getByRole('button',{name:'Move row 2 up'}))
+ screen.getByRole('button',{name:'Reorder row 2'}).focus()
+ await user.keyboard('{ArrowUp}')
+ expect(screen.getByRole('button',{name:'Reorder row 1'})).toHaveFocus()
+ expect(screen.queryByText('Row actions')).not.toBeInTheDocument()
  expect(screen.getByLabelText('Skill 1')).toHaveValue('Second')
  await user.click(screen.getByRole('button',{name:'Delete row 2'}))
  api.saveLessonPlan.mockImplementation(async(_s,_c,_w,rows)=>({plan:{rows}}))
@@ -93,4 +96,25 @@ it('guards navigation when only the private curriculum level has changed',async(
   await router.navigate('/away')
   expect(await screen.findByText('Another page')).toBeVisible()
  } finally {confirm.mockRestore()}
+})
+
+it('drags rows to a new position using the left handle',async()=>{
+ api.fetchLessonPlan.mockResolvedValue({plan:{rows:[{skill:'First',activity:'A',location:'Lane',duration:5},{skill:'Second',activity:'B',location:'Deep end',duration:10}]}})
+ setup();await screen.findByLabelText('Skill 1')
+ const handle=screen.getByRole('button',{name:'Reorder row 1'})
+ handle.setPointerCapture=vi.fn()
+ handle.releasePointerCapture=vi.fn()
+ vi.stubGlobal('PointerEvent',MouseEvent)
+ const elementFromPoint=vi.fn().mockReturnValue(screen.getByLabelText('Skill 2'))
+ const originalElementFromPoint=document.elementFromPoint
+ document.elementFromPoint=elementFromPoint
+ try {
+  fireEvent.pointerDown(handle,{button:0})
+  fireEvent.pointerMove(handle,{clientX:50,clientY:200})
+  fireEvent.pointerUp(handle,{clientX:50,clientY:200})
+  expect(screen.getByLabelText('Skill 1')).toHaveValue('Second')
+  expect(screen.getByLabelText('Activity / drill 2')).toHaveValue('A')
+  expect(screen.getByText('Unsaved changes')).toBeVisible()
+  expect(api.saveLessonPlan).not.toHaveBeenCalled()
+ } finally {document.elementFromPoint=originalElementFromPoint;vi.unstubAllGlobals()}
 })
