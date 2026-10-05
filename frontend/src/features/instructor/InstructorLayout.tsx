@@ -1,5 +1,5 @@
 import { Card, PageShell } from '../../general-components'
-import { HomeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, UsersIcon, PrinterIcon } from '@heroicons/react/24/outline'
+import { BookOpenIcon, HomeIcon, CalendarDaysIcon, ClipboardDocumentListIcon, UsersIcon, PrinterIcon } from '@heroicons/react/24/outline'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../app/AuthContext'
@@ -33,12 +33,12 @@ function InstructorWorkspace({children}: {children: ReactNode}) {
  {location.pathname!=='/instructor' && state.sessionError && <div role="alert" className="text-sm">{state.sessionError} <button type="button" className="underline" onClick={()=>{if(dirty && !window.confirm('Discard unsaved lesson plan changes?'))return;setDirty(false);state.refresh()}}>Retry sessions</button></div>}
  </div>
  <nav aria-label="Instructor navigation" className="flex flex-wrap gap-3 md:flex-col">
- {['Home','My Classes','Lesson Plans','Attendance','Print'].map((label,i)=><NavLink className={({isActive})=>`flex items-center gap-2 rounded-[10px] px-3 py-2 transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${isActive?'bg-accent font-semibold text-secondary':'bg-white/10 text-accent hover:bg-hover hover:text-secondary'}`} key={label} end to={['/instructor','/instructor/my-classes','/instructor/lesson-plans','/instructor/attendance','/instructor/print'][i]}>{[HomeIcon, CalendarDaysIcon,ClipboardDocumentListIcon,UsersIcon,PrinterIcon].map((Icon,index)=>index===i?<Icon key={index} className="h-5 w-5 shrink-0" aria-hidden="true"/>:null)}{label}</NavLink>)}
+ {['Home','My Classes','Lesson Plans','Activity Library','Attendance','Print'].map((label,i)=><NavLink className={({isActive})=>`flex items-center gap-2 rounded-[10px] px-3 py-2 transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${isActive?'bg-accent font-semibold text-secondary':'bg-white/10 text-accent hover:bg-hover hover:text-secondary'}`} key={label} end to={['/instructor','/instructor/my-classes','/instructor/lesson-plans','/instructor/activity-library','/instructor/attendance','/instructor/print'][i]}>{[HomeIcon, CalendarDaysIcon,ClipboardDocumentListIcon,BookOpenIcon,UsersIcon,PrinterIcon].map((Icon,index)=>index===i?<Icon key={index} className="h-5 w-5 shrink-0" aria-hidden="true"/>:null)}{label}</NavLink>)}
  </nav>
  <div className="mt-auto flex flex-col gap-3">
  {workflowCapabilities.supervisor && <Link className="rounded-2xl bg-white/10 px-4 py-2 text-center text-sm font-semibold transition hover:bg-accent hover:text-secondary" to="/">Supervisor View</Link>}
  <button type="button" className="rounded-2xl border border-white/40 px-4 py-2 text-sm font-semibold text-accent transition hover:bg-accent hover:text-secondary" onClick={async()=>{if(dirty && !window.confirm('Discard unsaved lesson plan changes and log out?'))return;await signOut();navigate('/sign-in')}}>Logout</button>
  </div>
- </aside><main key={user!.id} className="min-w-0 flex-1 p-4 md:overflow-y-auto md:p-8">{location.pathname!=='/instructor' && !state.sessionId ? <PageShell><Card>{state.sessionsLoading ? <p role="status">Loading sessions…</p> : <Link to="/instructor" className="font-semibold underline">Choose a session</Link>}</Card></PageShell> : children}</main>
+ </aside><main key={user!.id} className="min-w-0 flex-1 p-4 md:overflow-y-auto md:p-8">{location.pathname!=='/instructor' && location.pathname!=='/instructor/activity-library' && !state.sessionId ? <PageShell><Card>{state.sessionsLoading ? <p role="status">Loading sessions…</p> : <Link to="/instructor" className="font-semibold underline">Choose a session</Link>}</Card></PageShell> : children}</main>
  </div>
 }

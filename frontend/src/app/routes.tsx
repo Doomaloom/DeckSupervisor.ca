@@ -1,6 +1,7 @@
 import ForgotPasswordPage from '../features/auth/ForgotPasswordPage'
 import ResetPasswordPage from '../features/auth/ResetPasswordPage'
 import PrintPlans from '../features/instructor/PrintPlans'
+import ActivityLibrary from '../features/activity-library/ActivityLibrary'
 import LessonPlans from '../features/instructor/LessonPlans'
 import InstructorHome from '../features/instructor/InstructorHome'
 import MyClasses from '../features/instructor/MyClasses'
@@ -50,6 +51,7 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/instructor" element={<InstructorHome />} />
       <Route path="/instructor/my-classes" element={<MyClasses />} />
+      <Route path="/instructor/activity-library" element={<ActivityLibrary />} />
       <Route path="/instructor/lesson-plans" element={<LessonPlans />} />
       <Route path="/instructor/attendance" element={<InstructorPlaceholder title="Attendance" />} />
       <Route path="/instructor/print" element={<PrintPlans />} />

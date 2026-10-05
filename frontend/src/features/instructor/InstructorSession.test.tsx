@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import InstructorLayout from './InstructorLayout'
 import InstructorHome, {groupInstructorSessions} from './InstructorHome'
 import MyClasses from './MyClasses'
+import ActivityLibrary from '../activity-library/ActivityLibrary'
 import LessonPlans from './LessonPlans'
 import PrintPlans from './PrintPlans'
 
@@ -23,6 +24,7 @@ function setup(path='/instructor') {
  const router=createMemoryRouter([{element:<InstructorLayout><Outlet/></InstructorLayout>,children:[
   {path:'/instructor',element:<InstructorHome/>},
   {path:'/instructor/my-classes',element:<MyClasses/>},
+  {path:'/instructor/activity-library',element:<ActivityLibrary/>},
   {path:'/instructor/lesson-plans',element:<LessonPlans/>},
   {path:'/instructor/attendance',element:<h2>Attendance placeholder</h2>},
   {path:'/instructor/print',element:<PrintPlans/>},
@@ -135,4 +137,14 @@ it('matches supervisor session titles on Home, the sidebar, and My Classes',asyn
  await screen.findByRole('link',{name:/Plan Splash 1/})
  expect(screen.getByLabelText('Current session')).toHaveTextContent('Monday Fall 2026 | 4:00 PM-8:00 PM')
  expect(screen.getAllByText('Monday Fall 2026 | 4:00 PM-8:00 PM')).toHaveLength(2)
+})
+
+it('opens the activity library without sessions or linked classes',async()=>{
+ api.fetchInstructorSessions.mockResolvedValue({sessions:[]})
+ setup('/instructor/activity-library')
+ expect(await screen.findByRole('heading',{name:'Activity Library'})).toBeVisible()
+ await screen.findByText('No session selected')
+ expect(screen.getByRole('searchbox')).toBeVisible()
+ expect(screen.queryByRole('link',{name:'Choose a session'})).not.toBeInTheDocument()
+ expect(api.fetchInstructorClasses).not.toHaveBeenCalled()
 })

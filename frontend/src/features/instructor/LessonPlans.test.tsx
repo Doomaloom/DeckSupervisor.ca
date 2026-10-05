@@ -1,4 +1,4 @@
-import { fireEvent,render,screen,waitFor,within } from '@testing-library/react'
+import { cleanup,fireEvent,render,screen,waitFor,within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter,RouterProvider } from 'react-router-dom'
 import {beforeEach,expect,it,vi} from 'vitest'
@@ -117,4 +117,86 @@ it('drags rows to a new position using the left handle',async()=>{
   expect(screen.getByText('Unsaved changes')).toBeVisible()
   expect(api.saveLessonPlan).not.toHaveBeenCalled()
  } finally {document.elementFromPoint=originalElementFromPoint;vi.unstubAllGlobals()}
+})
+
+function mockLibraryDialog() {
+ const prototype=HTMLDialogElement.prototype
+ const originals=['showModal','close'].map(name=>Object.getOwnPropertyDescriptor(prototype,name))
+ Object.defineProperty(prototype,'showModal',{configurable:true,value:function(this:HTMLDialogElement){this.setAttribute('open','');this.querySelector<HTMLButtonElement>('button')?.focus()}})
+ Object.defineProperty(prototype,'close',{configurable:true,value:function(this:HTMLDialogElement){this.removeAttribute('open')}})
+ return ()=>{cleanup();['showModal','close'].forEach((name,i)=>{const original=originals[i];if(original)Object.defineProperty(prototype,name,original);else Reflect.deleteProperty(prototype,name)})}
+}
+it('inserts from the library without changing other row fields and persists only on save',async()=>{
+ const restore=mockLibraryDialog()
+ const skill=curriculumLevels.find(l=>l.id==='Splash1')!.skills.find(s=>s.id==='Splash1:5')!
+ const original=[{skill:skill.name,activity:'',location:'Deep end',duration:12},{skill:'Other saved skill',activity:'Keep this',location:'Lane',duration:3}]
+ api.fetchLessonPlan.mockResolvedValue({plan:{rows:original}})
+ api.saveLessonPlan.mockImplementation(async(_s,_c,_w,rows)=>({plan:{rows}}))
+ const user=userEvent.setup();const view=setup()
+ try {
+  const trigger=await screen.findByRole('button',{name:'Browse library for row 1'})
+  await user.click(trigger)
+  const dialog=screen.getByRole('dialog',{name:'Activity Library'})
+  await user.click(within(dialog).getByRole('checkbox',{name:'Only activities for Submerge & exhale ×5'}))
+  await user.type(within(dialog).getByRole('searchbox'),'Five Little Ducks')
+  await user.click(within(dialog).getByText('Five Little Ducks'))
+  await user.click(within(dialog).getByRole('button',{name:'Use Five Little Ducks'}))
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(trigger).toHaveFocus()
+  const inserted=(screen.getByLabelText('Activity / drill 1') as HTMLTextAreaElement).value
+  expect(inserted).toContain('Five Little Ducks')
+  expect(inserted).toContain('blow bubbles')
+  expect(screen.getByLabelText('Skill 1')).toHaveValue(skill.name)
+  expect(screen.getByLabelText('Pool location 1')).toHaveValue('Deep end')
+  expect(screen.getByLabelText('Duration (minutes) 1')).toHaveValue(12)
+  expect(screen.getByLabelText('Activity / drill 2')).toHaveValue('Keep this')
+  expect(screen.getByText('Unsaved changes')).toBeVisible()
+  expect(api.saveLessonPlan).not.toHaveBeenCalled()
+  await user.click(screen.getByRole('button',{name:'Save'}))
+  await screen.findByText('Lesson plan saved.')
+  const expected=[{...original[0],activity:inserted},original[1]]
+  expect(api.saveLessonPlan).toHaveBeenCalledWith('s','c','2026-10-05',expected,null)
+  view.unmount();api.fetchLessonPlan.mockResolvedValue({plan:{rows:expected}});setup()
+  expect(await screen.findByLabelText('Activity / drill 1')).toHaveValue(inserted)
+ } finally {restore()}
+})
+it('confirms replacement and preserves the draft and picker when replacement is cancelled',async()=>{
+ const restore=mockLibraryDialog()
+ const confirm=vi.spyOn(window,'confirm').mockReturnValue(false)
+ api.fetchLessonPlan.mockResolvedValue({plan:{rows:[{skill:'Unknown saved skill',activity:'My own instructions',location:'Lane',duration:5}]}})
+ const user=userEvent.setup();setup()
+ try {
+  await user.click(await screen.findByRole('button',{name:'Browse library for row 1'}))
+  const dialog=screen.getByRole('dialog')
+  expect(within(dialog).getByRole('checkbox')).toBeDisabled()
+  await user.type(within(dialog).getByRole('searchbox'),'Chop, Chop, Timber')
+  await user.click(within(dialog).getByText('Chop, Chop, Timber'))
+  await user.click(within(dialog).getByRole('button',{name:'Use Chop, Chop, Timber'}))
+  expect(confirm).toHaveBeenCalledWith('Replace this row’s activity text with the selected library activity?')
+  expect(screen.getByLabelText('Activity / drill 1')).toHaveValue('My own instructions')
+  expect(dialog).toBeVisible()
+  confirm.mockReturnValue(true)
+  await user.click(within(dialog).getByRole('button',{name:'Use Chop, Chop, Timber'}))
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(screen.getByLabelText('Activity / drill 1')).not.toHaveValue('My own instructions')
+  expect(api.saveLessonPlan).not.toHaveBeenCalled()
+ } finally {restore();confirm.mockRestore()}
+})
+it('closes the library with the close button or Escape without dirtying the plan',async()=>{
+ const restore=mockLibraryDialog()
+ api.fetchLessonPlan.mockResolvedValue({plan:{rows:[{skill:'',activity:'',location:'Lane',duration:5}]}})
+ const user=userEvent.setup();setup()
+ try {
+  const trigger=await screen.findByRole('button',{name:'Browse library for row 1'})
+  await user.click(trigger)
+  expect(screen.getByRole('checkbox')).toBeDisabled()
+  await user.click(screen.getByRole('button',{name:'Close activity library'}))
+  expect(trigger).toHaveFocus()
+  await user.click(trigger)
+  fireEvent(screen.getByRole('dialog'),new Event('cancel',{cancelable:true}))
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(trigger).toHaveFocus()
+  expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument()
+  expect(screen.getByLabelText('Activity / drill 1')).toHaveValue('')
+ } finally {restore()}
 })
