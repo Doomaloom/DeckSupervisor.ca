@@ -62,11 +62,14 @@ returns table(week date) language sql immutable set search_path=public as $$
  order by 1
 $$;
 -- Links never grant access to sessions or schematics. This function returns only session context.
-create or replace function public.instructor_sessions()
-returns table(id uuid,session_day text,session_season text,session_year integer,location text,start_date date,end_date date,weeks jsonb)
+-- Recreate to allow the additional title time fields on existing installations.
+drop function if exists public.instructor_sessions();
+create function public.instructor_sessions()
+returns table(id uuid,session_day text,session_season text,session_year integer,location text,start_date date,end_date date,weeks jsonb,session_start_time24 text,session_end_time24 text)
 language sql stable security definer set search_path=public as $$
  select s.id,s.session_day,s.session_season,s.session_year,s.location,s.start_date,s.end_date,
- coalesce((select jsonb_agg(w.week::text order by w.week) from instructor_weeks(s.start_date,s.end_date,s.session_day) w),'[]'::jsonb)
+ coalesce((select jsonb_agg(w.week::text order by w.week) from instructor_weeks(s.start_date,s.end_date,s.session_day) w),'[]'::jsonb),
+ s.session_start_time24,s.session_end_time24
  from sessions s where exists(select 1 from instructor_assignments a
  where a.session_id=s.id and a.active and a.account_id=auth.uid()) order by s.start_date,s.id
 $$;

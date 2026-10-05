@@ -2,6 +2,7 @@ import ForgotPasswordPage from '../features/auth/ForgotPasswordPage'
 import ResetPasswordPage from '../features/auth/ResetPasswordPage'
 import PrintPlans from '../features/instructor/PrintPlans'
 import LessonPlans from '../features/instructor/LessonPlans'
+import InstructorHome from '../features/instructor/InstructorHome'
 import MyClasses from '../features/instructor/MyClasses'
 import InstructorPlaceholder from '../features/instructor/InstructorPlaceholder'
 import { Routes, Route } from 'react-router-dom'
@@ -47,7 +48,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/instructor" element={<MyClasses />} />
+      <Route path="/instructor" element={<InstructorHome />} />
+      <Route path="/instructor/my-classes" element={<MyClasses />} />
       <Route path="/instructor/lesson-plans" element={<LessonPlans />} />
       <Route path="/instructor/attendance" element={<InstructorPlaceholder title="Attendance" />} />
       <Route path="/instructor/print" element={<PrintPlans />} />

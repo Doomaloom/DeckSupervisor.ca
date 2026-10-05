@@ -741,7 +741,8 @@ export function linkInstructorAssignment(sessionId: string, id: string, account_
 
 export type InstructorSession = {
  id: string; session_day: string; session_season: string | null; session_year: number | null;
- location: string | null; start_date: string | null; end_date: string | null; weeks: string[]
+ location: string | null; start_date: string | null; end_date: string | null; weeks: string[];
+ session_start_time24?: string | null; session_end_time24?: string | null
 }
 export type InstructorClass = {
  id: string; session_id: string; assignment_id: string; instructor: string; code: string;

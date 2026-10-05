@@ -185,3 +185,11 @@ Before deploying the updated lesson-plan API and frontend, apply
 The migration can be reapplied and leaves existing plans with a null curriculum
 level. Private and unrecognized classes choose one curriculum for the weekly plan;
 that choice is saved with the plan. Existing saved skill text is retained.
+
+### Instructor session titles
+
+Reapply `backend/supabase_instructor.sql` before deploying the instructor title
+update. Its transaction recreates `instructor_sessions()` with the session start
+and end times and restores the authenticated-only grants. The instructor view
+uses the same title formatter as the supervisor view; sessions without times
+continue to show their day, season, and year.
