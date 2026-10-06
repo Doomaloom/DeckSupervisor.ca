@@ -81,6 +81,34 @@ function setup(path = "/instructor") {
     render(<RouterProvider router={router} />);
     return router;
 }
+it("prints classes together without individual class selectors", async () => {
+    api.fetchInstructorClasses.mockResolvedValue({
+        classes: [course("a"), { ...course("a"), id: "class-a-2", code: "a2" }],
+    });
+    api.fetchLessonPlan.mockImplementation(async (_session: string, classId: string) => ({
+        plan: classId === "class-a" ? { week: "2026-10-05", rows: [] } : null,
+    }));
+    const user = userEvent.setup();
+    setup();
+    await user.click(await screen.findByRole("button", { name: /Pool a/ }));
+    await user.click(screen.getByRole("link", { name: "Print" }));
+    expect(await screen.findByRole("button", {
+        name: "Splash 1 · a · 09:00 · Alex",
+    })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Together" }));
+    expect(screen.getByRole("button", { name: "Together" }))
+        .toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", {
+        name: "Splash 1 · a · 09:00 · Alex",
+    })).not.toBeInTheDocument();
+    expect(await screen.findByText(/Print 1 saved class plan in one PDF/))
+        .toBeInTheDocument();
+    expect(screen.getByText(/1 class has no saved plan/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Separately" }));
+    expect(await screen.findByRole("button", {
+        name: "Splash 1 · a · 09:00 · Alex",
+    })).toBeInTheDocument();
+});
 it("selects on Home and shares the session across tabs without reloading metadata", async () => {
     const user = userEvent.setup();
     setup();

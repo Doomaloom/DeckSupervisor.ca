@@ -33,11 +33,18 @@ export function closestUpcomingWeek(weeks: string[], now = new Date()) {
 }
 
 export default function PlanSelection(
-    { title, children }: {
+    { title, children, printMode, onPrintModeChange, renderTogether }: {
         title: string;
         children: (
             s: InstructorSession,
             c: InstructorClass,
+            w: string,
+        ) => ReactNode;
+        printMode?: "separate" | "together";
+        onPrintModeChange?: (mode: "separate" | "together") => void;
+        renderTogether?: (
+            s: InstructorSession,
+            classes: InstructorClass[],
             w: string,
         ) => ReactNode;
     },
@@ -163,7 +170,27 @@ export default function PlanSelection(
                                 </div>
                             </fieldset>
                         )}
-                        <fieldset className="min-w-0">
+                        {printMode && onPrintModeChange && (
+                            <fieldset className="min-w-0">
+                                <legend className="mb-2 text-sm font-semibold">
+                                    Print classes
+                                </legend>
+                                <div className="grid grid-cols-2 gap-2" role="group" aria-label="Print classes">
+                                    {(["separate", "together"] as const).map((mode) => (
+                                        <ActionButton
+                                            key={mode}
+                                            aria-pressed={printMode === mode}
+                                            variant={printMode === mode ? "primary" : "outline"}
+                                            fullWidth
+                                            onClick={() => onPrintModeChange(mode)}
+                                        >
+                                            {mode === "separate" ? "Separately" : "Together"}
+                                        </ActionButton>
+                                    ))}
+                                </div>
+                            </fieldset>
+                        )}
+                        {printMode !== "together" && <fieldset className="min-w-0">
                             <legend className="mb-2 text-sm font-semibold">
                                 Class
                             </legend>
@@ -208,10 +235,13 @@ export default function PlanSelection(
                                     </button>
                                 ))}
                             </div>
-                        </fieldset>
-                        {selected && state.session && week && (
+                        </fieldset>}
+                        {state.session && week &&
+                            (printMode === "together" || selected) && (
                             <div className="min-w-0 border-t border-secondary/20 pt-6">
-                                {children(state.session, selected, week)}
+                                {printMode === "together" && renderTogether
+                                    ? renderTogether(state.session, state.classes, week)
+                                    : selected && children(state.session, selected, week)}
                             </div>
                         )}
                     </>

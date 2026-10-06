@@ -1,5 +1,5 @@
 import { renderPdfArtifact } from "../renderPdf";
-import { LessonPlanDocument } from "./LessonPlanDocument";
+import { LessonPlanDocument, LessonPlansDocument } from "./LessonPlanDocument";
 import type {
     InstructorClass,
     InstructorSession,
@@ -15,6 +15,19 @@ export function generateLessonPlanPdf(
         {
             title: "Weekly lesson plan",
             filename: `lesson-plan-${course.id}-${plan.week}.pdf`,
+        },
+    );
+}
+
+export function generateCombinedLessonPlanPdf(
+    session: InstructorSession,
+    entries: { course: InstructorClass; plan: LessonPlan }[],
+) {
+    return renderPdfArtifact(
+        <LessonPlansDocument session={session} entries={entries} />,
+        {
+            title: "Weekly lesson plans",
+            filename: `lesson-plans-${entries[0].plan.week}.pdf`,
         },
     );
 }

@@ -69,9 +69,38 @@ export function LessonPlanDocument(
         plan: LessonPlan;
     },
 ) {
+    return <LessonPlansDocument session={session} entries={[{ course, plan }]} />;
+}
+
+export function LessonPlansDocument(
+    { session, entries }: {
+        session: InstructorSession;
+        entries: { course: InstructorClass; plan: LessonPlan }[];
+    },
+) {
+    return (
+        <Document title={`Lesson plans - ${entries[0]?.plan.week || ""}`}>
+            {entries.map(({ course, plan }) => (
+                <LessonPlanPage
+                    key={course.id}
+                    session={session}
+                    course={course}
+                    plan={plan}
+                />
+            ))}
+        </Document>
+    );
+}
+
+function LessonPlanPage(
+    { session, course, plan }: {
+        session: InstructorSession;
+        course: InstructorClass;
+        plan: LessonPlan;
+    },
+) {
     const widths = ["22%", "43%", "20%", "15%"];
     return (
-        <Document title={`Lesson plan - ${course.code} - ${plan.week}`}>
             <Page size="LETTER" style={styles.page}>
                 <View fixed style={styles.context}>
                     <Text style={styles.title}>Weekly lesson plan</Text>
@@ -154,6 +183,5 @@ export function LessonPlanDocument(
                         `${pageNumber} / ${totalPages}`}
                 />
             </Page>
-        </Document>
     );
 }
