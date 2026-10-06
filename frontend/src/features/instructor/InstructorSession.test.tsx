@@ -14,6 +14,7 @@ const api = vi.hoisted(() => ({
     fetchInstructorSessions: vi.fn(),
     fetchInstructorClasses: vi.fn(),
     fetchLessonPlan: vi.fn(),
+    saveLessonPlan: vi.fn(),
 }));
 vi.mock(
     "../../app/AuthContext",
@@ -70,6 +71,7 @@ beforeEach(() => {
         id: string,
     ) => ({ classes: [course(id)] }));
     api.fetchLessonPlan.mockReset().mockResolvedValue({ plan: null });
+    api.saveLessonPlan.mockReset().mockImplementation(async (_s, _c, _w, rows) => ({ plan: { rows } }));
 });
 function setup(path = "/instructor") {
     const router = createMemoryRouter([{
@@ -124,10 +126,7 @@ it("prints classes together without individual class selectors", async () => {
     expect(screen.queryByRole("button", {
         name: "Splash 1 · a · 09:00 · Alex",
     })).not.toBeInTheDocument();
-    expect(await screen.findByText(/Showing 1 saved class plan in one PDF/))
-        .toBeInTheDocument();
-    expect(screen.getByText(/1 class has no saved plan/)).toBeInTheDocument();
-    expect(screen.getByTitle("Lesson plan PDF preview"))
+    expect(await screen.findByTitle("Lesson plan PDF preview"))
         .toHaveAttribute("src", "blob:lesson-plan-preview");
     expect(pdf.generateCombinedLessonPlanPdf).toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Separately" }));
@@ -159,6 +158,7 @@ it("honors deep links and updates their session after a confirmed draft discard"
     expect(screen.getByRole("button", { name: "Splash 1 · b · 09:00 · Alex" }))
         .toHaveAttribute("aria-pressed", "true");
     await user.click(screen.getByRole("button", { name: "Add activity" }));
+    await user.type(screen.getByLabelText("Activity / drill 1"), "Practice");
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     await user.click(screen.getByRole("link", { name: "Home" }));
     expect(sessionStorage.getItem("instructor-session:staff")).toBe("b");
@@ -442,6 +442,7 @@ it("steps through session weeks within their bounds and guards picker changes wi
         await user.click(
             await screen.findByRole("button", { name: "Add activity" }),
         );
+        await user.type(screen.getByLabelText("Activity / drill 1"), "Practice");
         const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
         await user.click(previous);
         await user.click(firstClass);

@@ -5,7 +5,7 @@ import {
     Textarea,
     TextInput,
 } from "../../general-components";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useBlocker } from "react-router-dom";
 import {
     fetchLessonPlan,
@@ -32,6 +32,13 @@ type RowDrag = {
     positions: { top: number; bottom: number }[];
     settling: boolean;
 };
+
+export function rowsForSave(rows: LessonRow[]) {
+    return rows.filter((row) =>
+        row.skill.trim() || row.activity.trim() || row.workout ||
+        row.location !== "Lane" || row.duration !== 5
+    );
+}
 
 export function LessonEditor(
     { sessionId, classId, week, level }: {
@@ -64,7 +71,8 @@ export function LessonEditor(
     const [notice, setNotice] = useState("");
     const [retry, setRetry] = useState(0);
     const active = useRef(true);
-    const dirty = JSON.stringify(rows) !== JSON.stringify(saved) ||
+    const persistableRows = useMemo(() => rowsForSave(rows), [rows]);
+    const dirty = JSON.stringify(persistableRows) !== JSON.stringify(saved) ||
         (!assignedLevel && curriculumLevel !== savedCurriculumLevel);
     const blocker = useBlocker(dirty);
     useEffect(() => {
@@ -117,11 +125,45 @@ export function LessonEditor(
             );
         };
     }, [dirty]);
+    useEffect(() => {
+        if (loading || saving || error || !dirty) return;
+        if (missing && !persistableRows.length && !curriculumLevel) return;
+        const timer = window.setTimeout(async () => {
+            setSaving(true);
+            setNotice("");
+            try {
+                const result = await saveLessonPlan(
+                    sessionId,
+                    classId,
+                    week,
+                    persistableRows,
+                    assignedLevel ? null : curriculumLevel || null,
+                );
+                if (active.current) {
+                    setSaved(result.plan.rows);
+                    setSavedCurriculumLevel(result.plan.curriculum_level || "");
+                    setMissing(false);
+                    setNotice("All changes saved.");
+                }
+            } catch (e) {
+                if (active.current) {
+                    setError(e instanceof Error
+                        ? e.message
+                        : "Autosave failed.");
+                }
+            } finally {
+                if (active.current) setSaving(false);
+            }
+        }, 600);
+        return () => window.clearTimeout(timer);
+    }, [sessionId, classId, week, loading, saving, error, dirty,
+        persistableRows, curriculumLevel, assignedLevel, missing]);
     useEffect(() => () => {
         if (dragTimer.current !== null) window.clearTimeout(dragTimer.current);
     }, []);
     function edit(i: number, patch: Partial<LessonRow>) {
         setNotice("");
+        setError("");
         setRows((current) =>
             current.map((r, index) => index === i ? { ...r, ...patch } : r)
         );
@@ -139,6 +181,7 @@ export function LessonEditor(
     function move(from: number, to: number) {
         if (from === to || to < 0 || to >= rows.length) return;
         setNotice("");
+        setError("");
         setRows((current) => {
             const next = [...current];
             const [row] = next.splice(from, 1);
@@ -182,52 +225,15 @@ export function LessonEditor(
         );
     }
     return (
-        <form
-            className="flex flex-col gap-4"
-            onSubmit={async (e) => {
-                e.preventDefault();
-                setSaving(true);
-                setError("");
-                setNotice("");
-                try {
-                    const result = await saveLessonPlan(
-                        sessionId,
-                        classId,
-                        week,
-                        rows,
-                        assignedLevel ? null : curriculumLevel || null,
-                    );
-                    if (active.current) {
-                        setSaved(result.plan.rows);
-                        setSavedCurriculumLevel(
-                            result.plan.curriculum_level || "",
-                        );
-                        setMissing(false);
-                        setNotice("Lesson plan saved.");
-                    }
-                } catch (e) {
-                    if (active.current) {
-                        setError(
-                            e instanceof Error
-                                ? e.message
-                                : "Save failed. Your draft is retained.",
-                        );
-                    }
-                } finally {
-                    if (active.current) setSaving(false);
-                }
-            }}
-        >
-            {dirty && (
-                <Notice tone="warning" role="status">Unsaved changes</Notice>
-            )}
+        <div className="flex flex-col gap-4">
             {error && (
                 <Notice tone="danger" role="alert">
                     {error} Your draft is retained.
                 </Notice>
             )}
-            {notice && <Notice tone="success" role="status">{notice}</Notice>}
-            <fieldset disabled={saving} className="min-w-0 space-y-4">
+            {saving && <p role="status" className="text-sm">Saving…</p>}
+            {notice && <p role="status" className="text-sm">{notice}</p>}
+            <fieldset className="min-w-0 space-y-4">
                 {!assignedLevel && (
                     <label className="mb-4 flex flex-col gap-2 text-sm font-semibold">
                         Curriculum level{" "}
@@ -238,6 +244,7 @@ export function LessonEditor(
                             value={curriculumLevel}
                             onChange={(e) => {
                                 setNotice("");
+                                setError("");
                                 setCurriculumLevel(e.target.value);
                             }}
                         >
@@ -706,6 +713,7 @@ export function LessonEditor(
                                                 }`}
                                                 onClick={() => {
                                                     setNotice("");
+                                                    setError("");
                                                     setRows((current) =>
                                                         current.filter((
                                                             _,
@@ -728,19 +736,17 @@ export function LessonEditor(
                         variant="outline"
                         type="button"
                         disabled={rows.length >= 200}
-                        onClick={() => setRows(
-                            (current) => [...current, {
+                        onClick={() => {
+                            setError("");
+                            setRows((current) => [...current, {
                                 skill: "",
                                 activity: "",
                                 location: "Lane",
                                 duration: 5,
-                            }],
-                        )}
+                            }]);
+                        }}
                     >
                         Add activity
-                    </ActionButton>
-                    <ActionButton variant="primary" type="submit">
-                        {saving ? "Saving…" : "Save"}
                     </ActionButton>
                 </div>
             </fieldset>
@@ -783,7 +789,7 @@ export function LessonEditor(
                     }}
                 />
             )}
-        </form>
+        </div>
     );
 }
 export default function LessonPlans() {

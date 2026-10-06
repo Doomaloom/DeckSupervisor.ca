@@ -18,7 +18,11 @@ const api = vi.hoisted(() => ({
 vi.mock("../../lib/serverApi", () => api);
 beforeEach(() => {
     api.fetchLessonPlan.mockReset().mockResolvedValue({ plan: null });
-    api.saveLessonPlan.mockReset();
+    api.saveLessonPlan.mockReset().mockImplementation(
+        async (_s, _c, _w, rows, curriculumLevel) => ({
+            plan: { rows, curriculum_level: curriculumLevel },
+        }),
+    );
 });
 function setup(level = "Splash 1") {
     return render(
@@ -37,7 +41,7 @@ function setup(level = "Splash 1") {
         />,
     );
 }
-it("keeps untouched plans null and retains drafts on save failure", async () => {
+it("skips untouched rows and retries autosave after a new edit", async () => {
     const user = userEvent.setup();
     setup();
     const emptyPlan = await screen.findByText(/No lesson plan saved/);
@@ -47,26 +51,55 @@ it("keeps untouched plans null and retains drafts on save failure", async () => 
     expect(api.saveLessonPlan).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Add activity" }));
     expect(screen.queryByText(/No lesson plan saved/)).not.toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(api.saveLessonPlan).not.toHaveBeenCalled();
+    api.saveLessonPlan.mockRejectedValueOnce(new Error("Offline"));
     await user.selectOptions(
         screen.getByLabelText("Skill 1"),
         "Enter and Exit Shallow Water",
     );
-    api.saveLessonPlan.mockRejectedValueOnce(new Error("Offline"));
-    await user.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
         "Your draft is retained",
     );
     expect(screen.getByLabelText("Skill 1")).toHaveValue(
         "Enter and Exit Shallow Water",
     );
-    api.saveLessonPlan.mockImplementation(async (_s, _c, _w, rows) => ({
-        plan: { rows },
-    }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
-    expect(await screen.findByText("Lesson plan saved.")).toBeVisible();
+    await user.type(screen.getByLabelText("Activity / drill 1"), "Practice");
+    expect(await screen.findByText("All changes saved.")).toBeVisible();
     expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
 });
-it("reorders and removes rows before explicit save", async () => {
+it("autosaves edited rows without newly added untouched rows", async () => {
+    const user = userEvent.setup();
+    setup();
+    await screen.findByText(/No lesson plan saved/);
+    await user.click(screen.getByRole("button", { name: "Add activity" }));
+    await user.click(screen.getByRole("button", { name: "Add activity" }));
+    await user.type(screen.getByLabelText("Activity / drill 2"), "Practice floats");
+    await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledWith(
+        "s", "c", "2026-10-05",
+        [{ skill: "", activity: "Practice floats", location: "Lane", duration: 5 }],
+        null,
+    ));
+});
+it("saves edits made while an earlier autosave is still running", async () => {
+    let finishFirst!: (value: unknown) => void;
+    api.saveLessonPlan.mockImplementationOnce(() => new Promise((resolve) => {
+        finishFirst = resolve;
+    }));
+    const user = userEvent.setup();
+    setup();
+    await screen.findByText(/No lesson plan saved/);
+    await user.click(screen.getByRole("button", { name: "Add activity" }));
+    await user.type(screen.getByLabelText("Activity / drill 1"), "First");
+    await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledTimes(1));
+    await user.type(screen.getByLabelText("Activity / drill 1"), " second");
+    expect(api.saveLessonPlan).toHaveBeenCalledTimes(1);
+    finishFirst({ plan: { rows: api.saveLessonPlan.mock.calls[0][3] } });
+    await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledTimes(2));
+    expect(api.saveLessonPlan.mock.calls[1][3][0].activity).toBe("First second");
+});
+it("autosaves reordered and removed rows", async () => {
     api.fetchLessonPlan.mockResolvedValue({
         plan: {
             rows: [{
@@ -91,10 +124,6 @@ it("reorders and removes rows before explicit save", async () => {
     expect(screen.queryByText("Row actions")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Skill 1")).toHaveValue("Second");
     await user.click(screen.getByRole("button", { name: "Delete row 2" }));
-    api.saveLessonPlan.mockImplementation(async (_s, _c, _w, rows) => ({
-        plan: { rows },
-    }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() =>
         expect(api.saveLessonPlan).toHaveBeenCalledWith(
             "s",
@@ -149,7 +178,7 @@ it("requires a plan level for private classes, preserves rows on changes, and re
         screen.getByLabelText("Curriculum level"),
         "Splash2A",
     );
-    expect(screen.getByText("Unsaved changes")).toBeVisible();
+    expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Skill 1")).toHaveValue(
         "Enter and Exit Shallow Water",
     );
@@ -161,16 +190,10 @@ it("requires a plan level for private classes, preserves rows on changes, and re
         curriculum_level: "Splash2A",
         rows: [{ skill, activity: "Practice", location: "Lane", duration: 5 }],
     };
-    api.saveLessonPlan.mockResolvedValue({ plan });
-    await user.click(screen.getByRole("button", { name: "Save" }));
-    await screen.findByText("Lesson plan saved.");
-    expect(api.saveLessonPlan).toHaveBeenCalledWith(
-        "s",
-        "c",
-        "2026-10-05",
-        plan.rows,
-        "Splash2A",
-    );
+    await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledWith(
+        "s", "c", "2026-10-05", plan.rows, "Splash2A",
+    ));
+    await screen.findByText("All changes saved.");
     expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
     view.unmount();
     api.fetchLessonPlan.mockResolvedValue({ plan });
@@ -198,16 +221,15 @@ it.each(["Splash Private", "Unknown level", ""])(
             "LittleSplash1",
         );
         expect(screen.getByLabelText("Skill 1")).toBeEnabled();
-        await user.click(screen.getByRole("button", { name: "Delete row 1" }));
         api.saveLessonPlan.mockRejectedValueOnce(new Error("Offline"));
-        await user.click(screen.getByRole("button", { name: "Save" }));
+        await user.click(screen.getByRole("button", { name: "Delete row 1" }));
         expect(await screen.findByRole("alert")).toHaveTextContent(
             "Your draft is retained",
         );
         expect(screen.getByLabelText("Curriculum level")).toHaveValue(
             "LittleSplash1",
         );
-        expect(screen.getByText("Unsaved changes")).toBeVisible();
+        expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
     },
 );
 it("guards navigation when only the private curriculum level has changed", async () => {
@@ -293,8 +315,8 @@ it("drags rows to a new position using the left handle", async () => {
             expect(screen.getByLabelText("Skill 1")).toHaveValue("Second")
         );
         expect(screen.getByLabelText("Activity / drill 2")).toHaveValue("A");
-        expect(screen.getByText("Unsaved changes")).toBeVisible();
-        expect(api.saveLessonPlan).not.toHaveBeenCalled();
+        expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
+        await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalled());
     } finally {
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
@@ -372,7 +394,7 @@ function mockLibraryDialog() {
         });
     };
 }
-it("inserts from the library without changing other row fields and persists only on save", async () => {
+it("inserts from the library without changing other row fields and autosaves", async () => {
     const restore = mockLibraryDialog();
     const skill = curriculumLevels.find((l) => l.id === "Splash1")!.skills.find(
         (s) => s.id === "Splash1:5",
@@ -430,10 +452,8 @@ it("inserts from the library without changing other row fields and persists only
         expect(screen.getByLabelText("Activity / drill 2")).toHaveValue(
             "Keep this",
         );
-        expect(screen.getByText("Unsaved changes")).toBeVisible();
-        expect(api.saveLessonPlan).not.toHaveBeenCalled();
-        await user.click(screen.getByRole("button", { name: "Save" }));
-        await screen.findByText("Lesson plan saved.");
+        expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
+        await screen.findByText("All changes saved.");
         const expected = [{ ...original[0], activity: inserted }, original[1]];
         expect(api.saveLessonPlan).toHaveBeenCalledWith(
             "s",
@@ -623,8 +643,7 @@ it("builds, saves, reopens and converts a structured workout while preserving ro
         );
         const summary = screen.getByLabelText("Workout summary 1").textContent;
         expect(summary).toContain("Total distance: 400 m");
-        await user.click(screen.getByRole("button", { name: "Save" }));
-        await screen.findByText("Lesson plan saved.");
+        await screen.findByText("All changes saved.");
         const rows = api.saveLessonPlan.mock.calls[0][3];
         expect(rows[0]).toMatchObject({
             skill: workoutSkill,
@@ -665,7 +684,6 @@ it("builds, saves, reopens and converts a structured workout while preserving ro
         expect(screen.getByLabelText("Activity / drill 1")).toHaveValue(
             summary,
         );
-        await user.click(screen.getByRole("button", { name: "Save" }));
         await waitFor(() =>
             expect(api.saveLessonPlan).toHaveBeenCalledTimes(2)
         );
