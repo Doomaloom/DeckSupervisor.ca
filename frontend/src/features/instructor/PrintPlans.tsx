@@ -77,7 +77,7 @@ function PlanPrintPreview(
             active = false;
             if (objectUrl) URL.revokeObjectURL(objectUrl);
         };
-    }, [session, courses, week, combined, retry]);
+    }, [session.id, courses, week, combined, retry]);
 
     function printPdf() {
         if (!artifact) return;

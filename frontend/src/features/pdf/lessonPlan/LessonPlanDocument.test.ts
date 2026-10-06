@@ -1,5 +1,12 @@
 import { expect, it } from "vitest";
-import { textSegments } from "./LessonPlanDocument";
+import { lessonPlanHeading, textSegments } from "./LessonPlanDocument";
+it("uses the session week number in the lesson plan heading", () => {
+    expect(lessonPlanHeading(
+        { weeks: ["2026-10-05", "2026-10-12"] } as any,
+        { code: "A1", level: "Swimmer 2" } as any,
+        { week: "2026-10-12" } as any,
+    )).toBe("A1 Swimmer 2 Week 2 Plan");
+});
 it("preserves all long text and bounds segments, including many newlines", () => {
     for (
         const text of [

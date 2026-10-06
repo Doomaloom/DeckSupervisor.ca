@@ -62,6 +62,14 @@ export function textSegments(text: string, width: number) {
     if (part || !segments.length) segments.push(part);
     return segments;
 }
+export function lessonPlanHeading(
+    session: InstructorSession,
+    course: InstructorClass,
+    plan: LessonPlan,
+) {
+    const weekNumber = session.weeks.indexOf(plan.week) + 1;
+    return `${course.level} · ${course.code} · Week ${weekNumber || plan.week} Plan`;
+}
 export function LessonPlanDocument(
     { session, course, plan }: {
         session: InstructorSession;
@@ -103,7 +111,9 @@ function LessonPlanPage(
     return (
             <Page size="LETTER" style={styles.page}>
                 <View fixed style={styles.context}>
-                    <Text style={styles.title}>Weekly lesson plan</Text>
+                    <Text style={styles.title}>
+                        {lessonPlanHeading(session, course, plan)}
+                    </Text>
                     <Text>
                         {course.instructor} | {course.level} | {course.code} |
                         {" "}
@@ -113,7 +123,6 @@ function LessonPlanPage(
                         )}
                     </Text>
                     <Text>{sessionLabel(session)}</Text>
-                    <Text>Week of {plan.week} (Monday, America/Toronto)</Text>
                 </View>
                 <View fixed style={styles.header}>
                     {[
