@@ -1,6 +1,8 @@
 # General Components
 
-Portable React and Tailwind components gathered from the COB Aquatics app style. This folder is intentionally independent from app-specific data such as sessions, rosters, teams, instructors, or CSV imports.
+Portable React and Tailwind components gathered from the COB Aquatics app style.
+This folder is intentionally independent from app-specific data such as
+sessions, rosters, teams, instructors, or CSV imports.
 
 ## Reuse In Another Project
 
@@ -9,7 +11,8 @@ Portable React and Tailwind components gathered from the COB Aquatics app style.
 3. Add the theme tokens from `theme.ts` to the target Tailwind config.
 4. Import the Rubik font or replace the font token with the target project font.
 5. Import components from the folder index.
-6. Use the components with React and Tailwind only; there are no app business-logic dependencies.
+6. Use the components with React and Tailwind only; there are no app
+   business-logic dependencies.
 
 ## Tailwind Theme
 
@@ -46,39 +49,39 @@ Import Rubik in global CSS if you want the same typography:
 ## Basic Card Form
 
 ```tsx
-import { ActionButton, Card, Field, TextInput } from './general-components'
+import { ActionButton, Card, Field, TextInput } from "./general-components";
 
 export function ProfileForm() {
-  return (
-    <Card>
-      <Field label="First name">
-        <TextInput placeholder="First name" />
-      </Field>
-      <ActionButton>Save</ActionButton>
-    </Card>
-  )
+    return (
+        <Card>
+            <Field label="First name">
+                <TextInput placeholder="First name" />
+            </Field>
+            <ActionButton>Save</ActionButton>
+        </Card>
+    );
 }
 ```
 
 ## Basic Modal
 
 ```tsx
-import { ModalShell, TextInput } from './general-components'
+import { ModalShell, TextInput } from "./general-components";
 
 export function EditItemModal({
-  name,
-  handleClose,
-  handleNameChange,
+    name,
+    handleClose,
+    handleNameChange,
 }: {
-  name: string
-  handleClose: () => void
-  handleNameChange: React.ChangeEventHandler<HTMLInputElement>
+    name: string;
+    handleClose: () => void;
+    handleNameChange: React.ChangeEventHandler<HTMLInputElement>;
 }) {
-  return (
-    <ModalShell title="Edit item" onClose={handleClose}>
-      <TextInput value={name} onChange={handleNameChange} />
-    </ModalShell>
-  )
+    return (
+        <ModalShell title="Edit item" onClose={handleClose}>
+            <TextInput value={name} onChange={handleNameChange} />
+        </ModalShell>
+    );
 }
 ```
 
@@ -94,7 +97,8 @@ export function EditItemModal({
 - `SelectableCard`
 - `SegmentedTabs`
 - `TextInput`
-- `Select` — native select attributes with the same rounded, blue-bordered field style
+- `Select` — native select attributes with the same rounded, blue-bordered field
+  style
 - `Textarea`
 - `cn`
 - `generalTheme`

@@ -1,1589 +1,1589 @@
 [
-  {
-    "id": "LittleSplash1",
-    "name": "Little Splash 1",
-    "skills": [
-      {
-        "id": "LittleSplash1:1",
-        "name": "Enter and Exit Shallow Water (Assisted)",
-        "compactName": "Assisted entry & exit"
-      },
-      {
-        "id": "LittleSplash1:2",
-        "name": "Jump into Chest-deep Water (Assisted)",
-        "compactName": "Assisted chest-deep jump"
-      },
-      {
-        "id": "LittleSplash1:3",
-        "name": "Face in water",
-        "compactName": "Face in water"
-      },
-      {
-        "id": "LittleSplash1:4",
-        "name": "Blow Bubbles in Water",
-        "compactName": "Blow Bubbles in Water"
-      },
-      {
-        "id": "LittleSplash1:5",
-        "name": "Float on Front and Back (3 seconds each)",
-        "compactName": "Front/back float 3s"
-      },
-      {
-        "id": "LittleSplash1:6",
-        "name": "Safe Movement in Shallow Water Wearing PFD",
-        "compactName": "PFD shallow movement"
-      },
-      {
-        "id": "LittleSplash1:7",
-        "name": "Glide on Front and Back (3 m each)",
-        "compactName": "Front/back glide 3m"
-      },
-      {
-        "id": "LittleSplash1:8",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "LittleSplash2",
-    "name": "Little Splash 2",
-    "skills": [
-      {
-        "id": "LittleSplash2:1",
-        "name": "Enter and Exit Shallow Water Wearing PFD",
-        "compactName": "PFD shallow entry & exit"
-      },
-      {
-        "id": "LittleSplash2:2",
-        "name": "Jump into Chest-deep Water",
-        "compactName": "Chest-deep jump"
-      },
-      {
-        "id": "LittleSplash2:3",
-        "name": "Submerge",
-        "compactName": "Submerge"
-      },
-      {
-        "id": "LittleSplash2:4",
-        "name": "Submerge and Exhale 3 times",
-        "compactName": "Submerge & exhale ×3"
-      },
-      {
-        "id": "LittleSplash2:5",
-        "name": "Float on Front and Back (3 sec. each) Wearing PFD or with other Buoyant Aid",
-        "compactName": "PFD/aid front/back float 3s"
-      },
-      {
-        "id": "LittleSplash2:6",
-        "name": "Roll Laterally Front and Back and Back to Front, Wearing PFD",
-        "compactName": "PFD front/back rolls"
-      },
-      {
-        "id": "LittleSplash2:7",
-        "name": "Glide on Front and Back (3 m each) Wearing PFD or with other Buoyant Aid",
-        "compactName": "PFD/aid front/back glide 3m"
-      },
-      {
-        "id": "LittleSplash2:8",
-        "name": "Flutter Kick on Back 5 m with Buoyant Aid",
-        "compactName": "Aided back flutter 5m"
-      },
-      {
-        "id": "LittleSplash2:9",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "LittleSplash3",
-    "name": "Little Splash 3",
-    "skills": [
-      {
-        "id": "LittleSplash3:1",
-        "name": "Jump into Deep Water Wearing PFD, Return and Exit",
-        "compactName": "PFD deep jump & exit"
-      },
-      {
-        "id": "LittleSplash3:2",
-        "name": "Sideways Entry Wearing PFD",
-        "compactName": "PFD sideways entry"
-      },
-      {
-        "id": "LittleSplash3:3",
-        "name": "Hold Breath Underwater 3 Seconds",
-        "compactName": "Underwater breath hold 3s"
-      },
-      {
-        "id": "LittleSplash3:4",
-        "name": "Submerge and Exhale 5 times",
-        "compactName": "Submerge & exhale ×5"
-      },
-      {
-        "id": "LittleSplash3:5",
-        "name": "Recover Object from Bottom in Waist-Deep Water",
-        "compactName": "Waist-deep object recovery"
-      },
-      {
-        "id": "LittleSplash3:6",
-        "name": "Back Float; Roll to Front; Swim 3 m",
-        "compactName": "Back float/roll/swim 3m"
-      },
-      {
-        "id": "LittleSplash3:7",
-        "name": "Float on Front and Back (5 Second each)",
-        "compactName": "Front/back float 5s"
-      },
-      {
-        "id": "LittleSplash3:8",
-        "name": "Roll Laterally Front to Back and Back to Front",
-        "compactName": "Front/back rolls"
-      },
-      {
-        "id": "LittleSplash3:9",
-        "name": "Glide on Front and Back (3 m each)",
-        "compactName": "Front/back glide 3m"
-      },
-      {
-        "id": "LittleSplash3:10",
-        "name": "Flutter Kick on Back 5 m",
-        "compactName": "Flutter Kick on Back 5 m"
-      },
-      {
-        "id": "LittleSplash3:11",
-        "name": "Flutter Kick on Front 5 m",
-        "compactName": "Flutter Kick on Front 5 m"
-      },
-      {
-        "id": "LittleSplash3:12",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "LittleSplash4",
-    "name": "Little Splash 4",
-    "skills": [
-      {
-        "id": "LittleSplash4:1",
-        "name": "Jump into Deep Water, Return and Exit",
-        "compactName": "Deep jump, return & exit"
-      },
-      {
-        "id": "LittleSplash4:2",
-        "name": "Sideways Entry",
-        "compactName": "Sideways Entry"
-      },
-      {
-        "id": "LittleSplash4:3",
-        "name": "Tread Water 10 Seconds Wearing PFD",
-        "compactName": "PFD tread 10s"
-      },
-      {
-        "id": "LittleSplash4:4",
-        "name": "Open Eyes Underwater",
-        "compactName": "Open Eyes Underwater"
-      },
-      {
-        "id": "LittleSplash4:5",
-        "name": "Recover Object from Bottom in Chest-Deep Water",
-        "compactName": "Chest-deep object recovery"
-      },
-      {
-        "id": "LittleSplash4:6",
-        "name": "Wearing a PFD, Sideways Entry into Deep Water; Tread 15 Seconds; Swim/Kick 5 m",
-        "compactName": "PFD entry/tread 15s/5m"
-      },
-      {
-        "id": "LittleSplash4:7",
-        "name": "Front Float; Roll to Back; Swim 5 m",
-        "compactName": "Front float/roll/swim 5m"
-      },
-      {
-        "id": "LittleSplash4:8",
-        "name": "Glide on side 3 m",
-        "compactName": "Glide on side 3 m"
-      },
-      {
-        "id": "LittleSplash4:9",
-        "name": "Flutter Kick: on front 7m; on back 7m; on side 5 m",
-        "compactName": "Flutter: F/B 7m, side 5m"
-      },
-      {
-        "id": "LittleSplash4:10",
-        "name": "Front Crawl 5 m Wearing PFD",
-        "compactName": "PFD front crawl 5m"
-      },
-      {
-        "id": "LittleSplash4:11",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "LittleSplash5",
-    "name": "Little Splash 5",
-    "skills": [
-      {
-        "id": "LittleSplash5:1",
-        "name": "Forward Roll Entry Wearing PFD",
-        "compactName": "PFD forward roll entry"
-      },
-      {
-        "id": "LittleSplash5:2",
-        "name": "Tread Water 10 Seconds",
-        "compactName": "Tread Water 10 Seconds"
-      },
-      {
-        "id": "LittleSplash5:3",
-        "name": "Submerge and Hold Breath 5 Seconds",
-        "compactName": "Underwater breath hold 5s"
-      },
-      {
-        "id": "LittleSplash5:4",
-        "name": "Recover Object from Bottom in Chest-deep Water",
-        "compactName": "Chest-deep object recovery"
-      },
-      {
-        "id": "LittleSplash5:5",
-        "name": "Wearing a PFD, Sideways Entry into Deep Water; Tread 20 Seconds; Swim/Kick 10 m",
-        "compactName": "PFD entry/tread 20s/10m"
-      },
-      {
-        "id": "LittleSplash5:6",
-        "name": "Whip kick in vertical position (20 sec) with a PFD or buoyant aid",
-        "compactName": "Aided vertical whip 20s"
-      },
-      {
-        "id": "LittleSplash5:7",
-        "name": "Front crawl 5 m",
-        "compactName": "Front crawl 5 m"
-      },
-      {
-        "id": "LittleSplash5:8",
-        "name": "Back Crawl 5 m",
-        "compactName": "Back Crawl 5 m"
-      },
-      {
-        "id": "LittleSplash5:9",
-        "name": "Interval Training: 4x5 m Flutter Kick on Back with 30 Seconds Rests",
-        "compactName": "Back flutter 4×5m"
-      },
-      {
-        "id": "LittleSplash5:10",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "ParentandTot1",
-    "name": "Parentand Tot 1",
-    "skills": [
-      {
-        "id": "ParentandTot1:1",
-        "name": "Enter and Exit the Water Safely with Tot",
-        "compactName": "Safe entry & exit with tot"
-      },
-      {
-        "id": "ParentandTot1:2",
-        "name": "Readiness for Submersion",
-        "compactName": "Readiness for Submersion"
-      },
-      {
-        "id": "ParentandTot1:3",
-        "name": "Hold Tot on Front, Eye Contact",
-        "compactName": "Front hold & eye contact"
-      },
-      {
-        "id": "ParentandTot1:4",
-        "name": "Hold Tot on Back, Head and Back Support",
-        "compactName": "Supported back hold"
-      },
-      {
-        "id": "ParentandTot1:5",
-        "name": "Relaxed Front Float (with assistance)",
-        "compactName": "Assisted front float"
-      },
-      {
-        "id": "ParentandTot1:6",
-        "name": "Back Float (Assisted)",
-        "compactName": "Back Float (Assisted)"
-      },
-      {
-        "id": "ParentandTot1:7",
-        "name": "Float Wearing PFD (Assisted)",
-        "compactName": "Assisted PFD float"
-      },
-      {
-        "id": "ParentandTot1:8",
-        "name": "Arms: Splashing, Reaching, Paddling, On Front and Back",
-        "compactName": "Front/back arm movements"
-      },
-      {
-        "id": "ParentandTot1:9",
-        "name": "Legs: Tickling, Splashing, Kicking, On Front and Back",
-        "compactName": "Front/back leg movements"
-      },
-      {
-        "id": "ParentandTot1:10",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "ParentandTot2",
-    "name": "Parentand Tot 2",
-    "skills": [
-      {
-        "id": "ParentandTot2:1",
-        "name": "Entry from Sitting Position (Assisted)",
-        "compactName": "Assisted seated entry"
-      },
-      {
-        "id": "ParentandTot2:2",
-        "name": "Exit the Water (Assisted)",
-        "compactName": "Exit the Water (Assisted)"
-      },
-      {
-        "id": "ParentandTot2:3",
-        "name": "Blow Bubbles On and In Water",
-        "compactName": "Bubbles on/in water"
-      },
-      {
-        "id": "ParentandTot2:4",
-        "name": "Face Wet and In Water",
-        "compactName": "Face Wet and In Water"
-      },
-      {
-        "id": "ParentandTot2:5",
-        "name": "Attempt to Recover Object Below Surface",
-        "compactName": "Subsurface object recovery"
-      },
-      {
-        "id": "ParentandTot2:6",
-        "name": "Entry From Sitting Position Wearing PFD and Return (Assisted)",
-        "compactName": "Assisted PFD entry/return"
-      },
-      {
-        "id": "ParentandTot2:7",
-        "name": "Front Float - Face In (Assisted)",
-        "compactName": "Assisted face-in front float"
-      },
-      {
-        "id": "ParentandTot2:8",
-        "name": "Back Float (Assisted)",
-        "compactName": "Back Float (Assisted)"
-      },
-      {
-        "id": "ParentandTot2:9",
-        "name": "Kicking on Front and Back (Assisted)",
-        "compactName": "Assisted front/back kick"
-      },
-      {
-        "id": "ParentandTot2:10",
-        "name": "Surface Passes with Continuous Contact",
-        "compactName": "Contact surface passes"
-      },
-      {
-        "id": "ParentandTot2:11",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "ParentandTot3",
-    "name": "Parentand Tot 3",
-    "skills": [
-      {
-        "id": "ParentandTot3:1",
-        "name": "Jump Entry (Assisted)",
-        "compactName": "Jump Entry (Assisted)"
-      },
-      {
-        "id": "ParentandTot3:2",
-        "name": "Entry and Submerge from Sitting Position (Assisted)",
-        "compactName": "Assisted seated submersion"
-      },
-      {
-        "id": "ParentandTot3:3",
-        "name": "Exit the Water (Unassisted)",
-        "compactName": "Unassisted exit"
-      },
-      {
-        "id": "ParentandTot3:4",
-        "name": "Hold Breath Underwater (Assisted)",
-        "compactName": "Assisted breath hold"
-      },
-      {
-        "id": "ParentandTot3:5",
-        "name": "Attempt to Open Eyes Underwater",
-        "compactName": "Open eyes underwater"
-      },
-      {
-        "id": "ParentandTot3:6",
-        "name": "Attempt to Recover Object from Bottom",
-        "compactName": "Bottom object recovery"
-      },
-      {
-        "id": "ParentandTot3:7",
-        "name": "Standing Jump Entry; Return to Edge (Assisted)",
-        "compactName": "Assisted jump & return"
-      },
-      {
-        "id": "ParentandTot3:8",
-        "name": "Jump Entry and Float Wearing PFD (Assisted)",
-        "compactName": "Assisted PFD jump/float"
-      },
-      {
-        "id": "ParentandTot3:9",
-        "name": "Front and Back \"Starfish\" Floats (Assisted)",
-        "compactName": "Assisted starfish floats"
-      },
-      {
-        "id": "ParentandTot3:10",
-        "name": "Front and Back \"Pencil\" Floats (Assisted)",
-        "compactName": "Assisted pencil floats"
-      },
-      {
-        "id": "ParentandTot3:11",
-        "name": "Kicking on Front and Back (Assisted)",
-        "compactName": "Assisted front/back kick"
-      },
-      {
-        "id": "ParentandTot3:12",
-        "name": "Underwater Passes",
-        "compactName": "Underwater Passes"
-      },
-      {
-        "id": "ParentandTot3:13",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "Splash1",
-    "name": "Splash 1",
-    "skills": [
-      {
-        "id": "Splash1:1",
-        "name": "Enter and Exit Shallow Water",
-        "compactName": "Shallow entry & exit"
-      },
-      {
-        "id": "Splash1:2",
-        "name": "Jump into Chest-deep Water",
-        "compactName": "Chest-deep jump"
-      },
-      {
-        "id": "Splash1:3",
-        "name": "Tread water (30 sec.) wearing PFD",
-        "compactName": "PFD tread 30s"
-      },
-      {
-        "id": "Splash1:4",
-        "name": "Hold breath underwater 5 sec.",
-        "compactName": "Underwater breath hold 5s"
-      },
-      {
-        "id": "Splash1:5",
-        "name": "Submerge and exhale 5 times",
-        "compactName": "Submerge & exhale ×5"
-      },
-      {
-        "id": "Splash1:6",
-        "name": "Float on front and back (5 sec. each)",
-        "compactName": "Front/back float 5s"
-      },
-      {
-        "id": "Splash1:7",
-        "name": "Roll laterally front to back and back to front",
-        "compactName": "Front/back rolls"
-      },
-      {
-        "id": "Splash1:8",
-        "name": "Glide on front, back and side (3 m each)",
-        "compactName": "Front/back/side glide 3m"
-      },
-      {
-        "id": "Splash1:9",
-        "name": "Flutter kick on front and back (5 m each)",
-        "compactName": "Front/back flutter 5m"
-      },
-      {
-        "id": "Splash1:10-front-crawl-wearing-pfd-5-m",
-        "name": "Front Crawl and Back Crawl wearing PFD (5 m) — Front Crawl wearing PFD (5 m)",
-        "compactName": "PFD front crawl 5m"
-      },
-      {
-        "id": "Splash1:10-back-crawl-wearing-pfd-5-m",
-        "name": "Front Crawl and Back Crawl wearing PFD (5 m) — Back Crawl wearing PFD (5 m)",
-        "compactName": "PFD back crawl 5m"
-      },
-      {
-        "id": "Splash1:11",
-        "name": "Water Smart Messages:",
-        "compactName": "Water Smart Messages:"
-      }
-    ]
-  },
-  {
-    "id": "Splash2A",
-    "name": "Splash 2A",
-    "skills": [
-      {
-        "id": "Splash2A:1",
-        "name": "Jump into deep water wearing PFD",
-        "compactName": "PFD deep-water jump"
-      },
-      {
-        "id": "Splash2A:2",
-        "name": "Tread water 10 sec",
-        "compactName": "Tread water 10 sec"
-      },
-      {
-        "id": "Splash2A:3",
-        "name": "Open eyes underwater",
-        "compactName": "Open eyes underwater"
-      },
-      {
-        "id": "Splash2A:4",
-        "name": "Recover object from bottom in chest-deep water",
-        "compactName": "Chest-deep object recovery"
-      },
-      {
-        "id": "Splash2A:5",
-        "name": "Wearing PFD, jump into deep water, tread 20 sec, and swim/kick 10 m",
-        "compactName": "PFD jump/tread 20s/10m"
-      },
-      {
-        "id": "Splash2A:6",
-        "name": "Flutter kick on Front, Back and Side (7 m each)",
-        "compactName": "Front/back/side flutter 7m"
-      },
-      {
-        "id": "Splash2A:7",
-        "name": "Front kick 3 sec. to side kick 3 sec. to front kick 3 sec. – assisted",
-        "compactName": "Aided front/side kick 3s"
-      },
-      {
-        "id": "Splash2A:8-front-crawl",
-        "name": "Front Crawl and Back Crawl (5 m) — Front Crawl",
-        "compactName": "Front crawl 5m"
-      },
-      {
-        "id": "Splash2A:8-back-crawl",
-        "name": "Front Crawl and Back Crawl (5 m) — Back Crawl",
-        "compactName": "Back crawl 5m"
-      },
-      {
-        "id": "Splash2A:9",
-        "name": "Interval training: 4x5 m flutter kick with 20 sec rests",
-        "compactName": "Flutter kick 4×5m"
-      },
-      {
-        "id": "Splash2A:10",
-        "name": "Water Smart Messages :",
-        "compactName": "Water Smart Messages :"
-      }
-    ]
-  },
-  {
-    "id": "Splash2B",
-    "name": "Splash 2B",
-    "skills": [
-      {
-        "id": "Splash2B:1",
-        "name": "Jump into deep water, return and exit",
-        "compactName": "Deep jump, return & exit"
-      },
-      {
-        "id": "Splash2B:2",
-        "name": "Sideways entry wearing PFD",
-        "compactName": "PFD sideways entry"
-      },
-      {
-        "id": "Splash2B:3",
-        "name": "Tread water 30 sec.",
-        "compactName": "Tread water 30 sec."
-      },
-      {
-        "id": "Splash2B:4",
-        "name": "Recover object from bottom in water just over swimmer's head",
-        "compactName": "Over-head object recovery"
-      },
-      {
-        "id": "Splash2B:5",
-        "name": "wearing PFD, jump into deep water, tread 30 sec. and swim/kick 15 m",
-        "compactName": "PFD jump/tread 30s/15m"
-      },
-      {
-        "id": "Splash2B:6",
-        "name": "Flutter kick on Front, Back and Side (10 m)",
-        "compactName": "Front/back/side flutter 10m"
-      },
-      {
-        "id": "Splash2B:7",
-        "name": "Whip kick in vertical position 30 sec. with aid",
-        "compactName": "Aided vertical whip 30s"
-      },
-      {
-        "id": "Splash2B:8-front-crawl",
-        "name": "Front crawl and Back Crawl (10 m) — Front Crawl",
-        "compactName": "Front crawl 10m"
-      },
-      {
-        "id": "Splash2B:8-back-crawl",
-        "name": "Front crawl and Back Crawl (10 m) — Back Crawl",
-        "compactName": "Back crawl 10m"
-      },
-      {
-        "id": "Splash2B:8-2",
-        "name": "Alternating front kick to side kick (10 m)",
-        "compactName": "Front/side kick 10m"
-      },
-      {
-        "id": "Splash2B:9",
-        "name": "Interval training 4x10m flutter kick with 20 sec. rests",
-        "compactName": "Flutter kick 4×10m"
-      },
-      {
-        "id": "Splash2B:10",
-        "name": "Water Smart Messages:",
-        "compactName": "Water Smart Messages:"
-      }
-    ]
-  },
-  {
-    "id": "Splash3",
-    "name": "Splash 3",
-    "skills": [
-      {
-        "id": "Splash3:1",
-        "name": "Kneeling Dive into Deep Water",
-        "compactName": "Kneeling deep-water dive"
-      },
-      {
-        "id": "Splash3:2",
-        "name": "Forward Roll Entry into Deep Water",
-        "compactName": "Forward roll entry"
-      },
-      {
-        "id": "Splash3:3",
-        "name": "Tread Water 30 Seconds",
-        "compactName": "Tread Water 30 Seconds"
-      },
-      {
-        "id": "Splash3:4",
-        "name": "Handstand in Shallow Water",
-        "compactName": "Shallow handstand"
-      },
-      {
-        "id": "Splash3:5",
-        "name": "Front Somersault (in Water)",
-        "compactName": "Front somersault"
-      },
-      {
-        "id": "Splash3:6",
-        "name": "Jump into Deep Water, Tread 30 sec., and Swim/Kick 25 m",
-        "compactName": "Jump/tread 30s/swim 25m"
-      },
-      {
-        "id": "Splash3:7",
-        "name": "Flutter Kick on Back 5 m; Reverse Direction and Flutter Kick on Front 5 m",
-        "compactName": "Back→front flutter 5m"
-      },
-      {
-        "id": "Splash3:8",
-        "name": "Flutter Kick on Front 5 m; Reverse Direction and Flutter Kick on Back 5 m",
-        "compactName": "Front→back flutter 5m"
-      },
-      {
-        "id": "Splash3:9",
-        "name": "Whip Kick on Back 10 m",
-        "compactName": "Whip Kick on Back 10 m"
-      },
-      {
-        "id": "Splash3:10-front-crawl",
-        "name": "Front Crawl and Back Crawl 15 m each — Front Crawl",
-        "compactName": "Front crawl 15m"
-      },
-      {
-        "id": "Splash3:10-back-crawl",
-        "name": "Front Crawl and Back Crawl 15 m each — Back Crawl",
-        "compactName": "Back crawl 15m"
-      },
-      {
-        "id": "Splash3:11",
-        "name": "Interval training: 4 x 15 m flutter kick with 20 sec. rests",
-        "compactName": "Flutter kick 4×15m"
-      },
-      {
-        "id": "Splash3:12",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "Splash4",
-    "name": "Splash 4",
-    "skills": [
-      {
-        "id": "Splash4:1",
-        "name": "Standing Dive into Deep Water",
-        "compactName": "Standing deep-water dive"
-      },
-      {
-        "id": "Splash4:2",
-        "name": "Tread Water 1 minute",
-        "compactName": "Tread Water 1 minute"
-      },
-      {
-        "id": "Splash4:3",
-        "name": "Swim Underwater 5 m",
-        "compactName": "Swim Underwater 5 m"
-      },
-      {
-        "id": "Splash4:4",
-        "name": "Canadian Swim to Survive Standard: Roll Entry into Deep Water, Tread 1 minute and Swim 50 m",
-        "compactName": "Swim to Survive 50m"
-      },
-      {
-        "id": "Splash4:5",
-        "name": "Whip Kick on Front 15 m",
-        "compactName": "Whip Kick on Front 15 m"
-      },
-      {
-        "id": "Splash4:6",
-        "name": "Breaststroke Arms Drill 15 m",
-        "compactName": "Breaststroke arms 15m"
-      },
-      {
-        "id": "Splash4:7-front-crawl",
-        "name": "Front Crawl and Back Crawl 25 m each — Front Crawl",
-        "compactName": "Front crawl 25m"
-      },
-      {
-        "id": "Splash4:7-back-crawl",
-        "name": "Front Crawl and Back Crawl 25 m each — Back Crawl",
-        "compactName": "Back crawl 25m"
-      },
-      {
-        "id": "Splash4:8",
-        "name": "Interval Training: 4x25 m Front or Back Crawl with 20 Second Rests",
-        "compactName": "Front/back crawl 4×25m"
-      },
-      {
-        "id": "Splash4:9",
-        "name": "Sprint Front Crawl 25 m",
-        "compactName": "Sprint Front Crawl 25 m"
-      },
-      {
-        "id": "Splash4:10",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "Splash5",
-    "name": "Splash 5",
-    "skills": [
-      {
-        "id": "Splash5:1",
-        "name": "Shallow Dive into Deep Water",
-        "compactName": "Shallow dive"
-      },
-      {
-        "id": "Splash5:2",
-        "name": "Tuck Jump (Cannonball) into Deep Water",
-        "compactName": "Deep-water tuck jump"
-      },
-      {
-        "id": "Splash5:3",
-        "name": "Jump Entry into Deep Water and Tread 2 minutes",
-        "compactName": "Deep jump & tread 2min"
-      },
-      {
-        "id": "Splash5:4",
-        "name": "Stationary Eggbeater Kick 30 Seconds",
-        "compactName": "Stationary eggbeater 30s"
-      },
-      {
-        "id": "Splash5:5",
-        "name": "Back Somersault (in Water)",
-        "compactName": "Back somersault"
-      },
-      {
-        "id": "Splash5:6",
-        "name": "Roll Entry into Deep Water, Tread 90 Seconds and Swim 75 m",
-        "compactName": "Roll/tread 90s/swim 75m"
-      },
-      {
-        "id": "Splash5:7",
-        "name": "Breaststroke 25 m",
-        "compactName": "Breaststroke 25 m"
-      },
-      {
-        "id": "Splash5:8-front-crawl",
-        "name": "Front Crawl and Back Crawl 50 m each — Front Crawl",
-        "compactName": "Front crawl 50m"
-      },
-      {
-        "id": "Splash5:8-back-crawl",
-        "name": "Front Crawl and Back Crawl 50 m each — Back Crawl",
-        "compactName": "Back crawl 50m"
-      },
-      {
-        "id": "Splash5:9",
-        "name": "Head-up Front Crawl 10 m",
-        "compactName": "Head-up Front Crawl 10 m"
-      },
-      {
-        "id": "Splash5:10",
-        "name": "Interval Training:4x50 m Front or Back Crawl with 30 sec Rests",
-        "compactName": "Front/back crawl 4×50m"
-      },
-      {
-        "id": "Splash5:11",
-        "name": "Interval Training: 4x15 m Breaststroke with 30 sec Rests",
-        "compactName": "Breaststroke 4×15m"
-      },
-      {
-        "id": "Splash5:12",
-        "name": "Sprint Front Crawl and Back Crawl 25 m each",
-        "compactName": "Front/back sprint 25m"
-      },
-      {
-        "id": "Splash5:13",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "Splash6",
-    "name": "Splash 6",
-    "skills": [
-      {
-        "id": "Splash6:1",
-        "name": "Stride Entry into Deep Water",
-        "compactName": "Deep-water stride entry"
-      },
-      {
-        "id": "Splash6:2",
-        "name": "Compact Jump into Deep Water",
-        "compactName": "Deep-water compact jump"
-      },
-      {
-        "id": "Splash6:3",
-        "name": "Legs-only Surface Support 45 Seconds",
-        "compactName": "Legs-only support 45s"
-      },
-      {
-        "id": "Splash6:4",
-        "name": "Swim Underwater 10 m to Recover Object",
-        "compactName": "Underwater recovery 10m"
-      },
-      {
-        "id": "Splash6:5",
-        "name": "Eggbeater Kick on Back 15 m",
-        "compactName": "Back eggbeater 15m"
-      },
-      {
-        "id": "Splash6:6",
-        "name": "Scissor Kick 15 m",
-        "compactName": "Scissor Kick 15 m"
-      },
-      {
-        "id": "Splash6:7",
-        "name": "Breaststroke 50 m",
-        "compactName": "Breaststroke 50 m"
-      },
-      {
-        "id": "Splash6:8-front-crawl",
-        "name": "Front Crawl and Back Crawl 100 m each — Front Crawl",
-        "compactName": "Front crawl 100m"
-      },
-      {
-        "id": "Splash6:8-back-crawl",
-        "name": "Front Crawl and Back Crawl 100 m each — Back Crawl",
-        "compactName": "Back crawl 100m"
-      },
-      {
-        "id": "Splash6:9",
-        "name": "Head-up Swim 25 m",
-        "compactName": "Head-up Swim 25 m"
-      },
-      {
-        "id": "Splash6:10",
-        "name": "Interval Training: 4x25 m Breaststroke with 30 second Rests",
-        "compactName": "Breaststroke 4×25m"
-      },
-      {
-        "id": "Splash6:11",
-        "name": "Sprint Breaststroke 25 m each",
-        "compactName": "Breaststroke sprint 25m"
-      },
-      {
-        "id": "Splash6:12",
-        "name": "Workout 300 m; 50 m Warm-up (Choice of Strokes); 4x25 m Front Crawl with 15 Sec Rests; 4x25 m Back Crawl with 15 Sec Rests; 50 m Cool-Down (Choice of Strokes)",
-        "compactName": "Workout 300m"
-      },
-      {
-        "id": "Splash6:13",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "Splash7",
-    "name": "Splash 7",
-    "skills": [
-      {
-        "id": "Splash7:1",
-        "name": "Swim 25 m or yd Head-up Front Crawl or Breaststroke",
-        "compactName": "Head-up swim 25m/yd"
-      },
-      {
-        "id": "Splash7:2",
-        "name": "Demonstrate Ready Position with a Stationary Scull for 30 Sec.",
-        "compactName": "Ready position/scull 30s"
-      },
-      {
-        "id": "Splash7:3",
-        "name": "Carry a 2.3 kg(5 lb) Object 15 m or yd Using Swimmer's Choice of Lifesaving Kick",
-        "compactName": "Carry 2.3kg for 15m/yd"
-      },
-      {
-        "id": "Splash7:4",
-        "name": "Demonstrate a Foot-First and a Head-First Surface Dive to a Maximum Depth of 2 m",
-        "compactName": "Head/foot-first dives 2m"
-      },
-      {
-        "id": "Splash7:5",
-        "name": "Demonstrate 25 m or yd Legs-Only Using Swimmer's Choice of Lifesaving Kick",
-        "compactName": "Legs-only swim 25m/yd"
-      },
-      {
-        "id": "Splash7:6",
-        "name": "Demonstrate the Ability to Inflate 2 Items of Clothing and Use as a Buoyant Assist",
-        "compactName": "Inflate 2 clothing items"
-      },
-      {
-        "id": "Splash7:7",
-        "name": "Swim 25 m or yd Using Any Stroke. Demonstrate the Ability to Swim Under an Obstacle Located at the Halfway Point",
-        "compactName": "Obstacle swim 25m/yd"
-      },
-      {
-        "id": "Splash7:8-front-crawl",
-        "name": "Swim Each of the Following Strokes 50 m or yd Front Crawl, Back Crawl, Breaststroke — Front Crawl",
-        "compactName": "Front crawl 50m/yd"
-      },
-      {
-        "id": "Splash7:8-back-crawl",
-        "name": "Swim Each of the Following Strokes 50 m or yd Front Crawl, Back Crawl, Breaststroke — Back Crawl",
-        "compactName": "Back crawl 50m/yd"
-      },
-      {
-        "id": "Splash7:8-breaststroke",
-        "name": "Swim Each of the Following Strokes 50 m or yd Front Crawl, Back Crawl, Breaststroke — Breaststroke",
-        "compactName": "Breaststroke 50m/yd"
-      },
-      {
-        "id": "Splash7:9",
-        "name": "Complete a 350 m or yd workout on 3 different Occasions Throughout the Training Course",
-        "compactName": "Workout 350m/yd ×3"
-      },
-      {
-        "id": "Splash7:10",
-        "name": "Swim 100 m in 3 min. or Better (100 yd in 2:40 min) Using any Stroke or Combination of Strokes of the Swimmer's Choice",
-        "compactName": "Timed swim 100m/yd"
-      },
-      {
-        "id": "Splash7:11",
-        "name": "Demonstrate primary assessment of a conscious and cooperative victim who describes his or her chief complaint and how injury occurred",
-        "compactName": "Conscious assessment"
-      },
-      {
-        "id": "Splash7:12",
-        "name": "Demonstrate the Ability to Recognize When to Call EMS and How To Do It",
-        "compactName": "Calling EMS"
-      },
-      {
-        "id": "Splash7:13",
-        "name": "Demonstrate Primary Assessment and Appropriate Care for External Bleeding",
-        "compactName": "External bleeding care"
-      },
-      {
-        "id": "Splash7:14",
-        "name": "Look at the Aquatic Facility for 10-15 Sec. Turn and Describe What You Saw",
-        "compactName": "Observe & recall 10–15s"
-      },
-      {
-        "id": "Splash7:15a",
-        "name": "Demonstrate Ability to Simulate in the Water the Appearance of a Weak Swimmer and a Non-Swimmer",
-        "compactName": "Act weak/non-swim"
-      },
-      {
-        "id": "Splash7:15b",
-        "name": "Demonstrate Ability to Recognize the Difference Between a Weak Swimmer and Non-Swimmer",
-        "compactName": "Spot weak/non-swim"
-      },
-      {
-        "id": "Splash7:16",
-        "name": "From a standing Position on Land, Throw a Buoyant Aid With Line to Hit a Target on the Surface of the Water as Many Times as Possible Within 30 sec.",
-        "compactName": "Throw aid with line 30s"
-      }
-    ]
-  },
-  {
-    "id": "Splash8",
-    "name": "Splash 8",
-    "skills": [
-      {
-        "id": "Splash8:1",
-        "name": "Demonstrate 1 Forward And 1 Backward Somersault in the Water as a Continuous Sequence",
-        "compactName": "Front/back somersaults"
-      },
-      {
-        "id": "Splash8:2",
-        "name": "Stride Entry and Swim 25 m or yd Head-up Front Crawl or Breaststroke. Assume Ready Position",
-        "compactName": "Stride/head-up 25m/yd"
-      },
-      {
-        "id": "Splash8:3",
-        "name": "Demonstrate 25 m or yd Eggbeater Kick on Back",
-        "compactName": "Back eggbeater 25m/yd"
-      },
-      {
-        "id": "Splash8:4",
-        "name": "Support a 2.3 kg (5 lb) Object for at Least 1 min. in Deep Water",
-        "compactName": "Support 2.3kg for 1min"
-      },
-      {
-        "id": "Splash8:5",
-        "name": "Head-up Approach into Surface Dive to a Maximum Depth 2 m Swim Underwater for At Least 2-3 m or yd to Recover a Small Object. Surface and Carry Object to Starting Point",
-        "compactName": "Dive 2m/recover 2–3m/yd"
-      },
-      {
-        "id": "Splash8:6",
-        "name": "Demonstrate an Assisted Removal of a Conscious Victim",
-        "compactName": "Conscious victim removal"
-      },
-      {
-        "id": "Splash8:7-front-crawl",
-        "name": "Swim Each of the Following Strokes 75 m or yd: Front Crawl, Back Crawl, Breaststroke — Front Crawl",
-        "compactName": "Front crawl 75m/yd"
-      },
-      {
-        "id": "Splash8:7-back-crawl",
-        "name": "Swim Each of the Following Strokes 75 m or yd: Front Crawl, Back Crawl, Breaststroke — Back Crawl",
-        "compactName": "Back crawl 75m/yd"
-      },
-      {
-        "id": "Splash8:7-breaststroke",
-        "name": "Swim Each of the Following Strokes 75 m or yd: Front Crawl, Back Crawl, Breaststroke — Breaststroke",
-        "compactName": "Breaststroke 75m/yd"
-      },
-      {
-        "id": "Splash8:8",
-        "name": "Swim 100 m or yd Individual Medley as Follows: 25 m or yd Each of Lifesaving Kick, Back Crawl, Breaststroke, Front Crawl",
-        "compactName": "Medley 100m/yd"
-      },
-      {
-        "id": "Splash8:9",
-        "name": "Swim 200 m in 6 min. or Better (200 yd in 5:20 min) Using Any Stroke or Combination of Strokes of the Swimmer's Choice",
-        "compactName": "Timed swim 200m/yd"
-      },
-      {
-        "id": "Splash8:10",
-        "name": "Demonstrate a Primary Assessment Including Hazards and ABCs on an Unconscious, Breathing Victim",
-        "compactName": "Unconscious assessment"
-      },
-      {
-        "id": "Splash8:11",
-        "name": "Demonstrate Emergency Care for a Victim in Shock",
-        "compactName": "Shock care"
-      },
-      {
-        "id": "Splash8:12a",
-        "name": "Simulate the Appearance and Treatment of a Conscious Adult or Child Victim with an Obstructed Airway",
-        "compactName": "Obstructed airway care"
-      },
-      {
-        "id": "Splash8:12b",
-        "name": "Simulate the Appearance and Treatment of a Conscious Adult or Child Victim with a Mild Obstructed Airway",
-        "compactName": "Mild airway obstruction"
-      },
-      {
-        "id": "Splash8:12c",
-        "name": "Simulate the Appearance and Treatment of a Conscious Adult or Child Victim with a Severe Obstructed Airway",
-        "compactName": "Severe airway blockage"
-      },
-      {
-        "id": "Splash8:13a",
-        "name": "Demonstrate Ability to Simulate in the Water the Appearance of a Weak Swimmer, a Non-swimmer and an Unconscious Victim",
-        "compactName": "Simulate victim types"
-      },
-      {
-        "id": "Splash8:13b",
-        "name": "Demonstrate the Ability to Recognize the Difference Between a Weak Swimmer a Non-swimmer and an Unconscious Victim",
-        "compactName": "Identify victim types"
-      },
-      {
-        "id": "Splash8:13c",
-        "name": "Demonstrate the Ability to recognize and Avoid Victims Who Present a Danger to the Rescuer",
-        "compactName": "Avoid dangerous victims"
-      },
-      {
-        "id": "Splash8:14",
-        "name": "Perform a Non-Contact Rescue Using a Buoyant Aid. Approach 20 m or yd and Encourage Victim to Safety While Maintaining a Safe Distance and Calling for Assistance. Rescuer Performs Appropriate Follow up Procedures, Including Treatment for Shock",
-        "compactName": "No-contact rescue 20m/yd"
-      }
-    ]
-  },
-  {
-    "id": "Splash9",
-    "name": "Splash 9",
-    "skills": [
-      {
-        "id": "Splash9:1",
-        "name": "Demonstrate At Least 2 Different Entries with Different Aids",
-        "compactName": "Two entries with aids"
-      },
-      {
-        "id": "Splash9:2",
-        "name": "Entry With Aid and Swim 25 m or yd Head-up Front Crawl or Breaststroke. Assume Ready Position and Demonstrate Ability to Scull Forward, Backward and Turn",
-        "compactName": "Aid/head-up swim 25m/yd"
-      },
-      {
-        "id": "Splash9:3",
-        "name": "Demonstrate Defence Methods from the Front, Side and Rear",
-        "compactName": "Front/side/rear defence"
-      },
-      {
-        "id": "Splash9:4",
-        "name": "Demonstrate Eggbeater Kick Showing Ability to Travel, Change Direction and Height Levels",
-        "compactName": "Eggbeater travel & turns"
-      },
-      {
-        "id": "Splash9:5",
-        "name": "Carry a 4.5 kg (10 lb) Object 25 m or yd Using Swimmer's Choice of Lifesaving Kick",
-        "compactName": "Carry 4.5kg for 25m/yd"
-      },
-      {
-        "id": "Splash9:6",
-        "name": "Demonstrate the Removal of an Unconscious Victim with the Assistance of an Untrained Bystander",
-        "compactName": "Unconscious removal"
-      },
-      {
-        "id": "Splash9:7",
-        "name": "Head-up Approach into Head-first Surface Dive to a Maximum Depth of 2 m Swim Underwater for 5-10 m or yd and Surface. Foot-first Surface Dive (max depth 2m) Recover an Object and Return It to the Starting Point",
-        "compactName": "Dives/recovery 5–10m/yd"
-      },
-      {
-        "id": "Splash9:8",
-        "name": "Demonstrate in Shallow Water, the Ability to Turn a Victim Face-up and Support the Face Above the Surface",
-        "compactName": "Turn & support face-up"
-      },
-      {
-        "id": "Splash9:9-front-crawl",
-        "name": "Swim Each of the Following Strokes 100 m or yd: Front Crawl, Back Crawl, Breaststroke — Front Crawl",
-        "compactName": "Front crawl 100m/yd"
-      },
-      {
-        "id": "Splash9:9-back-crawl",
-        "name": "Swim Each of the Following Strokes 100 m or yd: Front Crawl, Back Crawl, Breaststroke — Back Crawl",
-        "compactName": "Back crawl 100m/yd"
-      },
-      {
-        "id": "Splash9:9-breaststroke",
-        "name": "Swim Each of the Following Strokes 100 m or yd: Front Crawl, Back Crawl, Breaststroke — Breaststroke",
-        "compactName": "Breaststroke 100m/yd"
-      },
-      {
-        "id": "Splash9:10",
-        "name": "Complete a 600 m or yd Workout At Least 3 Times During the Training Course.",
-        "compactName": "Workout 600m/yd ×3"
-      },
-      {
-        "id": "Splash9:11",
-        "name": "Swim 300 m in 9 min. or Better (300 yd in 8:00 min) Using Any Stroke or Combination of Strokes of the Swimmer's Choice",
-        "compactName": "Timed swim 300m/yd"
-      },
-      {
-        "id": "Splash9:12",
-        "name": "Demonstrate the Recognition and Care of a Bone or Joint Injury",
-        "compactName": "Bone/joint injury care"
-      },
-      {
-        "id": "Splash9:13",
-        "name": "Demonstrate the Recognition and Care of a Victim Suffering Respiratory Distress from Asthma or Severe Allergic Reaction",
-        "compactName": "Asthma/allergy care"
-      },
-      {
-        "id": "Splash9:14",
-        "name": "From 3 Different Heights or Positions, Locate and Describe an Object Located on the Bottom or Below the Surface",
-        "compactName": "Locate underwater object"
-      },
-      {
-        "id": "Splash9:15",
-        "name": "Perform a Rescue of a Weak or Non-Swimmer with a Towing Aid. Swim Approach 20 m or yd and Tow Victim to Safety Showing Ability to Avoid Contact. Rescuer Performs Appropriate Follow Up Procedures, Including Treatment for Shock",
-        "compactName": "Towing-aid rescue 20m/yd"
-      }
-    ]
-  },
-  {
-    "id": "SplashFitness",
-    "name": "Splash Fitness",
-    "skills": [
-      {
-        "id": "SplashFitness:1",
-        "name": "Pace Clocks and Timers",
-        "compactName": "Pace Clocks and Timers"
-      },
-      {
-        "id": "SplashFitness:2",
-        "name": "Stretches for Swimmers",
-        "compactName": "Stretches for Swimmers"
-      },
-      {
-        "id": "SplashFitness:3",
-        "name": "Kicking Interval Training: 4 x 25 m Flutter Kick and /or Whip Kick with 15-20 sec. Rests",
-        "compactName": "Flutter/whip kick 4×25m"
-      },
-      {
-        "id": "SplashFitness:4",
-        "name": "Swimming Interval Training: Swim Interval Sets Selected by the Swimmer",
-        "compactName": "Swim interval sets"
-      },
-      {
-        "id": "SplashFitness:5",
-        "name": "Workout (300 m): 50 m Warm-up, 4 x 25 m Front or Back Crawl with 15 sec. rests, 4 x 25 m Choice of Strokes with 15 sec. rests, 50 m Cool-Down",
-        "compactName": "Workout 300m"
-      },
-      {
-        "id": "SplashFitness:6",
-        "name": "Workout Design: Design and Demonstrate 2 Sample Workouts",
-        "compactName": "Design 2 workouts"
-      },
-      {
-        "id": "SplashFitness:7",
-        "name": "Distance Swim: Endurance Challenge",
-        "compactName": "Distance/endurance swim"
-      },
-      {
-        "id": "SplashFitness:8",
-        "name": "Sprint Swim: 25 m each for at least 2 Strokes Chosen by the Swimmer",
-        "compactName": "Two-stroke sprint 25m"
-      }
-    ]
-  },
-  {
-    "id": "SplashPrivate",
-    "name": "Splash Private",
-    "skills": []
-  },
-  {
-    "id": "TeenAdult1",
-    "name": "Teen Adult 1",
-    "skills": [
-      {
-        "id": "TeenAdult1:1",
-        "name": "Enter and Exit Shallow Water",
-        "compactName": "Shallow entry & exit"
-      },
-      {
-        "id": "TeenAdult1:2",
-        "name": "Jump into Deep Water, Return and Exit",
-        "compactName": "Deep jump, return & exit"
-      },
-      {
-        "id": "TeenAdult1:3",
-        "name": "Sideways Entry Wearing PFD",
-        "compactName": "PFD sideways entry"
-      },
-      {
-        "id": "TeenAdult1:4",
-        "name": "Tread Water (30 sec) Wearing PFD",
-        "compactName": "PFD tread 30s"
-      },
-      {
-        "id": "TeenAdult1:5",
-        "name": "Hold Breath Underwater 5-10 sec",
-        "compactName": "Breath hold 5–10s"
-      },
-      {
-        "id": "TeenAdult1:6",
-        "name": "Submerge and Exhale 5-10 Times",
-        "compactName": "Submerge/exhale ×5–10"
-      },
-      {
-        "id": "TeenAdult1:7",
-        "name": "Open Eyes Underwater",
-        "compactName": "Open Eyes Underwater"
-      },
-      {
-        "id": "TeenAdult1:8",
-        "name": "Recover Object from Bottom in Chest-Deep Water",
-        "compactName": "Chest-deep object recovery"
-      },
-      {
-        "id": "TeenAdult1:9",
-        "name": "Wearing PFD, Jump into Deep Water, Tread 30 sec and Swim/Kick on Back 5-10 m",
-        "compactName": "PFD: jump/back 5–10m"
-      },
-      {
-        "id": "TeenAdult1:10",
-        "name": "Float on Front and Back",
-        "compactName": "Float on Front and Back"
-      },
-      {
-        "id": "TeenAdult1:11",
-        "name": "Roll Laterally Front to Back and Back to Front",
-        "compactName": "Front/back rolls"
-      },
-      {
-        "id": "TeenAdult1:12-front-glide",
-        "name": "Glide on Front, Back and Side (3-5 m each) — Front Glide",
-        "compactName": "Front glide 3–5m"
-      },
-      {
-        "id": "TeenAdult1:12-back-glide",
-        "name": "Glide on Front, Back and Side (3-5 m each) — Back Glide",
-        "compactName": "Back glide 3–5m"
-      },
-      {
-        "id": "TeenAdult1:12-side-glide",
-        "name": "Glide on Front, Back and Side (3-5 m each) — Side Glide",
-        "compactName": "Side glide 3–5m"
-      },
-      {
-        "id": "TeenAdult1:13",
-        "name": "Flutter Kick on Front, Back and Side (10-15 m each)",
-        "compactName": "F/B/side flutter 10–15m"
-      },
-      {
-        "id": "TeenAdult1:14",
-        "name": "Whip Kick in Vertical Position (15-30 sec) with Aid",
-        "compactName": "Aided vertical whip 15–30s"
-      },
-      {
-        "id": "TeenAdult1:15-front-crawl",
-        "name": "Front Crawl or Back Crawl 10-15 m — Front Crawl",
-        "compactName": "Front crawl 10–15m"
-      },
-      {
-        "id": "TeenAdult1:15-back-crawl",
-        "name": "Front Crawl or Back Crawl 10-15 m — Back Crawl",
-        "compactName": "Back crawl 10–15m"
-      },
-      {
-        "id": "TeenAdult1:16",
-        "name": "Interval Training: 4 x 9-12 m Flutter Kick with 10-15 sec Rests",
-        "compactName": "Flutter kick 4×9–12m"
-      },
-      {
-        "id": "TeenAdult1:17",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "TeenAdult2",
-    "name": "Teen Adult 2",
-    "skills": [
-      {
-        "id": "TeenAdult2:1",
-        "name": "Standing Dive into Deep Water",
-        "compactName": "Standing deep-water dive"
-      },
-      {
-        "id": "TeenAdult2:2",
-        "name": "Forward Roll Entry into Deep Water With and Without PFD",
-        "compactName": "Roll entry ±PFD"
-      },
-      {
-        "id": "TeenAdult2:3",
-        "name": "Tuck Jump (Cannonball) into Deep Water",
-        "compactName": "Deep-water tuck jump"
-      },
-      {
-        "id": "TeenAdult2:4",
-        "name": "Tread Water 1-2 min",
-        "compactName": "Tread Water 1-2 min"
-      },
-      {
-        "id": "TeenAdult2:5",
-        "name": "Handstand in Shallow Water",
-        "compactName": "Shallow handstand"
-      },
-      {
-        "id": "TeenAdult2:6",
-        "name": "Front Somersault (in water)",
-        "compactName": "Front somersault"
-      },
-      {
-        "id": "TeenAdult2:7",
-        "name": "Swim Underwater 5-10 m",
-        "compactName": "Swim Underwater 5-10 m"
-      },
-      {
-        "id": "TeenAdult2:8",
-        "name": "Canadian Swim to Survive Standard: Roll Entry into Deep Water, Tread 1 min, and Swim 50 m",
-        "compactName": "Swim to Survive 50m"
-      },
-      {
-        "id": "TeenAdult2:9",
-        "name": "Flutter Kick on Back 5 m; Reverse Direction and Flutter Kick on Front 5 m",
-        "compactName": "Back→front flutter 5m"
-      },
-      {
-        "id": "TeenAdult2:10",
-        "name": "Flutter Kick on Front 5 m; Reverse Direction and Flutter Kick on Back 5 m",
-        "compactName": "Front→back flutter 5m"
-      },
-      {
-        "id": "TeenAdult2:11",
-        "name": "Whip Kick on Back 10-15 m",
-        "compactName": "Whip Kick on Back 10-15 m"
-      },
-      {
-        "id": "TeenAdult2:12",
-        "name": "Whip Kick on Front 10-15 m",
-        "compactName": "Front whip kick 10–15m"
-      },
-      {
-        "id": "TeenAdult2:13",
-        "name": "Breastroke Arms Drill 10-15 m",
-        "compactName": "Breaststroke arms 10–15m"
-      },
-      {
-        "id": "TeenAdult2:14-front-crawl",
-        "name": "Front Crawl and Back Crawl (25-50 m each) — Front Crawl",
-        "compactName": "Front crawl 25–50m"
-      },
-      {
-        "id": "TeenAdult2:14-back-crawl",
-        "name": "Front Crawl and Back Crawl (25-50 m each) — Back Crawl",
-        "compactName": "Back crawl 25–50m"
-      },
-      {
-        "id": "TeenAdult2:15",
-        "name": "Interval Training: 4 x 25 m Flutter Kick with 15-20 sec Rests",
-        "compactName": "Flutter kick 4×25m"
-      },
-      {
-        "id": "TeenAdult2:16",
-        "name": "Interval Training: 4 x 25 m Front or Back Crawl 10-15 sec Rests",
-        "compactName": "Front/back crawl 4×25m"
-      },
-      {
-        "id": "TeenAdult2:17",
-        "name": "Sprint Front Crawl 25 m",
-        "compactName": "Sprint Front Crawl 25 m"
-      },
-      {
-        "id": "TeenAdult2:18",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  },
-  {
-    "id": "TeenAdult3",
-    "name": "Teen Adult 3",
-    "skills": [
-      {
-        "id": "TeenAdult3:1",
-        "name": "Shallow Dive into Deep Water",
-        "compactName": "Shallow dive"
-      },
-      {
-        "id": "TeenAdult3:2",
-        "name": "Stride Entry into Deep Water",
-        "compactName": "Deep-water stride entry"
-      },
-      {
-        "id": "TeenAdult3:3",
-        "name": "Compact Jump into Deep Water",
-        "compactName": "Deep-water compact jump"
-      },
-      {
-        "id": "TeenAdult3:4",
-        "name": "Legs-only Surface Support (30-60 sec",
-        "compactName": "Legs-only support 30–60s"
-      },
-      {
-        "id": "TeenAdult3:5",
-        "name": "Back Somersault (in water)",
-        "compactName": "Back Somersault (in water)"
-      },
-      {
-        "id": "TeenAdult3:6",
-        "name": "Swim Underwater 5-10 m to Recover Object",
-        "compactName": "Underwater pickup 5–10m"
-      },
-      {
-        "id": "TeenAdult3:7-eggbeater-kick",
-        "name": "Eggbeater Kick on Back or Scissor Kick on Side 10-15 m — Eggbeater Kick",
-        "compactName": "Back eggbeater 10–15m"
-      },
-      {
-        "id": "TeenAdult3:7-scissor-kick",
-        "name": "Eggbeater Kick on Back or Scissor Kick on Side 10-15 m — Scissor Kick",
-        "compactName": "Side scissor kick 10–15m"
-      },
-      {
-        "id": "TeenAdult3:8",
-        "name": "Breaststroke 25-50 m",
-        "compactName": "Breaststroke 25-50 m"
-      },
-      {
-        "id": "TeenAdult3:9-front-crawl",
-        "name": "Front Crawl and Back Crawl (50-100 m. each) — Front Crawl",
-        "compactName": "Front crawl 50–100m"
-      },
-      {
-        "id": "TeenAdult3:9-back-crawl",
-        "name": "Front Crawl and Back Crawl (50-100 m. each) — Back Crawl",
-        "compactName": "Back crawl 50–100m"
-      },
-      {
-        "id": "TeenAdult3:10",
-        "name": "Head up Front Crawl 10-15 m",
-        "compactName": "Head-up crawl 10–15m"
-      },
-      {
-        "id": "TeenAdult3:11",
-        "name": "Interval Training: 4 x 50 m Front or Back Crawl or Breaststroke with 30 sec Rests",
-        "compactName": "Crawl/breaststroke 4×50m"
-      },
-      {
-        "id": "TeenAdult3:12",
-        "name": "Sprint Front Crawl, Back Crawl or Breaststroke 25-50 m",
-        "compactName": "Choice sprint 25–50m"
-      },
-      {
-        "id": "TeenAdult3:13",
-        "name": "Workout 300 m: 50 m Warm-up (choice of strokes); 4 x 25 Front Crawl with 15 sec Rests; 4 x 25 m Back Crawl with 15 sec Rests; 50 m Cool-down (choice of strokes)",
-        "compactName": "Workout 300m"
-      },
-      {
-        "id": "TeenAdult3:14",
-        "name": "Water Smart Messages",
-        "compactName": "Water Smart Messages"
-      }
-    ]
-  }
+    {
+        "id": "LittleSplash1",
+        "name": "Little Splash 1",
+        "skills": [
+            {
+                "id": "LittleSplash1:1",
+                "name": "Enter and Exit Shallow Water (Assisted)",
+                "compactName": "Assisted entry & exit"
+            },
+            {
+                "id": "LittleSplash1:2",
+                "name": "Jump into Chest-deep Water (Assisted)",
+                "compactName": "Assisted chest-deep jump"
+            },
+            {
+                "id": "LittleSplash1:3",
+                "name": "Face in water",
+                "compactName": "Face in water"
+            },
+            {
+                "id": "LittleSplash1:4",
+                "name": "Blow Bubbles in Water",
+                "compactName": "Blow Bubbles in Water"
+            },
+            {
+                "id": "LittleSplash1:5",
+                "name": "Float on Front and Back (3 seconds each)",
+                "compactName": "Front/back float 3s"
+            },
+            {
+                "id": "LittleSplash1:6",
+                "name": "Safe Movement in Shallow Water Wearing PFD",
+                "compactName": "PFD shallow movement"
+            },
+            {
+                "id": "LittleSplash1:7",
+                "name": "Glide on Front and Back (3 m each)",
+                "compactName": "Front/back glide 3m"
+            },
+            {
+                "id": "LittleSplash1:8",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "LittleSplash2",
+        "name": "Little Splash 2",
+        "skills": [
+            {
+                "id": "LittleSplash2:1",
+                "name": "Enter and Exit Shallow Water Wearing PFD",
+                "compactName": "PFD shallow entry & exit"
+            },
+            {
+                "id": "LittleSplash2:2",
+                "name": "Jump into Chest-deep Water",
+                "compactName": "Chest-deep jump"
+            },
+            {
+                "id": "LittleSplash2:3",
+                "name": "Submerge",
+                "compactName": "Submerge"
+            },
+            {
+                "id": "LittleSplash2:4",
+                "name": "Submerge and Exhale 3 times",
+                "compactName": "Submerge & exhale ×3"
+            },
+            {
+                "id": "LittleSplash2:5",
+                "name": "Float on Front and Back (3 sec. each) Wearing PFD or with other Buoyant Aid",
+                "compactName": "PFD/aid front/back float 3s"
+            },
+            {
+                "id": "LittleSplash2:6",
+                "name": "Roll Laterally Front and Back and Back to Front, Wearing PFD",
+                "compactName": "PFD front/back rolls"
+            },
+            {
+                "id": "LittleSplash2:7",
+                "name": "Glide on Front and Back (3 m each) Wearing PFD or with other Buoyant Aid",
+                "compactName": "PFD/aid front/back glide 3m"
+            },
+            {
+                "id": "LittleSplash2:8",
+                "name": "Flutter Kick on Back 5 m with Buoyant Aid",
+                "compactName": "Aided back flutter 5m"
+            },
+            {
+                "id": "LittleSplash2:9",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "LittleSplash3",
+        "name": "Little Splash 3",
+        "skills": [
+            {
+                "id": "LittleSplash3:1",
+                "name": "Jump into Deep Water Wearing PFD, Return and Exit",
+                "compactName": "PFD deep jump & exit"
+            },
+            {
+                "id": "LittleSplash3:2",
+                "name": "Sideways Entry Wearing PFD",
+                "compactName": "PFD sideways entry"
+            },
+            {
+                "id": "LittleSplash3:3",
+                "name": "Hold Breath Underwater 3 Seconds",
+                "compactName": "Underwater breath hold 3s"
+            },
+            {
+                "id": "LittleSplash3:4",
+                "name": "Submerge and Exhale 5 times",
+                "compactName": "Submerge & exhale ×5"
+            },
+            {
+                "id": "LittleSplash3:5",
+                "name": "Recover Object from Bottom in Waist-Deep Water",
+                "compactName": "Waist-deep object recovery"
+            },
+            {
+                "id": "LittleSplash3:6",
+                "name": "Back Float; Roll to Front; Swim 3 m",
+                "compactName": "Back float/roll/swim 3m"
+            },
+            {
+                "id": "LittleSplash3:7",
+                "name": "Float on Front and Back (5 Second each)",
+                "compactName": "Front/back float 5s"
+            },
+            {
+                "id": "LittleSplash3:8",
+                "name": "Roll Laterally Front to Back and Back to Front",
+                "compactName": "Front/back rolls"
+            },
+            {
+                "id": "LittleSplash3:9",
+                "name": "Glide on Front and Back (3 m each)",
+                "compactName": "Front/back glide 3m"
+            },
+            {
+                "id": "LittleSplash3:10",
+                "name": "Flutter Kick on Back 5 m",
+                "compactName": "Flutter Kick on Back 5 m"
+            },
+            {
+                "id": "LittleSplash3:11",
+                "name": "Flutter Kick on Front 5 m",
+                "compactName": "Flutter Kick on Front 5 m"
+            },
+            {
+                "id": "LittleSplash3:12",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "LittleSplash4",
+        "name": "Little Splash 4",
+        "skills": [
+            {
+                "id": "LittleSplash4:1",
+                "name": "Jump into Deep Water, Return and Exit",
+                "compactName": "Deep jump, return & exit"
+            },
+            {
+                "id": "LittleSplash4:2",
+                "name": "Sideways Entry",
+                "compactName": "Sideways Entry"
+            },
+            {
+                "id": "LittleSplash4:3",
+                "name": "Tread Water 10 Seconds Wearing PFD",
+                "compactName": "PFD tread 10s"
+            },
+            {
+                "id": "LittleSplash4:4",
+                "name": "Open Eyes Underwater",
+                "compactName": "Open Eyes Underwater"
+            },
+            {
+                "id": "LittleSplash4:5",
+                "name": "Recover Object from Bottom in Chest-Deep Water",
+                "compactName": "Chest-deep object recovery"
+            },
+            {
+                "id": "LittleSplash4:6",
+                "name": "Wearing a PFD, Sideways Entry into Deep Water; Tread 15 Seconds; Swim/Kick 5 m",
+                "compactName": "PFD entry/tread 15s/5m"
+            },
+            {
+                "id": "LittleSplash4:7",
+                "name": "Front Float; Roll to Back; Swim 5 m",
+                "compactName": "Front float/roll/swim 5m"
+            },
+            {
+                "id": "LittleSplash4:8",
+                "name": "Glide on side 3 m",
+                "compactName": "Glide on side 3 m"
+            },
+            {
+                "id": "LittleSplash4:9",
+                "name": "Flutter Kick: on front 7m; on back 7m; on side 5 m",
+                "compactName": "Flutter: F/B 7m, side 5m"
+            },
+            {
+                "id": "LittleSplash4:10",
+                "name": "Front Crawl 5 m Wearing PFD",
+                "compactName": "PFD front crawl 5m"
+            },
+            {
+                "id": "LittleSplash4:11",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "LittleSplash5",
+        "name": "Little Splash 5",
+        "skills": [
+            {
+                "id": "LittleSplash5:1",
+                "name": "Forward Roll Entry Wearing PFD",
+                "compactName": "PFD forward roll entry"
+            },
+            {
+                "id": "LittleSplash5:2",
+                "name": "Tread Water 10 Seconds",
+                "compactName": "Tread Water 10 Seconds"
+            },
+            {
+                "id": "LittleSplash5:3",
+                "name": "Submerge and Hold Breath 5 Seconds",
+                "compactName": "Underwater breath hold 5s"
+            },
+            {
+                "id": "LittleSplash5:4",
+                "name": "Recover Object from Bottom in Chest-deep Water",
+                "compactName": "Chest-deep object recovery"
+            },
+            {
+                "id": "LittleSplash5:5",
+                "name": "Wearing a PFD, Sideways Entry into Deep Water; Tread 20 Seconds; Swim/Kick 10 m",
+                "compactName": "PFD entry/tread 20s/10m"
+            },
+            {
+                "id": "LittleSplash5:6",
+                "name": "Whip kick in vertical position (20 sec) with a PFD or buoyant aid",
+                "compactName": "Aided vertical whip 20s"
+            },
+            {
+                "id": "LittleSplash5:7",
+                "name": "Front crawl 5 m",
+                "compactName": "Front crawl 5 m"
+            },
+            {
+                "id": "LittleSplash5:8",
+                "name": "Back Crawl 5 m",
+                "compactName": "Back Crawl 5 m"
+            },
+            {
+                "id": "LittleSplash5:9",
+                "name": "Interval Training: 4x5 m Flutter Kick on Back with 30 Seconds Rests",
+                "compactName": "Back flutter 4×5m"
+            },
+            {
+                "id": "LittleSplash5:10",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "ParentandTot1",
+        "name": "Parentand Tot 1",
+        "skills": [
+            {
+                "id": "ParentandTot1:1",
+                "name": "Enter and Exit the Water Safely with Tot",
+                "compactName": "Safe entry & exit with tot"
+            },
+            {
+                "id": "ParentandTot1:2",
+                "name": "Readiness for Submersion",
+                "compactName": "Readiness for Submersion"
+            },
+            {
+                "id": "ParentandTot1:3",
+                "name": "Hold Tot on Front, Eye Contact",
+                "compactName": "Front hold & eye contact"
+            },
+            {
+                "id": "ParentandTot1:4",
+                "name": "Hold Tot on Back, Head and Back Support",
+                "compactName": "Supported back hold"
+            },
+            {
+                "id": "ParentandTot1:5",
+                "name": "Relaxed Front Float (with assistance)",
+                "compactName": "Assisted front float"
+            },
+            {
+                "id": "ParentandTot1:6",
+                "name": "Back Float (Assisted)",
+                "compactName": "Back Float (Assisted)"
+            },
+            {
+                "id": "ParentandTot1:7",
+                "name": "Float Wearing PFD (Assisted)",
+                "compactName": "Assisted PFD float"
+            },
+            {
+                "id": "ParentandTot1:8",
+                "name": "Arms: Splashing, Reaching, Paddling, On Front and Back",
+                "compactName": "Front/back arm movements"
+            },
+            {
+                "id": "ParentandTot1:9",
+                "name": "Legs: Tickling, Splashing, Kicking, On Front and Back",
+                "compactName": "Front/back leg movements"
+            },
+            {
+                "id": "ParentandTot1:10",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "ParentandTot2",
+        "name": "Parentand Tot 2",
+        "skills": [
+            {
+                "id": "ParentandTot2:1",
+                "name": "Entry from Sitting Position (Assisted)",
+                "compactName": "Assisted seated entry"
+            },
+            {
+                "id": "ParentandTot2:2",
+                "name": "Exit the Water (Assisted)",
+                "compactName": "Exit the Water (Assisted)"
+            },
+            {
+                "id": "ParentandTot2:3",
+                "name": "Blow Bubbles On and In Water",
+                "compactName": "Bubbles on/in water"
+            },
+            {
+                "id": "ParentandTot2:4",
+                "name": "Face Wet and In Water",
+                "compactName": "Face Wet and In Water"
+            },
+            {
+                "id": "ParentandTot2:5",
+                "name": "Attempt to Recover Object Below Surface",
+                "compactName": "Subsurface object recovery"
+            },
+            {
+                "id": "ParentandTot2:6",
+                "name": "Entry From Sitting Position Wearing PFD and Return (Assisted)",
+                "compactName": "Assisted PFD entry/return"
+            },
+            {
+                "id": "ParentandTot2:7",
+                "name": "Front Float - Face In (Assisted)",
+                "compactName": "Assisted face-in front float"
+            },
+            {
+                "id": "ParentandTot2:8",
+                "name": "Back Float (Assisted)",
+                "compactName": "Back Float (Assisted)"
+            },
+            {
+                "id": "ParentandTot2:9",
+                "name": "Kicking on Front and Back (Assisted)",
+                "compactName": "Assisted front/back kick"
+            },
+            {
+                "id": "ParentandTot2:10",
+                "name": "Surface Passes with Continuous Contact",
+                "compactName": "Contact surface passes"
+            },
+            {
+                "id": "ParentandTot2:11",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "ParentandTot3",
+        "name": "Parentand Tot 3",
+        "skills": [
+            {
+                "id": "ParentandTot3:1",
+                "name": "Jump Entry (Assisted)",
+                "compactName": "Jump Entry (Assisted)"
+            },
+            {
+                "id": "ParentandTot3:2",
+                "name": "Entry and Submerge from Sitting Position (Assisted)",
+                "compactName": "Assisted seated submersion"
+            },
+            {
+                "id": "ParentandTot3:3",
+                "name": "Exit the Water (Unassisted)",
+                "compactName": "Unassisted exit"
+            },
+            {
+                "id": "ParentandTot3:4",
+                "name": "Hold Breath Underwater (Assisted)",
+                "compactName": "Assisted breath hold"
+            },
+            {
+                "id": "ParentandTot3:5",
+                "name": "Attempt to Open Eyes Underwater",
+                "compactName": "Open eyes underwater"
+            },
+            {
+                "id": "ParentandTot3:6",
+                "name": "Attempt to Recover Object from Bottom",
+                "compactName": "Bottom object recovery"
+            },
+            {
+                "id": "ParentandTot3:7",
+                "name": "Standing Jump Entry; Return to Edge (Assisted)",
+                "compactName": "Assisted jump & return"
+            },
+            {
+                "id": "ParentandTot3:8",
+                "name": "Jump Entry and Float Wearing PFD (Assisted)",
+                "compactName": "Assisted PFD jump/float"
+            },
+            {
+                "id": "ParentandTot3:9",
+                "name": "Front and Back \"Starfish\" Floats (Assisted)",
+                "compactName": "Assisted starfish floats"
+            },
+            {
+                "id": "ParentandTot3:10",
+                "name": "Front and Back \"Pencil\" Floats (Assisted)",
+                "compactName": "Assisted pencil floats"
+            },
+            {
+                "id": "ParentandTot3:11",
+                "name": "Kicking on Front and Back (Assisted)",
+                "compactName": "Assisted front/back kick"
+            },
+            {
+                "id": "ParentandTot3:12",
+                "name": "Underwater Passes",
+                "compactName": "Underwater Passes"
+            },
+            {
+                "id": "ParentandTot3:13",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "Splash1",
+        "name": "Splash 1",
+        "skills": [
+            {
+                "id": "Splash1:1",
+                "name": "Enter and Exit Shallow Water",
+                "compactName": "Shallow entry & exit"
+            },
+            {
+                "id": "Splash1:2",
+                "name": "Jump into Chest-deep Water",
+                "compactName": "Chest-deep jump"
+            },
+            {
+                "id": "Splash1:3",
+                "name": "Tread water (30 sec.) wearing PFD",
+                "compactName": "PFD tread 30s"
+            },
+            {
+                "id": "Splash1:4",
+                "name": "Hold breath underwater 5 sec.",
+                "compactName": "Underwater breath hold 5s"
+            },
+            {
+                "id": "Splash1:5",
+                "name": "Submerge and exhale 5 times",
+                "compactName": "Submerge & exhale ×5"
+            },
+            {
+                "id": "Splash1:6",
+                "name": "Float on front and back (5 sec. each)",
+                "compactName": "Front/back float 5s"
+            },
+            {
+                "id": "Splash1:7",
+                "name": "Roll laterally front to back and back to front",
+                "compactName": "Front/back rolls"
+            },
+            {
+                "id": "Splash1:8",
+                "name": "Glide on front, back and side (3 m each)",
+                "compactName": "Front/back/side glide 3m"
+            },
+            {
+                "id": "Splash1:9",
+                "name": "Flutter kick on front and back (5 m each)",
+                "compactName": "Front/back flutter 5m"
+            },
+            {
+                "id": "Splash1:10-front-crawl-wearing-pfd-5-m",
+                "name": "Front Crawl and Back Crawl wearing PFD (5 m) — Front Crawl wearing PFD (5 m)",
+                "compactName": "PFD front crawl 5m"
+            },
+            {
+                "id": "Splash1:10-back-crawl-wearing-pfd-5-m",
+                "name": "Front Crawl and Back Crawl wearing PFD (5 m) — Back Crawl wearing PFD (5 m)",
+                "compactName": "PFD back crawl 5m"
+            },
+            {
+                "id": "Splash1:11",
+                "name": "Water Smart Messages:",
+                "compactName": "Water Smart Messages:"
+            }
+        ]
+    },
+    {
+        "id": "Splash2A",
+        "name": "Splash 2A",
+        "skills": [
+            {
+                "id": "Splash2A:1",
+                "name": "Jump into deep water wearing PFD",
+                "compactName": "PFD deep-water jump"
+            },
+            {
+                "id": "Splash2A:2",
+                "name": "Tread water 10 sec",
+                "compactName": "Tread water 10 sec"
+            },
+            {
+                "id": "Splash2A:3",
+                "name": "Open eyes underwater",
+                "compactName": "Open eyes underwater"
+            },
+            {
+                "id": "Splash2A:4",
+                "name": "Recover object from bottom in chest-deep water",
+                "compactName": "Chest-deep object recovery"
+            },
+            {
+                "id": "Splash2A:5",
+                "name": "Wearing PFD, jump into deep water, tread 20 sec, and swim/kick 10 m",
+                "compactName": "PFD jump/tread 20s/10m"
+            },
+            {
+                "id": "Splash2A:6",
+                "name": "Flutter kick on Front, Back and Side (7 m each)",
+                "compactName": "Front/back/side flutter 7m"
+            },
+            {
+                "id": "Splash2A:7",
+                "name": "Front kick 3 sec. to side kick 3 sec. to front kick 3 sec. – assisted",
+                "compactName": "Aided front/side kick 3s"
+            },
+            {
+                "id": "Splash2A:8-front-crawl",
+                "name": "Front Crawl and Back Crawl (5 m) — Front Crawl",
+                "compactName": "Front crawl 5m"
+            },
+            {
+                "id": "Splash2A:8-back-crawl",
+                "name": "Front Crawl and Back Crawl (5 m) — Back Crawl",
+                "compactName": "Back crawl 5m"
+            },
+            {
+                "id": "Splash2A:9",
+                "name": "Interval training: 4x5 m flutter kick with 20 sec rests",
+                "compactName": "Flutter kick 4×5m"
+            },
+            {
+                "id": "Splash2A:10",
+                "name": "Water Smart Messages :",
+                "compactName": "Water Smart Messages :"
+            }
+        ]
+    },
+    {
+        "id": "Splash2B",
+        "name": "Splash 2B",
+        "skills": [
+            {
+                "id": "Splash2B:1",
+                "name": "Jump into deep water, return and exit",
+                "compactName": "Deep jump, return & exit"
+            },
+            {
+                "id": "Splash2B:2",
+                "name": "Sideways entry wearing PFD",
+                "compactName": "PFD sideways entry"
+            },
+            {
+                "id": "Splash2B:3",
+                "name": "Tread water 30 sec.",
+                "compactName": "Tread water 30 sec."
+            },
+            {
+                "id": "Splash2B:4",
+                "name": "Recover object from bottom in water just over swimmer's head",
+                "compactName": "Over-head object recovery"
+            },
+            {
+                "id": "Splash2B:5",
+                "name": "wearing PFD, jump into deep water, tread 30 sec. and swim/kick 15 m",
+                "compactName": "PFD jump/tread 30s/15m"
+            },
+            {
+                "id": "Splash2B:6",
+                "name": "Flutter kick on Front, Back and Side (10 m)",
+                "compactName": "Front/back/side flutter 10m"
+            },
+            {
+                "id": "Splash2B:7",
+                "name": "Whip kick in vertical position 30 sec. with aid",
+                "compactName": "Aided vertical whip 30s"
+            },
+            {
+                "id": "Splash2B:8-front-crawl",
+                "name": "Front crawl and Back Crawl (10 m) — Front Crawl",
+                "compactName": "Front crawl 10m"
+            },
+            {
+                "id": "Splash2B:8-back-crawl",
+                "name": "Front crawl and Back Crawl (10 m) — Back Crawl",
+                "compactName": "Back crawl 10m"
+            },
+            {
+                "id": "Splash2B:8-2",
+                "name": "Alternating front kick to side kick (10 m)",
+                "compactName": "Front/side kick 10m"
+            },
+            {
+                "id": "Splash2B:9",
+                "name": "Interval training 4x10m flutter kick with 20 sec. rests",
+                "compactName": "Flutter kick 4×10m"
+            },
+            {
+                "id": "Splash2B:10",
+                "name": "Water Smart Messages:",
+                "compactName": "Water Smart Messages:"
+            }
+        ]
+    },
+    {
+        "id": "Splash3",
+        "name": "Splash 3",
+        "skills": [
+            {
+                "id": "Splash3:1",
+                "name": "Kneeling Dive into Deep Water",
+                "compactName": "Kneeling deep-water dive"
+            },
+            {
+                "id": "Splash3:2",
+                "name": "Forward Roll Entry into Deep Water",
+                "compactName": "Forward roll entry"
+            },
+            {
+                "id": "Splash3:3",
+                "name": "Tread Water 30 Seconds",
+                "compactName": "Tread Water 30 Seconds"
+            },
+            {
+                "id": "Splash3:4",
+                "name": "Handstand in Shallow Water",
+                "compactName": "Shallow handstand"
+            },
+            {
+                "id": "Splash3:5",
+                "name": "Front Somersault (in Water)",
+                "compactName": "Front somersault"
+            },
+            {
+                "id": "Splash3:6",
+                "name": "Jump into Deep Water, Tread 30 sec., and Swim/Kick 25 m",
+                "compactName": "Jump/tread 30s/swim 25m"
+            },
+            {
+                "id": "Splash3:7",
+                "name": "Flutter Kick on Back 5 m; Reverse Direction and Flutter Kick on Front 5 m",
+                "compactName": "Back→front flutter 5m"
+            },
+            {
+                "id": "Splash3:8",
+                "name": "Flutter Kick on Front 5 m; Reverse Direction and Flutter Kick on Back 5 m",
+                "compactName": "Front→back flutter 5m"
+            },
+            {
+                "id": "Splash3:9",
+                "name": "Whip Kick on Back 10 m",
+                "compactName": "Whip Kick on Back 10 m"
+            },
+            {
+                "id": "Splash3:10-front-crawl",
+                "name": "Front Crawl and Back Crawl 15 m each — Front Crawl",
+                "compactName": "Front crawl 15m"
+            },
+            {
+                "id": "Splash3:10-back-crawl",
+                "name": "Front Crawl and Back Crawl 15 m each — Back Crawl",
+                "compactName": "Back crawl 15m"
+            },
+            {
+                "id": "Splash3:11",
+                "name": "Interval training: 4 x 15 m flutter kick with 20 sec. rests",
+                "compactName": "Flutter kick 4×15m"
+            },
+            {
+                "id": "Splash3:12",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "Splash4",
+        "name": "Splash 4",
+        "skills": [
+            {
+                "id": "Splash4:1",
+                "name": "Standing Dive into Deep Water",
+                "compactName": "Standing deep-water dive"
+            },
+            {
+                "id": "Splash4:2",
+                "name": "Tread Water 1 minute",
+                "compactName": "Tread Water 1 minute"
+            },
+            {
+                "id": "Splash4:3",
+                "name": "Swim Underwater 5 m",
+                "compactName": "Swim Underwater 5 m"
+            },
+            {
+                "id": "Splash4:4",
+                "name": "Canadian Swim to Survive Standard: Roll Entry into Deep Water, Tread 1 minute and Swim 50 m",
+                "compactName": "Swim to Survive 50m"
+            },
+            {
+                "id": "Splash4:5",
+                "name": "Whip Kick on Front 15 m",
+                "compactName": "Whip Kick on Front 15 m"
+            },
+            {
+                "id": "Splash4:6",
+                "name": "Breaststroke Arms Drill 15 m",
+                "compactName": "Breaststroke arms 15m"
+            },
+            {
+                "id": "Splash4:7-front-crawl",
+                "name": "Front Crawl and Back Crawl 25 m each — Front Crawl",
+                "compactName": "Front crawl 25m"
+            },
+            {
+                "id": "Splash4:7-back-crawl",
+                "name": "Front Crawl and Back Crawl 25 m each — Back Crawl",
+                "compactName": "Back crawl 25m"
+            },
+            {
+                "id": "Splash4:8",
+                "name": "Interval Training: 4x25 m Front or Back Crawl with 20 Second Rests",
+                "compactName": "Front/back crawl 4×25m"
+            },
+            {
+                "id": "Splash4:9",
+                "name": "Sprint Front Crawl 25 m",
+                "compactName": "Sprint Front Crawl 25 m"
+            },
+            {
+                "id": "Splash4:10",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "Splash5",
+        "name": "Splash 5",
+        "skills": [
+            {
+                "id": "Splash5:1",
+                "name": "Shallow Dive into Deep Water",
+                "compactName": "Shallow dive"
+            },
+            {
+                "id": "Splash5:2",
+                "name": "Tuck Jump (Cannonball) into Deep Water",
+                "compactName": "Deep-water tuck jump"
+            },
+            {
+                "id": "Splash5:3",
+                "name": "Jump Entry into Deep Water and Tread 2 minutes",
+                "compactName": "Deep jump & tread 2min"
+            },
+            {
+                "id": "Splash5:4",
+                "name": "Stationary Eggbeater Kick 30 Seconds",
+                "compactName": "Stationary eggbeater 30s"
+            },
+            {
+                "id": "Splash5:5",
+                "name": "Back Somersault (in Water)",
+                "compactName": "Back somersault"
+            },
+            {
+                "id": "Splash5:6",
+                "name": "Roll Entry into Deep Water, Tread 90 Seconds and Swim 75 m",
+                "compactName": "Roll/tread 90s/swim 75m"
+            },
+            {
+                "id": "Splash5:7",
+                "name": "Breaststroke 25 m",
+                "compactName": "Breaststroke 25 m"
+            },
+            {
+                "id": "Splash5:8-front-crawl",
+                "name": "Front Crawl and Back Crawl 50 m each — Front Crawl",
+                "compactName": "Front crawl 50m"
+            },
+            {
+                "id": "Splash5:8-back-crawl",
+                "name": "Front Crawl and Back Crawl 50 m each — Back Crawl",
+                "compactName": "Back crawl 50m"
+            },
+            {
+                "id": "Splash5:9",
+                "name": "Head-up Front Crawl 10 m",
+                "compactName": "Head-up Front Crawl 10 m"
+            },
+            {
+                "id": "Splash5:10",
+                "name": "Interval Training:4x50 m Front or Back Crawl with 30 sec Rests",
+                "compactName": "Front/back crawl 4×50m"
+            },
+            {
+                "id": "Splash5:11",
+                "name": "Interval Training: 4x15 m Breaststroke with 30 sec Rests",
+                "compactName": "Breaststroke 4×15m"
+            },
+            {
+                "id": "Splash5:12",
+                "name": "Sprint Front Crawl and Back Crawl 25 m each",
+                "compactName": "Front/back sprint 25m"
+            },
+            {
+                "id": "Splash5:13",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "Splash6",
+        "name": "Splash 6",
+        "skills": [
+            {
+                "id": "Splash6:1",
+                "name": "Stride Entry into Deep Water",
+                "compactName": "Deep-water stride entry"
+            },
+            {
+                "id": "Splash6:2",
+                "name": "Compact Jump into Deep Water",
+                "compactName": "Deep-water compact jump"
+            },
+            {
+                "id": "Splash6:3",
+                "name": "Legs-only Surface Support 45 Seconds",
+                "compactName": "Legs-only support 45s"
+            },
+            {
+                "id": "Splash6:4",
+                "name": "Swim Underwater 10 m to Recover Object",
+                "compactName": "Underwater recovery 10m"
+            },
+            {
+                "id": "Splash6:5",
+                "name": "Eggbeater Kick on Back 15 m",
+                "compactName": "Back eggbeater 15m"
+            },
+            {
+                "id": "Splash6:6",
+                "name": "Scissor Kick 15 m",
+                "compactName": "Scissor Kick 15 m"
+            },
+            {
+                "id": "Splash6:7",
+                "name": "Breaststroke 50 m",
+                "compactName": "Breaststroke 50 m"
+            },
+            {
+                "id": "Splash6:8-front-crawl",
+                "name": "Front Crawl and Back Crawl 100 m each — Front Crawl",
+                "compactName": "Front crawl 100m"
+            },
+            {
+                "id": "Splash6:8-back-crawl",
+                "name": "Front Crawl and Back Crawl 100 m each — Back Crawl",
+                "compactName": "Back crawl 100m"
+            },
+            {
+                "id": "Splash6:9",
+                "name": "Head-up Swim 25 m",
+                "compactName": "Head-up Swim 25 m"
+            },
+            {
+                "id": "Splash6:10",
+                "name": "Interval Training: 4x25 m Breaststroke with 30 second Rests",
+                "compactName": "Breaststroke 4×25m"
+            },
+            {
+                "id": "Splash6:11",
+                "name": "Sprint Breaststroke 25 m each",
+                "compactName": "Breaststroke sprint 25m"
+            },
+            {
+                "id": "Splash6:12",
+                "name": "Workout 300 m; 50 m Warm-up (Choice of Strokes); 4x25 m Front Crawl with 15 Sec Rests; 4x25 m Back Crawl with 15 Sec Rests; 50 m Cool-Down (Choice of Strokes)",
+                "compactName": "Workout 300m"
+            },
+            {
+                "id": "Splash6:13",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "Splash7",
+        "name": "Splash 7",
+        "skills": [
+            {
+                "id": "Splash7:1",
+                "name": "Swim 25 m or yd Head-up Front Crawl or Breaststroke",
+                "compactName": "Head-up swim 25m/yd"
+            },
+            {
+                "id": "Splash7:2",
+                "name": "Demonstrate Ready Position with a Stationary Scull for 30 Sec.",
+                "compactName": "Ready position/scull 30s"
+            },
+            {
+                "id": "Splash7:3",
+                "name": "Carry a 2.3 kg(5 lb) Object 15 m or yd Using Swimmer's Choice of Lifesaving Kick",
+                "compactName": "Carry 2.3kg for 15m/yd"
+            },
+            {
+                "id": "Splash7:4",
+                "name": "Demonstrate a Foot-First and a Head-First Surface Dive to a Maximum Depth of 2 m",
+                "compactName": "Head/foot-first dives 2m"
+            },
+            {
+                "id": "Splash7:5",
+                "name": "Demonstrate 25 m or yd Legs-Only Using Swimmer's Choice of Lifesaving Kick",
+                "compactName": "Legs-only swim 25m/yd"
+            },
+            {
+                "id": "Splash7:6",
+                "name": "Demonstrate the Ability to Inflate 2 Items of Clothing and Use as a Buoyant Assist",
+                "compactName": "Inflate 2 clothing items"
+            },
+            {
+                "id": "Splash7:7",
+                "name": "Swim 25 m or yd Using Any Stroke. Demonstrate the Ability to Swim Under an Obstacle Located at the Halfway Point",
+                "compactName": "Obstacle swim 25m/yd"
+            },
+            {
+                "id": "Splash7:8-front-crawl",
+                "name": "Swim Each of the Following Strokes 50 m or yd Front Crawl, Back Crawl, Breaststroke — Front Crawl",
+                "compactName": "Front crawl 50m/yd"
+            },
+            {
+                "id": "Splash7:8-back-crawl",
+                "name": "Swim Each of the Following Strokes 50 m or yd Front Crawl, Back Crawl, Breaststroke — Back Crawl",
+                "compactName": "Back crawl 50m/yd"
+            },
+            {
+                "id": "Splash7:8-breaststroke",
+                "name": "Swim Each of the Following Strokes 50 m or yd Front Crawl, Back Crawl, Breaststroke — Breaststroke",
+                "compactName": "Breaststroke 50m/yd"
+            },
+            {
+                "id": "Splash7:9",
+                "name": "Complete a 350 m or yd workout on 3 different Occasions Throughout the Training Course",
+                "compactName": "Workout 350m/yd ×3"
+            },
+            {
+                "id": "Splash7:10",
+                "name": "Swim 100 m in 3 min. or Better (100 yd in 2:40 min) Using any Stroke or Combination of Strokes of the Swimmer's Choice",
+                "compactName": "Timed swim 100m/yd"
+            },
+            {
+                "id": "Splash7:11",
+                "name": "Demonstrate primary assessment of a conscious and cooperative victim who describes his or her chief complaint and how injury occurred",
+                "compactName": "Conscious assessment"
+            },
+            {
+                "id": "Splash7:12",
+                "name": "Demonstrate the Ability to Recognize When to Call EMS and How To Do It",
+                "compactName": "Calling EMS"
+            },
+            {
+                "id": "Splash7:13",
+                "name": "Demonstrate Primary Assessment and Appropriate Care for External Bleeding",
+                "compactName": "External bleeding care"
+            },
+            {
+                "id": "Splash7:14",
+                "name": "Look at the Aquatic Facility for 10-15 Sec. Turn and Describe What You Saw",
+                "compactName": "Observe & recall 10–15s"
+            },
+            {
+                "id": "Splash7:15a",
+                "name": "Demonstrate Ability to Simulate in the Water the Appearance of a Weak Swimmer and a Non-Swimmer",
+                "compactName": "Act weak/non-swim"
+            },
+            {
+                "id": "Splash7:15b",
+                "name": "Demonstrate Ability to Recognize the Difference Between a Weak Swimmer and Non-Swimmer",
+                "compactName": "Spot weak/non-swim"
+            },
+            {
+                "id": "Splash7:16",
+                "name": "From a standing Position on Land, Throw a Buoyant Aid With Line to Hit a Target on the Surface of the Water as Many Times as Possible Within 30 sec.",
+                "compactName": "Throw aid with line 30s"
+            }
+        ]
+    },
+    {
+        "id": "Splash8",
+        "name": "Splash 8",
+        "skills": [
+            {
+                "id": "Splash8:1",
+                "name": "Demonstrate 1 Forward And 1 Backward Somersault in the Water as a Continuous Sequence",
+                "compactName": "Front/back somersaults"
+            },
+            {
+                "id": "Splash8:2",
+                "name": "Stride Entry and Swim 25 m or yd Head-up Front Crawl or Breaststroke. Assume Ready Position",
+                "compactName": "Stride/head-up 25m/yd"
+            },
+            {
+                "id": "Splash8:3",
+                "name": "Demonstrate 25 m or yd Eggbeater Kick on Back",
+                "compactName": "Back eggbeater 25m/yd"
+            },
+            {
+                "id": "Splash8:4",
+                "name": "Support a 2.3 kg (5 lb) Object for at Least 1 min. in Deep Water",
+                "compactName": "Support 2.3kg for 1min"
+            },
+            {
+                "id": "Splash8:5",
+                "name": "Head-up Approach into Surface Dive to a Maximum Depth 2 m Swim Underwater for At Least 2-3 m or yd to Recover a Small Object. Surface and Carry Object to Starting Point",
+                "compactName": "Dive 2m/recover 2–3m/yd"
+            },
+            {
+                "id": "Splash8:6",
+                "name": "Demonstrate an Assisted Removal of a Conscious Victim",
+                "compactName": "Conscious victim removal"
+            },
+            {
+                "id": "Splash8:7-front-crawl",
+                "name": "Swim Each of the Following Strokes 75 m or yd: Front Crawl, Back Crawl, Breaststroke — Front Crawl",
+                "compactName": "Front crawl 75m/yd"
+            },
+            {
+                "id": "Splash8:7-back-crawl",
+                "name": "Swim Each of the Following Strokes 75 m or yd: Front Crawl, Back Crawl, Breaststroke — Back Crawl",
+                "compactName": "Back crawl 75m/yd"
+            },
+            {
+                "id": "Splash8:7-breaststroke",
+                "name": "Swim Each of the Following Strokes 75 m or yd: Front Crawl, Back Crawl, Breaststroke — Breaststroke",
+                "compactName": "Breaststroke 75m/yd"
+            },
+            {
+                "id": "Splash8:8",
+                "name": "Swim 100 m or yd Individual Medley as Follows: 25 m or yd Each of Lifesaving Kick, Back Crawl, Breaststroke, Front Crawl",
+                "compactName": "Medley 100m/yd"
+            },
+            {
+                "id": "Splash8:9",
+                "name": "Swim 200 m in 6 min. or Better (200 yd in 5:20 min) Using Any Stroke or Combination of Strokes of the Swimmer's Choice",
+                "compactName": "Timed swim 200m/yd"
+            },
+            {
+                "id": "Splash8:10",
+                "name": "Demonstrate a Primary Assessment Including Hazards and ABCs on an Unconscious, Breathing Victim",
+                "compactName": "Unconscious assessment"
+            },
+            {
+                "id": "Splash8:11",
+                "name": "Demonstrate Emergency Care for a Victim in Shock",
+                "compactName": "Shock care"
+            },
+            {
+                "id": "Splash8:12a",
+                "name": "Simulate the Appearance and Treatment of a Conscious Adult or Child Victim with an Obstructed Airway",
+                "compactName": "Obstructed airway care"
+            },
+            {
+                "id": "Splash8:12b",
+                "name": "Simulate the Appearance and Treatment of a Conscious Adult or Child Victim with a Mild Obstructed Airway",
+                "compactName": "Mild airway obstruction"
+            },
+            {
+                "id": "Splash8:12c",
+                "name": "Simulate the Appearance and Treatment of a Conscious Adult or Child Victim with a Severe Obstructed Airway",
+                "compactName": "Severe airway blockage"
+            },
+            {
+                "id": "Splash8:13a",
+                "name": "Demonstrate Ability to Simulate in the Water the Appearance of a Weak Swimmer, a Non-swimmer and an Unconscious Victim",
+                "compactName": "Simulate victim types"
+            },
+            {
+                "id": "Splash8:13b",
+                "name": "Demonstrate the Ability to Recognize the Difference Between a Weak Swimmer a Non-swimmer and an Unconscious Victim",
+                "compactName": "Identify victim types"
+            },
+            {
+                "id": "Splash8:13c",
+                "name": "Demonstrate the Ability to recognize and Avoid Victims Who Present a Danger to the Rescuer",
+                "compactName": "Avoid dangerous victims"
+            },
+            {
+                "id": "Splash8:14",
+                "name": "Perform a Non-Contact Rescue Using a Buoyant Aid. Approach 20 m or yd and Encourage Victim to Safety While Maintaining a Safe Distance and Calling for Assistance. Rescuer Performs Appropriate Follow up Procedures, Including Treatment for Shock",
+                "compactName": "No-contact rescue 20m/yd"
+            }
+        ]
+    },
+    {
+        "id": "Splash9",
+        "name": "Splash 9",
+        "skills": [
+            {
+                "id": "Splash9:1",
+                "name": "Demonstrate At Least 2 Different Entries with Different Aids",
+                "compactName": "Two entries with aids"
+            },
+            {
+                "id": "Splash9:2",
+                "name": "Entry With Aid and Swim 25 m or yd Head-up Front Crawl or Breaststroke. Assume Ready Position and Demonstrate Ability to Scull Forward, Backward and Turn",
+                "compactName": "Aid/head-up swim 25m/yd"
+            },
+            {
+                "id": "Splash9:3",
+                "name": "Demonstrate Defence Methods from the Front, Side and Rear",
+                "compactName": "Front/side/rear defence"
+            },
+            {
+                "id": "Splash9:4",
+                "name": "Demonstrate Eggbeater Kick Showing Ability to Travel, Change Direction and Height Levels",
+                "compactName": "Eggbeater travel & turns"
+            },
+            {
+                "id": "Splash9:5",
+                "name": "Carry a 4.5 kg (10 lb) Object 25 m or yd Using Swimmer's Choice of Lifesaving Kick",
+                "compactName": "Carry 4.5kg for 25m/yd"
+            },
+            {
+                "id": "Splash9:6",
+                "name": "Demonstrate the Removal of an Unconscious Victim with the Assistance of an Untrained Bystander",
+                "compactName": "Unconscious removal"
+            },
+            {
+                "id": "Splash9:7",
+                "name": "Head-up Approach into Head-first Surface Dive to a Maximum Depth of 2 m Swim Underwater for 5-10 m or yd and Surface. Foot-first Surface Dive (max depth 2m) Recover an Object and Return It to the Starting Point",
+                "compactName": "Dives/recovery 5–10m/yd"
+            },
+            {
+                "id": "Splash9:8",
+                "name": "Demonstrate in Shallow Water, the Ability to Turn a Victim Face-up and Support the Face Above the Surface",
+                "compactName": "Turn & support face-up"
+            },
+            {
+                "id": "Splash9:9-front-crawl",
+                "name": "Swim Each of the Following Strokes 100 m or yd: Front Crawl, Back Crawl, Breaststroke — Front Crawl",
+                "compactName": "Front crawl 100m/yd"
+            },
+            {
+                "id": "Splash9:9-back-crawl",
+                "name": "Swim Each of the Following Strokes 100 m or yd: Front Crawl, Back Crawl, Breaststroke — Back Crawl",
+                "compactName": "Back crawl 100m/yd"
+            },
+            {
+                "id": "Splash9:9-breaststroke",
+                "name": "Swim Each of the Following Strokes 100 m or yd: Front Crawl, Back Crawl, Breaststroke — Breaststroke",
+                "compactName": "Breaststroke 100m/yd"
+            },
+            {
+                "id": "Splash9:10",
+                "name": "Complete a 600 m or yd Workout At Least 3 Times During the Training Course.",
+                "compactName": "Workout 600m/yd ×3"
+            },
+            {
+                "id": "Splash9:11",
+                "name": "Swim 300 m in 9 min. or Better (300 yd in 8:00 min) Using Any Stroke or Combination of Strokes of the Swimmer's Choice",
+                "compactName": "Timed swim 300m/yd"
+            },
+            {
+                "id": "Splash9:12",
+                "name": "Demonstrate the Recognition and Care of a Bone or Joint Injury",
+                "compactName": "Bone/joint injury care"
+            },
+            {
+                "id": "Splash9:13",
+                "name": "Demonstrate the Recognition and Care of a Victim Suffering Respiratory Distress from Asthma or Severe Allergic Reaction",
+                "compactName": "Asthma/allergy care"
+            },
+            {
+                "id": "Splash9:14",
+                "name": "From 3 Different Heights or Positions, Locate and Describe an Object Located on the Bottom or Below the Surface",
+                "compactName": "Locate underwater object"
+            },
+            {
+                "id": "Splash9:15",
+                "name": "Perform a Rescue of a Weak or Non-Swimmer with a Towing Aid. Swim Approach 20 m or yd and Tow Victim to Safety Showing Ability to Avoid Contact. Rescuer Performs Appropriate Follow Up Procedures, Including Treatment for Shock",
+                "compactName": "Towing-aid rescue 20m/yd"
+            }
+        ]
+    },
+    {
+        "id": "SplashFitness",
+        "name": "Splash Fitness",
+        "skills": [
+            {
+                "id": "SplashFitness:1",
+                "name": "Pace Clocks and Timers",
+                "compactName": "Pace Clocks and Timers"
+            },
+            {
+                "id": "SplashFitness:2",
+                "name": "Stretches for Swimmers",
+                "compactName": "Stretches for Swimmers"
+            },
+            {
+                "id": "SplashFitness:3",
+                "name": "Kicking Interval Training: 4 x 25 m Flutter Kick and /or Whip Kick with 15-20 sec. Rests",
+                "compactName": "Flutter/whip kick 4×25m"
+            },
+            {
+                "id": "SplashFitness:4",
+                "name": "Swimming Interval Training: Swim Interval Sets Selected by the Swimmer",
+                "compactName": "Swim interval sets"
+            },
+            {
+                "id": "SplashFitness:5",
+                "name": "Workout (300 m): 50 m Warm-up, 4 x 25 m Front or Back Crawl with 15 sec. rests, 4 x 25 m Choice of Strokes with 15 sec. rests, 50 m Cool-Down",
+                "compactName": "Workout 300m"
+            },
+            {
+                "id": "SplashFitness:6",
+                "name": "Workout Design: Design and Demonstrate 2 Sample Workouts",
+                "compactName": "Design 2 workouts"
+            },
+            {
+                "id": "SplashFitness:7",
+                "name": "Distance Swim: Endurance Challenge",
+                "compactName": "Distance/endurance swim"
+            },
+            {
+                "id": "SplashFitness:8",
+                "name": "Sprint Swim: 25 m each for at least 2 Strokes Chosen by the Swimmer",
+                "compactName": "Two-stroke sprint 25m"
+            }
+        ]
+    },
+    {
+        "id": "SplashPrivate",
+        "name": "Splash Private",
+        "skills": []
+    },
+    {
+        "id": "TeenAdult1",
+        "name": "Teen Adult 1",
+        "skills": [
+            {
+                "id": "TeenAdult1:1",
+                "name": "Enter and Exit Shallow Water",
+                "compactName": "Shallow entry & exit"
+            },
+            {
+                "id": "TeenAdult1:2",
+                "name": "Jump into Deep Water, Return and Exit",
+                "compactName": "Deep jump, return & exit"
+            },
+            {
+                "id": "TeenAdult1:3",
+                "name": "Sideways Entry Wearing PFD",
+                "compactName": "PFD sideways entry"
+            },
+            {
+                "id": "TeenAdult1:4",
+                "name": "Tread Water (30 sec) Wearing PFD",
+                "compactName": "PFD tread 30s"
+            },
+            {
+                "id": "TeenAdult1:5",
+                "name": "Hold Breath Underwater 5-10 sec",
+                "compactName": "Breath hold 5–10s"
+            },
+            {
+                "id": "TeenAdult1:6",
+                "name": "Submerge and Exhale 5-10 Times",
+                "compactName": "Submerge/exhale ×5–10"
+            },
+            {
+                "id": "TeenAdult1:7",
+                "name": "Open Eyes Underwater",
+                "compactName": "Open Eyes Underwater"
+            },
+            {
+                "id": "TeenAdult1:8",
+                "name": "Recover Object from Bottom in Chest-Deep Water",
+                "compactName": "Chest-deep object recovery"
+            },
+            {
+                "id": "TeenAdult1:9",
+                "name": "Wearing PFD, Jump into Deep Water, Tread 30 sec and Swim/Kick on Back 5-10 m",
+                "compactName": "PFD: jump/back 5–10m"
+            },
+            {
+                "id": "TeenAdult1:10",
+                "name": "Float on Front and Back",
+                "compactName": "Float on Front and Back"
+            },
+            {
+                "id": "TeenAdult1:11",
+                "name": "Roll Laterally Front to Back and Back to Front",
+                "compactName": "Front/back rolls"
+            },
+            {
+                "id": "TeenAdult1:12-front-glide",
+                "name": "Glide on Front, Back and Side (3-5 m each) — Front Glide",
+                "compactName": "Front glide 3–5m"
+            },
+            {
+                "id": "TeenAdult1:12-back-glide",
+                "name": "Glide on Front, Back and Side (3-5 m each) — Back Glide",
+                "compactName": "Back glide 3–5m"
+            },
+            {
+                "id": "TeenAdult1:12-side-glide",
+                "name": "Glide on Front, Back and Side (3-5 m each) — Side Glide",
+                "compactName": "Side glide 3–5m"
+            },
+            {
+                "id": "TeenAdult1:13",
+                "name": "Flutter Kick on Front, Back and Side (10-15 m each)",
+                "compactName": "F/B/side flutter 10–15m"
+            },
+            {
+                "id": "TeenAdult1:14",
+                "name": "Whip Kick in Vertical Position (15-30 sec) with Aid",
+                "compactName": "Aided vertical whip 15–30s"
+            },
+            {
+                "id": "TeenAdult1:15-front-crawl",
+                "name": "Front Crawl or Back Crawl 10-15 m — Front Crawl",
+                "compactName": "Front crawl 10–15m"
+            },
+            {
+                "id": "TeenAdult1:15-back-crawl",
+                "name": "Front Crawl or Back Crawl 10-15 m — Back Crawl",
+                "compactName": "Back crawl 10–15m"
+            },
+            {
+                "id": "TeenAdult1:16",
+                "name": "Interval Training: 4 x 9-12 m Flutter Kick with 10-15 sec Rests",
+                "compactName": "Flutter kick 4×9–12m"
+            },
+            {
+                "id": "TeenAdult1:17",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "TeenAdult2",
+        "name": "Teen Adult 2",
+        "skills": [
+            {
+                "id": "TeenAdult2:1",
+                "name": "Standing Dive into Deep Water",
+                "compactName": "Standing deep-water dive"
+            },
+            {
+                "id": "TeenAdult2:2",
+                "name": "Forward Roll Entry into Deep Water With and Without PFD",
+                "compactName": "Roll entry ±PFD"
+            },
+            {
+                "id": "TeenAdult2:3",
+                "name": "Tuck Jump (Cannonball) into Deep Water",
+                "compactName": "Deep-water tuck jump"
+            },
+            {
+                "id": "TeenAdult2:4",
+                "name": "Tread Water 1-2 min",
+                "compactName": "Tread Water 1-2 min"
+            },
+            {
+                "id": "TeenAdult2:5",
+                "name": "Handstand in Shallow Water",
+                "compactName": "Shallow handstand"
+            },
+            {
+                "id": "TeenAdult2:6",
+                "name": "Front Somersault (in water)",
+                "compactName": "Front somersault"
+            },
+            {
+                "id": "TeenAdult2:7",
+                "name": "Swim Underwater 5-10 m",
+                "compactName": "Swim Underwater 5-10 m"
+            },
+            {
+                "id": "TeenAdult2:8",
+                "name": "Canadian Swim to Survive Standard: Roll Entry into Deep Water, Tread 1 min, and Swim 50 m",
+                "compactName": "Swim to Survive 50m"
+            },
+            {
+                "id": "TeenAdult2:9",
+                "name": "Flutter Kick on Back 5 m; Reverse Direction and Flutter Kick on Front 5 m",
+                "compactName": "Back→front flutter 5m"
+            },
+            {
+                "id": "TeenAdult2:10",
+                "name": "Flutter Kick on Front 5 m; Reverse Direction and Flutter Kick on Back 5 m",
+                "compactName": "Front→back flutter 5m"
+            },
+            {
+                "id": "TeenAdult2:11",
+                "name": "Whip Kick on Back 10-15 m",
+                "compactName": "Whip Kick on Back 10-15 m"
+            },
+            {
+                "id": "TeenAdult2:12",
+                "name": "Whip Kick on Front 10-15 m",
+                "compactName": "Front whip kick 10–15m"
+            },
+            {
+                "id": "TeenAdult2:13",
+                "name": "Breastroke Arms Drill 10-15 m",
+                "compactName": "Breaststroke arms 10–15m"
+            },
+            {
+                "id": "TeenAdult2:14-front-crawl",
+                "name": "Front Crawl and Back Crawl (25-50 m each) — Front Crawl",
+                "compactName": "Front crawl 25–50m"
+            },
+            {
+                "id": "TeenAdult2:14-back-crawl",
+                "name": "Front Crawl and Back Crawl (25-50 m each) — Back Crawl",
+                "compactName": "Back crawl 25–50m"
+            },
+            {
+                "id": "TeenAdult2:15",
+                "name": "Interval Training: 4 x 25 m Flutter Kick with 15-20 sec Rests",
+                "compactName": "Flutter kick 4×25m"
+            },
+            {
+                "id": "TeenAdult2:16",
+                "name": "Interval Training: 4 x 25 m Front or Back Crawl 10-15 sec Rests",
+                "compactName": "Front/back crawl 4×25m"
+            },
+            {
+                "id": "TeenAdult2:17",
+                "name": "Sprint Front Crawl 25 m",
+                "compactName": "Sprint Front Crawl 25 m"
+            },
+            {
+                "id": "TeenAdult2:18",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    },
+    {
+        "id": "TeenAdult3",
+        "name": "Teen Adult 3",
+        "skills": [
+            {
+                "id": "TeenAdult3:1",
+                "name": "Shallow Dive into Deep Water",
+                "compactName": "Shallow dive"
+            },
+            {
+                "id": "TeenAdult3:2",
+                "name": "Stride Entry into Deep Water",
+                "compactName": "Deep-water stride entry"
+            },
+            {
+                "id": "TeenAdult3:3",
+                "name": "Compact Jump into Deep Water",
+                "compactName": "Deep-water compact jump"
+            },
+            {
+                "id": "TeenAdult3:4",
+                "name": "Legs-only Surface Support (30-60 sec",
+                "compactName": "Legs-only support 30–60s"
+            },
+            {
+                "id": "TeenAdult3:5",
+                "name": "Back Somersault (in water)",
+                "compactName": "Back Somersault (in water)"
+            },
+            {
+                "id": "TeenAdult3:6",
+                "name": "Swim Underwater 5-10 m to Recover Object",
+                "compactName": "Underwater pickup 5–10m"
+            },
+            {
+                "id": "TeenAdult3:7-eggbeater-kick",
+                "name": "Eggbeater Kick on Back or Scissor Kick on Side 10-15 m — Eggbeater Kick",
+                "compactName": "Back eggbeater 10–15m"
+            },
+            {
+                "id": "TeenAdult3:7-scissor-kick",
+                "name": "Eggbeater Kick on Back or Scissor Kick on Side 10-15 m — Scissor Kick",
+                "compactName": "Side scissor kick 10–15m"
+            },
+            {
+                "id": "TeenAdult3:8",
+                "name": "Breaststroke 25-50 m",
+                "compactName": "Breaststroke 25-50 m"
+            },
+            {
+                "id": "TeenAdult3:9-front-crawl",
+                "name": "Front Crawl and Back Crawl (50-100 m. each) — Front Crawl",
+                "compactName": "Front crawl 50–100m"
+            },
+            {
+                "id": "TeenAdult3:9-back-crawl",
+                "name": "Front Crawl and Back Crawl (50-100 m. each) — Back Crawl",
+                "compactName": "Back crawl 50–100m"
+            },
+            {
+                "id": "TeenAdult3:10",
+                "name": "Head up Front Crawl 10-15 m",
+                "compactName": "Head-up crawl 10–15m"
+            },
+            {
+                "id": "TeenAdult3:11",
+                "name": "Interval Training: 4 x 50 m Front or Back Crawl or Breaststroke with 30 sec Rests",
+                "compactName": "Crawl/breaststroke 4×50m"
+            },
+            {
+                "id": "TeenAdult3:12",
+                "name": "Sprint Front Crawl, Back Crawl or Breaststroke 25-50 m",
+                "compactName": "Choice sprint 25–50m"
+            },
+            {
+                "id": "TeenAdult3:13",
+                "name": "Workout 300 m: 50 m Warm-up (choice of strokes); 4 x 25 Front Crawl with 15 sec Rests; 4 x 25 m Back Crawl with 15 sec Rests; 50 m Cool-down (choice of strokes)",
+                "compactName": "Workout 300m"
+            },
+            {
+                "id": "TeenAdult3:14",
+                "name": "Water Smart Messages",
+                "compactName": "Water Smart Messages"
+            }
+        ]
+    }
 ]

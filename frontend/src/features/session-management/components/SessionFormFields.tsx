@@ -1,43 +1,43 @@
-import SourceLocationsInput from '../../../components/SourceLocationsInput'
-import { MANUAL_SESSION_DAY_OPTIONS } from '../../../shared/session/sessionDays'
-import type { TeamRecord } from '../../../app/useCurrentTeam'
-import { NO_TEAM_VALUE } from '../types'
+import SourceLocationsInput from "../../../components/SourceLocationsInput";
+import { MANUAL_SESSION_DAY_OPTIONS } from "../../../shared/session/sessionDays";
+import type { TeamRecord } from "../../../app/useCurrentTeam";
+import { NO_TEAM_VALUE } from "../types";
 
 type SessionFormFieldsProps = {
-    seasonOptions: string[]
-    sessionDay: string
-    sessionSeason: string
-    sessionYear: string
-    startDate: string
-    endDate: string
-    sessionStartTime24: string
-    sessionEndTime24: string
-    location: string
-    sourceLocations: string[]
-    sourceLocationOptions?: string[]
-    availableLocations: string[]
-    rosterFileLabel: string
-    timeMessage?: string
-    isInspectingRosterFile?: boolean
-    teamId?: string
-    teams?: TeamRecord[]
-    teamsLoading?: boolean
-    showTeamSelect?: boolean
-    disabled?: boolean
-    locationListId: string
-    sourceLocationsInputId: string
-    onSessionDayChange: (value: string) => void
-    onSessionSeasonChange: (value: string) => void
-    onSessionYearChange: (value: string) => void
-    onStartDateChange: (value: string) => void
-    onEndDateChange: (value: string) => void
-    onSessionStartTimeChange: (value: string) => void
-    onSessionEndTimeChange: (value: string) => void
-    onTeamIdChange?: (value: string) => void
-    onLocationChange: (value: string) => void
-    onSourceLocationsChange: (value: string[]) => void
-    onRosterFileChange: (file: File | null) => void
-}
+    seasonOptions: string[];
+    sessionDay: string;
+    sessionSeason: string;
+    sessionYear: string;
+    startDate: string;
+    endDate: string;
+    sessionStartTime24: string;
+    sessionEndTime24: string;
+    location: string;
+    sourceLocations: string[];
+    sourceLocationOptions?: string[];
+    availableLocations: string[];
+    rosterFileLabel: string;
+    timeMessage?: string;
+    isInspectingRosterFile?: boolean;
+    teamId?: string;
+    teams?: TeamRecord[];
+    teamsLoading?: boolean;
+    showTeamSelect?: boolean;
+    disabled?: boolean;
+    locationListId: string;
+    sourceLocationsInputId: string;
+    onSessionDayChange: (value: string) => void;
+    onSessionSeasonChange: (value: string) => void;
+    onSessionYearChange: (value: string) => void;
+    onStartDateChange: (value: string) => void;
+    onEndDateChange: (value: string) => void;
+    onSessionStartTimeChange: (value: string) => void;
+    onSessionEndTimeChange: (value: string) => void;
+    onTeamIdChange?: (value: string) => void;
+    onLocationChange: (value: string) => void;
+    onSourceLocationsChange: (value: string[]) => void;
+    onRosterFileChange: (file: File | null) => void;
+};
 
 function SessionFormFields({
     seasonOptions,
@@ -52,9 +52,9 @@ function SessionFormFields({
     sourceLocations,
     sourceLocationOptions = [],
     availableLocations,
-    timeMessage = '',
+    timeMessage = "",
     isInspectingRosterFile = false,
-    teamId = '',
+    teamId = "",
     teams = [],
     teamsLoading = false,
     showTeamSelect = false,
@@ -79,11 +79,11 @@ function SessionFormFields({
                 <select
                     className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                     value={sessionDay}
-                    onChange={event => onSessionDayChange(event.target.value)}
+                    onChange={(event) => onSessionDayChange(event.target.value)}
                     disabled={disabled}
                 >
                     <option value="">Select a day</option>
-                    {MANUAL_SESSION_DAY_OPTIONS.map(option => (
+                    {MANUAL_SESSION_DAY_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                             {option.label}
                         </option>
@@ -95,11 +95,12 @@ function SessionFormFields({
                 <select
                     className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                     value={sessionSeason}
-                    onChange={event => onSessionSeasonChange(event.target.value)}
+                    onChange={(event) =>
+                        onSessionSeasonChange(event.target.value)}
                     disabled={disabled}
                 >
                     <option value="">Select a season</option>
-                    {seasonOptions.map(season => (
+                    {seasonOptions.map((season) => (
                         <option key={season} value={season}>
                             {season}
                         </option>
@@ -114,7 +115,8 @@ function SessionFormFields({
                     min={2000}
                     max={2100}
                     value={sessionYear}
-                    onChange={event => onSessionYearChange(event.target.value)}
+                    onChange={(event) =>
+                        onSessionYearChange(event.target.value)}
                     placeholder="e.g. 2026"
                     disabled={disabled}
                 />
@@ -125,7 +127,7 @@ function SessionFormFields({
                     className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                     type="date"
                     value={startDate}
-                    onChange={event => onStartDateChange(event.target.value)}
+                    onChange={(event) => onStartDateChange(event.target.value)}
                     disabled={disabled}
                 />
             </label>
@@ -135,7 +137,7 @@ function SessionFormFields({
                     className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                     type="date"
                     value={endDate}
-                    onChange={event => onEndDateChange(event.target.value)}
+                    onChange={(event) => onEndDateChange(event.target.value)}
                     disabled={disabled}
                 />
             </label>
@@ -145,7 +147,8 @@ function SessionFormFields({
                     className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                     type="time"
                     value={sessionStartTime24}
-                    onChange={event => onSessionStartTimeChange(event.target.value)}
+                    onChange={(event) =>
+                        onSessionStartTimeChange(event.target.value)}
                     disabled={disabled}
                 />
             </label>
@@ -155,47 +158,55 @@ function SessionFormFields({
                     className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                     type="time"
                     value={sessionEndTime24}
-                    onChange={event => onSessionEndTimeChange(event.target.value)}
+                    onChange={(event) =>
+                        onSessionEndTimeChange(event.target.value)}
                     disabled={disabled}
                 />
             </label>
-            {showTeamSelect ? (
-                <label className="flex flex-col gap-2 font-semibold text-secondary">
-                    Team
-                    <select
-                        className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
-                        value={teamId}
-                        onChange={event => onTeamIdChange?.(event.target.value)}
-                        disabled={disabled || teamsLoading}
-                    >
-                        <option value="">Select a team</option>
-                        <option value={NO_TEAM_VALUE}>No team</option>
-                        {teams.map(team => (
-                            <option key={team.id} value={team.id}>
-                                {team.name}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-            ) : null}
+            {showTeamSelect
+                ? (
+                    <label className="flex flex-col gap-2 font-semibold text-secondary">
+                        Team
+                        <select
+                            className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
+                            value={teamId}
+                            onChange={(event) =>
+                                onTeamIdChange?.(event.target.value)}
+                            disabled={disabled || teamsLoading}
+                        >
+                            <option value="">Select a team</option>
+                            <option value={NO_TEAM_VALUE}>No team</option>
+                            {teams.map((team) => (
+                                <option key={team.id} value={team.id}>
+                                    {team.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                )
+                : null}
             <label className="flex flex-col gap-2 font-semibold text-secondary">
                 Display Location
                 <input
                     className="rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-primary"
                     type="text"
                     value={location}
-                    onChange={event => onLocationChange(event.target.value)}
-                    list={availableLocations.length > 0 ? locationListId : undefined}
+                    onChange={(event) => onLocationChange(event.target.value)}
+                    list={availableLocations.length > 0
+                        ? locationListId
+                        : undefined}
                     placeholder="Shown across the app"
                     disabled={disabled}
                 />
-                {availableLocations.length > 0 ? (
-                    <datalist id={locationListId}>
-                        {availableLocations.map(option => (
-                            <option key={option} value={option} />
-                        ))}
-                    </datalist>
-                ) : null}
+                {availableLocations.length > 0
+                    ? (
+                        <datalist id={locationListId}>
+                            {availableLocations.map((option) => (
+                                <option key={option} value={option} />
+                            ))}
+                        </datalist>
+                    )
+                    : null}
             </label>
             <SourceLocationsInput
                 values={sourceLocations}
@@ -203,19 +214,30 @@ function SessionFormFields({
                 helperText="These raw CSV locations will be treated as one session."
                 onChange={onSourceLocationsChange}
             />
-            {availableLocations.length > 0 ? (
-                <span className="text-xs font-medium text-secondary/70">
-                    Team locations are suggestions only. The display location and raw locations are saved independently.
-                </span>
-            ) : null}
-            {isInspectingRosterFile ? (
-                <p className="text-sm font-medium text-secondary/70">
-                    Inspecting roster CSV for session times...
-                </p>
-            ) : null}
-            {timeMessage ? <p className="text-sm font-medium text-secondary/70">{timeMessage}</p> : null}
+            {availableLocations.length > 0
+                ? (
+                    <span className="text-xs font-medium text-secondary/70">
+                        Team locations are suggestions only. The display
+                        location and raw locations are saved independently.
+                    </span>
+                )
+                : null}
+            {isInspectingRosterFile
+                ? (
+                    <p className="text-sm font-medium text-secondary/70">
+                        Inspecting roster CSV for session times...
+                    </p>
+                )
+                : null}
+            {timeMessage
+                ? (
+                    <p className="text-sm font-medium text-secondary/70">
+                        {timeMessage}
+                    </p>
+                )
+                : null}
         </div>
-    )
+    );
 }
 
-export default SessionFormFields
+export default SessionFormFields;

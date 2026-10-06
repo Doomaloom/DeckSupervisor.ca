@@ -1,8 +1,11 @@
-import React from 'react'
-import { render, type RenderOptions } from '@testing-library/react'
+import React from "react";
+import { render, type RenderOptions } from "@testing-library/react";
 
-export function customRender(ui: React.ReactElement, options?: Omit<RenderOptions, 'wrapper'>) {
-  return render(ui, options)
+export function customRender(
+    ui: React.ReactElement,
+    options?: Omit<RenderOptions, "wrapper">,
+) {
+    return render(ui, options);
 }
 
-export * from '@testing-library/react'
+export * from "@testing-library/react";

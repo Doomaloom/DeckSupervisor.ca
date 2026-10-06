@@ -1,23 +1,32 @@
-import type { PlannerClass, PlannerDataset, PlannerParticipant, PlannerParticipantCallRecord } from '../../../types/app'
-import { getPlannerMoveTargetLabel } from '../../../lib/sessionPlanner'
-import { dayNames } from './plannerPresentation'
+import type {
+    PlannerClass,
+    PlannerDataset,
+    PlannerParticipant,
+    PlannerParticipantCallRecord,
+} from "../../../types/app";
+import { getPlannerMoveTargetLabel } from "../../../lib/sessionPlanner";
+import { dayNames } from "./plannerPresentation";
 
 type PlannerEmailDraftArgs = {
-    participant: PlannerParticipant
-    plannerClass: PlannerClass
-    callRecord: PlannerParticipantCallRecord
-    dataset: PlannerDataset
-    senderName: string
-    locationName: string
-    callbackPhoneNumber: string
-    ccEmail: string
-}
+    participant: PlannerParticipant;
+    plannerClass: PlannerClass;
+    callRecord: PlannerParticipantCallRecord;
+    dataset: PlannerDataset;
+    senderName: string;
+    locationName: string;
+    callbackPhoneNumber: string;
+    ccEmail: string;
+};
 
 function buildPlannerEmailSubject(args: PlannerEmailDraftArgs) {
-    return `Course Cancellation for ${args.participant.name}`
+    return `Course Cancellation for ${args.participant.name}`;
 }
 
-function buildVoicemailEmailBody(args: PlannerEmailDraftArgs, classDateTime: string, callbackLine: string) {
+function buildVoicemailEmailBody(
+    args: PlannerEmailDraftArgs,
+    classDateTime: string,
+    callbackLine: string,
+) {
     return [
         `Hello,`,
         ``,
@@ -29,7 +38,7 @@ function buildVoicemailEmailBody(args: PlannerEmailDraftArgs, classDateTime: str
         ``,
         callbackLine,
         ``,
-    ].join('\n')
+    ].join("\n");
 }
 
 function buildAcceptedAccommodationEmailBody(
@@ -48,10 +57,14 @@ function buildAcceptedAccommodationEmailBody(
         ``,
         callbackLine,
         ``,
-    ].join('\n')
+    ].join("\n");
 }
 
-function buildNoAccommodationEmailBody(args: PlannerEmailDraftArgs, classDateTime: string, callbackLine: string) {
+function buildNoAccommodationEmailBody(
+    args: PlannerEmailDraftArgs,
+    classDateTime: string,
+    callbackLine: string,
+) {
     return [
         `Hello,`,
         ``,
@@ -63,11 +76,17 @@ function buildNoAccommodationEmailBody(args: PlannerEmailDraftArgs, classDateTim
         ``,
         callbackLine,
         ``,
-    ].join('\n')
+    ].join("\n");
 }
 
-function buildPlannedMoveEmailBody(args: PlannerEmailDraftArgs, classDateTime: string, callbackLine: string) {
-    const moveTarget = getPlannerMoveTargetLabel(args.dataset, args.plannerClass) || 'a new class time'
+function buildPlannedMoveEmailBody(
+    args: PlannerEmailDraftArgs,
+    classDateTime: string,
+    callbackLine: string,
+) {
+    const moveTarget =
+        getPlannerMoveTargetLabel(args.dataset, args.plannerClass) ||
+        "a new class time";
     return [
         `Hello,`,
         ``,
@@ -81,14 +100,18 @@ function buildPlannedMoveEmailBody(args: PlannerEmailDraftArgs, classDateTime: s
         ``,
         `Thank you,`,
         `${args.locationName}`,
-    ].join('\n')
+    ].join("\n");
 }
 
-function buildCancellationEmailBody(args: PlannerEmailDraftArgs, classDateTime: string, callbackLine: string) {
-    const alternativeLine =
-        args.callRecord.acceptedAlternativeClassKey || args.callRecord.offeredAlternativeClassKey
-            ? `We have alternative class options available and can help review those with you.`
-            : `If needed, staff at the centre can help review next steps for the registration.`
+function buildCancellationEmailBody(
+    args: PlannerEmailDraftArgs,
+    classDateTime: string,
+    callbackLine: string,
+) {
+    const alternativeLine = args.callRecord.acceptedAlternativeClassKey ||
+            args.callRecord.offeredAlternativeClassKey
+        ? `We have alternative class options available and can help review those with you.`
+        : `If needed, staff at the centre can help review next steps for the registration.`;
 
     return [
         `Hello,`,
@@ -103,45 +126,50 @@ function buildCancellationEmailBody(args: PlannerEmailDraftArgs, classDateTime: 
         ``,
         `Thank you,`,
         `${args.locationName}`,
-    ].join('\n')
+    ].join("\n");
 }
 
 function buildPlannerEmailBody(args: PlannerEmailDraftArgs) {
-    const classDay = dayNames[args.plannerClass.dayOfWeek] ?? args.plannerClass.dayOfWeek
-    const classDateTime = `${classDay} at ${args.plannerClass.eventTime}`
+    const classDay = dayNames[args.plannerClass.dayOfWeek] ??
+        args.plannerClass.dayOfWeek;
+    const classDateTime = `${classDay} at ${args.plannerClass.eventTime}`;
     const callbackLine = args.callbackPhoneNumber
         ? `You can reach us at ${args.callbackPhoneNumber}.`
-        : 'You can reach us at the centre.'
+        : "You can reach us at the centre.";
 
-    if (args.callRecord.status === 'voicemail') {
-        return buildVoicemailEmailBody(args, classDateTime, callbackLine)
+    if (args.callRecord.status === "voicemail") {
+        return buildVoicemailEmailBody(args, classDateTime, callbackLine);
     }
 
-    if (args.callRecord.status === 'accepted_alternative') {
-        return buildAcceptedAccommodationEmailBody(args, classDateTime, callbackLine)
+    if (args.callRecord.status === "accepted_alternative") {
+        return buildAcceptedAccommodationEmailBody(
+            args,
+            classDateTime,
+            callbackLine,
+        );
     }
 
-    if (args.callRecord.status === 'declined_alternatives') {
-        return buildNoAccommodationEmailBody(args, classDateTime, callbackLine)
+    if (args.callRecord.status === "declined_alternatives") {
+        return buildNoAccommodationEmailBody(args, classDateTime, callbackLine);
     }
 
-    if (args.plannerClass.planningStatus === 'planned_move') {
-        return buildPlannedMoveEmailBody(args, classDateTime, callbackLine)
+    if (args.plannerClass.planningStatus === "planned_move") {
+        return buildPlannedMoveEmailBody(args, classDateTime, callbackLine);
     }
 
-    return buildCancellationEmailBody(args, classDateTime, callbackLine)
+    return buildCancellationEmailBody(args, classDateTime, callbackLine);
 }
 
 export function openPlannerEmailDraft(args: PlannerEmailDraftArgs) {
-    const subject = buildPlannerEmailSubject(args)
-    const body = buildPlannerEmailBody(args)
-    const to = args.participant.email.trim()
-    const params: string[] = []
-    params.push(`subject=${encodeURIComponent(subject)}`)
-    params.push(`body=${encodeURIComponent(body)}`)
+    const subject = buildPlannerEmailSubject(args);
+    const body = buildPlannerEmailBody(args);
+    const to = args.participant.email.trim();
+    const params: string[] = [];
+    params.push(`subject=${encodeURIComponent(subject)}`);
+    params.push(`body=${encodeURIComponent(body)}`);
     if (args.ccEmail.trim()) {
-        params.push(`cc=${encodeURIComponent(args.ccEmail.trim())}`)
+        params.push(`cc=${encodeURIComponent(args.ccEmail.trim())}`);
     }
-    const mailtoUrl = `mailto:${encodeURIComponent(to)}?${params.join('&')}`
-    window.location.href = mailtoUrl
+    const mailtoUrl = `mailto:${encodeURIComponent(to)}?${params.join("&")}`;
+    window.location.href = mailtoUrl;
 }

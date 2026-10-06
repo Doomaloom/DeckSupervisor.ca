@@ -1,22 +1,22 @@
-import React from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App'
-import { AuthProvider } from './AuthContext'
-import { DayProvider } from './DayContext'
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+import { AuthProvider } from "./AuthContext";
+import { DayProvider } from "./DayContext";
 
-const container = document.getElementById('root')
+const container = document.getElementById("root");
 
 if (!container) {
-  throw new Error('Root container not found')
+    throw new Error("Root container not found");
 }
 
-const root = createRoot(container)
+const root = createRoot(container);
 root.render(
-  <React.StrictMode>
-    <AuthProvider>
-      <DayProvider>
-        <App />
-      </DayProvider>
-    </AuthProvider>
-  </React.StrictMode>
-)
+    <React.StrictMode>
+        <AuthProvider>
+            <DayProvider>
+                <App />
+            </DayProvider>
+        </AuthProvider>
+    </React.StrictMode>,
+);

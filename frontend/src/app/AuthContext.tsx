@@ -1,194 +1,241 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import {
-  bootstrapAuthSession,
-  onAuthSessionChanged,
-  type AuthUser,
-  signInWithPassword,
-  signOut as signOutFromBackend,
-  signUpWithPassword,
-  type BrowserSession,
-} from '../lib/authClient'
-import { fetchAccountData, updateProfile as updateProfileRequest } from '../lib/serverApi'
-import { setStorageScope } from '../lib/storageScope'
+    type AuthUser,
+    bootstrapAuthSession,
+    type BrowserSession,
+    onAuthSessionChanged,
+    signInWithPassword,
+    signOut as signOutFromBackend,
+    signUpWithPassword,
+} from "../lib/authClient";
+import {
+    fetchAccountData,
+    updateProfile as updateProfileRequest,
+} from "../lib/serverApi";
+import { setStorageScope } from "../lib/storageScope";
 
 export type Profile = {
-  id: string
-  email: string
-  first_name: string
-  last_name: string
-  location?: string | null
-  account_type: 'part_time' | 'full_time'
-}
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    location?: string | null;
+    account_type: "part_time" | "full_time";
+};
 
 type AuthContextValue = {
-  workflowCapabilities: {instructor: boolean; supervisor: boolean}
-  session: BrowserSession | null
-  user: AuthUser | null
-  profile: Profile | null
-  loading: boolean
-  isGuest: boolean
-  accountType: Profile['account_type'] | null
-  needsProfile: boolean
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string) => Promise<string>
-  refreshProfile: () => Promise<void>
-  completeProfile: (firstName: string, lastName: string, location?: string) => Promise<void>
-  signOut: () => Promise<void>
-}
+    workflowCapabilities: { instructor: boolean; supervisor: boolean };
+    session: BrowserSession | null;
+    user: AuthUser | null;
+    profile: Profile | null;
+    loading: boolean;
+    isGuest: boolean;
+    accountType: Profile["account_type"] | null;
+    needsProfile: boolean;
+    signIn: (email: string, password: string) => Promise<void>;
+    signUp: (email: string, password: string) => Promise<string>;
+    refreshProfile: () => Promise<void>;
+    completeProfile: (
+        firstName: string,
+        lastName: string,
+        location?: string,
+    ) => Promise<void>;
+    signOut: () => Promise<void>;
+};
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<BrowserSession | null>(null)
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [profileResolved, setProfileResolved] = useState(false)
-  const profileGeneration = useRef(0)
+    const [session, setSession] = useState<BrowserSession | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [profileResolved, setProfileResolved] = useState(false);
+    const profileGeneration = useRef(0);
 
-  const loadProfile = useCallback(async (activeUser: AuthUser | null) => {
-    const generation = ++profileGeneration.current
-    setProfile(null)
-    if (!activeUser) {
-      setProfile(null)
-      setProfileResolved(true)
-      return
-    }
-    setProfileResolved(false)
-    try {
-      const data = await fetchAccountData()
-      if (generation === profileGeneration.current) setProfile(data.profile)
-    } catch (error) {
-      console.error('Failed to load profile', error)
-      if (generation === profileGeneration.current) setProfile(null)
-    } finally {
-      if (generation === profileGeneration.current) setProfileResolved(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    let mounted = true
-    const applySession = async (nextSession: BrowserSession | null) => {
-      if (!mounted) {
-        return
-      }
-      setSession(nextSession)
-      const nextUser = nextSession?.user ?? null
-      setUser(nextUser)
-      setStorageScope(nextUser?.id ?? 'guest')
-      await loadProfile(nextUser)
-      if (mounted) {
-        setLoading(false)
-      }
-    }
-
-    void bootstrapAuthSession()
-      .then(applySession)
-      .catch(error => {
-        console.error('Failed to bootstrap auth session', error)
-        if (mounted) {
-          setSession(null)
-          setUser(null)
-          setProfile(null)
-          setProfileResolved(true)
-          setStorageScope('guest')
-          setLoading(false)
+    const loadProfile = useCallback(async (activeUser: AuthUser | null) => {
+        const generation = ++profileGeneration.current;
+        setProfile(null);
+        if (!activeUser) {
+            setProfile(null);
+            setProfileResolved(true);
+            return;
         }
-      })
-    const unsubscribe = onAuthSessionChanged(nextSession => {
-      void applySession(nextSession)
-    })
+        setProfileResolved(false);
+        try {
+            const data = await fetchAccountData();
+            if (generation === profileGeneration.current) {
+                setProfile(data.profile);
+            }
+        } catch (error) {
+            console.error("Failed to load profile", error);
+            if (generation === profileGeneration.current) setProfile(null);
+        } finally {
+            if (generation === profileGeneration.current) {
+                setProfileResolved(true);
+            }
+        }
+    }, []);
 
-    return () => {
-      mounted = false
-      unsubscribe()
-    }
-  }, [loadProfile])
+    useEffect(() => {
+        let mounted = true;
+        const applySession = async (nextSession: BrowserSession | null) => {
+            if (!mounted) {
+                return;
+            }
+            setSession(nextSession);
+            const nextUser = nextSession?.user ?? null;
+            setUser(nextUser);
+            setStorageScope(nextUser?.id ?? "guest");
+            await loadProfile(nextUser);
+            if (mounted) {
+                setLoading(false);
+            }
+        };
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const nextSession = await signInWithPassword(email, password)
-    if (!nextSession) {
-      throw new Error('Failed to establish session')
-    }
-  }, [])
+        void bootstrapAuthSession()
+            .then(applySession)
+            .catch((error) => {
+                console.error("Failed to bootstrap auth session", error);
+                if (mounted) {
+                    setSession(null);
+                    setUser(null);
+                    setProfile(null);
+                    setProfileResolved(true);
+                    setStorageScope("guest");
+                    setLoading(false);
+                }
+            });
+        const unsubscribe = onAuthSessionChanged((nextSession) => {
+            void applySession(nextSession);
+        });
 
-  const signUp = useCallback(async (email: string, password: string) => {
-    const result = await signUpWithPassword(email, password)
-    return result.message ?? ''
-  }, [])
+        return () => {
+            mounted = false;
+            unsubscribe();
+        };
+    }, [loadProfile]);
 
-  const refreshProfile = useCallback(async () => {
-    await loadProfile(user)
-  }, [loadProfile, user])
+    const signIn = useCallback(async (email: string, password: string) => {
+        const nextSession = await signInWithPassword(email, password);
+        if (!nextSession) {
+            throw new Error("Failed to establish session");
+        }
+    }, []);
 
-  const completeProfile = useCallback(
-    async (firstName: string, lastName: string, location?: string) => {
-      if (!user) {
-        return
-      }
-      const payload: {
-        id: string
-        email: string
-        first_name: string
-        last_name: string
-        location?: string | null
-      } = {
-        id: user.id,
-        email: user.email ?? '',
-        first_name: firstName,
-        last_name: lastName,
-      }
-      if (location !== undefined) {
-        payload.location = location ?? null
-      }
-      try {
-        await updateProfileRequest(payload)
-      } catch (error) {
-        console.error('Failed to save profile', error)
-        return
-      }
-      await loadProfile(user)
-    },
-    [loadProfile, user]
-  )
+    const signUp = useCallback(async (email: string, password: string) => {
+        const result = await signUpWithPassword(email, password);
+        return result.message ?? "";
+    }, []);
 
-  const signOut = useCallback(async () => {
-    profileGeneration.current += 1
-    if (user) sessionStorage.removeItem(`instructor-session:${user.id}`)
-    await signOutFromBackend()
-    setSession(null)
-    setUser(null)
-    setProfile(null)
-    setProfileResolved(true)
-    setStorageScope('guest')
-  }, [user])
+    const refreshProfile = useCallback(async () => {
+        await loadProfile(user);
+    }, [loadProfile, user]);
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      workflowCapabilities: {instructor: Boolean(user && profile && ['part_time','full_time'].includes(profile.account_type)), supervisor: Boolean(user && profile && ['part_time','full_time'].includes(profile.account_type))},
-      session,
-      user,
-      profile,
-      loading,
-      isGuest: !user,
-      accountType: profile?.account_type ?? null,
-      needsProfile: Boolean(user && profileResolved && (!profile?.first_name || !profile?.last_name)),
-      signIn,
-      signUp,
-      refreshProfile,
-      completeProfile,
-      signOut,
-    }),
-    [completeProfile, loading, profile, profileResolved, refreshProfile, session, signIn, signOut, signUp, user]
-  )
+    const completeProfile = useCallback(
+        async (firstName: string, lastName: string, location?: string) => {
+            if (!user) {
+                return;
+            }
+            const payload: {
+                id: string;
+                email: string;
+                first_name: string;
+                last_name: string;
+                location?: string | null;
+            } = {
+                id: user.id,
+                email: user.email ?? "",
+                first_name: firstName,
+                last_name: lastName,
+            };
+            if (location !== undefined) {
+                payload.location = location ?? null;
+            }
+            try {
+                await updateProfileRequest(payload);
+            } catch (error) {
+                console.error("Failed to save profile", error);
+                return;
+            }
+            await loadProfile(user);
+        },
+        [loadProfile, user],
+    );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    const signOut = useCallback(async () => {
+        profileGeneration.current += 1;
+        if (user) sessionStorage.removeItem(`instructor-session:${user.id}`);
+        await signOutFromBackend();
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setProfileResolved(true);
+        setStorageScope("guest");
+    }, [user]);
+
+    const value = useMemo<AuthContextValue>(
+        () => ({
+            workflowCapabilities: {
+                instructor: Boolean(
+                    user && profile &&
+                        ["part_time", "full_time"].includes(
+                            profile.account_type,
+                        ),
+                ),
+                supervisor: Boolean(
+                    user && profile &&
+                        ["part_time", "full_time"].includes(
+                            profile.account_type,
+                        ),
+                ),
+            },
+            session,
+            user,
+            profile,
+            loading,
+            isGuest: !user,
+            accountType: profile?.account_type ?? null,
+            needsProfile: Boolean(
+                user && profileResolved &&
+                    (!profile?.first_name || !profile?.last_name),
+            ),
+            signIn,
+            signUp,
+            refreshProfile,
+            completeProfile,
+            signOut,
+        }),
+        [
+            completeProfile,
+            loading,
+            profile,
+            profileResolved,
+            refreshProfile,
+            session,
+            signIn,
+            signOut,
+            signUp,
+            user,
+        ],
+    );
+
+    return <AuthContext.Provider value={value}>{children}
+    </AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return context
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error("useAuth must be used within AuthProvider");
+    }
+    return context;
 }

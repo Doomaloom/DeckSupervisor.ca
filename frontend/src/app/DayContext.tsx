@@ -1,43 +1,53 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { getSelectedDay, setSelectedDay as setSelectedDayStorage } from '../lib/storage'
-import { onStorageScopeChanged } from '../lib/storageScope'
+import React, {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+import {
+    getSelectedDay,
+    setSelectedDay as setSelectedDayStorage,
+} from "../lib/storage";
+import { onStorageScopeChanged } from "../lib/storageScope";
 
 type DayContextValue = {
-  selectedDay: string
-  setSelectedDay: (day: string) => void
-}
+    selectedDay: string;
+    setSelectedDay: (day: string) => void;
+};
 
-const DayContext = createContext<DayContextValue | undefined>(undefined)
+const DayContext = createContext<DayContextValue | undefined>(undefined);
 
 export function DayProvider({ children }: { children: React.ReactNode }) {
-  const [selectedDay, setSelectedDayState] = useState(getSelectedDay())
+    const [selectedDay, setSelectedDayState] = useState(getSelectedDay());
 
-  useEffect(() => {
-    return onStorageScopeChanged(() => {
-      setSelectedDayState(getSelectedDay())
-    })
-  }, [])
+    useEffect(() => {
+        return onStorageScopeChanged(() => {
+            setSelectedDayState(getSelectedDay());
+        });
+    }, []);
 
-  const setSelectedDay = useCallback((day: string) => {
-    setSelectedDayState(day)
-    setSelectedDayStorage(day)
-  }, [])
+    const setSelectedDay = useCallback((day: string) => {
+        setSelectedDayState(day);
+        setSelectedDayStorage(day);
+    }, []);
 
-  const value = useMemo(
-    () => ({
-      selectedDay,
-      setSelectedDay,
-    }),
-    [selectedDay, setSelectedDay]
-  )
+    const value = useMemo(
+        () => ({
+            selectedDay,
+            setSelectedDay,
+        }),
+        [selectedDay, setSelectedDay],
+    );
 
-  return <DayContext.Provider value={value}>{children}</DayContext.Provider>
+    return <DayContext.Provider value={value}>{children}</DayContext.Provider>;
 }
 
 export function useDay() {
-  const context = useContext(DayContext)
-  if (!context) {
-    throw new Error('useDay must be used within DayProvider')
-  }
-  return context
+    const context = useContext(DayContext);
+    if (!context) {
+        throw new Error("useDay must be used within DayProvider");
+    }
+    return context;
 }

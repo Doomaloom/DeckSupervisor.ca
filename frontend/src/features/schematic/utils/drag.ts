@@ -1,44 +1,55 @@
-import type { Course } from '../types'
-import { coursesOverlap } from './courses'
+import type { Course } from "../types";
+import { coursesOverlap } from "./courses";
 
 export function findContiguousSwapIndices(column: Course[], course: Course) {
     const overlapping = column
         .map((entry, index) => ({ entry, index }))
         .filter(({ entry }) => coursesOverlap(entry, course))
-        .sort((a, b) => a.entry.startMinutes - b.entry.startMinutes)
+        .sort((a, b) => a.entry.startMinutes - b.entry.startMinutes);
 
     if (overlapping.length === 0) {
-        return []
+        return [];
     }
 
     if (overlapping[0].entry.startMinutes !== course.startMinutes) {
-        return []
+        return [];
     }
 
     for (let i = 1; i < overlapping.length; i += 1) {
-        if (overlapping[i - 1].entry.endMinutes !== overlapping[i].entry.startMinutes) {
-            return []
+        if (
+            overlapping[i - 1].entry.endMinutes !==
+                overlapping[i].entry.startMinutes
+        ) {
+            return [];
         }
     }
 
-    const last = overlapping[overlapping.length - 1].entry
+    const last = overlapping[overlapping.length - 1].entry;
     if (last.endMinutes !== course.endMinutes) {
-        return []
+        return [];
     }
 
-    return overlapping.map(item => item.index)
+    return overlapping.map((item) => item.index);
 }
 
-export function canReplaceByStart(column: Course[], course: Course, targetIndex: number) {
-    const target = column[targetIndex]
+export function canReplaceByStart(
+    column: Course[],
+    course: Course,
+    targetIndex: number,
+) {
+    const target = column[targetIndex];
     if (!target || target.startMinutes !== course.startMinutes) {
-        return false
+        return false;
     }
-    return !column.some((entry, index) => index !== targetIndex && coursesOverlap(entry, course))
+    return !column.some((entry, index) =>
+        index !== targetIndex && coursesOverlap(entry, course)
+    );
 }
 
 export function canPlaceCourses(column: Course[], courses: Course[]) {
-    return courses.every(course => !column.some(entry => coursesOverlap(entry, course)))
+    return courses.every((course) =>
+        !column.some((entry) => coursesOverlap(entry, course))
+    );
 }
 
 export function canSwapSingleCourses(
@@ -47,7 +58,12 @@ export function canSwapSingleCourses(
     sourceCourse: Course,
     targetCourse: Course,
 ) {
-    const nextSource = sourceColumn.filter(course => course.code !== sourceCourse.code)
-    const nextTarget = targetColumn.filter(course => course.code !== targetCourse.code)
-    return canPlaceCourses(nextSource, [targetCourse]) && canPlaceCourses(nextTarget, [sourceCourse])
+    const nextSource = sourceColumn.filter((course) =>
+        course.code !== sourceCourse.code
+    );
+    const nextTarget = targetColumn.filter((course) =>
+        course.code !== targetCourse.code
+    );
+    return canPlaceCourses(nextSource, [targetCourse]) &&
+        canPlaceCourses(nextTarget, [sourceCourse]);
 }

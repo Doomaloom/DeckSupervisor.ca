@@ -1,21 +1,23 @@
-import { useState } from 'react'
-import { openAttendancePrintWindow } from '../../attendance-print/openAttendancePrintWindow'
-import { buildAttendancePrintItems } from '../utils'
-import { useCurrentSession } from '../../../app/useCurrentSession'
-import { formatSessionDisplayName } from '../../../shared/session/sessionLabels'
-import type { RosterGroup } from '../types'
-import { showAppNotice } from '../../../lib/appNotice'
+import { useState } from "react";
+import { openAttendancePrintWindow } from "../../attendance-print/openAttendancePrintWindow";
+import { buildAttendancePrintItems } from "../utils";
+import { useCurrentSession } from "../../../app/useCurrentSession";
+import { formatSessionDisplayName } from "../../../shared/session/sessionLabels";
+import type { RosterGroup } from "../types";
+import { showAppNotice } from "../../../lib/appNotice";
 
 export function useRosterPrint() {
-    const { session: currentSession } = useCurrentSession()
-    const [blockedPrintJob, setBlockedPrintJob] = useState<{
-        jobLabel: string
-        roster: RosterGroup
-    } | null>(null)
+    const { session: currentSession } = useCurrentSession();
+    const [blockedPrintJob, setBlockedPrintJob] = useState<
+        {
+            jobLabel: string;
+            roster: RosterGroup;
+        } | null
+    >(null);
 
     const handlePrintRoster = async (roster: RosterGroup) => {
-        setBlockedPrintJob(null)
-        const rosters = buildAttendancePrintItems(roster)
+        setBlockedPrintJob(null);
+        const rosters = buildAttendancePrintItems(roster);
         const sessionName = formatSessionDisplayName({
             sessionDay: currentSession?.session_day,
             includeDay: false,
@@ -24,29 +26,41 @@ export function useRosterPrint() {
             startDate: currentSession?.start_date ?? null,
             sessionStartTime24: currentSession?.session_start_time24 ?? null,
             sessionEndTime24: currentSession?.session_end_time24 ?? null,
-            fallback: 'Session',
-        })
-        const printWindow = openAttendancePrintWindow('Attendance Roster')
+            fallback: "Session",
+        });
+        const printWindow = openAttendancePrintWindow("Attendance Roster");
         if (!printWindow) {
-            setBlockedPrintJob({ jobLabel: `Attendance - ${roster.serviceName || roster.code || 'Roster'}`, roster })
-            return
+            setBlockedPrintJob({
+                jobLabel: `Attendance - ${
+                    roster.serviceName || roster.code || "Roster"
+                }`,
+                roster,
+            });
+            return;
         }
 
         try {
-            const { printAttendanceHtml } = await import('../../attendance-print/printAttendanceHtml')
-            const jobLabel = `Attendance - ${roster.serviceName || roster.code || 'Roster'}`
+            const { printAttendanceHtml } = await import(
+                "../../attendance-print/printAttendanceHtml"
+            );
+            const jobLabel = `Attendance - ${
+                roster.serviceName || roster.code || "Roster"
+            }`;
             const result = await printAttendanceHtml({
                 session: sessionName,
                 rosters,
                 title: jobLabel,
-            }, printWindow)
-            if (result.status === 'failed') throw result.error
+            }, printWindow);
+            if (result.status === "failed") throw result.error;
         } catch (error) {
-            console.error(error)
-            showAppNotice('Unable to prepare attendance sheets. Please try again.', 'error')
-            printWindow?.close()
+            console.error(error);
+            showAppNotice(
+                "Unable to prepare attendance sheets. Please try again.",
+                "error",
+            );
+            printWindow?.close();
         }
-    }
+    };
 
     return {
         blockedPrintJob,
@@ -54,9 +68,9 @@ export function useRosterPrint() {
         handlePrintRoster,
         retryBlockedPrint: () => {
             if (!blockedPrintJob) {
-                return
+                return;
             }
-            void handlePrintRoster(blockedPrintJob.roster)
+            void handlePrintRoster(blockedPrintJob.roster);
         },
-    }
+    };
 }

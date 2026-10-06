@@ -1,24 +1,36 @@
-import React from 'react'
-import { tabButtonClass } from '../utils'
+import React from "react";
+import { tabButtonClass } from "../utils";
 
-type RosterTab = 'default' | 'custom'
+type RosterTab = "default" | "custom";
 
 type RostersTabsProps = {
-    activeTab: RosterTab
-    onChange: (tab: RosterTab) => void
-}
+    activeTab: RosterTab;
+    onChange: (tab: RosterTab) => void;
+};
 
 function RostersTabs({ activeTab, onChange }: RostersTabsProps) {
     return (
-        <div id="rosters-tabs" data-component="rosters-tabs" className="flex w-full gap-3">
-            <button type="button" className={tabButtonClass(activeTab === 'default')} onClick={() => onChange('default')}>
+        <div
+            id="rosters-tabs"
+            data-component="rosters-tabs"
+            className="flex w-full gap-3"
+        >
+            <button
+                type="button"
+                className={tabButtonClass(activeTab === "default")}
+                onClick={() => onChange("default")}
+            >
                 Rosters
             </button>
-            <button type="button" className={tabButtonClass(activeTab === 'custom')} onClick={() => onChange('custom')}>
+            <button
+                type="button"
+                className={tabButtonClass(activeTab === "custom")}
+                onClick={() => onChange("custom")}
+            >
                 Custom Rosters
             </button>
         </div>
-    )
+    );
 }
 
-export default RostersTabs
+export default RostersTabs;

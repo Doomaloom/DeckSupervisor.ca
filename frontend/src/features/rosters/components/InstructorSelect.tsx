@@ -1,19 +1,19 @@
-import React from 'react'
-import { selectClass } from '../constants'
+import React from "react";
+import { selectClass } from "../constants";
 
 type InstructorSelectProps = {
-    value: string
-    options: string[]
-    placeholder?: string
-    optionKeyPrefix?: string
-    disabled?: boolean
-    onChange: (value: string) => void
-}
+    value: string;
+    options: string[];
+    placeholder?: string;
+    optionKeyPrefix?: string;
+    disabled?: boolean;
+    onChange: (value: string) => void;
+};
 
 function InstructorSelect({
     value,
     options,
-    placeholder = 'Select Instructor',
+    placeholder = "Select Instructor",
     optionKeyPrefix,
     disabled = false,
     onChange,
@@ -23,17 +23,20 @@ function InstructorSelect({
             data-component="instructor-select"
             className={selectClass}
             value={value}
-            onChange={event => onChange(event.target.value)}
+            onChange={(event) => onChange(event.target.value)}
             disabled={disabled}
         >
             <option value="">{placeholder}</option>
-            {options.map(instructor => (
-                <option key={`${optionKeyPrefix ?? 'instructor'}-${instructor}`} value={instructor}>
+            {options.map((instructor) => (
+                <option
+                    key={`${optionKeyPrefix ?? "instructor"}-${instructor}`}
+                    value={instructor}
+                >
                     {instructor}
                 </option>
             ))}
         </select>
-    )
+    );
 }
 
-export default InstructorSelect
+export default InstructorSelect;

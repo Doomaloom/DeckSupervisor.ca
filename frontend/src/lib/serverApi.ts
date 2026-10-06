@@ -1,777 +1,1085 @@
-import type { Workout } from '../features/workout-builder/workout'
+import type { Workout } from "../features/workout-builder/workout";
 import type {
-  ClassRoster,
-  CsvSessionCandidate,
-  ExtractedClass,
-  ExtractedSession,
-  PlannerCallRecordUpdate,
-  PlannerClassMoveType,
-  PlannerClassStatus,
-  PlannerDataset,
-  RequestAssignment,
-  PlannerShareJoinResponse,
-  PlannerShareSession,
-  RosterStudent,
-} from '../types/app'
+    ClassRoster,
+    CsvSessionCandidate,
+    ExtractedClass,
+    ExtractedSession,
+    PlannerCallRecordUpdate,
+    PlannerClassMoveType,
+    PlannerClassStatus,
+    PlannerDataset,
+    PlannerShareJoinResponse,
+    PlannerShareSession,
+    RequestAssignment,
+    RosterStudent,
+} from "../types/app";
 
-type RequestOptions = Omit<RequestInit, 'body'> & {
-  body?: unknown
-}
+type RequestOptions = Omit<RequestInit, "body"> & {
+    body?: unknown;
+};
 
 async function request<T>(path: string, options?: RequestOptions): Promise<T> {
-  const response = await fetch(path, {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options?.headers ?? {}),
-    },
-    ...options,
-    body: options?.body === undefined ? undefined : JSON.stringify(options.body),
-  })
+    const response = await fetch(path, {
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+            ...(options?.headers ?? {}),
+        },
+        ...options,
+        body: options?.body === undefined
+            ? undefined
+            : JSON.stringify(options.body),
+    });
 
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || 'Request failed')
-  }
+    if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Request failed");
+    }
 
-  if (response.status === 204) {
-    return undefined as T
-  }
+    if (response.status === 204) {
+        return undefined as T;
+    }
 
-  return (await response.json()) as T
+    return (await response.json()) as T;
 }
 
 export type AccountDataResponse = {
-  workflow_capabilities: {instructor: boolean; supervisor: boolean}
-  profile: {
-    id: string
-    email: string
-    first_name: string
-    last_name: string
-    location?: string | null
-    account_type: 'part_time' | 'full_time'
-  }
-  invites: Array<{
-    id: string
-    team_id: string
-    status: string
-    teams?: { name: string } | null
-  }>
-  memberships: Array<{
-    team_id: string
-    role: string
-    teams?: { name: string } | null
-  }>
-}
+    workflow_capabilities: { instructor: boolean; supervisor: boolean };
+    profile: {
+        id: string;
+        email: string;
+        first_name: string;
+        last_name: string;
+        location?: string | null;
+        account_type: "part_time" | "full_time";
+    };
+    invites: Array<{
+        id: string;
+        team_id: string;
+        status: string;
+        teams?: { name: string } | null;
+    }>;
+    memberships: Array<{
+        team_id: string;
+        role: string;
+        teams?: { name: string } | null;
+    }>;
+};
 
 export function fetchAccountData() {
-  return request<AccountDataResponse>('/api/account')
+    return request<AccountDataResponse>("/api/account");
 }
 
-export function updateProfile(body: { first_name: string; last_name: string; location?: string | null }) {
-  return request<{ profile: AccountDataResponse['profile'] }>('/api/profile', {
-    method: 'PUT',
-    body,
-  })
+export function updateProfile(
+    body: { first_name: string; last_name: string; location?: string | null },
+) {
+    return request<{ profile: AccountDataResponse["profile"] }>(
+        "/api/profile",
+        {
+            method: "PUT",
+            body,
+        },
+    );
 }
 
 export function fetchCurrentTeams() {
-  return request<{ teams: Array<{ id: string; name: string; available_locations: string[] }> }>('/api/teams/current')
+    return request<
+        {
+            teams: Array<
+                { id: string; name: string; available_locations: string[] }
+            >;
+        }
+    >("/api/teams/current");
 }
 
-export function fetchRequestAssignments(filters?: { term?: string; location?: string }) {
-  const params = new URLSearchParams()
-  if (filters?.term) {
-    params.set('term', filters.term)
-  }
-  if (filters?.location) {
-    params.set('location', filters.location)
-  }
-  const query = params.toString()
-  return request<{ assignments: RequestAssignment[] }>(
-    `/api/request-assignments${query ? `?${query}` : ''}`,
-  )
+export function fetchRequestAssignments(
+    filters?: { term?: string; location?: string },
+) {
+    const params = new URLSearchParams();
+    if (filters?.term) {
+        params.set("term", filters.term);
+    }
+    if (filters?.location) {
+        params.set("location", filters.location);
+    }
+    const query = params.toString();
+    return request<{ assignments: RequestAssignment[] }>(
+        `/api/request-assignments${query ? `?${query}` : ""}`,
+    );
 }
 
 export function createRequestAssignment(body: {
-  eventId: string
-  term: string
-  location: string
-  instructor: string
+    eventId: string;
+    term: string;
+    location: string;
+    instructor: string;
 }) {
-  return request<{ assignment: RequestAssignment }>('/api/request-assignments', {
-    method: 'POST',
-    body,
-  })
+    return request<{ assignment: RequestAssignment }>(
+        "/api/request-assignments",
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function updateRequestAssignment(
-  id: string,
-  body: {
-    eventId?: string
-    term?: string
-    location?: string
-    instructor?: string
-  },
+    id: string,
+    body: {
+        eventId?: string;
+        term?: string;
+        location?: string;
+        instructor?: string;
+    },
 ) {
-  return request<{ assignment: RequestAssignment }>(`/api/request-assignments/${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    body,
-  })
+    return request<{ assignment: RequestAssignment }>(
+        `/api/request-assignments/${encodeURIComponent(id)}`,
+        {
+            method: "PATCH",
+            body,
+        },
+    );
 }
 
 export function deleteRequestAssignment(id: string) {
-  return request<void>(`/api/request-assignments/${encodeURIComponent(id)}`, { method: 'DELETE' })
+    return request<void>(`/api/request-assignments/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+    });
 }
 
 export function fetchCurrentSession(sessionId: string) {
-  return request<{
-    session: {
-      id: string
-      team_id: string | null
-      created_by: string
-      session_day: string
-      session_season: string | null
-      session_year: number | null
-      start_date: string | null
-      end_date: string | null
-      location: string | null
-      source_locations: string[]
-      session_start_time24: string | null
-      session_end_time24: string | null
-      instructors: { id?: string; name: string }[]
-    } | null
-    access: {
-      mode: 'guest' | 'owner' | 'shared' | 'none'
-      allowRosterEdits: boolean
-      shareDate?: string
-    }
-  }>(`/api/sessions/current/${encodeURIComponent(sessionId)}`)
+    return request<{
+        session: {
+            id: string;
+            team_id: string | null;
+            created_by: string;
+            session_day: string;
+            session_season: string | null;
+            session_year: number | null;
+            start_date: string | null;
+            end_date: string | null;
+            location: string | null;
+            source_locations: string[];
+            session_start_time24: string | null;
+            session_end_time24: string | null;
+            instructors: { id?: string; name: string }[];
+        } | null;
+        access: {
+            mode: "guest" | "owner" | "shared" | "none";
+            allowRosterEdits: boolean;
+            shareDate?: string;
+        };
+    }>(`/api/sessions/current/${encodeURIComponent(sessionId)}`);
 }
 
 export function fetchMySessions() {
-  return request<{ sessions: any[] }>('/api/sessions/mine')
+    return request<{ sessions: any[] }>("/api/sessions/mine");
 }
 
 export function createSession(body: Record<string, unknown>) {
-  return request<{ session: any }>('/api/sessions', { method: 'POST', body })
+    return request<{ session: any }>("/api/sessions", { method: "POST", body });
 }
 
-export function updateSession(sessionId: string, body: Record<string, unknown>) {
-  return request<{ session: any }>(`/api/sessions/${encodeURIComponent(sessionId)}`, {
-    method: 'PATCH',
-    body,
-  })
+export function updateSession(
+    sessionId: string,
+    body: Record<string, unknown>,
+) {
+    return request<{ session: any }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}`,
+        {
+            method: "PATCH",
+            body,
+        },
+    );
 }
 
 export function deleteSession(sessionId: string) {
-  return request<void>(`/api/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' })
+    return request<void>(`/api/sessions/${encodeURIComponent(sessionId)}`, {
+        method: "DELETE",
+    });
 }
 
 export function fetchSharedSessionsToday() {
-  return request<{ sharedSessions: any[] }>('/api/session-shares/today')
+    return request<{ sharedSessions: any[] }>("/api/session-shares/today");
 }
 
 export function fetchTeamSessions(teamId: string, select?: string) {
-  const params = new URLSearchParams()
-  if (select) {
-    params.set('select', select)
-  }
-  return request<{ sessions: any[] }>(`/api/teams/${encodeURIComponent(teamId)}/sessions?${params.toString()}`)
+    const params = new URLSearchParams();
+    if (select) {
+        params.set("select", select);
+    }
+    return request<{ sessions: any[] }>(
+        `/api/teams/${
+            encodeURIComponent(teamId)
+        }/sessions?${params.toString()}`,
+    );
 }
 
 export async function fetchCsvSessionCandidates(
-  file: File,
-  scope?: { teamId?: string; termSeason?: string; termYear?: number }
+    file: File,
+    scope?: { teamId?: string; termSeason?: string; termYear?: number },
 ) {
-  const analyzed = await fetchCsvAnalyze(file, scope)
-  return {
-    sessions: analyzed.candidates,
-    classesBySession: analyzed.extracted.classesBySession,
-  }
+    const analyzed = await fetchCsvAnalyze(file, scope);
+    return {
+        sessions: analyzed.candidates,
+        classesBySession: analyzed.extracted.classesBySession,
+    };
 }
 
 type AnalyzeCsvApiRosterStudent = {
-  name: string
-  phone: string
-  age?: string
-  instructor: string
-  level: string
-  waitlist?: boolean
-}
+    name: string;
+    phone: string;
+    age?: string;
+    instructor: string;
+    level: string;
+    waitlist?: boolean;
+};
 
 type AnalyzeCsvApiRoster = {
-  sessionKey?: string
-  code?: string
-  courseCode?: string
-  serviceName: string
-  location: string
-  time: string
-  instructor: string
-  studentCount?: number
-  waitlistCount?: number
-  students?: AnalyzeCsvApiRosterStudent[]
-  Students?: AnalyzeCsvApiRosterStudent[]
-}
+    sessionKey?: string;
+    code?: string;
+    courseCode?: string;
+    serviceName: string;
+    location: string;
+    time: string;
+    instructor: string;
+    studentCount?: number;
+    waitlistCount?: number;
+    students?: AnalyzeCsvApiRosterStudent[];
+    Students?: AnalyzeCsvApiRosterStudent[];
+};
 
 type AnalyzeCsvApiCandidate = {
-  candidateKey: string
-  extractedSessionKeys: string[]
-  rawLocations: string[]
-  dayOfWeek: string
-  sessionSeason: string
-  sessionYear: number
-  startDate: string
-  endDate: string
-  location: string
-  sessionStartTime24: string
-  sessionEndTime24: string
-  classCount: number
-  studentCount: number
-  waitlistCount: number
-  courseCodes: string[]
-  matchedSession: CsvSessionCandidate['matchedSession']
-}
+    candidateKey: string;
+    extractedSessionKeys: string[];
+    rawLocations: string[];
+    dayOfWeek: string;
+    sessionSeason: string;
+    sessionYear: number;
+    startDate: string;
+    endDate: string;
+    location: string;
+    sessionStartTime24: string;
+    sessionEndTime24: string;
+    classCount: number;
+    studentCount: number;
+    waitlistCount: number;
+    courseCodes: string[];
+    matchedSession: CsvSessionCandidate["matchedSession"];
+};
 
 type AnalyzeCsvApiResponse = {
-  success: boolean
-  meta?: {
-    warnings?: string[]
-  }
-  rosters: AnalyzeCsvApiRoster[]
-  totalStudents: number
-  extracted: {
-    totalSessions: number
-    totalClasses: number
-    sessions: ExtractedSession[]
-    classesBySession: Record<string, ExtractedClass[]>
-  }
-  candidates: AnalyzeCsvApiCandidate[]
-  rostersByCandidateKey: Record<string, AnalyzeCsvApiRoster[]>
-}
+    success: boolean;
+    meta?: {
+        warnings?: string[];
+    };
+    rosters: AnalyzeCsvApiRoster[];
+    totalStudents: number;
+    extracted: {
+        totalSessions: number;
+        totalClasses: number;
+        sessions: ExtractedSession[];
+        classesBySession: Record<string, ExtractedClass[]>;
+    };
+    candidates: AnalyzeCsvApiCandidate[];
+    rostersByCandidateKey: Record<string, AnalyzeCsvApiRoster[]>;
+};
 
-function hydrateAnalyzeRosterStudent(student: AnalyzeCsvApiRosterStudent): RosterStudent {
-  return {
-    name: student.name,
-    phone: student.phone,
-    age: student.age,
-    instructor: student.instructor ?? '',
-    level: student.level ?? '',
-    waitlist: Boolean(student.waitlist),
-  }
+function hydrateAnalyzeRosterStudent(
+    student: AnalyzeCsvApiRosterStudent,
+): RosterStudent {
+    return {
+        name: student.name,
+        phone: student.phone,
+        age: student.age,
+        instructor: student.instructor ?? "",
+        level: student.level ?? "",
+        waitlist: Boolean(student.waitlist),
+    };
 }
 
 function hydrateAnalyzeRoster(
-  roster: AnalyzeCsvApiRoster,
-  sessionsByKey: Map<string, ExtractedSession>,
+    roster: AnalyzeCsvApiRoster,
+    sessionsByKey: Map<string, ExtractedSession>,
 ): ClassRoster {
-  const session = roster.sessionKey ? sessionsByKey.get(roster.sessionKey) : undefined
-  const day = session?.dayOfWeek ?? ''
-  const students = roster.students ?? roster.Students ?? []
-  return {
-    sessionKey: roster.sessionKey,
-    code: roster.code ?? roster.courseCode ?? '',
-    serviceName: roster.serviceName,
-    day,
-    time: roster.time,
-    location: roster.location,
-    schedule: day,
-    instructor: roster.instructor ?? '',
-    studentCount: roster.studentCount ?? students.length,
-    waitlistCount:
-      roster.waitlistCount ?? students.filter(student => Boolean(student.waitlist)).length,
-    students: students.map(hydrateAnalyzeRosterStudent),
-  }
+    const session = roster.sessionKey
+        ? sessionsByKey.get(roster.sessionKey)
+        : undefined;
+    const day = session?.dayOfWeek ?? "";
+    const students = roster.students ?? roster.Students ?? [];
+    return {
+        sessionKey: roster.sessionKey,
+        code: roster.code ?? roster.courseCode ?? "",
+        serviceName: roster.serviceName,
+        day,
+        time: roster.time,
+        location: roster.location,
+        schedule: day,
+        instructor: roster.instructor ?? "",
+        studentCount: roster.studentCount ?? students.length,
+        waitlistCount: roster.waitlistCount ??
+            students.filter((student) => Boolean(student.waitlist)).length,
+        students: students.map(hydrateAnalyzeRosterStudent),
+    };
 }
 
-function mapAnalyzeCandidate(candidate: AnalyzeCsvApiCandidate): CsvSessionCandidate {
-  return {
-    sessionKey: candidate.candidateKey,
-    sourceSessionKeys: candidate.extractedSessionKeys ?? [],
-    rawLocations: candidate.rawLocations ?? [],
-    dayOfWeek: candidate.dayOfWeek,
-    sessionSeason: candidate.sessionSeason,
-    sessionYear: candidate.sessionYear,
-    startDate: candidate.startDate,
-    endDate: candidate.endDate,
-    location: candidate.location,
-    sessionStartTime24: candidate.sessionStartTime24,
-    sessionEndTime24: candidate.sessionEndTime24,
-    classCount: candidate.classCount,
-    studentCount: candidate.studentCount,
-    waitlistCount: candidate.waitlistCount,
-    courseCodes: candidate.courseCodes ?? [],
-    matchedSession: candidate.matchedSession,
-  }
+function mapAnalyzeCandidate(
+    candidate: AnalyzeCsvApiCandidate,
+): CsvSessionCandidate {
+    return {
+        sessionKey: candidate.candidateKey,
+        sourceSessionKeys: candidate.extractedSessionKeys ?? [],
+        rawLocations: candidate.rawLocations ?? [],
+        dayOfWeek: candidate.dayOfWeek,
+        sessionSeason: candidate.sessionSeason,
+        sessionYear: candidate.sessionYear,
+        startDate: candidate.startDate,
+        endDate: candidate.endDate,
+        location: candidate.location,
+        sessionStartTime24: candidate.sessionStartTime24,
+        sessionEndTime24: candidate.sessionEndTime24,
+        classCount: candidate.classCount,
+        studentCount: candidate.studentCount,
+        waitlistCount: candidate.waitlistCount,
+        courseCodes: candidate.courseCodes ?? [],
+        matchedSession: candidate.matchedSession,
+    };
 }
 
 export async function fetchCsvAnalyze(
-  file: File,
-  scope?: { teamId?: string; termSeason?: string; termYear?: number; day?: string },
+    file: File,
+    scope?: {
+        teamId?: string;
+        termSeason?: string;
+        termYear?: number;
+        day?: string;
+    },
 ) {
-  const formData = new FormData()
-  formData.append('csv_file', file)
-  if (scope?.teamId) {
-    formData.append('teamId', scope.teamId)
-  }
-  if (scope?.termSeason) {
-    formData.append('termSeason', scope.termSeason)
-  }
-  if (scope?.termYear) {
-    formData.append('termYear', String(scope.termYear))
-  }
-  if (scope?.day) {
-    formData.append('day', scope.day)
-  }
+    const formData = new FormData();
+    formData.append("csv_file", file);
+    if (scope?.teamId) {
+        formData.append("teamId", scope.teamId);
+    }
+    if (scope?.termSeason) {
+        formData.append("termSeason", scope.termSeason);
+    }
+    if (scope?.termYear) {
+        formData.append("termYear", String(scope.termYear));
+    }
+    if (scope?.day) {
+        formData.append("day", scope.day);
+    }
 
-  const response = await fetch('/api/analyzeCSV', {
-    method: 'POST',
-    credentials: 'include',
-    body: formData,
-  })
+    const response = await fetch("/api/analyzeCSV", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+    });
 
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || 'Failed to analyze CSV')
-  }
+    if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Failed to analyze CSV");
+    }
 
-  const payload = (await response.json()) as AnalyzeCsvApiResponse
-  const extracted = payload.extracted ?? {
-    totalSessions: 0,
-    totalClasses: 0,
-    sessions: [],
-    classesBySession: {},
-  }
-  const sessionsByKey = new Map((extracted.sessions ?? []).map(session => [session.sessionKey, session]))
+    const payload = (await response.json()) as AnalyzeCsvApiResponse;
+    const extracted = payload.extracted ?? {
+        totalSessions: 0,
+        totalClasses: 0,
+        sessions: [],
+        classesBySession: {},
+    };
+    const sessionsByKey = new Map(
+        (extracted.sessions ?? []).map((
+            session,
+        ) => [session.sessionKey, session]),
+    );
 
-  return {
-    success: Boolean(payload.success),
-    warnings: payload.meta?.warnings ?? [],
-    rosters: (payload.rosters ?? []).map(roster => hydrateAnalyzeRoster(roster, sessionsByKey)),
-    totalStudents: payload.totalStudents ?? 0,
-    extracted,
-    candidates: (payload.candidates ?? []).map(mapAnalyzeCandidate),
-    rostersByCandidateKey: Object.fromEntries(
-      Object.entries(payload.rostersByCandidateKey ?? {}).map(([candidateKey, rosters]) => [
-        candidateKey,
-        (rosters ?? []).map(roster => hydrateAnalyzeRoster(roster, sessionsByKey)),
-      ]),
-    ) as Record<string, ClassRoster[]>,
-  }
+    return {
+        success: Boolean(payload.success),
+        warnings: payload.meta?.warnings ?? [],
+        rosters: (payload.rosters ?? []).map((roster) =>
+            hydrateAnalyzeRoster(roster, sessionsByKey)
+        ),
+        totalStudents: payload.totalStudents ?? 0,
+        extracted,
+        candidates: (payload.candidates ?? []).map(mapAnalyzeCandidate),
+        rostersByCandidateKey: Object.fromEntries(
+            Object.entries(payload.rostersByCandidateKey ?? {}).map((
+                [candidateKey, rosters],
+            ) => [
+                candidateKey,
+                (rosters ?? []).map((roster) =>
+                    hydrateAnalyzeRoster(roster, sessionsByKey)
+                ),
+            ]),
+        ) as Record<string, ClassRoster[]>,
+    };
 }
 
 export type SessionPlannerAnalyzeResponse = {
-  success: boolean
-  dataset: PlannerDataset
-  meta: {
-    activitySummaryRows: number
-    rosterRows: number
-    matchedClassCount: number
-    activityOnlyClassCount: number
-    rosterOnlyClassCount: number
-    classCount: number
-    participantCount: number
-    warnings: string[]
-  }
-}
+    success: boolean;
+    dataset: PlannerDataset;
+    meta: {
+        activitySummaryRows: number;
+        rosterRows: number;
+        matchedClassCount: number;
+        activityOnlyClassCount: number;
+        rosterOnlyClassCount: number;
+        classCount: number;
+        participantCount: number;
+        warnings: string[];
+    };
+};
 
-export async function fetchSessionPlannerAnalyze(activitySummaryFile: File, rosterFile: File) {
-  const formData = new FormData()
-  formData.append('activity_summary_file', activitySummaryFile)
-  formData.append('roster_file', rosterFile)
+export async function fetchSessionPlannerAnalyze(
+    activitySummaryFile: File,
+    rosterFile: File,
+) {
+    const formData = new FormData();
+    formData.append("activity_summary_file", activitySummaryFile);
+    formData.append("roster_file", rosterFile);
 
-  const response = await fetch('/api/session-planner/analyze', {
-    method: 'POST',
-    credentials: 'include',
-    body: formData,
-  })
+    const response = await fetch("/api/session-planner/analyze", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+    });
 
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || 'Failed to analyze session planner CSVs')
-  }
+    if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Failed to analyze session planner CSVs");
+    }
 
-  return (await response.json()) as SessionPlannerAnalyzeResponse
+    return (await response.json()) as SessionPlannerAnalyzeResponse;
 }
 
 export function fetchOwnedTeams() {
-  return request<{ teams: any[] }>('/api/teams/owned')
+    return request<{ teams: any[] }>("/api/teams/owned");
 }
 
 export function fetchMemberTeams() {
-  return request<{ teams: any[] }>('/api/teams/member')
+    return request<{ teams: any[] }>("/api/teams/member");
 }
 
 export function fetchTeamDetails(teamId: string) {
-  return request<{ invites: any[]; members: any[] }>(`/api/teams/${encodeURIComponent(teamId)}/details`)
+    return request<{ invites: any[]; members: any[] }>(
+        `/api/teams/${encodeURIComponent(teamId)}/details`,
+    );
 }
 
 export function createTeam(body: Record<string, unknown>) {
-  return request<{ team: any }>('/api/teams', { method: 'POST', body })
+    return request<{ team: any }>("/api/teams", { method: "POST", body });
 }
 
 export function updateTeam(teamId: string, body: Record<string, unknown>) {
-  return request<{ team: any[] }>(`/api/teams/${encodeURIComponent(teamId)}`, { method: 'PATCH', body })
+    return request<{ team: any[] }>(
+        `/api/teams/${encodeURIComponent(teamId)}`,
+        {
+            method: "PATCH",
+            body,
+        },
+    );
 }
 
 export function fetchTeamMembers(teamId: string) {
-  return request<{ members: any[] }>(`/api/teams/${encodeURIComponent(teamId)}/members`)
+    return request<{ members: any[] }>(
+        `/api/teams/${encodeURIComponent(teamId)}/members`,
+    );
 }
 
-export type AccountProfile = { id: string; first_name: string; last_name: string; email: string }
+export type AccountProfile = {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+};
 
 export function searchInvitableProfiles(teamId: string, query: string) {
-  const params = new URLSearchParams({ q: query })
-  return request<{ results: AccountProfile[] }>(`/api/teams/${encodeURIComponent(teamId)}/invitable-profiles?${params.toString()}`)
+    const params = new URLSearchParams({ q: query });
+    return request<{ results: AccountProfile[] }>(
+        `/api/teams/${
+            encodeURIComponent(teamId)
+        }/invitable-profiles?${params.toString()}`,
+    );
 }
 
 export function createTeamInvite(teamId: string, inviteeId: string) {
-  return request<{ invite: any }>(`/api/teams/${encodeURIComponent(teamId)}/invites`, {
-    method: 'POST',
-    body: { invitee_id: inviteeId },
-  })
+    return request<{ invite: any }>(
+        `/api/teams/${encodeURIComponent(teamId)}/invites`,
+        {
+            method: "POST",
+            body: { invitee_id: inviteeId },
+        },
+    );
 }
 
 export function acceptTeamInvite(inviteId: string) {
-  return request<void>(`/api/team-invites/${encodeURIComponent(inviteId)}/accept`, { method: 'POST' })
+    return request<void>(
+        `/api/team-invites/${encodeURIComponent(inviteId)}/accept`,
+        { method: "POST" },
+    );
 }
 
 export function declineTeamInvite(inviteId: string) {
-  return request<void>(`/api/team-invites/${encodeURIComponent(inviteId)}/decline`, { method: 'POST' })
+    return request<void>(
+        `/api/team-invites/${encodeURIComponent(inviteId)}/decline`,
+        { method: "POST" },
+    );
 }
 
 export function revokeTeamInvite(inviteId: string) {
-  return request<void>(`/api/team-invites/${encodeURIComponent(inviteId)}/revoke`, { method: 'POST' })
+    return request<void>(
+        `/api/team-invites/${encodeURIComponent(inviteId)}/revoke`,
+        { method: "POST" },
+    );
 }
 
 export function removeTeamMember(teamId: string, userId: string) {
-  return request<void>(`/api/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(userId)}`, { method: 'DELETE' })
+    return request<void>(
+        `/api/teams/${encodeURIComponent(teamId)}/members/${
+            encodeURIComponent(userId)
+        }`,
+        { method: "DELETE" },
+    );
 }
 
 export function createSessionShare(body: Record<string, unknown>) {
-  return request<void>('/api/session-shares', { method: 'POST', body })
+    return request<void>("/api/session-shares", { method: "POST", body });
 }
 
-export type StaffEntryScope = { sessionId: string } | { teamId: string; season: string; year: number }
+export type StaffEntryScope = { sessionId: string } | {
+    teamId: string;
+    season: string;
+    year: number;
+};
 
 export type StaffEntry = {
-  id: string
-  session_id: string
-  created_by: string
-  created_at: string
-  author?: { first_name: string; last_name: string; email: string } | null
-  session?: {
-    session_day: string
-    session_season: string | null
-    session_year: number | null
-    start_date: string | null
-    location: string | null
-  } | null
-}
+    id: string;
+    session_id: string;
+    created_by: string;
+    created_at: string;
+    author?: { first_name: string; last_name: string; email: string } | null;
+    session?: {
+        session_day: string;
+        session_season: string | null;
+        session_year: number | null;
+        start_date: string | null;
+        location: string | null;
+    } | null;
+};
 
 export type SessionNote = StaffEntry & {
-  note_type: string
-  text: string
-  employee_name: string | null
-  done: boolean
-}
+    note_type: string;
+    text: string;
+    employee_name: string | null;
+    done: boolean;
+};
 
 export type SessionReport = StaffEntry & {
-  title: string
-  report_data: unknown
-  updated_at: string
-}
+    title: string;
+    report_data: unknown;
+    updated_at: string;
+};
 
 function staffScopeQuery(scope: StaffEntryScope | string) {
-  const values = typeof scope === 'string' ? { sessionId: scope } : scope
-  return new URLSearchParams(Object.entries(values).map(([key, value]) => [key, String(value)])).toString()
+    const values = typeof scope === "string" ? { sessionId: scope } : scope;
+    return new URLSearchParams(
+        Object.entries(values).map(([key, value]) => [key, String(value)]),
+    ).toString();
 }
 
 export function fetchSessionNotes(scope: StaffEntryScope | string) {
-  return request<{ notes: SessionNote[] }>(`/api/session-notes?${staffScopeQuery(scope)}`)
+    return request<{ notes: SessionNote[] }>(
+        `/api/session-notes?${staffScopeQuery(scope)}`,
+    );
 }
 
 export function createSessionNote(body: Record<string, unknown>) {
-  return request<{ note: SessionNote }>('/api/session-notes', { method: 'POST', body })
+    return request<{ note: SessionNote }>("/api/session-notes", {
+        method: "POST",
+        body,
+    });
 }
 
 export function updateSessionNote(id: string, body: Record<string, unknown>) {
-  return request<{ note: SessionNote }>(`/api/session-notes/${encodeURIComponent(id)}`, { method: 'PATCH', body })
+    return request<{ note: SessionNote }>(
+        `/api/session-notes/${encodeURIComponent(id)}`,
+        { method: "PATCH", body },
+    );
 }
 
 export function fetchSessionReports(scope: StaffEntryScope) {
-  return request<{ reports: SessionReport[] }>(`/api/session-reports?${staffScopeQuery(scope)}`)
+    return request<{ reports: SessionReport[] }>(
+        `/api/session-reports?${staffScopeQuery(scope)}`,
+    );
 }
 
-export function createSessionReport(body: { session_id: string; title: string; report_data: unknown }) {
-  return request<{ report: SessionReport }>('/api/session-reports', { method: 'POST', body })
+export function createSessionReport(
+    body: { session_id: string; title: string; report_data: unknown },
+) {
+    return request<{ report: SessionReport }>("/api/session-reports", {
+        method: "POST",
+        body,
+    });
 }
 
-export function updateSessionReport(id: string, body: { title: string; report_data: unknown }) {
-  return request<{ report: SessionReport }>(`/api/session-reports/${encodeURIComponent(id)}`, { method: 'PATCH', body })
+export function updateSessionReport(
+    id: string,
+    body: { title: string; report_data: unknown },
+) {
+    return request<{ report: SessionReport }>(
+        `/api/session-reports/${encodeURIComponent(id)}`,
+        { method: "PATCH", body },
+    );
 }
 
 export function deleteSessionReport(id: string) {
-  return request<void>(`/api/session-reports/${encodeURIComponent(id)}`, { method: 'DELETE' })
+    return request<void>(`/api/session-reports/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+    });
 }
 
 export function createPlannerShare(body: {
-  dataset: PlannerDataset
-  displayName: string
-  locationOverrides: Record<string, string>
-  callbackPhoneNumber: string
-  ccEmail: string
+    dataset: PlannerDataset;
+    displayName: string;
+    locationOverrides: Record<string, string>;
+    callbackPhoneNumber: string;
+    ccEmail: string;
 }) {
-  return request<PlannerShareJoinResponse>('/api/planner-shares', {
-    method: 'POST',
-    body,
-  })
+    return request<PlannerShareJoinResponse>("/api/planner-shares", {
+        method: "POST",
+        body,
+    });
 }
 
 export function joinPlannerShare(code: string, body: { displayName: string }) {
-  return request<PlannerShareJoinResponse>(`/api/planner-shares/${encodeURIComponent(code)}/join`, {
-    method: 'POST',
-    body,
-  })
+    return request<PlannerShareJoinResponse>(
+        `/api/planner-shares/${encodeURIComponent(code)}/join`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function fetchPlannerShare(code: string, participantId: string) {
-  const params = new URLSearchParams({ participantId })
-  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}?${params.toString()}`)
+    const params = new URLSearchParams({ participantId });
+    return request<{ session: PlannerShareSession }>(
+        `/api/planner-shares/${encodeURIComponent(code)}?${params.toString()}`,
+    );
 }
 
-export function heartbeatPlannerShare(code: string, body: { participantId: string }) {
-  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/heartbeat`, {
-    method: 'POST',
-    body,
-  })
+export function heartbeatPlannerShare(
+    code: string,
+    body: { participantId: string },
+) {
+    return request<{ session: PlannerShareSession }>(
+        `/api/planner-shares/${encodeURIComponent(code)}/heartbeat`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
-export function leavePlannerShare(code: string, body: { participantId: string }) {
-  return request<void>(`/api/planner-shares/${encodeURIComponent(code)}/leave`, {
-    method: 'POST',
-    body,
-  })
+export function leavePlannerShare(
+    code: string,
+    body: { participantId: string },
+) {
+    return request<void>(
+        `/api/planner-shares/${encodeURIComponent(code)}/leave`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
-export function closePlannerShare(code: string, body: { participantId: string }) {
-  return request<void>(`/api/planner-shares/${encodeURIComponent(code)}/close`, {
-    method: 'POST',
-    body,
-  })
+export function closePlannerShare(
+    code: string,
+    body: { participantId: string },
+) {
+    return request<void>(
+        `/api/planner-shares/${encodeURIComponent(code)}/close`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function updatePlannerShareClassStatus(
-  code: string,
-  body: { participantId: string; classKey: string; status: PlannerClassStatus }
+    code: string,
+    body: {
+        participantId: string;
+        classKey: string;
+        status: PlannerClassStatus;
+    },
 ) {
-  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/class-status`, {
-    method: 'POST',
-    body,
-  })
+    return request<{ session: PlannerShareSession }>(
+        `/api/planner-shares/${encodeURIComponent(code)}/class-status`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function updatePlannerShareClassLanes(
-  code: string,
-  body: { participantId: string; classLaneIndexes: Record<string, number> }
+    code: string,
+    body: { participantId: string; classLaneIndexes: Record<string, number> },
 ) {
-  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/class-lanes`, {
-    method: 'POST',
-    body,
-  })
+    return request<{ session: PlannerShareSession }>(
+        `/api/planner-shares/${encodeURIComponent(code)}/class-lanes`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function updatePlannerShareClassMove(
-  code: string,
-  body: {
-    participantId: string
-    classKey: string
-    plannedMoveType: PlannerClassMoveType
-    plannedMoveTime: string
-    plannedMoveTargetClassKey: string
-  },
+    code: string,
+    body: {
+        participantId: string;
+        classKey: string;
+        plannedMoveType: PlannerClassMoveType;
+        plannedMoveTime: string;
+        plannedMoveTargetClassKey: string;
+    },
 ) {
-  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/class-move`, {
-    method: 'POST',
-    body,
-  })
+    return request<{ session: PlannerShareSession }>(
+        `/api/planner-shares/${encodeURIComponent(code)}/class-move`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function updatePlannerShareClassMetadata(
-  code: string,
-  body: { participantId: string; classKey: string; barcodeCancelledAt: string }
+    code: string,
+    body: {
+        participantId: string;
+        classKey: string;
+        barcodeCancelledAt: string;
+    },
 ) {
-  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/class-metadata`, {
-    method: 'POST',
-    body,
-  })
+    return request<{ session: PlannerShareSession }>(
+        `/api/planner-shares/${encodeURIComponent(code)}/class-metadata`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function updatePlannerShareCallRecord(
-  code: string,
-  body: { participantId: string; participantRecordId: string; update: PlannerCallRecordUpdate }
+    code: string,
+    body: {
+        participantId: string;
+        participantRecordId: string;
+        update: PlannerCallRecordUpdate;
+    },
 ) {
-  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/call-record`, {
-    method: 'POST',
-    body,
-  })
+    return request<{ session: PlannerShareSession }>(
+        `/api/planner-shares/${encodeURIComponent(code)}/call-record`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function updatePlannerShareDetails(
-  code: string,
-  body: {
-    participantId: string
-    locationOverrides: Record<string, string>
-    callbackPhoneNumber: string
-    ccEmail: string
-  }
+    code: string,
+    body: {
+        participantId: string;
+        locationOverrides: Record<string, string>;
+        callbackPhoneNumber: string;
+        ccEmail: string;
+    },
 ) {
-  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/details`, {
-    method: 'POST',
-    body,
-  })
+    return request<{ session: PlannerShareSession }>(
+        `/api/planner-shares/${encodeURIComponent(code)}/details`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function applyPlannerShareSaveState(
-  code: string,
-  body: {
-    participantId: string
-    classStatuses: Record<string, PlannerClassStatus>
-    classLaneIndexes: Record<string, number>
-    classMoves: Record<
-      string,
-      {
-        plannedMoveType: PlannerClassMoveType
-        plannedMoveTime: string
-        plannedMoveTargetClassKey: string
-      }
-    >
-    classBarcodeCancelledAt: Record<string, string>
-    callRecords: Record<string, PlannerCallRecordUpdate>
-    locationOverrides: Record<string, string>
-    callbackPhoneNumber: string
-  },
+    code: string,
+    body: {
+        participantId: string;
+        classStatuses: Record<string, PlannerClassStatus>;
+        classLaneIndexes: Record<string, number>;
+        classMoves: Record<
+            string,
+            {
+                plannedMoveType: PlannerClassMoveType;
+                plannedMoveTime: string;
+                plannedMoveTargetClassKey: string;
+            }
+        >;
+        classBarcodeCancelledAt: Record<string, string>;
+        callRecords: Record<string, PlannerCallRecordUpdate>;
+        locationOverrides: Record<string, string>;
+        callbackPhoneNumber: string;
+    },
 ) {
-  return request<{ session: PlannerShareSession }>(`/api/planner-shares/${encodeURIComponent(code)}/save-state`, {
-    method: 'POST',
-    body,
-  })
+    return request<{ session: PlannerShareSession }>(
+        `/api/planner-shares/${encodeURIComponent(code)}/save-state`,
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function deleteSessionNote(id: string) {
-  return request<void>(`/api/session-notes/${encodeURIComponent(id)}`, { method: 'DELETE' })
+    return request<void>(`/api/session-notes/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+    });
 }
 
 export function fetchReportCardTotals(teamId: string, sessionLabel: string) {
-  const params = new URLSearchParams({ session: sessionLabel, teamId })
-  return request<{ totals: any[] }>(`/api/report-cards/totals?${params.toString()}`)
+    const params = new URLSearchParams({ session: sessionLabel, teamId });
+    return request<{ totals: any[] }>(
+        `/api/report-cards/totals?${params.toString()}`,
+    );
 }
 
 export function syncReportCards(body: Record<string, unknown>) {
-  return request<{ status: 'synced' | 'blocked_unassigned' | 'empty' }>('/api/report-cards/sync', {
-    method: 'POST',
-    body,
-  })
+    return request<{ status: "synced" | "blocked_unassigned" | "empty" }>(
+        "/api/report-cards/sync",
+        {
+            method: "POST",
+            body,
+        },
+    );
 }
 
 export function fetchSchematic(sessionId: string) {
-  return request<{ schematic: { session_id: string; data: { codes?: string[]; instructors?: string[] } } | null }>(
-    `/api/schematics/${encodeURIComponent(sessionId)}`,
-  )
+    return request<
+        {
+            schematic: {
+                session_id: string;
+                data: { codes?: string[]; instructors?: string[] };
+            } | null;
+        }
+    >(
+        `/api/schematics/${encodeURIComponent(sessionId)}`,
+    );
 }
 
 export function fetchSchematics(sessionIds: string[]) {
-  const params = new URLSearchParams({ sessionIds: sessionIds.join(',') })
-  return request<{ schematics: Array<{ session_id: string; data: { codes?: string[]; instructors?: string[] } | null }> }>(
-    `/api/schematics?${params.toString()}`,
-  )
+    const params = new URLSearchParams({ sessionIds: sessionIds.join(",") });
+    return request<
+        {
+            schematics: Array<
+                {
+                    session_id: string;
+                    data: { codes?: string[]; instructors?: string[] } | null;
+                }
+            >;
+        }
+    >(
+        `/api/schematics?${params.toString()}`,
+    );
 }
 
-export function upsertSchematic(sessionId: string, data: { codes: string[]; instructors: string[]; assignmentIds?: string[]; instructorIds?: (string | null)[]; assignments?: unknown[] }) {
-  return request<{ schematic: any }>(`/api/schematics/${encodeURIComponent(sessionId)}`, {
-    method: 'PUT',
-    body: { data },
-  })
+export function upsertSchematic(
+    sessionId: string,
+    data: {
+        codes: string[];
+        instructors: string[];
+        assignmentIds?: string[];
+        instructorIds?: (string | null)[];
+        assignments?: unknown[];
+    },
+) {
+    return request<{ schematic: any }>(
+        `/api/schematics/${encodeURIComponent(sessionId)}`,
+        {
+            method: "PUT",
+            body: { data },
+        },
+    );
 }
 
 export function fetchRosterEdits(sessionId: string) {
-  return request<{
-    rosterEdits: Array<{ code: string; level: string }>
-    studentEdits: Array<{ code: string; student_name_hash: string; level: string }>
-  }>(`/api/roster-edits?sessionId=${encodeURIComponent(sessionId)}`)
+    return request<{
+        rosterEdits: Array<{ code: string; level: string }>;
+        studentEdits: Array<
+            { code: string; student_name_hash: string; level: string }
+        >;
+    }>(`/api/roster-edits?sessionId=${encodeURIComponent(sessionId)}`);
 }
 
 export function upsertRosterLevelEdit(body: Record<string, unknown>) {
-  return request<void>('/api/roster-edits/level', { method: 'POST', body })
+    return request<void>("/api/roster-edits/level", { method: "POST", body });
 }
 
 export function upsertRosterStudentLevelEdit(body: Record<string, unknown>) {
-  return request<void>('/api/roster-edits/student', { method: 'POST', body })
+    return request<void>("/api/roster-edits/student", { method: "POST", body });
 }
 
 export type DeviceShareStarted = {
-  id: string
-  hostToken: string
-  codes: Array<{ instructor: string; code: string }>
-  expiresAt: string
-}
+    id: string;
+    hostToken: string;
+    codes: Array<{ instructor: string; code: string }>;
+    expiresAt: string;
+};
 
-export function createDeviceShare(packages: Array<{ instructor: string; package: unknown }>) {
-  return request<DeviceShareStarted>('/api/device-shares', { method: 'POST', body: { packages } })
+export function createDeviceShare(
+    packages: Array<{ instructor: string; package: unknown }>,
+) {
+    return request<DeviceShareStarted>("/api/device-shares", {
+        method: "POST",
+        body: { packages },
+    });
 }
 
 export function heartbeatDeviceShare(id: string, hostToken: string) {
-  return request<{ expiresAt: string }>(`/api/device-shares/${encodeURIComponent(id)}/heartbeat`, { method: 'POST', body: { hostToken } })
+    return request<{ expiresAt: string }>(
+        `/api/device-shares/${encodeURIComponent(id)}/heartbeat`,
+        { method: "POST", body: { hostToken } },
+    );
 }
 
 export function closeDeviceShare(id: string, hostToken: string) {
-  return request<void>(`/api/device-shares/${encodeURIComponent(id)}/close`, { method: 'POST', body: { hostToken }, keepalive: true })
+    return request<void>(`/api/device-shares/${encodeURIComponent(id)}/close`, {
+        method: "POST",
+        body: { hostToken },
+        keepalive: true,
+    });
 }
 
 export function searchLinkableProfiles(sessionId: string, query: string) {
- const params = new URLSearchParams({ q: query })
- return request<{ results: AccountProfile[] }>(`/api/sessions/${encodeURIComponent(sessionId)}/linkable-profiles?${params}`)
+    const params = new URLSearchParams({ q: query });
+    return request<{ results: AccountProfile[] }>(
+        `/api/sessions/${
+            encodeURIComponent(sessionId)
+        }/linkable-profiles?${params}`,
+    );
 }
-export type InstructorAssignment = { id: string; name: string; account_id: string | null; account: AccountProfile | null }
+export type InstructorAssignment = {
+    id: string;
+    name: string;
+    account_id: string | null;
+    account: AccountProfile | null;
+};
 export function fetchInstructorAssignments(sessionId: string) {
- return request<{assignments: InstructorAssignment[]}>(`/api/sessions/${encodeURIComponent(sessionId)}/instructor-assignments`)
+    return request<{ assignments: InstructorAssignment[] }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/instructor-assignments`,
+    );
 }
-export function linkInstructorAssignment(sessionId: string, id: string, account_id: string | null) {
- return request<{assignments: InstructorAssignment[]}>(`/api/sessions/${encodeURIComponent(sessionId)}/instructor-assignments/${encodeURIComponent(id)}`, {method:'PATCH',body:{account_id}})
+export function linkInstructorAssignment(
+    sessionId: string,
+    id: string,
+    account_id: string | null,
+) {
+    return request<{ assignments: InstructorAssignment[] }>(
+        `/api/sessions/${
+            encodeURIComponent(sessionId)
+        }/instructor-assignments/${encodeURIComponent(id)}`,
+        { method: "PATCH", body: { account_id } },
+    );
 }
 
 export type InstructorSession = {
- id: string; session_day: string; session_season: string | null; session_year: number | null;
- location: string | null; start_date: string | null; end_date: string | null; weeks: string[];
- session_start_time24?: string | null; session_end_time24?: string | null
-}
+    id: string;
+    session_day: string;
+    session_season: string | null;
+    session_year: number | null;
+    location: string | null;
+    start_date: string | null;
+    end_date: string | null;
+    weeks: string[];
+    session_start_time24?: string | null;
+    session_end_time24?: string | null;
+};
 export type InstructorClass = {
- id: string; session_id: string; assignment_id: string; instructor: string; code: string;
- level: string; start_time: string; end_time: string
-}
+    id: string;
+    session_id: string;
+    assignment_id: string;
+    instructor: string;
+    code: string;
+    level: string;
+    start_time: string;
+    end_time: string;
+};
 export function fetchInstructorSessions() {
- return request<{sessions: InstructorSession[]}>('/api/instructor/sessions')
+    return request<{ sessions: InstructorSession[] }>(
+        "/api/instructor/sessions",
+    );
 }
 export function fetchInstructorClasses(sessionId: string) {
- return request<{classes: InstructorClass[]}>(`/api/instructor/sessions/${encodeURIComponent(sessionId)}/classes`)
+    return request<{ classes: InstructorClass[] }>(
+        `/api/instructor/sessions/${encodeURIComponent(sessionId)}/classes`,
+    );
 }
 
-export type LessonRow = {skill: string; activity: string; location: string; duration: number; workout?: Workout}
-export type LessonPlan = {session_id: string; class_id: string; week: string; rows: LessonRow[]; curriculum_level?: string | null; updated_at: string}
-export function fetchLessonPlan(session: string, classId: string, week: string) {
- return request<{plan: LessonPlan | null}>(`/api/instructor/sessions/${encodeURIComponent(session)}/classes/${encodeURIComponent(classId)}/plans/${encodeURIComponent(week)}`)
+export type LessonRow = {
+    skill: string;
+    activity: string;
+    location: string;
+    duration: number;
+    workout?: Workout;
+};
+export type LessonPlan = {
+    session_id: string;
+    class_id: string;
+    week: string;
+    rows: LessonRow[];
+    curriculum_level?: string | null;
+    updated_at: string;
+};
+export function fetchLessonPlan(
+    session: string,
+    classId: string,
+    week: string,
+) {
+    return request<{ plan: LessonPlan | null }>(
+        `/api/instructor/sessions/${encodeURIComponent(session)}/classes/${
+            encodeURIComponent(classId)
+        }/plans/${encodeURIComponent(week)}`,
+    );
 }
-export function saveLessonPlan(session: string, classId: string, week: string, rows: LessonRow[], curriculumLevel?: string | null) {
- return request<{plan: LessonPlan}>(`/api/instructor/sessions/${encodeURIComponent(session)}/classes/${encodeURIComponent(classId)}/plans/${encodeURIComponent(week)}`,{method:'PUT',body:{rows,...(curriculumLevel !== undefined ? {curriculum_level:curriculumLevel} : {})}})
+export function saveLessonPlan(
+    session: string,
+    classId: string,
+    week: string,
+    rows: LessonRow[],
+    curriculumLevel?: string | null,
+) {
+    return request<{ plan: LessonPlan }>(
+        `/api/instructor/sessions/${encodeURIComponent(session)}/classes/${
+            encodeURIComponent(classId)
+        }/plans/${encodeURIComponent(week)}`,
+        {
+            method: "PUT",
+            body: {
+                rows,
+                ...(curriculumLevel !== undefined
+                    ? { curriculum_level: curriculumLevel }
+                    : {}),
+            },
+        },
+    );
 }
 
 export type SessionInstructor = {
- id: string
- name: string
- account_id: string | null
- account: AccountProfile | null
- class_count: number
-}
+    id: string;
+    name: string;
+    account_id: string | null;
+    account: AccountProfile | null;
+    class_count: number;
+};
 export function fetchSessionInstructors(sessionId: string) {
- return request<{ instructors: SessionInstructor[] }>(`/api/sessions/${encodeURIComponent(sessionId)}/instructors`)
+    return request<{ instructors: SessionInstructor[] }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/instructors`,
+    );
 }

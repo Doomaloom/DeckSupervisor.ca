@@ -1,13 +1,16 @@
-export { buildAttendancePrintDocument, groupAttendancePrintItems } from './buildAttendancePrintDocument'
-export { openAttendancePrintWindow } from './openAttendancePrintWindow'
-export { printAttendanceHtml } from './printAttendanceHtml'
-export { loadAttendanceTemplate } from './templateRegistry'
+export {
+    buildAttendancePrintDocument,
+    groupAttendancePrintItems,
+} from "./buildAttendancePrintDocument";
+export { openAttendancePrintWindow } from "./openAttendancePrintWindow";
+export { printAttendanceHtml } from "./printAttendanceHtml";
+export { loadAttendanceTemplate } from "./templateRegistry";
 export type {
-  AttendancePrintItem,
-  AttendancePrintOptions,
-  AttendancePrintRequest,
-  AttendancePrintResult,
-  AttendancePrintRoster,
-  AttendancePrintStudent,
-  AttendanceSchematicCoverOptions,
-} from './types'
+    AttendancePrintItem,
+    AttendancePrintOptions,
+    AttendancePrintRequest,
+    AttendancePrintResult,
+    AttendancePrintRoster,
+    AttendancePrintStudent,
+    AttendanceSchematicCoverOptions,
+} from "./types";

@@ -1,36 +1,128 @@
-import { useNavigate } from 'react-router-dom'
-import { Card, PageShell, Notice, ActionButton, EmptyState } from '../../general-components'
-import { useInstructorSession } from './InstructorSessionContext'
-import { compareSessionDays, SESSION_DAY_LABELS } from '../../shared/session/sessionDays'
-import { getDayLabel } from '../../shared/session/sessionLabels'
-import { sessionLabel } from './useInstructorClasses'
-import type { InstructorSession } from '../../lib/serverApi'
+import { useNavigate } from "react-router-dom";
+import {
+    ActionButton,
+    Card,
+    EmptyState,
+    Notice,
+    PageShell,
+} from "../../general-components";
+import { useInstructorSession } from "./InstructorSessionContext";
+import {
+    compareSessionDays,
+    SESSION_DAY_LABELS,
+} from "../../shared/session/sessionDays";
+import { getDayLabel } from "../../shared/session/sessionLabels";
+import { sessionLabel } from "./useInstructorClasses";
+import type { InstructorSession } from "../../lib/serverApi";
 
 function normalizedDay(day: string) {
- const trimmed=day.trim()
- return Object.entries(SESSION_DAY_LABELS).find(([key,label])=>key.toLowerCase()===trimmed.toLowerCase() || label.toLowerCase()===trimmed.toLowerCase())?.[0] ?? trimmed
+    const trimmed = day.trim();
+    return Object.entries(SESSION_DAY_LABELS).find(([key, label]) =>
+        key.toLowerCase() === trimmed.toLowerCase() ||
+        label.toLowerCase() === trimmed.toLowerCase()
+    )?.[0] ?? trimmed;
 }
 export function groupInstructorSessions(sessions: InstructorSession[]) {
- const groups=new Map<string,InstructorSession[]>()
- for(const session of sessions){const day=normalizedDay(session.session_day);groups.set(day,[...(groups.get(day) ?? []),session])}
- return [...groups].sort(([a],[b])=>compareSessionDays(a,b)).map(([day,items])=>({day,label:getDayLabel(day)||'Other sessions',sessions:items.sort((a,b)=>(a.start_date||'9999').localeCompare(b.start_date||'9999') || sessionLabel(a).localeCompare(sessionLabel(b)) || (a.location||'').localeCompare(b.location||'') || a.id.localeCompare(b.id))}))
+    const groups = new Map<string, InstructorSession[]>();
+    for (const session of sessions) {
+        const day = normalizedDay(session.session_day);
+        groups.set(day, [...(groups.get(day) ?? []), session]);
+    }
+    return [...groups].sort(([a], [b]) => compareSessionDays(a, b)).map((
+        [day, items],
+    ) => ({
+        day,
+        label: getDayLabel(day) || "Other sessions",
+        sessions: items.sort((a, b) =>
+            (a.start_date || "9999").localeCompare(b.start_date || "9999") ||
+            sessionLabel(a).localeCompare(sessionLabel(b)) ||
+            (a.location || "").localeCompare(b.location || "") ||
+            a.id.localeCompare(b.id)
+        ),
+    }));
 }
 export default function InstructorHome() {
- const state=useInstructorSession()
- const navigate=useNavigate()
- return <PageShell><Card className="flex min-w-0 flex-col gap-6">
- <h2 className="text-2xl font-semibold">Home</h2>
- <p className="text-lg font-semibold">Select a session</p>
- {state.sessionsLoading && <p role="status">Loading sessions…</p>}
- {state.sessionError && <Notice tone="danger" role="alert">{state.sessionError} <ActionButton onClick={state.refresh}>Retry sessions</ActionButton></Notice>}
- {!state.sessionsLoading && !state.sessionError && (state.sessions.length ? groupInstructorSessions(state.sessions).map(group=><section key={group.day} className="min-w-0">
- <h3 className="mb-3 text-lg font-semibold">{group.label}</h3>
- <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">{group.sessions.map(session=><button key={session.id} type="button" aria-pressed={state.sessionId===session.id} onClick={()=>{state.selectSession(session.id);navigate(`/instructor/my-classes?session=${encodeURIComponent(session.id)}`)}} className={`flex w-full min-w-0 flex-col gap-2 break-words rounded-card border-2 bg-accent p-5 text-left text-secondary shadow-md transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${state.sessionId===session.id?'border-secondary':'border-secondary/20'}`}>
- <span className="text-lg font-semibold">{sessionLabel(session)}</span>
- <span>{session.start_date || 'Start date not set'} – {session.end_date || 'End date not set'}</span>
- <span className="text-sm text-secondary/70">{session.location || 'No location set'}</span>
- {state.sessionId===session.id && <span>Current session</span>}
- </button>)}</div>
- </section>) : <EmptyState>No sessions are linked to your account. Ask your supervisor to link your staff account to a saved schematic column.</EmptyState>)}
- </Card></PageShell>
+    const state = useInstructorSession();
+    const navigate = useNavigate();
+    return (
+        <PageShell>
+            <Card className="flex min-w-0 flex-col gap-6">
+                <h2 className="text-2xl font-semibold">Home</h2>
+                <p className="text-lg font-semibold">Select a session</p>
+                {state.sessionsLoading && (
+                    <p role="status">
+                        Loading sessions…
+                    </p>
+                )}
+                {state.sessionError && (
+                    <Notice tone="danger" role="alert">
+                        {state.sessionError}{" "}
+                        <ActionButton onClick={state.refresh}>
+                            Retry sessions
+                        </ActionButton>
+                    </Notice>
+                )}
+                {!state.sessionsLoading && !state.sessionError &&
+                    (state.sessions.length
+                        ? groupInstructorSessions(state.sessions).map((
+                            group,
+                        ) => (
+                            <section key={group.day} className="min-w-0">
+                                <h3 className="mb-3 text-lg font-semibold">
+                                    {group.label}
+                                </h3>
+                                <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+                                    {group.sessions.map((session) => (
+                                        <button
+                                            key={session.id}
+                                            type="button"
+                                            aria-pressed={state.sessionId ===
+                                                session.id}
+                                            onClick={() => {
+                                                state.selectSession(session.id);
+                                                navigate(
+                                                    `/instructor/my-classes?session=${
+                                                        encodeURIComponent(
+                                                            session.id,
+                                                        )
+                                                    }`,
+                                                );
+                                            }}
+                                            className={`flex w-full min-w-0 flex-col gap-2 break-words rounded-card border-2 bg-accent p-5 text-left text-secondary shadow-md transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                                                state.sessionId === session.id
+                                                    ? "border-secondary"
+                                                    : "border-secondary/20"
+                                            }`}
+                                        >
+                                            <span className="text-lg font-semibold">
+                                                {sessionLabel(session)}
+                                            </span>
+                                            <span>
+                                                {session.start_date ||
+                                                    "Start date not set"} –{" "}
+                                                {session.end_date ||
+                                                    "End date not set"}
+                                            </span>
+                                            <span className="text-sm text-secondary/70">
+                                                {session.location ||
+                                                    "No location set"}
+                                            </span>
+                                            {state.sessionId === session.id && (
+                                                <span>Current session</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
+                        ))
+                        : (
+                            <EmptyState>
+                                No sessions are linked to your account. Ask your
+                                supervisor to link your staff account to a saved
+                                schematic column.
+                            </EmptyState>
+                        ))}
+            </Card>
+        </PageShell>
+    );
 }

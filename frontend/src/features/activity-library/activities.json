@@ -1,1960 +1,1960 @@
 [
-  {
-    "id": "songs-baby-beluga",
-    "category": "Songs",
-    "title": "Baby Beluga",
-    "instructions": "An ocean-themed song about a young whale swimming, diving, and splashing. Use as a song or spoken rhyme; the source does not specify a movement sequence.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      1
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-bullfrog",
-    "category": "Songs",
-    "title": "Bullfrog",
-    "instructions": "Use the frog rhyme to cue a jump into the water at the final splash. The story moves from a frog sitting on a rock to its sudden jump.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      1
-    ],
-    "skillIds": [
-      "LittleSplash1:2",
-      "LittleSplash2:2",
-      "ParentandTot3:1",
-      "ParentandTot3:7",
-      "Splash1:2"
-    ]
-  },
-  {
-    "id": "songs-clean-up-song",
-    "category": "Songs",
-    "title": "Clean up song",
-    "instructions": "A short group song to accompany tidying equipment together.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      1
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-did-you-ever-see-a-laddie",
-    "category": "Songs",
-    "title": "Did you ever see a Laddie?",
-    "instructions": "A directional song built around moving one way and then the other. For the second verse, change the character from a laddie to a lassie.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      1
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-do-your-ears-hang-low",
-    "category": "Songs",
-    "title": "Do your ears hang low?",
-    "instructions": "Act out the ear movements described by each verse. Repeat the song with progressively faster actions.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      1
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-five-little-ducks",
-    "category": "Songs",
-    "title": "Five Little Ducks",
-    "instructions": "Count five ducks and describe their different reactions to swimming. When the motorboat arrives, blow bubbles to imitate its sound, then have the ducks swim away.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      1
-    ],
-    "skillIds": [
-      "LittleSplash1:4",
-      "LittleSplash2:4",
-      "LittleSplash3:4",
-      "ParentandTot2:3",
-      "Splash1:5"
-    ]
-  },
-  {
-    "id": "songs-five-little-fishes",
-    "category": "Songs",
-    "title": "Five Little Fishes",
-    "instructions": "A counting rhyme in which five fish gradually leave their group until none remain. The source describes swimming and diving but gives no separate action instructions.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      1
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-five-little-frogs",
-    "category": "Songs",
-    "title": "Five Little Frogs",
-    "instructions": "A counting song about frogs leaving a log for the pool. Repeat with one fewer frog each time until no frogs remain.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      1
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-going-on-a-lion-hunt-1",
-    "category": "Songs",
-    "title": "Going on a Lion Hunt (1)",
-    "instructions": "Act out a journey through imaginary obstacles. Start with tall grass, then substitute mud, a mountain, a lake, or a cave. On finding the lion in the cave, retrace the obstacles on the way back.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      1
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-going-on-a-lion-hunt-2",
-    "category": "Songs",
-    "title": "Going on a Lion Hunt (2)",
-    "instructions": "Begin with hands at the eyes, then pretend to hold suspenders. Indicate a teddy on one side and a buddy on the other. Put hands on cheeks when an obstacle appears. Push water down for going over, up for going under, and together for going around. Move across the pool using the action chosen for the obstacle: swim through a swamp, climb a mountain, swing through a forest, or enter a cave.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      1,
-      2
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-hands-up-hands-down",
-    "category": "Songs",
-    "title": "Hands Up, Hands Down",
-    "instructions": "Lead an action sequence: raise and lower hands with splashes, move hands in and out and shake them, push and pull a toy, alternate big and small kicks, then alternate quiet and loud bubbles.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash1:4",
-      "LittleSplash2:4",
-      "LittleSplash2:8",
-      "LittleSplash3:10",
-      "LittleSplash3:11",
-      "LittleSplash3:4",
-      "ParentandTot1:8",
-      "ParentandTot1:9",
-      "ParentandTot2:3",
-      "ParentandTot2:9",
-      "ParentandTot3:11",
-      "Splash1:5",
-      "Splash1:9"
-    ]
-  },
-  {
-    "id": "songs-hickory-dickory-dock",
-    "category": "Songs",
-    "title": "Hickory Dickory Dock",
-    "instructions": "Sway during the clock refrain. Move into the middle as the mouse climbs, clap once when the clock strikes, move back out as the mouse descends, and finish by swaying.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-humpty-dumpty",
-    "category": "Songs",
-    "title": "Humpty Dumpty",
-    "instructions": "Have swimmers sit on the pool edge with hands held forward to suggest a large tummy. Cue their entry into the water and a front float at the fall in the rhyme.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash1:1",
-      "LittleSplash1:2",
-      "LittleSplash1:5",
-      "LittleSplash2:1",
-      "LittleSplash2:2",
-      "LittleSplash2:5",
-      "LittleSplash3:7",
-      "ParentandTot1:5",
-      "ParentandTot1:6",
-      "ParentandTot2:1",
-      "ParentandTot2:7",
-      "ParentandTot2:8",
-      "ParentandTot3:1",
-      "ParentandTot3:7",
-      "ParentandTot3:9",
-      "Splash1:1",
-      "Splash1:2",
-      "Splash1:6"
-    ]
-  },
-  {
-    "id": "songs-i-m-a-little-pancake",
-    "category": "Songs",
-    "title": "I'm a Little Pancake",
-    "instructions": "Use the tune of “I’m a Little Tea Pot.” The rhyme describes a pancake lying flat on its back and then turning over. Pair the change in the story with the float and roll being practised.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash1:5",
-      "LittleSplash2:5",
-      "LittleSplash2:6",
-      "LittleSplash3:7",
-      "LittleSplash3:8",
-      "ParentandTot1:5",
-      "ParentandTot1:6",
-      "ParentandTot2:7",
-      "ParentandTot2:8",
-      "ParentandTot3:9",
-      "Splash1:6",
-      "Splash1:7"
-    ]
-  },
-  {
-    "id": "songs-i-m-being-swallowed-by-a-boa-constrictor",
-    "category": "Songs",
-    "title": "I'm being Swallowed by a Boa Constrictor",
-    "instructions": "A body-awareness rhyme that progresses upward from toes to head. The source names body parts but does not provide a separate swimming action sequence.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-itsy-bitsy-spider",
-    "category": "Songs",
-    "title": "Itsy Bitsy Spider",
-    "instructions": "A familiar rhyme about a spider climbing, being washed down by rain, and climbing again. The source gives no separate pool actions.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-jack-and-jill",
-    "category": "Songs",
-    "title": "Jack and Jill",
-    "instructions": "Start seated on the pool edge and mime scooping water. The source cues the boys to enter, followed by the girls, as the two characters tumble.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash1:1",
-      "LittleSplash1:2",
-      "LittleSplash2:1",
-      "LittleSplash2:2",
-      "ParentandTot2:1",
-      "ParentandTot3:1",
-      "ParentandTot3:7",
-      "Splash1:1",
-      "Splash1:2"
-    ]
-  },
-  {
-    "id": "songs-little-fish",
-    "category": "Songs",
-    "title": "Little Fish",
-    "instructions": "A short rhyme describing a fish moving its fins and swimming through the day and night. No separate technique instructions are supplied.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-little-frog",
-    "category": "Songs",
-    "title": "Little Frog",
-    "instructions": "A hopping frog rhyme with a jump into the water on the final cue.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash1:2",
-      "LittleSplash2:2",
-      "ParentandTot3:1",
-      "ParentandTot3:7",
-      "Splash1:2"
-    ]
-  },
-  {
-    "id": "songs-motor-boat-motor-boat",
-    "category": "Songs",
-    "title": "Motor Boat, Motor Boat",
-    "instructions": "A speed-change rhyme: begin slowly, accelerate, then stop as the imaginary motor runs out of fuel. The source leaves the choice of swimming movement to the instructor.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-my-aunt-greet",
-    "category": "Songs",
-    "title": "My Aunt Greet",
-    "instructions": "Use broad, rhythmic arm gestures at the water surface. Draw the outline of a large hat, pat the shape of a cat twice, sweep out a long tail twice, make two curls, and dot the surface with a fingertip. Repeat the same gesture whenever its object returns in the song. Keep the pace measured and the arm movements wide.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "ParentandTot1:8"
-    ]
-  },
-  {
-    "id": "songs-my-bonnie-lies-over-the-ocean",
-    "category": "Songs",
-    "title": "My Bonnie Lies over the Ocean",
-    "instructions": "An ocean-themed group song with a repeating refrain. The source does not specify pool actions or a skill progression.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-my-turtle",
-    "category": "Songs",
-    "title": "My Turtle",
-    "instructions": "A rhyme about a turtle extending its head to eat and drawing it back into its shell to sleep. No separate swimming instructions are supplied.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-old-macdonald-had-a-pond",
-    "category": "Songs",
-    "title": "Old MacDonald Had a Pond",
-    "instructions": "Use a pond variation of the familiar farm song. Begin with fish sounds and add verses about frogs, ducks, floating lily pads, and dragonflies.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-people-on-the-boat",
-    "category": "Songs",
-    "title": "People on the Boat",
-    "instructions": "Act out the boat sequence: move up and down, sweep like wipers, kick like motors, imitate horns, and sit on the bottom as anchors.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash1:3",
-      "LittleSplash2:3",
-      "LittleSplash2:8",
-      "LittleSplash3:10",
-      "LittleSplash3:11",
-      "ParentandTot1:2",
-      "ParentandTot1:9",
-      "ParentandTot2:4",
-      "ParentandTot2:9",
-      "ParentandTot3:11",
-      "ParentandTot3:2",
-      "Splash1:9"
-    ]
-  },
-  {
-    "id": "songs-purple-yellow",
-    "category": "Songs",
-    "title": "Purple Yellow",
-    "instructions": "A very short rhyme using an imaginary dip into jelly as its action cue.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash1:3",
-      "LittleSplash2:3",
-      "ParentandTot1:2",
-      "ParentandTot2:4",
-      "ParentandTot3:2"
-    ]
-  },
-  {
-    "id": "songs-ring-around-the-rosie",
-    "category": "Songs",
-    "title": "Ring around the Rosie",
-    "instructions": "A circle rhyme ending with a coordinated downward movement.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash1:3",
-      "LittleSplash2:3",
-      "ParentandTot1:2",
-      "ParentandTot2:4",
-      "ParentandTot3:2"
-    ]
-  },
-  {
-    "id": "songs-ring-around-the-hotdog",
-    "category": "Songs",
-    "title": "Ring around the Hotdog",
-    "instructions": "A food-themed circle rhyme that ends with pretending to retrieve pickles underwater.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash3:5",
-      "LittleSplash4:5",
-      "LittleSplash5:4",
-      "ParentandTot2:5",
-      "ParentandTot3:6",
-      "Splash2A:4"
-    ]
-  },
-  {
-    "id": "songs-ring-around-the-sundae",
-    "category": "Songs",
-    "title": "Ring around the Sundae",
-    "instructions": "A dessert-themed circle rhyme that ends with pretending to retrieve cherries underwater.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash3:5",
-      "LittleSplash4:5",
-      "LittleSplash5:4",
-      "ParentandTot2:5",
-      "ParentandTot3:6",
-      "Splash2A:4"
-    ]
-  },
-  {
-    "id": "songs-row-row-row-your-boat",
-    "category": "Songs",
-    "title": "Row, Row, Row your Boat",
-    "instructions": "Use rowing and swimming verses, then substitute kicking feet, stroking arms, and blowing bubbles as the repeated action.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash1:4",
-      "LittleSplash2:4",
-      "LittleSplash2:8",
-      "LittleSplash3:10",
-      "LittleSplash3:11",
-      "LittleSplash3:4",
-      "ParentandTot1:8",
-      "ParentandTot1:9",
-      "ParentandTot2:3",
-      "ParentandTot2:9",
-      "ParentandTot3:11",
-      "Splash1:5",
-      "Splash1:9"
-    ]
-  },
-  {
-    "id": "songs-shake-shake",
-    "category": "Songs",
-    "title": "Shake Shake",
-    "instructions": "Alternate a verse about shaking and wiggling with a verse about blowing bubbles; finish each verse with the wiggle action.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2
-    ],
-    "skillIds": [
-      "LittleSplash1:4",
-      "LittleSplash2:4",
-      "LittleSplash3:4",
-      "ParentandTot2:3",
-      "Splash1:5"
-    ]
-  },
-  {
-    "id": "songs-swimming-duck",
-    "category": "Songs",
-    "title": "Swimming Duck",
-    "instructions": "Describe a duck walking with a waddling movement and a quack, then reaching a puddle and swimming around. The ending continues on the following scanned page.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      2,
-      3
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-swimming-swimming",
-    "category": "Songs",
-    "title": "Swimming, Swimming",
-    "instructions": "A swimming-themed song naming different strokes and diving. The source does not prescribe an exercise sequence.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      3
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-teddy-bear-teddy-bear",
-    "category": "Songs",
-    "title": "Teddy Bear, Teddy Bear",
-    "instructions": "Lead the named actions in sequence: turn around, touch the ground, move the nose, touch the toes, reach upward, and wave goodbye.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      3
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-the-farmer-plants-his-corn",
-    "category": "Songs",
-    "title": "The Farmer Plants His Corn",
-    "instructions": "Start curled up as seeds. Add verses with actions for falling rain, growing slowly into tall plants, and falling down when the farmer harvests them.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      3
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "songs-three-little-monkeys-1",
-    "category": "Songs",
-    "title": "Three Little Monkeys (1)",
-    "instructions": "Show three fingers and move them sideways as the monkeys swing. Make a teasing face. Join hands underwater and move them as an alligator, then open and snap the hands together. Submerge to hide. Repeat with two monkeys and then one.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      3
-    ],
-    "skillIds": [
-      "LittleSplash1:3",
-      "LittleSplash2:3",
-      "ParentandTot1:2",
-      "ParentandTot2:4",
-      "ParentandTot3:2"
-    ]
-  },
-  {
-    "id": "songs-three-little-monkeys-2",
-    "category": "Songs",
-    "title": "Three Little Monkeys (2)",
-    "instructions": "Show three fingers and jump up and down. When a monkey falls, put part of the head in the water. Mime a telephone call, then wag a finger. Repeat with two monkeys and then one.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
-    "sourcePages": [
-      3
-    ],
-    "skillIds": [
-      "LittleSplash1:3",
-      "LittleSplash2:3",
-      "ParentandTot1:2",
-      "ParentandTot2:4",
-      "ParentandTot3:2"
-    ]
-  },
-  {
-    "id": "games-chop-chop-timber",
-    "category": "Games",
-    "title": "Chop, Chop, Timber",
-    "instructions": "Swimmers curl into a ball on the pool edge as seeds. Pretend to water them and add sunshine; they grow into tall trees with arms raised. The instructor cuts down each tree in turn, cueing that swimmer to jump or fall into the water.",
-    "sourcePages": [
-      3
-    ],
-    "skillIds": [
-      "LittleSplash1:1",
-      "LittleSplash1:2",
-      "LittleSplash2:1",
-      "LittleSplash2:2",
-      "ParentandTot2:1",
-      "ParentandTot3:1",
-      "ParentandTot3:7",
-      "Splash1:1",
-      "Splash1:2"
-    ]
-  },
-  {
-    "id": "games-one-two-three-go",
-    "category": "Games",
-    "title": "One-Two-Three, Go",
-    "instructions": "Line swimmers up on the pool edge. They enter only when the caller uses the exact “One-Two-Three, Go” cue and stay put for any other phrase. The last correctly timed jumper wins. Leave enough space between participants to prevent collisions during entry.",
-    "sourcePages": [
-      3
-    ],
-    "skillIds": [
-      "LittleSplash1:2",
-      "LittleSplash2:2",
-      "ParentandTot3:1",
-      "ParentandTot3:7",
-      "Splash1:2"
-    ]
-  },
-  {
-    "id": "games-water-smart-game",
-    "category": "Games",
-    "title": "Water Smart Game",
-    "instructions": "With swimmers on the edge, describe water-related situations, such as swimming alone or swimming under lifeguard supervision. For a safe situation, swimmers jump in. For an unsafe situation, they remain on the edge and shake their heads.",
-    "sourcePages": [
-      3
-    ],
-    "skillIds": [
-      "LittleSplash1:8",
-      "LittleSplash2:9",
-      "LittleSplash3:12",
-      "LittleSplash4:11",
-      "LittleSplash5:10",
-      "ParentandTot1:10",
-      "ParentandTot2:11",
-      "ParentandTot3:13",
-      "Splash1:11",
-      "Splash2A:10",
-      "Splash2B:10",
-      "Splash3:12",
-      "Splash4:10",
-      "Splash5:13",
-      "Splash6:13"
-    ]
-  },
-  {
-    "id": "games-what-time-is-it-mr-shark",
-    "category": "Games",
-    "title": "What Time is it Mr. Shark?",
-    "instructions": "Choose one participant as the shark at the opposite side of the pool. The other participants and instructor start together at an edge and ask the shark for the time. A numerical answer tells them how many steps to advance. At “lunchtime,” they return to touch their starting edge before being tagged. Tagged participants become sharks. The instructor may join the group but should avoid taking the shark role so they can continue watching everyone.",
-    "sourcePages": [
-      3
-    ],
-    "skillIds": []
-  },
-  {
-    "id": "drills-front-crawl-torpedo-kicking",
-    "category": "Drills",
-    "title": "Front crawl: Torpedo kicking",
-    "instructions": "Practise hip-led kicking while face down in a streamlined position. Increase the challenge with a less buoyant aid such as a floating brick or pull buoy. For more support, use a PFD, kickboard, shark fin, or noodle.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "LittleSplash4:10",
-      "LittleSplash4:9",
-      "LittleSplash5:7",
-      "Splash1:10-front-crawl-wearing-pfd-5-m",
-      "Splash1:9",
-      "Splash2A:6",
-      "Splash2A:7",
-      "Splash2A:8-front-crawl",
-      "Splash2A:9",
-      "Splash2B:6",
-      "Splash2B:8-2",
-      "Splash2B:8-front-crawl",
-      "Splash2B:9",
-      "Splash3:10-front-crawl",
-      "Splash3:11",
-      "Splash3:7",
-      "Splash3:8",
-      "Splash4:7-front-crawl",
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult1:13",
-      "TeenAdult1:15-front-crawl",
-      "TeenAdult1:16",
-      "TeenAdult2:10",
-      "TeenAdult2:14-front-crawl",
-      "TeenAdult2:15",
-      "TeenAdult2:9",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3",
-    "equipment": "Optional buoyant aid"
-  },
-  {
-    "id": "drills-front-crawl-side-kicking",
-    "category": "Drills",
-    "title": "Front crawl: Side kicking",
-    "instructions": "Lie on one side with the lower arm reaching past the head and the head resting on that shoulder. Look forward and kick quickly while keeping a taut, streamlined body. Practise on both sides to develop side breathing.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "Splash2B:8-2",
-      "Splash3:10-front-crawl",
-      "Splash4:7-front-crawl",
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult1:15-front-crawl",
-      "TeenAdult2:14-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 3-6; Adult 1-3"
-  },
-  {
-    "id": "drills-front-crawl-6-kick-switch",
-    "category": "Drills",
-    "title": "Front crawl: 6-kick switch",
-    "instructions": "Start streamlined on one side and take 6 kicks. Use one stroke to roll onto the other side, take another 6 kicks, and repeat. Work on bilateral breathing, body roll, and a continuous kick.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "Splash3:10-front-crawl",
-      "Splash4:7-front-crawl",
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult1:15-front-crawl",
-      "TeenAdult2:14-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 3-6; Adult 1-3"
-  },
-  {
-    "id": "drills-front-crawl-18-beaters",
-    "category": "Drills",
-    "title": "Front crawl: 18 beaters",
-    "instructions": "Start on one side with an arm extended overhead and take 6 kicks. Roll onto the front, extend both arms, and take 6 kicks. Use one underwater pull to turn onto the other side for 6 more kicks. Repeat, maintaining streamline in each position.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "Splash3:10-front-crawl",
-      "Splash4:7-front-crawl",
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult1:15-front-crawl",
-      "TeenAdult2:14-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 3-6; Adult 1-3"
-  },
-  {
-    "id": "drills-front-crawl-resistance-kicking",
-    "category": "Drills",
-    "title": "Front crawl: Resistance kicking",
-    "instructions": "Kick in a streamlined position using a kickboard or the wall. For resistance, hold half the board below the surface while kicking.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3",
-    "equipment": "Kickboard or pool wall"
-  },
-  {
-    "id": "drills-front-crawl-single-arm-front-crawl",
-    "category": "Drills",
-    "title": "Front crawl: Single-arm front crawl",
-    "instructions": "Keep one arm reaching forward while the other performs long, controlled strokes. Choose enough buoyancy to let the swimmer concentrate on the arm action. A floating brick or pull buoy adds difficulty; a PFD, kickboard, or noodle provides more support.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "LittleSplash4:10",
-      "LittleSplash5:7",
-      "Splash1:10-front-crawl-wearing-pfd-5-m",
-      "Splash2A:8-front-crawl",
-      "Splash2B:8-front-crawl",
-      "Splash3:10-front-crawl",
-      "Splash4:7-front-crawl",
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult1:15-front-crawl",
-      "TeenAdult2:14-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3",
-    "equipment": "Buoyant aid appropriate to swimmer"
-  },
-  {
-    "id": "drills-front-crawl-standing-front-crawl",
-    "category": "Drills",
-    "title": "Front crawl: Standing front crawl",
-    "instructions": "Rehearse the arm action while standing on the deck or in shallow water. Focus on introducing the movement before adding swimming.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "LittleSplash4:10",
-      "LittleSplash5:7",
-      "Splash1:10-front-crawl-wearing-pfd-5-m",
-      "Splash2A:8-front-crawl",
-      "Splash2B:8-front-crawl",
-      "TeenAdult1:15-front-crawl",
-      "TeenAdult2:14-front-crawl"
-    ],
-    "suitability": "Preschool 4-5; Swimmer 1-2; Adult 1-2"
-  },
-  {
-    "id": "drills-front-crawl-3-stroke-glide",
-    "category": "Drills",
-    "title": "Front crawl: 3-stroke glide",
-    "instructions": "Take 3 front crawl strokes. Pause on the third stroke to breathe, then continue the pattern to practise bilateral breathing.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "LittleSplash4:10",
-      "LittleSplash5:7",
-      "Splash1:10-front-crawl-wearing-pfd-5-m",
-      "Splash2A:8-front-crawl",
-      "Splash2B:8-front-crawl",
-      "Splash3:10-front-crawl",
-      "Splash4:7-front-crawl",
-      "TeenAdult1:15-front-crawl",
-      "TeenAdult2:14-front-crawl"
-    ],
-    "suitability": "Preschool 4-5; Swimmer 1-4; Adult 1-2"
-  },
-  {
-    "id": "drills-front-crawl-single-arm-roll-out",
-    "category": "Drills",
-    "title": "Front crawl: Single-arm roll out",
-    "instructions": "Begin face down in streamline. Pull one arm underwater past the hips while rolling onto the side. Breathe as that stroke finishes, then start recovering the arm. As the hand approaches the head, roll back onto the front and return the face to the water to exhale. Use technique appropriate to the swimmer’s level.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "LittleSplash4:10",
-      "LittleSplash5:7",
-      "Splash1:10-front-crawl-wearing-pfd-5-m",
-      "Splash2A:8-front-crawl",
-      "Splash2B:8-front-crawl",
-      "Splash3:10-front-crawl",
-      "Splash4:7-front-crawl",
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult1:15-front-crawl",
-      "TeenAdult2:14-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3"
-  },
-  {
-    "id": "drills-front-crawl-elevator",
-    "category": "Drills",
-    "title": "Front crawl: Elevator",
-    "instructions": "Explore four head positions while swimming: fourth floor, chin at the surface; third floor, mouth in the water; second floor, nose in the water; first floor, correct swimming head position.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "Splash3:10-front-crawl",
-      "Splash4:7-front-crawl",
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult2:14-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 3-6; Adult 2-3"
-  },
-  {
-    "id": "drills-front-crawl-head-up-front-crawl",
-    "category": "Drills",
-    "title": "Front crawl: Head-up front crawl",
-    "instructions": "Swim with the chin at the surface, looking at a fixed point on the far wall. Keep the kick close to the surface and the head steady instead of following the arms. This challenges the upper body.",
-    "sourcePages": [
-      8
-    ],
-    "skillIds": [
-      "Splash5:9",
-      "Splash6:9",
-      "TeenAdult3:10"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-front-crawl-distance-per-stroke",
-    "category": "Drills",
-    "title": "Front crawl: Distance per stroke",
-    "instructions": "Count strokes over a short distance, such as 25-50 m. Swim the same distance again and aim to use fewer strokes while maintaining effective technique.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-front-crawl-dry-front-crawl",
-    "category": "Drills",
-    "title": "Front crawl: Dry front crawl",
-    "instructions": "Lie on one side on the deck. Reach the lower arm forward and rest the upper arm beside the body. Slide the upper hand toward the armpit with the elbow pointing upward. At the armpit, roll onto the stomach and continue reaching the hand past the head onto the deck.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-front-crawl-shark-drill",
-    "category": "Drills",
-    "title": "Front crawl: Shark drill",
-    "instructions": "Swim 3 strokes using high-elbow recovery. On the third stroke, breathe and pause with fingertips at the armpit for 3 seconds before continuing.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-front-crawl-thumb-drill",
-    "category": "Drills",
-    "title": "Front crawl: Thumb drill",
-    "instructions": "Finish each underwater pull by touching the thumb to the hip, then begin the high-elbow recovery. Use the touch to reinforce a complete stroke finish.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-front-crawl-closed-fists-swimming",
-    "category": "Drills",
-    "title": "Front crawl: Closed fists swimming",
-    "instructions": "Swim front crawl with closed fists and high elbows. Concentrate on water pressure against the forearms, rather than relying only on the hands. The source identifies this as an advanced drill.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-front-crawl-finger-drag",
-    "category": "Drills",
-    "title": "Front crawl: Finger drag",
-    "instructions": "Keep fingertips trailing in the water throughout recovery. When the fingers reach the head, enter the whole hand and arm and extend forward. Maintain high elbows.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-front-crawl-zipper-up-down",
-    "category": "Drills",
-    "title": "Front crawl: Zipper up/down",
-    "instructions": "Kick on one side in streamline, holding an aid with the forward arm. Slowly slide the other hand from the leg to the armpit and back down. Work one arm at a time. Fins can reduce the kicking demand so attention stays on recovery and body position.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash5:8-front-crawl",
-      "Splash6:8-front-crawl",
-      "TeenAdult3:9-front-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3",
-    "equipment": "Buoyant aid; optional fins"
-  },
-  {
-    "id": "drills-back-crawl-kicking",
-    "category": "Drills",
-    "title": "Back crawl: Kicking",
-    "instructions": "Kick on the back using technique appropriate to the swimmer. Keep arms by the sides or stretch them overhead while holding a board. A less buoyant aid, such as a floating brick or pull buoy, increases the challenge.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "LittleSplash4:9",
-      "LittleSplash5:8",
-      "LittleSplash5:9",
-      "Splash1:9",
-      "Splash2A:6",
-      "Splash2A:8-back-crawl",
-      "Splash2A:9",
-      "Splash2B:6",
-      "Splash2B:8-back-crawl",
-      "Splash2B:9",
-      "Splash3:10-back-crawl",
-      "Splash3:11",
-      "Splash3:7",
-      "Splash3:8",
-      "Splash4:7-back-crawl",
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult1:13",
-      "TeenAdult1:15-back-crawl",
-      "TeenAdult1:16",
-      "TeenAdult2:10",
-      "TeenAdult2:14-back-crawl",
-      "TeenAdult2:15",
-      "TeenAdult2:9",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3",
-    "equipment": "Optional kickboard, floating brick, or pull buoy"
-  },
-  {
-    "id": "drills-back-crawl-side-kicking",
-    "category": "Drills",
-    "title": "Back crawl: Side kicking",
-    "instructions": "Kick on one side with the lower arm extending beyond the head and the other arm beside the body. Focus on the kick and body roll.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "LittleSplash4:9",
-      "LittleSplash5:8",
-      "LittleSplash5:9",
-      "Splash1:9",
-      "Splash2A:6",
-      "Splash2A:8-back-crawl",
-      "Splash2A:9",
-      "Splash2B:6",
-      "Splash2B:8-back-crawl",
-      "Splash2B:9",
-      "Splash3:10-back-crawl",
-      "Splash3:11",
-      "Splash3:7",
-      "Splash3:8",
-      "Splash4:7-back-crawl",
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult1:13",
-      "TeenAdult1:15-back-crawl",
-      "TeenAdult1:16",
-      "TeenAdult2:10",
-      "TeenAdult2:14-back-crawl",
-      "TeenAdult2:15",
-      "TeenAdult2:9",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3"
-  },
-  {
-    "id": "drills-back-crawl-shake-the-shoe-off",
-    "category": "Drills",
-    "title": "Back crawl: Shake the shoe off",
-    "instructions": "Sit on the pool edge and pretend to flick off a loose shoe or sock. Use small kicks and keep the knees down to encourage relaxed ankles.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "LittleSplash4:9",
-      "LittleSplash5:8",
-      "LittleSplash5:9",
-      "Splash1:9",
-      "Splash2A:6",
-      "Splash2A:8-back-crawl",
-      "Splash2A:9",
-      "Splash2B:6",
-      "Splash2B:8-back-crawl",
-      "Splash2B:9",
-      "Splash3:10-back-crawl",
-      "Splash3:11",
-      "Splash3:7",
-      "Splash3:8",
-      "Splash4:7-back-crawl",
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult1:13",
-      "TeenAdult1:15-back-crawl",
-      "TeenAdult1:16",
-      "TeenAdult2:10",
-      "TeenAdult2:14-back-crawl",
-      "TeenAdult2:15",
-      "TeenAdult2:9",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3"
-  },
-  {
-    "id": "drills-back-crawl-holy-kicking",
-    "category": "Drills",
-    "title": "Back crawl: Holy kicking",
-    "instructions": "Kick on the back with elbows resting near the waist and hands raised together in a prayer position above the water. For more difficulty, slowly extend the arms upward, then lower them until the hands reach the stomach.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash3:10-back-crawl",
-      "Splash4:7-back-crawl",
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult2:14-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 3-6; Adult 2-3"
-  },
-  {
-    "id": "drills-back-crawl-6-kick-switch",
-    "category": "Drills",
-    "title": "Back crawl: 6-kick switch",
-    "instructions": "From a streamlined side position, take 6 kicks, use a stroke to roll to the opposite side, then take 6 more kicks. Repeat while keeping the head still.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash3:10-back-crawl",
-      "Splash4:7-back-crawl",
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult2:14-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 3-6; Adult 2-3"
-  },
-  {
-    "id": "drills-back-crawl-streamline-kick",
-    "category": "Drills",
-    "title": "Back crawl: Streamline kick",
-    "instructions": "Kick on the back with both arms stretched beyond the head and pressed against the ears. Maintain streamline to work on kick strength and technique.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-back-crawl-fashion-model",
-    "category": "Drills",
-    "title": "Back crawl: Fashion model",
-    "instructions": "Place hands on hips while kicking on the back. Roll enough to lift one arm out of the water and take 6 kicks on that side. Roll to the other side and repeat.",
-    "sourcePages": [
-      9
-    ],
-    "skillIds": [
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-back-crawl-10-beat-back-crawl",
-    "category": "Drills",
-    "title": "Back crawl: 10-beat back crawl",
-    "instructions": "Hold a streamlined side position for 10 kicks, then stroke with the forward arm to change sides. Keep the head steady throughout.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "LittleSplash5:8",
-      "Splash2A:8-back-crawl",
-      "Splash2B:8-back-crawl",
-      "Splash3:10-back-crawl",
-      "Splash4:7-back-crawl",
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult1:15-back-crawl",
-      "TeenAdult2:14-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Preschool 5; Swimmer 2-6; Adult 1-3"
-  },
-  {
-    "id": "drills-back-crawl-single-arm-back-crawl",
-    "category": "Drills",
-    "title": "Back crawl: Single-arm back crawl",
-    "instructions": "Swim using one arm while the other stays beside the body. As the stroking hand enters, roll the opposite shoulder out of the water. The resting arm may hold an aid for support.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "LittleSplash5:8",
-      "Splash2A:8-back-crawl",
-      "Splash2B:8-back-crawl",
-      "TeenAdult1:15-back-crawl"
-    ],
-    "suitability": "Preschool 5; Swimmer 2; Adult 1",
-    "equipment": "Optional buoyant aid"
-  },
-  {
-    "id": "drills-back-crawl-sky-bottom",
-    "category": "Drills",
-    "title": "Back crawl: Sky-bottom",
-    "instructions": "Exaggerate the arm reach during back crawl: reach upward toward a noodle representing the sky, then downward toward the pool bottom.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "LittleSplash5:8",
-      "Splash2A:8-back-crawl",
-      "Splash2B:8-back-crawl",
-      "TeenAdult1:15-back-crawl"
-    ],
-    "suitability": "Preschool 5; Swimmer 2; Adult 1",
-    "equipment": "Noodle"
-  },
-  {
-    "id": "drills-back-crawl-standing-back-crawl",
-    "category": "Drills",
-    "title": "Back crawl: Standing back crawl",
-    "instructions": "Practise back crawl arms while standing on deck or in shallow water. For Swimmer 5 and above, use this to introduce the bent-arm pull.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "LittleSplash5:8",
-      "Splash2A:8-back-crawl",
-      "Splash2B:8-back-crawl",
-      "Splash3:10-back-crawl",
-      "Splash4:7-back-crawl",
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult1:15-back-crawl",
-      "TeenAdult2:14-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Preschool 5; Swimmer 2-6; Adult 1-3"
-  },
-  {
-    "id": "drills-back-crawl-touch-the-rope",
-    "category": "Drills",
-    "title": "Back crawl: Touch the rope",
-    "instructions": "Provide a target about 3 feet above the water and have swimmers reach toward it on every recovery. Use a stretched rope or an instructor-held noodle, kickboard, or other object.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "LittleSplash5:8",
-      "Splash2A:8-back-crawl",
-      "Splash2B:8-back-crawl",
-      "TeenAdult1:15-back-crawl"
-    ],
-    "suitability": "Preschool 5; Swimmer 2; Adult 1",
-    "equipment": "Rope, noodle, or kickboard"
-  },
-  {
-    "id": "drills-back-crawl-transition-back-crawl",
-    "category": "Drills",
-    "title": "Back crawl: Transition back crawl",
-    "instructions": "Take 3 right-arm strokes with the left arm at the side, then 3 left-arm strokes with the right at the side. Repeat with 2 strokes on each arm, then finish the length using full back crawl.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "Splash2A:8-back-crawl",
-      "Splash2B:8-back-crawl",
-      "Splash3:10-back-crawl",
-      "Splash4:7-back-crawl",
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult1:15-back-crawl",
-      "TeenAdult2:14-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 2-6; Adult 1-3"
-  },
-  {
-    "id": "drills-back-crawl-sponge",
-    "category": "Drills",
-    "title": "Back crawl: Sponge",
-    "instructions": "Balance a sponge or another small object on the forehead while swimming. Keep it in place as the shoulders roll to practise steady head position.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "Splash3:10-back-crawl",
-      "Splash4:7-back-crawl",
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult2:14-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 3-6; Adult 2-3",
-    "equipment": "Sponge or small object"
-  },
-  {
-    "id": "drills-back-crawl-lane-rope-pull",
-    "category": "Drills",
-    "title": "Back crawl: Lane rope pull",
-    "instructions": "Swim single-arm back crawl beside a lane rope, using the nearer arm and keeping the other at the side. Grasp the rope above the head, roll, and pull so the elbow bends underwater. Finish the pull beyond the hips.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3",
-    "equipment": "Lane rope"
-  },
-  {
-    "id": "drills-back-crawl-double-arm-back-crawl",
-    "category": "Drills",
-    "title": "Back crawl: Double-arm back crawl",
-    "instructions": "While on the back, stroke with both arms together. Concentrate on the propulsive phase with bent arms.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-back-crawl-swim-the-rope",
-    "category": "Drills",
-    "title": "Back crawl: Swim the rope",
-    "instructions": "Use a rope across the pool or a lane rope as a pulling aid while swimming back crawl. Work the right arm in one direction and the left on the return, emphasizing the bend during the upsweep.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3",
-    "equipment": "Rope or lane rope"
-  },
-  {
-    "id": "drills-back-crawl-distance-per-stroke",
-    "category": "Drills",
-    "title": "Back crawl: Distance per stroke",
-    "instructions": "Count strokes over a chosen distance. Rest, then swim that distance again using fewer strokes to develop efficiency.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-back-crawl-closed-fist",
-    "category": "Drills",
-    "title": "Back crawl: Closed fist",
-    "instructions": "Swim with fists closed and concentrate on feeling the water and generating propulsion with the forearms.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-back-crawl-bounce",
-    "category": "Drills",
-    "title": "Back crawl: Bounce",
-    "instructions": "Hold a tennis ball in each hand while swimming. At the end of each stroke, release the ball past the hip as though pitching a fastball. Use this to emphasize the stroke finish.",
-    "sourcePages": [
-      10
-    ],
-    "skillIds": [
-      "Splash5:8-back-crawl",
-      "Splash6:8-back-crawl",
-      "TeenAdult3:9-back-crawl"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3",
-    "equipment": "Two tennis balls per swimmer"
-  },
-  {
-    "id": "drills-breaststroke-vertical-kicking",
-    "category": "Drills",
-    "title": "Breaststroke: Vertical kicking",
-    "instructions": "In a vertical position, extend each whip kick fully to lift the shoulders or chest above the surface.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "LittleSplash5:6",
-      "Splash2B:7",
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult1:14",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Preschool 5; Swimmer 2-6; Adult 1-3"
-  },
-  {
-    "id": "drills-breaststroke-vertical-wall-kicking",
-    "category": "Drills",
-    "title": "Breaststroke: Vertical wall kicking",
-    "instructions": "Face the pool wall with armpits supported at the gutter and stomach and upper legs against the wall. Practise whip kick while keeping the body close to the wall to emphasize lower-leg drive.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "LittleSplash5:6",
-      "Splash2B:7",
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult1:14",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Preschool 5; Swimmer 2-6; Adult 1-3",
-    "equipment": "Pool wall"
-  },
-  {
-    "id": "drills-breaststroke-kicking-with-or-without-a-board",
-    "category": "Drills",
-    "title": "Breaststroke: Kicking with or without a board",
-    "instructions": "Practise the kick on the front or back according to the swimmer’s level. Use a buoyant aid for support; remove the aid and keep streamline for a greater challenge.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "LittleSplash5:6",
-      "Splash2B:7",
-      "Splash3:9",
-      "Splash4:5",
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult1:14",
-      "TeenAdult2:11",
-      "TeenAdult2:12",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Preschool 5; Swimmer 2-6; Adult 1-3",
-    "equipment": "Optional kickboard or buoyant aid"
-  },
-  {
-    "id": "drills-breaststroke-penguin-walk",
-    "category": "Drills",
-    "title": "Breaststroke: Penguin walk",
-    "instructions": "Walk on deck or in shallow water with flexed ankles. Touch down on the heels only, keeping toes lifted and turned outward.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-breaststroke-kicking-off-wall-on-land",
-    "category": "Drills",
-    "title": "Breaststroke: Kicking off wall on land",
-    "instructions": "Lie on the stomach on a wet deck with knees close to a wall. Flex the feet and press them into the wall to move the body forward. Focus on the part of the foot that should press against the water.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3",
-    "equipment": "Wall and wet deck"
-  },
-  {
-    "id": "drills-breaststroke-kicking-on-wall",
-    "category": "Drills",
-    "title": "Breaststroke: Kicking on wall",
-    "instructions": "Sit at the wall with legs bent 90 degrees. Begin with feet forward, draw heels toward the wall while keeping legs together, flex the ankles, then sweep the feet in a circle back to the start. Feel pressure along the inner feet and ankles.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3",
-    "equipment": "Pool wall"
-  },
-  {
-    "id": "drills-breaststroke-ankle-touch-kicking",
-    "category": "Drills",
-    "title": "Breaststroke: Ankle touch kicking",
-    "instructions": "Keep arms beside the body. During kick recovery, bring the ankles to the hands to practise coordination.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-breaststroke-streamline-under",
-    "category": "Drills",
-    "title": "Breaststroke: Streamline under",
-    "instructions": "Kick underwater in streamline, return to the surface for a breath, then submerge again. Focus on breath control.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-breaststroke-triple-kick",
-    "category": "Drills",
-    "title": "Breaststroke: Triple kick",
-    "instructions": "Use 3 kicks for each arm pull, concentrating on body position and an efficient kick.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 5-6; Adult 3"
-  },
-  {
-    "id": "drills-breaststroke-scull-drill",
-    "category": "Drills",
-    "title": "Breaststroke: Scull drill",
-    "instructions": "Lie face down with arms extended past the head. Scull inward toward the centre line and outward again, keeping bent elbows near the surface and above the forearms. Vary wrist and elbow angles to find effective forward movement. Use a pull buoy to support the legs without kicking.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash4:6",
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult2:13",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 4-6; Adult 2-3",
-    "equipment": "Pull buoy"
-  },
-  {
-    "id": "drills-breaststroke-breaststroke-arms-on-deck",
-    "category": "Drills",
-    "title": "Breaststroke: Breaststroke arms on deck",
-    "instructions": "Lie at the pool edge with shoulders and arms over the water in streamline. Pull the hands down and back toward the wall with elbows higher than hands. Bring hands and elbows together at the centre, then extend them forward.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash4:6",
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult2:13",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 4-6; Adult 2-3"
-  },
-  {
-    "id": "drills-breaststroke-arms-only",
-    "category": "Drills",
-    "title": "Breaststroke: Arms only",
-    "instructions": "Place a noodle under the armpits for support. Flutter kick while practising breaststroke arms, using the noodle as the limit behind which the arms should not travel.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash4:6",
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult2:13",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 4-6; Adult 2-3",
-    "equipment": "Noodle"
-  },
-  {
-    "id": "drills-breaststroke-coordination-pattern",
-    "category": "Drills",
-    "title": "Breaststroke: Coordination pattern",
-    "instructions": "Stand in shallow water or lie over the pool edge. Rehearse the pull, breath, and kick sequence, with instructor assistance where needed.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash4:6",
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult2:13",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 4-6; Adult 2-3"
-  },
-  {
-    "id": "drills-breaststroke-head-up-breaststroke",
-    "category": "Drills",
-    "title": "Breaststroke: Head-up breaststroke",
-    "instructions": "Swim full breaststroke with the head lifted and eyes looking forward. Concentrate on the arm pull and leg kick without adding underwater breathing.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash4:6",
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult2:13",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 4-6; Adult 2-3"
-  },
-  {
-    "id": "drills-breaststroke-shooters",
-    "category": "Drills",
-    "title": "Breaststroke: Shooters",
-    "instructions": "Begin the pull slowly and feel the hands and arms working against the water. As the hands meet at the centre of the body, drive the arms forward quickly to practise fast recovery.",
-    "sourcePages": [
-      11
-    ],
-    "skillIds": [
-      "Splash4:6",
-      "Splash5:7",
-      "Splash6:7",
-      "TeenAdult2:13",
-      "TeenAdult3:8"
-    ],
-    "suitability": "Swimmer 4-6; Adult 2-3"
-  },
-  {
-    "id": "drills-dry-land-chest-stretch",
-    "category": "Drills",
-    "title": "Dry land: Chest stretch",
-    "instructions": "Stand upright with feet a little wider than the shoulders. Extend straight arms sideways at shoulder height with palms facing forward. Move the arms back and hold.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-bicep-stretch",
-    "category": "Drills",
-    "title": "Dry land: Bicep stretch",
-    "instructions": "Stand upright with feet a little wider than the shoulders. Hold straight arms out at shoulder height, palms facing backward. Move the arms back and hold.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-shoulder-stretch",
-    "category": "Drills",
-    "title": "Dry land: Shoulder stretch",
-    "instructions": "Stand upright with feet a little wider than the shoulders. Bring one straight arm across the chest and use the bent opposite arm to support the stretch. Repeat on the other side.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-upper-back-stretch",
-    "category": "Drills",
-    "title": "Dry land: Upper back stretch",
-    "instructions": "Stand upright with feet a little wider than the shoulders. Interlace the fingers and reach forward with thumbs pointing down, feeling the stretch across the upper back and between the shoulder blades.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-shoulder-and-triceps-stretch",
-    "category": "Drills",
-    "title": "Dry land: Shoulder and triceps stretch",
-    "instructions": "Stand upright with feet a little wider than the shoulders. Raise both arms overhead with palms together, bend the elbows, and move the arms backward.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-side-bends",
-    "category": "Drills",
-    "title": "Dry land: Side bends",
-    "instructions": "Stand upright with feet a little wider than the shoulders. Rest one hand on a hip and reach the other arm overhead. Bend slowly sideways, return upright, then change sides. Avoid leaning forward or backward.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-abdominal-and-lower-back-muscles",
-    "category": "Drills",
-    "title": "Dry land: Abdominal and lower back muscles",
-    "instructions": "Lie face down with arms extended forward. Lift the hands, chest, and shoulders so the toes and torso remain on the ground. The stretch is felt through the back and abdomen.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-gluteus-muscles",
-    "category": "Drills",
-    "title": "Dry land: Gluteus muscles",
-    "instructions": "Lie face down. Gently contract the buttocks for 10 seconds, then relax. Lift and extend one arm for 10 seconds, then the other. Repeat with each leg. Next lift the right arm with the left leg for 10 seconds, then swap diagonals.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-swimming-dry-land",
-    "category": "Drills",
-    "title": "Dry land: Swimming (dry land)",
-    "instructions": "Lie face down and lift arms and legs off the ground. Flutter both arms and legs together to imitate swimming.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-calf-stretch",
-    "category": "Drills",
-    "title": "Dry land: Calf stretch",
-    "instructions": "Face a wall with hands on it and arms straight. Step one leg farther back. Put the toes of the nearer foot against the wall while keeping its heel on the floor. Bend the elbows, lean toward the wall, and hold. Change feet.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-arm-swings-and-hand-claps",
-    "category": "Drills",
-    "title": "Dry land: Arm swings and hand claps",
-    "instructions": "Circle one arm 10 times, repeat with the other, then circle both together. Next extend arms forward, open them backward, and bring them forward to clap. Repeat the clap movement 10 times.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-lunges",
-    "category": "Drills",
-    "title": "Dry land: Lunges",
-    "instructions": "Walk forward using a lunge on each step. Keep hips facing forward and direct the pressure through the heel rather than the toes.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "drills-dry-land-jump-starts",
-    "category": "Drills",
-    "title": "Dry land: Jump starts",
-    "instructions": "Bring heels together with toes turned out. Squat with heels between the legs, then jump upward and reach overhead. Repeat.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:2"
-    ],
-    "suitability": "Fitness Swimmer: stretches for swimmers"
-  },
-  {
-    "id": "workouts-sample-warm-up",
-    "category": "Workouts",
-    "title": "Sample warm-up",
-    "instructions": "200 m mixed strokes at an easy pace, changing stroke every 25 or 50 m.\n4 × 50 m varying the time: begin relaxed, then slightly faster, then strong effort, then fast.\nPace progression shown in the source: 25 m relaxed; 50 m slightly faster; 75 m strong effort; 100 m fast.\n\nThis is a warm-up component, not a complete workout.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:6"
-    ]
-  },
-  {
-    "id": "workouts-11-years-under-main-set-a",
-    "category": "Workouts",
-    "title": "11 years & under: Main set A",
-    "instructions": "4 × 25 m front crawl; start every 1:00.\n2 × 25 m flutter kick with a board; rest 20 seconds after each repeat.\n2 × 25 m flutter kick without a board; rest 20 seconds after each repeat.\n4 × 25 m, starting every 1:00: closed-fist front crawl on odd lengths, distance-per-stroke focus on even lengths.\n\nDPS means distance per stroke: cover the distance efficiently with fewer strokes. Add an appropriate warm-up and cool-down.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "11 years and under",
-    "equipment": "Kickboard"
-  },
-  {
-    "id": "workouts-11-years-under-main-set-b",
-    "category": "Workouts",
-    "title": "11 years & under: Main set B",
-    "instructions": "2 × 50 m front crawl; start every 1:40.\nThen a distance ladder: 25 m, 50 m, 75 m, 75 m, 50 m, 25 m. The source does not specify a stroke or interval for the ladder.\n\nAdd an appropriate warm-up and cool-down.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "11 years and under"
-  },
-  {
-    "id": "workouts-11-14-years-main-set-a",
-    "category": "Workouts",
-    "title": "11-14 years: Main set A",
-    "instructions": "4 × 75 m front crawl; start every 2:00.\n3 × 50 m front crawl; start every 1:20.\n2 × 25 m front crawl; start every 55 seconds.\n\nAdd an appropriate warm-up and cool-down.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "11-14 years"
-  },
-  {
-    "id": "workouts-11-14-years-main-set-b",
-    "category": "Workouts",
-    "title": "11-14 years: Main set B",
-    "instructions": "8 × 25 m, alternating breaststroke on odd lengths and back crawl on even lengths.\n2 × 75 m, each consisting of 25 m back flutter kick and 50 m back crawl.\n2 × 75 m, each consisting of 25 m whip kick without a board and 50 m breaststroke.\n\nThe source does not give rest intervals. Add an appropriate warm-up and cool-down.",
-    "sourcePages": [
-      23
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "11-14 years"
-  },
-  {
-    "id": "workouts-13-18-years-main-set-a",
-    "category": "Workouts",
-    "title": "13-18 years: Main set A",
-    "instructions": "3 × 100 m front crawl; start every 2:45.\n2 × 100 m front crawl; start every 2:35.\n1 × 100 m front crawl sprint.\n\nAdd an appropriate warm-up and cool-down.",
-    "sourcePages": [
-      24
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "13-18 years"
-  },
-  {
-    "id": "workouts-13-18-years-main-set-b",
-    "category": "Workouts",
-    "title": "13-18 years: Main set B",
-    "instructions": "Pyramid:\n25 m front crawl; rest 20 seconds.\n50 m back crawl; rest 30 seconds.\n75 m breaststroke; rest 45 seconds.\n100 m front crawl; rest 1 minute.\n75 m breaststroke; rest 45 seconds.\n50 m back crawl; rest 30 seconds.\n25 m front crawl; rest 20 seconds.\n\nAdd an appropriate warm-up and cool-down.",
-    "sourcePages": [
-      24
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "13-18 years"
-  },
-  {
-    "id": "workouts-sample-cool-down",
-    "category": "Workouts",
-    "title": "Sample cool-down",
-    "instructions": "200 m easy mixed strokes, changing stroke every 25 or 50 m.\n4 × 50 m easy swimming, stroke of choice, with a distance-per-stroke focus.\n6 × 25 m, stroke of choice, with 25 seconds of rest after each repeat.\n\nDPS means distance per stroke. This is a cool-down component, not a complete workout.",
-    "sourcePages": [
-      24
-    ],
-    "skillIds": [
-      "SplashFitness:6"
-    ]
-  },
-  {
-    "id": "workouts-11-years-under-interval-workout-1",
-    "category": "Workouts",
-    "title": "11 years & under: Interval workout 1",
-    "instructions": "Warm-up\n1 × 25 m, 1 × 50 m, then 1 × 75 m; stroke of choice with 20 seconds of rest after each swim.\n\nMain set\n2 × 25 m flutter kick; start every 1:10.\n2 × 25 m front crawl; start every 1:00.\n2 × 50 m, stroke of choice; start every 2:00.\n\nCool-down\n1 × 25 m, 1 × 50 m, then 1 × 75 m; stroke of choice with 20 seconds of rest after each swim.",
-    "sourcePages": [
-      24
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "11 years and under"
-  },
-  {
-    "id": "workouts-11-years-under-interval-workout-2",
-    "category": "Workouts",
-    "title": "11 years & under: Interval workout 2",
-    "instructions": "Warm-up\n4 × 25 m, stroke of choice; start every 1:00.\n\nMain set\n8 × 25 m front crawl; start every 55 seconds.\n\nCool-down\n4 × 25 m, stroke of choice; start every 1:00.",
-    "sourcePages": [
-      24
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "11 years and under"
-  },
-  {
-    "id": "workouts-11-14-years-interval-workout-1",
-    "category": "Workouts",
-    "title": "11-14 years: Interval workout 1",
-    "instructions": "Warm-up\n4 × 25 m, stroke of choice; start every 1:00.\n\nMain set\n25 m, stroke of choice; rest 15 seconds.\n50 m, stroke of choice; rest 30 seconds.\n50 m, stroke of choice; rest 30 seconds.\n25 m, stroke of choice; rest 15 seconds.\n\nCool-down\n4 × 25 m, stroke of choice; start every 1:00.",
-    "sourcePages": [
-      24
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "11-14 years"
-  },
-  {
-    "id": "workouts-11-14-years-interval-workout-2",
-    "category": "Workouts",
-    "title": "11-14 years: Interval workout 2",
-    "instructions": "Warm-up\n100 m, stroke of choice.\n\nMain set\n6 × 50 m front crawl; start every 1:30.\n2 × 25 m flutter kick without a board, arms streamlined; rest 20 seconds after each repeat.\n2 × 25 m 6-kick switch side glides; rest 20 seconds after each repeat.\n\nCool-down\n100 m, stroke of choice.",
-    "sourcePages": [
-      24
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "11-14 years"
-  },
-  {
-    "id": "workouts-13-18-years-interval-workout-1",
-    "category": "Workouts",
-    "title": "13-18 years: Interval workout 1",
-    "instructions": "Warm-up\n2 × 25 m, stroke of choice; rest 20 seconds after each repeat.\n2 × 50 m, stroke of choice; rest 30 seconds after each repeat.\n\nMain set\n12 × 25 m, stroke of choice at a hard effort; start every 1:00.\n4 × 50 m, stroke of choice at a hard effort; start every 1:30.\n\nCool-down\n100 m, stroke of choice.",
-    "sourcePages": [
-      24
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "13-18 years"
-  },
-  {
-    "id": "workouts-13-18-years-interval-workout-2",
-    "category": "Workouts",
-    "title": "13-18 years: Interval workout 2",
-    "instructions": "Warm-up\n200 m, stroke of choice, with long and easy strokes.\n\nMain set\n25 m front crawl; rest 15 seconds.\n50 m front crawl; rest 30 seconds.\n200 m, stroke of choice; rest 45 seconds.\n50 m front crawl; rest 30 seconds.\n25 m front crawl; rest 15 seconds.\n\nCool-down\n200 m, stroke of choice.",
-    "sourcePages": [
-      24
-    ],
-    "skillIds": [
-      "SplashFitness:4",
-      "SplashFitness:6"
-    ],
-    "suitability": "13-18 years"
-  }
+    {
+        "id": "songs-baby-beluga",
+        "category": "Songs",
+        "title": "Baby Beluga",
+        "instructions": "An ocean-themed song about a young whale swimming, diving, and splashing. Use as a song or spoken rhyme; the source does not specify a movement sequence.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            1
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-bullfrog",
+        "category": "Songs",
+        "title": "Bullfrog",
+        "instructions": "Use the frog rhyme to cue a jump into the water at the final splash. The story moves from a frog sitting on a rock to its sudden jump.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            1
+        ],
+        "skillIds": [
+            "LittleSplash1:2",
+            "LittleSplash2:2",
+            "ParentandTot3:1",
+            "ParentandTot3:7",
+            "Splash1:2"
+        ]
+    },
+    {
+        "id": "songs-clean-up-song",
+        "category": "Songs",
+        "title": "Clean up song",
+        "instructions": "A short group song to accompany tidying equipment together.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            1
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-did-you-ever-see-a-laddie",
+        "category": "Songs",
+        "title": "Did you ever see a Laddie?",
+        "instructions": "A directional song built around moving one way and then the other. For the second verse, change the character from a laddie to a lassie.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            1
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-do-your-ears-hang-low",
+        "category": "Songs",
+        "title": "Do your ears hang low?",
+        "instructions": "Act out the ear movements described by each verse. Repeat the song with progressively faster actions.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            1
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-five-little-ducks",
+        "category": "Songs",
+        "title": "Five Little Ducks",
+        "instructions": "Count five ducks and describe their different reactions to swimming. When the motorboat arrives, blow bubbles to imitate its sound, then have the ducks swim away.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            1
+        ],
+        "skillIds": [
+            "LittleSplash1:4",
+            "LittleSplash2:4",
+            "LittleSplash3:4",
+            "ParentandTot2:3",
+            "Splash1:5"
+        ]
+    },
+    {
+        "id": "songs-five-little-fishes",
+        "category": "Songs",
+        "title": "Five Little Fishes",
+        "instructions": "A counting rhyme in which five fish gradually leave their group until none remain. The source describes swimming and diving but gives no separate action instructions.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            1
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-five-little-frogs",
+        "category": "Songs",
+        "title": "Five Little Frogs",
+        "instructions": "A counting song about frogs leaving a log for the pool. Repeat with one fewer frog each time until no frogs remain.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            1
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-going-on-a-lion-hunt-1",
+        "category": "Songs",
+        "title": "Going on a Lion Hunt (1)",
+        "instructions": "Act out a journey through imaginary obstacles. Start with tall grass, then substitute mud, a mountain, a lake, or a cave. On finding the lion in the cave, retrace the obstacles on the way back.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            1
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-going-on-a-lion-hunt-2",
+        "category": "Songs",
+        "title": "Going on a Lion Hunt (2)",
+        "instructions": "Begin with hands at the eyes, then pretend to hold suspenders. Indicate a teddy on one side and a buddy on the other. Put hands on cheeks when an obstacle appears. Push water down for going over, up for going under, and together for going around. Move across the pool using the action chosen for the obstacle: swim through a swamp, climb a mountain, swing through a forest, or enter a cave.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            1,
+            2
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-hands-up-hands-down",
+        "category": "Songs",
+        "title": "Hands Up, Hands Down",
+        "instructions": "Lead an action sequence: raise and lower hands with splashes, move hands in and out and shake them, push and pull a toy, alternate big and small kicks, then alternate quiet and loud bubbles.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash1:4",
+            "LittleSplash2:4",
+            "LittleSplash2:8",
+            "LittleSplash3:10",
+            "LittleSplash3:11",
+            "LittleSplash3:4",
+            "ParentandTot1:8",
+            "ParentandTot1:9",
+            "ParentandTot2:3",
+            "ParentandTot2:9",
+            "ParentandTot3:11",
+            "Splash1:5",
+            "Splash1:9"
+        ]
+    },
+    {
+        "id": "songs-hickory-dickory-dock",
+        "category": "Songs",
+        "title": "Hickory Dickory Dock",
+        "instructions": "Sway during the clock refrain. Move into the middle as the mouse climbs, clap once when the clock strikes, move back out as the mouse descends, and finish by swaying.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-humpty-dumpty",
+        "category": "Songs",
+        "title": "Humpty Dumpty",
+        "instructions": "Have swimmers sit on the pool edge with hands held forward to suggest a large tummy. Cue their entry into the water and a front float at the fall in the rhyme.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash1:1",
+            "LittleSplash1:2",
+            "LittleSplash1:5",
+            "LittleSplash2:1",
+            "LittleSplash2:2",
+            "LittleSplash2:5",
+            "LittleSplash3:7",
+            "ParentandTot1:5",
+            "ParentandTot1:6",
+            "ParentandTot2:1",
+            "ParentandTot2:7",
+            "ParentandTot2:8",
+            "ParentandTot3:1",
+            "ParentandTot3:7",
+            "ParentandTot3:9",
+            "Splash1:1",
+            "Splash1:2",
+            "Splash1:6"
+        ]
+    },
+    {
+        "id": "songs-i-m-a-little-pancake",
+        "category": "Songs",
+        "title": "I'm a Little Pancake",
+        "instructions": "Use the tune of “I’m a Little Tea Pot.” The rhyme describes a pancake lying flat on its back and then turning over. Pair the change in the story with the float and roll being practised.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash1:5",
+            "LittleSplash2:5",
+            "LittleSplash2:6",
+            "LittleSplash3:7",
+            "LittleSplash3:8",
+            "ParentandTot1:5",
+            "ParentandTot1:6",
+            "ParentandTot2:7",
+            "ParentandTot2:8",
+            "ParentandTot3:9",
+            "Splash1:6",
+            "Splash1:7"
+        ]
+    },
+    {
+        "id": "songs-i-m-being-swallowed-by-a-boa-constrictor",
+        "category": "Songs",
+        "title": "I'm being Swallowed by a Boa Constrictor",
+        "instructions": "A body-awareness rhyme that progresses upward from toes to head. The source names body parts but does not provide a separate swimming action sequence.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-itsy-bitsy-spider",
+        "category": "Songs",
+        "title": "Itsy Bitsy Spider",
+        "instructions": "A familiar rhyme about a spider climbing, being washed down by rain, and climbing again. The source gives no separate pool actions.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-jack-and-jill",
+        "category": "Songs",
+        "title": "Jack and Jill",
+        "instructions": "Start seated on the pool edge and mime scooping water. The source cues the boys to enter, followed by the girls, as the two characters tumble.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash1:1",
+            "LittleSplash1:2",
+            "LittleSplash2:1",
+            "LittleSplash2:2",
+            "ParentandTot2:1",
+            "ParentandTot3:1",
+            "ParentandTot3:7",
+            "Splash1:1",
+            "Splash1:2"
+        ]
+    },
+    {
+        "id": "songs-little-fish",
+        "category": "Songs",
+        "title": "Little Fish",
+        "instructions": "A short rhyme describing a fish moving its fins and swimming through the day and night. No separate technique instructions are supplied.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-little-frog",
+        "category": "Songs",
+        "title": "Little Frog",
+        "instructions": "A hopping frog rhyme with a jump into the water on the final cue.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash1:2",
+            "LittleSplash2:2",
+            "ParentandTot3:1",
+            "ParentandTot3:7",
+            "Splash1:2"
+        ]
+    },
+    {
+        "id": "songs-motor-boat-motor-boat",
+        "category": "Songs",
+        "title": "Motor Boat, Motor Boat",
+        "instructions": "A speed-change rhyme: begin slowly, accelerate, then stop as the imaginary motor runs out of fuel. The source leaves the choice of swimming movement to the instructor.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-my-aunt-greet",
+        "category": "Songs",
+        "title": "My Aunt Greet",
+        "instructions": "Use broad, rhythmic arm gestures at the water surface. Draw the outline of a large hat, pat the shape of a cat twice, sweep out a long tail twice, make two curls, and dot the surface with a fingertip. Repeat the same gesture whenever its object returns in the song. Keep the pace measured and the arm movements wide.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "ParentandTot1:8"
+        ]
+    },
+    {
+        "id": "songs-my-bonnie-lies-over-the-ocean",
+        "category": "Songs",
+        "title": "My Bonnie Lies over the Ocean",
+        "instructions": "An ocean-themed group song with a repeating refrain. The source does not specify pool actions or a skill progression.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-my-turtle",
+        "category": "Songs",
+        "title": "My Turtle",
+        "instructions": "A rhyme about a turtle extending its head to eat and drawing it back into its shell to sleep. No separate swimming instructions are supplied.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-old-macdonald-had-a-pond",
+        "category": "Songs",
+        "title": "Old MacDonald Had a Pond",
+        "instructions": "Use a pond variation of the familiar farm song. Begin with fish sounds and add verses about frogs, ducks, floating lily pads, and dragonflies.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-people-on-the-boat",
+        "category": "Songs",
+        "title": "People on the Boat",
+        "instructions": "Act out the boat sequence: move up and down, sweep like wipers, kick like motors, imitate horns, and sit on the bottom as anchors.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash1:3",
+            "LittleSplash2:3",
+            "LittleSplash2:8",
+            "LittleSplash3:10",
+            "LittleSplash3:11",
+            "ParentandTot1:2",
+            "ParentandTot1:9",
+            "ParentandTot2:4",
+            "ParentandTot2:9",
+            "ParentandTot3:11",
+            "ParentandTot3:2",
+            "Splash1:9"
+        ]
+    },
+    {
+        "id": "songs-purple-yellow",
+        "category": "Songs",
+        "title": "Purple Yellow",
+        "instructions": "A very short rhyme using an imaginary dip into jelly as its action cue.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash1:3",
+            "LittleSplash2:3",
+            "ParentandTot1:2",
+            "ParentandTot2:4",
+            "ParentandTot3:2"
+        ]
+    },
+    {
+        "id": "songs-ring-around-the-rosie",
+        "category": "Songs",
+        "title": "Ring around the Rosie",
+        "instructions": "A circle rhyme ending with a coordinated downward movement.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash1:3",
+            "LittleSplash2:3",
+            "ParentandTot1:2",
+            "ParentandTot2:4",
+            "ParentandTot3:2"
+        ]
+    },
+    {
+        "id": "songs-ring-around-the-hotdog",
+        "category": "Songs",
+        "title": "Ring around the Hotdog",
+        "instructions": "A food-themed circle rhyme that ends with pretending to retrieve pickles underwater.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash3:5",
+            "LittleSplash4:5",
+            "LittleSplash5:4",
+            "ParentandTot2:5",
+            "ParentandTot3:6",
+            "Splash2A:4"
+        ]
+    },
+    {
+        "id": "songs-ring-around-the-sundae",
+        "category": "Songs",
+        "title": "Ring around the Sundae",
+        "instructions": "A dessert-themed circle rhyme that ends with pretending to retrieve cherries underwater.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash3:5",
+            "LittleSplash4:5",
+            "LittleSplash5:4",
+            "ParentandTot2:5",
+            "ParentandTot3:6",
+            "Splash2A:4"
+        ]
+    },
+    {
+        "id": "songs-row-row-row-your-boat",
+        "category": "Songs",
+        "title": "Row, Row, Row your Boat",
+        "instructions": "Use rowing and swimming verses, then substitute kicking feet, stroking arms, and blowing bubbles as the repeated action.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash1:4",
+            "LittleSplash2:4",
+            "LittleSplash2:8",
+            "LittleSplash3:10",
+            "LittleSplash3:11",
+            "LittleSplash3:4",
+            "ParentandTot1:8",
+            "ParentandTot1:9",
+            "ParentandTot2:3",
+            "ParentandTot2:9",
+            "ParentandTot3:11",
+            "Splash1:5",
+            "Splash1:9"
+        ]
+    },
+    {
+        "id": "songs-shake-shake",
+        "category": "Songs",
+        "title": "Shake Shake",
+        "instructions": "Alternate a verse about shaking and wiggling with a verse about blowing bubbles; finish each verse with the wiggle action.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2
+        ],
+        "skillIds": [
+            "LittleSplash1:4",
+            "LittleSplash2:4",
+            "LittleSplash3:4",
+            "ParentandTot2:3",
+            "Splash1:5"
+        ]
+    },
+    {
+        "id": "songs-swimming-duck",
+        "category": "Songs",
+        "title": "Swimming Duck",
+        "instructions": "Describe a duck walking with a waddling movement and a quack, then reaching a puddle and swimming around. The ending continues on the following scanned page.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            2,
+            3
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-swimming-swimming",
+        "category": "Songs",
+        "title": "Swimming, Swimming",
+        "instructions": "A swimming-themed song naming different strokes and diving. The source does not prescribe an exercise sequence.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            3
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-teddy-bear-teddy-bear",
+        "category": "Songs",
+        "title": "Teddy Bear, Teddy Bear",
+        "instructions": "Lead the named actions in sequence: turn around, touch the ground, move the nose, touch the toes, reach upward, and wave goodbye.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            3
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-the-farmer-plants-his-corn",
+        "category": "Songs",
+        "title": "The Farmer Plants His Corn",
+        "instructions": "Start curled up as seeds. Add verses with actions for falling rain, growing slowly into tall plants, and falling down when the farmer harvests them.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            3
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "songs-three-little-monkeys-1",
+        "category": "Songs",
+        "title": "Three Little Monkeys (1)",
+        "instructions": "Show three fingers and move them sideways as the monkeys swing. Make a teasing face. Join hands underwater and move them as an alligator, then open and snap the hands together. Submerge to hide. Repeat with two monkeys and then one.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            3
+        ],
+        "skillIds": [
+            "LittleSplash1:3",
+            "LittleSplash2:3",
+            "ParentandTot1:2",
+            "ParentandTot2:4",
+            "ParentandTot3:2"
+        ]
+    },
+    {
+        "id": "songs-three-little-monkeys-2",
+        "category": "Songs",
+        "title": "Three Little Monkeys (2)",
+        "instructions": "Show three fingers and jump up and down. When a monkey falls, put part of the head in the water. Mime a telephone call, then wag a finger. Repeat with two monkeys and then one.\n\nSong guide: use the named song or a spoken rhyme. Lyrics are not included.",
+        "sourcePages": [
+            3
+        ],
+        "skillIds": [
+            "LittleSplash1:3",
+            "LittleSplash2:3",
+            "ParentandTot1:2",
+            "ParentandTot2:4",
+            "ParentandTot3:2"
+        ]
+    },
+    {
+        "id": "games-chop-chop-timber",
+        "category": "Games",
+        "title": "Chop, Chop, Timber",
+        "instructions": "Swimmers curl into a ball on the pool edge as seeds. Pretend to water them and add sunshine; they grow into tall trees with arms raised. The instructor cuts down each tree in turn, cueing that swimmer to jump or fall into the water.",
+        "sourcePages": [
+            3
+        ],
+        "skillIds": [
+            "LittleSplash1:1",
+            "LittleSplash1:2",
+            "LittleSplash2:1",
+            "LittleSplash2:2",
+            "ParentandTot2:1",
+            "ParentandTot3:1",
+            "ParentandTot3:7",
+            "Splash1:1",
+            "Splash1:2"
+        ]
+    },
+    {
+        "id": "games-one-two-three-go",
+        "category": "Games",
+        "title": "One-Two-Three, Go",
+        "instructions": "Line swimmers up on the pool edge. They enter only when the caller uses the exact “One-Two-Three, Go” cue and stay put for any other phrase. The last correctly timed jumper wins. Leave enough space between participants to prevent collisions during entry.",
+        "sourcePages": [
+            3
+        ],
+        "skillIds": [
+            "LittleSplash1:2",
+            "LittleSplash2:2",
+            "ParentandTot3:1",
+            "ParentandTot3:7",
+            "Splash1:2"
+        ]
+    },
+    {
+        "id": "games-water-smart-game",
+        "category": "Games",
+        "title": "Water Smart Game",
+        "instructions": "With swimmers on the edge, describe water-related situations, such as swimming alone or swimming under lifeguard supervision. For a safe situation, swimmers jump in. For an unsafe situation, they remain on the edge and shake their heads.",
+        "sourcePages": [
+            3
+        ],
+        "skillIds": [
+            "LittleSplash1:8",
+            "LittleSplash2:9",
+            "LittleSplash3:12",
+            "LittleSplash4:11",
+            "LittleSplash5:10",
+            "ParentandTot1:10",
+            "ParentandTot2:11",
+            "ParentandTot3:13",
+            "Splash1:11",
+            "Splash2A:10",
+            "Splash2B:10",
+            "Splash3:12",
+            "Splash4:10",
+            "Splash5:13",
+            "Splash6:13"
+        ]
+    },
+    {
+        "id": "games-what-time-is-it-mr-shark",
+        "category": "Games",
+        "title": "What Time is it Mr. Shark?",
+        "instructions": "Choose one participant as the shark at the opposite side of the pool. The other participants and instructor start together at an edge and ask the shark for the time. A numerical answer tells them how many steps to advance. At “lunchtime,” they return to touch their starting edge before being tagged. Tagged participants become sharks. The instructor may join the group but should avoid taking the shark role so they can continue watching everyone.",
+        "sourcePages": [
+            3
+        ],
+        "skillIds": []
+    },
+    {
+        "id": "drills-front-crawl-torpedo-kicking",
+        "category": "Drills",
+        "title": "Front crawl: Torpedo kicking",
+        "instructions": "Practise hip-led kicking while face down in a streamlined position. Increase the challenge with a less buoyant aid such as a floating brick or pull buoy. For more support, use a PFD, kickboard, shark fin, or noodle.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "LittleSplash4:10",
+            "LittleSplash4:9",
+            "LittleSplash5:7",
+            "Splash1:10-front-crawl-wearing-pfd-5-m",
+            "Splash1:9",
+            "Splash2A:6",
+            "Splash2A:7",
+            "Splash2A:8-front-crawl",
+            "Splash2A:9",
+            "Splash2B:6",
+            "Splash2B:8-2",
+            "Splash2B:8-front-crawl",
+            "Splash2B:9",
+            "Splash3:10-front-crawl",
+            "Splash3:11",
+            "Splash3:7",
+            "Splash3:8",
+            "Splash4:7-front-crawl",
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult1:13",
+            "TeenAdult1:15-front-crawl",
+            "TeenAdult1:16",
+            "TeenAdult2:10",
+            "TeenAdult2:14-front-crawl",
+            "TeenAdult2:15",
+            "TeenAdult2:9",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3",
+        "equipment": "Optional buoyant aid"
+    },
+    {
+        "id": "drills-front-crawl-side-kicking",
+        "category": "Drills",
+        "title": "Front crawl: Side kicking",
+        "instructions": "Lie on one side with the lower arm reaching past the head and the head resting on that shoulder. Look forward and kick quickly while keeping a taut, streamlined body. Practise on both sides to develop side breathing.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "Splash2B:8-2",
+            "Splash3:10-front-crawl",
+            "Splash4:7-front-crawl",
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult1:15-front-crawl",
+            "TeenAdult2:14-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 3-6; Adult 1-3"
+    },
+    {
+        "id": "drills-front-crawl-6-kick-switch",
+        "category": "Drills",
+        "title": "Front crawl: 6-kick switch",
+        "instructions": "Start streamlined on one side and take 6 kicks. Use one stroke to roll onto the other side, take another 6 kicks, and repeat. Work on bilateral breathing, body roll, and a continuous kick.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "Splash3:10-front-crawl",
+            "Splash4:7-front-crawl",
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult1:15-front-crawl",
+            "TeenAdult2:14-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 3-6; Adult 1-3"
+    },
+    {
+        "id": "drills-front-crawl-18-beaters",
+        "category": "Drills",
+        "title": "Front crawl: 18 beaters",
+        "instructions": "Start on one side with an arm extended overhead and take 6 kicks. Roll onto the front, extend both arms, and take 6 kicks. Use one underwater pull to turn onto the other side for 6 more kicks. Repeat, maintaining streamline in each position.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "Splash3:10-front-crawl",
+            "Splash4:7-front-crawl",
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult1:15-front-crawl",
+            "TeenAdult2:14-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 3-6; Adult 1-3"
+    },
+    {
+        "id": "drills-front-crawl-resistance-kicking",
+        "category": "Drills",
+        "title": "Front crawl: Resistance kicking",
+        "instructions": "Kick in a streamlined position using a kickboard or the wall. For resistance, hold half the board below the surface while kicking.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3",
+        "equipment": "Kickboard or pool wall"
+    },
+    {
+        "id": "drills-front-crawl-single-arm-front-crawl",
+        "category": "Drills",
+        "title": "Front crawl: Single-arm front crawl",
+        "instructions": "Keep one arm reaching forward while the other performs long, controlled strokes. Choose enough buoyancy to let the swimmer concentrate on the arm action. A floating brick or pull buoy adds difficulty; a PFD, kickboard, or noodle provides more support.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "LittleSplash4:10",
+            "LittleSplash5:7",
+            "Splash1:10-front-crawl-wearing-pfd-5-m",
+            "Splash2A:8-front-crawl",
+            "Splash2B:8-front-crawl",
+            "Splash3:10-front-crawl",
+            "Splash4:7-front-crawl",
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult1:15-front-crawl",
+            "TeenAdult2:14-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3",
+        "equipment": "Buoyant aid appropriate to swimmer"
+    },
+    {
+        "id": "drills-front-crawl-standing-front-crawl",
+        "category": "Drills",
+        "title": "Front crawl: Standing front crawl",
+        "instructions": "Rehearse the arm action while standing on the deck or in shallow water. Focus on introducing the movement before adding swimming.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "LittleSplash4:10",
+            "LittleSplash5:7",
+            "Splash1:10-front-crawl-wearing-pfd-5-m",
+            "Splash2A:8-front-crawl",
+            "Splash2B:8-front-crawl",
+            "TeenAdult1:15-front-crawl",
+            "TeenAdult2:14-front-crawl"
+        ],
+        "suitability": "Preschool 4-5; Swimmer 1-2; Adult 1-2"
+    },
+    {
+        "id": "drills-front-crawl-3-stroke-glide",
+        "category": "Drills",
+        "title": "Front crawl: 3-stroke glide",
+        "instructions": "Take 3 front crawl strokes. Pause on the third stroke to breathe, then continue the pattern to practise bilateral breathing.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "LittleSplash4:10",
+            "LittleSplash5:7",
+            "Splash1:10-front-crawl-wearing-pfd-5-m",
+            "Splash2A:8-front-crawl",
+            "Splash2B:8-front-crawl",
+            "Splash3:10-front-crawl",
+            "Splash4:7-front-crawl",
+            "TeenAdult1:15-front-crawl",
+            "TeenAdult2:14-front-crawl"
+        ],
+        "suitability": "Preschool 4-5; Swimmer 1-4; Adult 1-2"
+    },
+    {
+        "id": "drills-front-crawl-single-arm-roll-out",
+        "category": "Drills",
+        "title": "Front crawl: Single-arm roll out",
+        "instructions": "Begin face down in streamline. Pull one arm underwater past the hips while rolling onto the side. Breathe as that stroke finishes, then start recovering the arm. As the hand approaches the head, roll back onto the front and return the face to the water to exhale. Use technique appropriate to the swimmer’s level.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "LittleSplash4:10",
+            "LittleSplash5:7",
+            "Splash1:10-front-crawl-wearing-pfd-5-m",
+            "Splash2A:8-front-crawl",
+            "Splash2B:8-front-crawl",
+            "Splash3:10-front-crawl",
+            "Splash4:7-front-crawl",
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult1:15-front-crawl",
+            "TeenAdult2:14-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3"
+    },
+    {
+        "id": "drills-front-crawl-elevator",
+        "category": "Drills",
+        "title": "Front crawl: Elevator",
+        "instructions": "Explore four head positions while swimming: fourth floor, chin at the surface; third floor, mouth in the water; second floor, nose in the water; first floor, correct swimming head position.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "Splash3:10-front-crawl",
+            "Splash4:7-front-crawl",
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult2:14-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 3-6; Adult 2-3"
+    },
+    {
+        "id": "drills-front-crawl-head-up-front-crawl",
+        "category": "Drills",
+        "title": "Front crawl: Head-up front crawl",
+        "instructions": "Swim with the chin at the surface, looking at a fixed point on the far wall. Keep the kick close to the surface and the head steady instead of following the arms. This challenges the upper body.",
+        "sourcePages": [
+            8
+        ],
+        "skillIds": [
+            "Splash5:9",
+            "Splash6:9",
+            "TeenAdult3:10"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-front-crawl-distance-per-stroke",
+        "category": "Drills",
+        "title": "Front crawl: Distance per stroke",
+        "instructions": "Count strokes over a short distance, such as 25-50 m. Swim the same distance again and aim to use fewer strokes while maintaining effective technique.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-front-crawl-dry-front-crawl",
+        "category": "Drills",
+        "title": "Front crawl: Dry front crawl",
+        "instructions": "Lie on one side on the deck. Reach the lower arm forward and rest the upper arm beside the body. Slide the upper hand toward the armpit with the elbow pointing upward. At the armpit, roll onto the stomach and continue reaching the hand past the head onto the deck.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-front-crawl-shark-drill",
+        "category": "Drills",
+        "title": "Front crawl: Shark drill",
+        "instructions": "Swim 3 strokes using high-elbow recovery. On the third stroke, breathe and pause with fingertips at the armpit for 3 seconds before continuing.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-front-crawl-thumb-drill",
+        "category": "Drills",
+        "title": "Front crawl: Thumb drill",
+        "instructions": "Finish each underwater pull by touching the thumb to the hip, then begin the high-elbow recovery. Use the touch to reinforce a complete stroke finish.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-front-crawl-closed-fists-swimming",
+        "category": "Drills",
+        "title": "Front crawl: Closed fists swimming",
+        "instructions": "Swim front crawl with closed fists and high elbows. Concentrate on water pressure against the forearms, rather than relying only on the hands. The source identifies this as an advanced drill.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-front-crawl-finger-drag",
+        "category": "Drills",
+        "title": "Front crawl: Finger drag",
+        "instructions": "Keep fingertips trailing in the water throughout recovery. When the fingers reach the head, enter the whole hand and arm and extend forward. Maintain high elbows.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-front-crawl-zipper-up-down",
+        "category": "Drills",
+        "title": "Front crawl: Zipper up/down",
+        "instructions": "Kick on one side in streamline, holding an aid with the forward arm. Slowly slide the other hand from the leg to the armpit and back down. Work one arm at a time. Fins can reduce the kicking demand so attention stays on recovery and body position.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash5:8-front-crawl",
+            "Splash6:8-front-crawl",
+            "TeenAdult3:9-front-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3",
+        "equipment": "Buoyant aid; optional fins"
+    },
+    {
+        "id": "drills-back-crawl-kicking",
+        "category": "Drills",
+        "title": "Back crawl: Kicking",
+        "instructions": "Kick on the back using technique appropriate to the swimmer. Keep arms by the sides or stretch them overhead while holding a board. A less buoyant aid, such as a floating brick or pull buoy, increases the challenge.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "LittleSplash4:9",
+            "LittleSplash5:8",
+            "LittleSplash5:9",
+            "Splash1:9",
+            "Splash2A:6",
+            "Splash2A:8-back-crawl",
+            "Splash2A:9",
+            "Splash2B:6",
+            "Splash2B:8-back-crawl",
+            "Splash2B:9",
+            "Splash3:10-back-crawl",
+            "Splash3:11",
+            "Splash3:7",
+            "Splash3:8",
+            "Splash4:7-back-crawl",
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult1:13",
+            "TeenAdult1:15-back-crawl",
+            "TeenAdult1:16",
+            "TeenAdult2:10",
+            "TeenAdult2:14-back-crawl",
+            "TeenAdult2:15",
+            "TeenAdult2:9",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3",
+        "equipment": "Optional kickboard, floating brick, or pull buoy"
+    },
+    {
+        "id": "drills-back-crawl-side-kicking",
+        "category": "Drills",
+        "title": "Back crawl: Side kicking",
+        "instructions": "Kick on one side with the lower arm extending beyond the head and the other arm beside the body. Focus on the kick and body roll.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "LittleSplash4:9",
+            "LittleSplash5:8",
+            "LittleSplash5:9",
+            "Splash1:9",
+            "Splash2A:6",
+            "Splash2A:8-back-crawl",
+            "Splash2A:9",
+            "Splash2B:6",
+            "Splash2B:8-back-crawl",
+            "Splash2B:9",
+            "Splash3:10-back-crawl",
+            "Splash3:11",
+            "Splash3:7",
+            "Splash3:8",
+            "Splash4:7-back-crawl",
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult1:13",
+            "TeenAdult1:15-back-crawl",
+            "TeenAdult1:16",
+            "TeenAdult2:10",
+            "TeenAdult2:14-back-crawl",
+            "TeenAdult2:15",
+            "TeenAdult2:9",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3"
+    },
+    {
+        "id": "drills-back-crawl-shake-the-shoe-off",
+        "category": "Drills",
+        "title": "Back crawl: Shake the shoe off",
+        "instructions": "Sit on the pool edge and pretend to flick off a loose shoe or sock. Use small kicks and keep the knees down to encourage relaxed ankles.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "LittleSplash4:9",
+            "LittleSplash5:8",
+            "LittleSplash5:9",
+            "Splash1:9",
+            "Splash2A:6",
+            "Splash2A:8-back-crawl",
+            "Splash2A:9",
+            "Splash2B:6",
+            "Splash2B:8-back-crawl",
+            "Splash2B:9",
+            "Splash3:10-back-crawl",
+            "Splash3:11",
+            "Splash3:7",
+            "Splash3:8",
+            "Splash4:7-back-crawl",
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult1:13",
+            "TeenAdult1:15-back-crawl",
+            "TeenAdult1:16",
+            "TeenAdult2:10",
+            "TeenAdult2:14-back-crawl",
+            "TeenAdult2:15",
+            "TeenAdult2:9",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Preschool 4-5; Swimmer 1-6; Adult 1-3"
+    },
+    {
+        "id": "drills-back-crawl-holy-kicking",
+        "category": "Drills",
+        "title": "Back crawl: Holy kicking",
+        "instructions": "Kick on the back with elbows resting near the waist and hands raised together in a prayer position above the water. For more difficulty, slowly extend the arms upward, then lower them until the hands reach the stomach.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash3:10-back-crawl",
+            "Splash4:7-back-crawl",
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult2:14-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 3-6; Adult 2-3"
+    },
+    {
+        "id": "drills-back-crawl-6-kick-switch",
+        "category": "Drills",
+        "title": "Back crawl: 6-kick switch",
+        "instructions": "From a streamlined side position, take 6 kicks, use a stroke to roll to the opposite side, then take 6 more kicks. Repeat while keeping the head still.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash3:10-back-crawl",
+            "Splash4:7-back-crawl",
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult2:14-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 3-6; Adult 2-3"
+    },
+    {
+        "id": "drills-back-crawl-streamline-kick",
+        "category": "Drills",
+        "title": "Back crawl: Streamline kick",
+        "instructions": "Kick on the back with both arms stretched beyond the head and pressed against the ears. Maintain streamline to work on kick strength and technique.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-back-crawl-fashion-model",
+        "category": "Drills",
+        "title": "Back crawl: Fashion model",
+        "instructions": "Place hands on hips while kicking on the back. Roll enough to lift one arm out of the water and take 6 kicks on that side. Roll to the other side and repeat.",
+        "sourcePages": [
+            9
+        ],
+        "skillIds": [
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-back-crawl-10-beat-back-crawl",
+        "category": "Drills",
+        "title": "Back crawl: 10-beat back crawl",
+        "instructions": "Hold a streamlined side position for 10 kicks, then stroke with the forward arm to change sides. Keep the head steady throughout.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "LittleSplash5:8",
+            "Splash2A:8-back-crawl",
+            "Splash2B:8-back-crawl",
+            "Splash3:10-back-crawl",
+            "Splash4:7-back-crawl",
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult1:15-back-crawl",
+            "TeenAdult2:14-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Preschool 5; Swimmer 2-6; Adult 1-3"
+    },
+    {
+        "id": "drills-back-crawl-single-arm-back-crawl",
+        "category": "Drills",
+        "title": "Back crawl: Single-arm back crawl",
+        "instructions": "Swim using one arm while the other stays beside the body. As the stroking hand enters, roll the opposite shoulder out of the water. The resting arm may hold an aid for support.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "LittleSplash5:8",
+            "Splash2A:8-back-crawl",
+            "Splash2B:8-back-crawl",
+            "TeenAdult1:15-back-crawl"
+        ],
+        "suitability": "Preschool 5; Swimmer 2; Adult 1",
+        "equipment": "Optional buoyant aid"
+    },
+    {
+        "id": "drills-back-crawl-sky-bottom",
+        "category": "Drills",
+        "title": "Back crawl: Sky-bottom",
+        "instructions": "Exaggerate the arm reach during back crawl: reach upward toward a noodle representing the sky, then downward toward the pool bottom.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "LittleSplash5:8",
+            "Splash2A:8-back-crawl",
+            "Splash2B:8-back-crawl",
+            "TeenAdult1:15-back-crawl"
+        ],
+        "suitability": "Preschool 5; Swimmer 2; Adult 1",
+        "equipment": "Noodle"
+    },
+    {
+        "id": "drills-back-crawl-standing-back-crawl",
+        "category": "Drills",
+        "title": "Back crawl: Standing back crawl",
+        "instructions": "Practise back crawl arms while standing on deck or in shallow water. For Swimmer 5 and above, use this to introduce the bent-arm pull.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "LittleSplash5:8",
+            "Splash2A:8-back-crawl",
+            "Splash2B:8-back-crawl",
+            "Splash3:10-back-crawl",
+            "Splash4:7-back-crawl",
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult1:15-back-crawl",
+            "TeenAdult2:14-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Preschool 5; Swimmer 2-6; Adult 1-3"
+    },
+    {
+        "id": "drills-back-crawl-touch-the-rope",
+        "category": "Drills",
+        "title": "Back crawl: Touch the rope",
+        "instructions": "Provide a target about 3 feet above the water and have swimmers reach toward it on every recovery. Use a stretched rope or an instructor-held noodle, kickboard, or other object.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "LittleSplash5:8",
+            "Splash2A:8-back-crawl",
+            "Splash2B:8-back-crawl",
+            "TeenAdult1:15-back-crawl"
+        ],
+        "suitability": "Preschool 5; Swimmer 2; Adult 1",
+        "equipment": "Rope, noodle, or kickboard"
+    },
+    {
+        "id": "drills-back-crawl-transition-back-crawl",
+        "category": "Drills",
+        "title": "Back crawl: Transition back crawl",
+        "instructions": "Take 3 right-arm strokes with the left arm at the side, then 3 left-arm strokes with the right at the side. Repeat with 2 strokes on each arm, then finish the length using full back crawl.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "Splash2A:8-back-crawl",
+            "Splash2B:8-back-crawl",
+            "Splash3:10-back-crawl",
+            "Splash4:7-back-crawl",
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult1:15-back-crawl",
+            "TeenAdult2:14-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 2-6; Adult 1-3"
+    },
+    {
+        "id": "drills-back-crawl-sponge",
+        "category": "Drills",
+        "title": "Back crawl: Sponge",
+        "instructions": "Balance a sponge or another small object on the forehead while swimming. Keep it in place as the shoulders roll to practise steady head position.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "Splash3:10-back-crawl",
+            "Splash4:7-back-crawl",
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult2:14-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 3-6; Adult 2-3",
+        "equipment": "Sponge or small object"
+    },
+    {
+        "id": "drills-back-crawl-lane-rope-pull",
+        "category": "Drills",
+        "title": "Back crawl: Lane rope pull",
+        "instructions": "Swim single-arm back crawl beside a lane rope, using the nearer arm and keeping the other at the side. Grasp the rope above the head, roll, and pull so the elbow bends underwater. Finish the pull beyond the hips.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3",
+        "equipment": "Lane rope"
+    },
+    {
+        "id": "drills-back-crawl-double-arm-back-crawl",
+        "category": "Drills",
+        "title": "Back crawl: Double-arm back crawl",
+        "instructions": "While on the back, stroke with both arms together. Concentrate on the propulsive phase with bent arms.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-back-crawl-swim-the-rope",
+        "category": "Drills",
+        "title": "Back crawl: Swim the rope",
+        "instructions": "Use a rope across the pool or a lane rope as a pulling aid while swimming back crawl. Work the right arm in one direction and the left on the return, emphasizing the bend during the upsweep.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3",
+        "equipment": "Rope or lane rope"
+    },
+    {
+        "id": "drills-back-crawl-distance-per-stroke",
+        "category": "Drills",
+        "title": "Back crawl: Distance per stroke",
+        "instructions": "Count strokes over a chosen distance. Rest, then swim that distance again using fewer strokes to develop efficiency.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-back-crawl-closed-fist",
+        "category": "Drills",
+        "title": "Back crawl: Closed fist",
+        "instructions": "Swim with fists closed and concentrate on feeling the water and generating propulsion with the forearms.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-back-crawl-bounce",
+        "category": "Drills",
+        "title": "Back crawl: Bounce",
+        "instructions": "Hold a tennis ball in each hand while swimming. At the end of each stroke, release the ball past the hip as though pitching a fastball. Use this to emphasize the stroke finish.",
+        "sourcePages": [
+            10
+        ],
+        "skillIds": [
+            "Splash5:8-back-crawl",
+            "Splash6:8-back-crawl",
+            "TeenAdult3:9-back-crawl"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3",
+        "equipment": "Two tennis balls per swimmer"
+    },
+    {
+        "id": "drills-breaststroke-vertical-kicking",
+        "category": "Drills",
+        "title": "Breaststroke: Vertical kicking",
+        "instructions": "In a vertical position, extend each whip kick fully to lift the shoulders or chest above the surface.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "LittleSplash5:6",
+            "Splash2B:7",
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult1:14",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Preschool 5; Swimmer 2-6; Adult 1-3"
+    },
+    {
+        "id": "drills-breaststroke-vertical-wall-kicking",
+        "category": "Drills",
+        "title": "Breaststroke: Vertical wall kicking",
+        "instructions": "Face the pool wall with armpits supported at the gutter and stomach and upper legs against the wall. Practise whip kick while keeping the body close to the wall to emphasize lower-leg drive.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "LittleSplash5:6",
+            "Splash2B:7",
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult1:14",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Preschool 5; Swimmer 2-6; Adult 1-3",
+        "equipment": "Pool wall"
+    },
+    {
+        "id": "drills-breaststroke-kicking-with-or-without-a-board",
+        "category": "Drills",
+        "title": "Breaststroke: Kicking with or without a board",
+        "instructions": "Practise the kick on the front or back according to the swimmer’s level. Use a buoyant aid for support; remove the aid and keep streamline for a greater challenge.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "LittleSplash5:6",
+            "Splash2B:7",
+            "Splash3:9",
+            "Splash4:5",
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult1:14",
+            "TeenAdult2:11",
+            "TeenAdult2:12",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Preschool 5; Swimmer 2-6; Adult 1-3",
+        "equipment": "Optional kickboard or buoyant aid"
+    },
+    {
+        "id": "drills-breaststroke-penguin-walk",
+        "category": "Drills",
+        "title": "Breaststroke: Penguin walk",
+        "instructions": "Walk on deck or in shallow water with flexed ankles. Touch down on the heels only, keeping toes lifted and turned outward.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-breaststroke-kicking-off-wall-on-land",
+        "category": "Drills",
+        "title": "Breaststroke: Kicking off wall on land",
+        "instructions": "Lie on the stomach on a wet deck with knees close to a wall. Flex the feet and press them into the wall to move the body forward. Focus on the part of the foot that should press against the water.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3",
+        "equipment": "Wall and wet deck"
+    },
+    {
+        "id": "drills-breaststroke-kicking-on-wall",
+        "category": "Drills",
+        "title": "Breaststroke: Kicking on wall",
+        "instructions": "Sit at the wall with legs bent 90 degrees. Begin with feet forward, draw heels toward the wall while keeping legs together, flex the ankles, then sweep the feet in a circle back to the start. Feel pressure along the inner feet and ankles.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3",
+        "equipment": "Pool wall"
+    },
+    {
+        "id": "drills-breaststroke-ankle-touch-kicking",
+        "category": "Drills",
+        "title": "Breaststroke: Ankle touch kicking",
+        "instructions": "Keep arms beside the body. During kick recovery, bring the ankles to the hands to practise coordination.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-breaststroke-streamline-under",
+        "category": "Drills",
+        "title": "Breaststroke: Streamline under",
+        "instructions": "Kick underwater in streamline, return to the surface for a breath, then submerge again. Focus on breath control.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-breaststroke-triple-kick",
+        "category": "Drills",
+        "title": "Breaststroke: Triple kick",
+        "instructions": "Use 3 kicks for each arm pull, concentrating on body position and an efficient kick.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 5-6; Adult 3"
+    },
+    {
+        "id": "drills-breaststroke-scull-drill",
+        "category": "Drills",
+        "title": "Breaststroke: Scull drill",
+        "instructions": "Lie face down with arms extended past the head. Scull inward toward the centre line and outward again, keeping bent elbows near the surface and above the forearms. Vary wrist and elbow angles to find effective forward movement. Use a pull buoy to support the legs without kicking.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash4:6",
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult2:13",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 4-6; Adult 2-3",
+        "equipment": "Pull buoy"
+    },
+    {
+        "id": "drills-breaststroke-breaststroke-arms-on-deck",
+        "category": "Drills",
+        "title": "Breaststroke: Breaststroke arms on deck",
+        "instructions": "Lie at the pool edge with shoulders and arms over the water in streamline. Pull the hands down and back toward the wall with elbows higher than hands. Bring hands and elbows together at the centre, then extend them forward.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash4:6",
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult2:13",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 4-6; Adult 2-3"
+    },
+    {
+        "id": "drills-breaststroke-arms-only",
+        "category": "Drills",
+        "title": "Breaststroke: Arms only",
+        "instructions": "Place a noodle under the armpits for support. Flutter kick while practising breaststroke arms, using the noodle as the limit behind which the arms should not travel.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash4:6",
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult2:13",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 4-6; Adult 2-3",
+        "equipment": "Noodle"
+    },
+    {
+        "id": "drills-breaststroke-coordination-pattern",
+        "category": "Drills",
+        "title": "Breaststroke: Coordination pattern",
+        "instructions": "Stand in shallow water or lie over the pool edge. Rehearse the pull, breath, and kick sequence, with instructor assistance where needed.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash4:6",
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult2:13",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 4-6; Adult 2-3"
+    },
+    {
+        "id": "drills-breaststroke-head-up-breaststroke",
+        "category": "Drills",
+        "title": "Breaststroke: Head-up breaststroke",
+        "instructions": "Swim full breaststroke with the head lifted and eyes looking forward. Concentrate on the arm pull and leg kick without adding underwater breathing.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash4:6",
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult2:13",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 4-6; Adult 2-3"
+    },
+    {
+        "id": "drills-breaststroke-shooters",
+        "category": "Drills",
+        "title": "Breaststroke: Shooters",
+        "instructions": "Begin the pull slowly and feel the hands and arms working against the water. As the hands meet at the centre of the body, drive the arms forward quickly to practise fast recovery.",
+        "sourcePages": [
+            11
+        ],
+        "skillIds": [
+            "Splash4:6",
+            "Splash5:7",
+            "Splash6:7",
+            "TeenAdult2:13",
+            "TeenAdult3:8"
+        ],
+        "suitability": "Swimmer 4-6; Adult 2-3"
+    },
+    {
+        "id": "drills-dry-land-chest-stretch",
+        "category": "Drills",
+        "title": "Dry land: Chest stretch",
+        "instructions": "Stand upright with feet a little wider than the shoulders. Extend straight arms sideways at shoulder height with palms facing forward. Move the arms back and hold.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-bicep-stretch",
+        "category": "Drills",
+        "title": "Dry land: Bicep stretch",
+        "instructions": "Stand upright with feet a little wider than the shoulders. Hold straight arms out at shoulder height, palms facing backward. Move the arms back and hold.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-shoulder-stretch",
+        "category": "Drills",
+        "title": "Dry land: Shoulder stretch",
+        "instructions": "Stand upright with feet a little wider than the shoulders. Bring one straight arm across the chest and use the bent opposite arm to support the stretch. Repeat on the other side.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-upper-back-stretch",
+        "category": "Drills",
+        "title": "Dry land: Upper back stretch",
+        "instructions": "Stand upright with feet a little wider than the shoulders. Interlace the fingers and reach forward with thumbs pointing down, feeling the stretch across the upper back and between the shoulder blades.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-shoulder-and-triceps-stretch",
+        "category": "Drills",
+        "title": "Dry land: Shoulder and triceps stretch",
+        "instructions": "Stand upright with feet a little wider than the shoulders. Raise both arms overhead with palms together, bend the elbows, and move the arms backward.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-side-bends",
+        "category": "Drills",
+        "title": "Dry land: Side bends",
+        "instructions": "Stand upright with feet a little wider than the shoulders. Rest one hand on a hip and reach the other arm overhead. Bend slowly sideways, return upright, then change sides. Avoid leaning forward or backward.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-abdominal-and-lower-back-muscles",
+        "category": "Drills",
+        "title": "Dry land: Abdominal and lower back muscles",
+        "instructions": "Lie face down with arms extended forward. Lift the hands, chest, and shoulders so the toes and torso remain on the ground. The stretch is felt through the back and abdomen.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-gluteus-muscles",
+        "category": "Drills",
+        "title": "Dry land: Gluteus muscles",
+        "instructions": "Lie face down. Gently contract the buttocks for 10 seconds, then relax. Lift and extend one arm for 10 seconds, then the other. Repeat with each leg. Next lift the right arm with the left leg for 10 seconds, then swap diagonals.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-swimming-dry-land",
+        "category": "Drills",
+        "title": "Dry land: Swimming (dry land)",
+        "instructions": "Lie face down and lift arms and legs off the ground. Flutter both arms and legs together to imitate swimming.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-calf-stretch",
+        "category": "Drills",
+        "title": "Dry land: Calf stretch",
+        "instructions": "Face a wall with hands on it and arms straight. Step one leg farther back. Put the toes of the nearer foot against the wall while keeping its heel on the floor. Bend the elbows, lean toward the wall, and hold. Change feet.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-arm-swings-and-hand-claps",
+        "category": "Drills",
+        "title": "Dry land: Arm swings and hand claps",
+        "instructions": "Circle one arm 10 times, repeat with the other, then circle both together. Next extend arms forward, open them backward, and bring them forward to clap. Repeat the clap movement 10 times.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-lunges",
+        "category": "Drills",
+        "title": "Dry land: Lunges",
+        "instructions": "Walk forward using a lunge on each step. Keep hips facing forward and direct the pressure through the heel rather than the toes.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "drills-dry-land-jump-starts",
+        "category": "Drills",
+        "title": "Dry land: Jump starts",
+        "instructions": "Bring heels together with toes turned out. Squat with heels between the legs, then jump upward and reach overhead. Repeat.\n\nSource coaching notes: move slowly, relax, keep breathing, and avoid stretching beyond mild discomfort. Hold static positions for at least 15 seconds unless the exercise gives a different hold time.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:2"
+        ],
+        "suitability": "Fitness Swimmer: stretches for swimmers"
+    },
+    {
+        "id": "workouts-sample-warm-up",
+        "category": "Workouts",
+        "title": "Sample warm-up",
+        "instructions": "200 m mixed strokes at an easy pace, changing stroke every 25 or 50 m.\n4 × 50 m varying the time: begin relaxed, then slightly faster, then strong effort, then fast.\nPace progression shown in the source: 25 m relaxed; 50 m slightly faster; 75 m strong effort; 100 m fast.\n\nThis is a warm-up component, not a complete workout.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:6"
+        ]
+    },
+    {
+        "id": "workouts-11-years-under-main-set-a",
+        "category": "Workouts",
+        "title": "11 years & under: Main set A",
+        "instructions": "4 × 25 m front crawl; start every 1:00.\n2 × 25 m flutter kick with a board; rest 20 seconds after each repeat.\n2 × 25 m flutter kick without a board; rest 20 seconds after each repeat.\n4 × 25 m, starting every 1:00: closed-fist front crawl on odd lengths, distance-per-stroke focus on even lengths.\n\nDPS means distance per stroke: cover the distance efficiently with fewer strokes. Add an appropriate warm-up and cool-down.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "11 years and under",
+        "equipment": "Kickboard"
+    },
+    {
+        "id": "workouts-11-years-under-main-set-b",
+        "category": "Workouts",
+        "title": "11 years & under: Main set B",
+        "instructions": "2 × 50 m front crawl; start every 1:40.\nThen a distance ladder: 25 m, 50 m, 75 m, 75 m, 50 m, 25 m. The source does not specify a stroke or interval for the ladder.\n\nAdd an appropriate warm-up and cool-down.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "11 years and under"
+    },
+    {
+        "id": "workouts-11-14-years-main-set-a",
+        "category": "Workouts",
+        "title": "11-14 years: Main set A",
+        "instructions": "4 × 75 m front crawl; start every 2:00.\n3 × 50 m front crawl; start every 1:20.\n2 × 25 m front crawl; start every 55 seconds.\n\nAdd an appropriate warm-up and cool-down.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "11-14 years"
+    },
+    {
+        "id": "workouts-11-14-years-main-set-b",
+        "category": "Workouts",
+        "title": "11-14 years: Main set B",
+        "instructions": "8 × 25 m, alternating breaststroke on odd lengths and back crawl on even lengths.\n2 × 75 m, each consisting of 25 m back flutter kick and 50 m back crawl.\n2 × 75 m, each consisting of 25 m whip kick without a board and 50 m breaststroke.\n\nThe source does not give rest intervals. Add an appropriate warm-up and cool-down.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "11-14 years"
+    },
+    {
+        "id": "workouts-13-18-years-main-set-a",
+        "category": "Workouts",
+        "title": "13-18 years: Main set A",
+        "instructions": "3 × 100 m front crawl; start every 2:45.\n2 × 100 m front crawl; start every 2:35.\n1 × 100 m front crawl sprint.\n\nAdd an appropriate warm-up and cool-down.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "13-18 years"
+    },
+    {
+        "id": "workouts-13-18-years-main-set-b",
+        "category": "Workouts",
+        "title": "13-18 years: Main set B",
+        "instructions": "Pyramid:\n25 m front crawl; rest 20 seconds.\n50 m back crawl; rest 30 seconds.\n75 m breaststroke; rest 45 seconds.\n100 m front crawl; rest 1 minute.\n75 m breaststroke; rest 45 seconds.\n50 m back crawl; rest 30 seconds.\n25 m front crawl; rest 20 seconds.\n\nAdd an appropriate warm-up and cool-down.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "13-18 years"
+    },
+    {
+        "id": "workouts-sample-cool-down",
+        "category": "Workouts",
+        "title": "Sample cool-down",
+        "instructions": "200 m easy mixed strokes, changing stroke every 25 or 50 m.\n4 × 50 m easy swimming, stroke of choice, with a distance-per-stroke focus.\n6 × 25 m, stroke of choice, with 25 seconds of rest after each repeat.\n\nDPS means distance per stroke. This is a cool-down component, not a complete workout.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:6"
+        ]
+    },
+    {
+        "id": "workouts-11-years-under-interval-workout-1",
+        "category": "Workouts",
+        "title": "11 years & under: Interval workout 1",
+        "instructions": "Warm-up\n1 × 25 m, 1 × 50 m, then 1 × 75 m; stroke of choice with 20 seconds of rest after each swim.\n\nMain set\n2 × 25 m flutter kick; start every 1:10.\n2 × 25 m front crawl; start every 1:00.\n2 × 50 m, stroke of choice; start every 2:00.\n\nCool-down\n1 × 25 m, 1 × 50 m, then 1 × 75 m; stroke of choice with 20 seconds of rest after each swim.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "11 years and under"
+    },
+    {
+        "id": "workouts-11-years-under-interval-workout-2",
+        "category": "Workouts",
+        "title": "11 years & under: Interval workout 2",
+        "instructions": "Warm-up\n4 × 25 m, stroke of choice; start every 1:00.\n\nMain set\n8 × 25 m front crawl; start every 55 seconds.\n\nCool-down\n4 × 25 m, stroke of choice; start every 1:00.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "11 years and under"
+    },
+    {
+        "id": "workouts-11-14-years-interval-workout-1",
+        "category": "Workouts",
+        "title": "11-14 years: Interval workout 1",
+        "instructions": "Warm-up\n4 × 25 m, stroke of choice; start every 1:00.\n\nMain set\n25 m, stroke of choice; rest 15 seconds.\n50 m, stroke of choice; rest 30 seconds.\n50 m, stroke of choice; rest 30 seconds.\n25 m, stroke of choice; rest 15 seconds.\n\nCool-down\n4 × 25 m, stroke of choice; start every 1:00.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "11-14 years"
+    },
+    {
+        "id": "workouts-11-14-years-interval-workout-2",
+        "category": "Workouts",
+        "title": "11-14 years: Interval workout 2",
+        "instructions": "Warm-up\n100 m, stroke of choice.\n\nMain set\n6 × 50 m front crawl; start every 1:30.\n2 × 25 m flutter kick without a board, arms streamlined; rest 20 seconds after each repeat.\n2 × 25 m 6-kick switch side glides; rest 20 seconds after each repeat.\n\nCool-down\n100 m, stroke of choice.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "11-14 years"
+    },
+    {
+        "id": "workouts-13-18-years-interval-workout-1",
+        "category": "Workouts",
+        "title": "13-18 years: Interval workout 1",
+        "instructions": "Warm-up\n2 × 25 m, stroke of choice; rest 20 seconds after each repeat.\n2 × 50 m, stroke of choice; rest 30 seconds after each repeat.\n\nMain set\n12 × 25 m, stroke of choice at a hard effort; start every 1:00.\n4 × 50 m, stroke of choice at a hard effort; start every 1:30.\n\nCool-down\n100 m, stroke of choice.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "13-18 years"
+    },
+    {
+        "id": "workouts-13-18-years-interval-workout-2",
+        "category": "Workouts",
+        "title": "13-18 years: Interval workout 2",
+        "instructions": "Warm-up\n200 m, stroke of choice, with long and easy strokes.\n\nMain set\n25 m front crawl; rest 15 seconds.\n50 m front crawl; rest 30 seconds.\n200 m, stroke of choice; rest 45 seconds.\n50 m front crawl; rest 30 seconds.\n25 m front crawl; rest 15 seconds.\n\nCool-down\n200 m, stroke of choice.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:4",
+            "SplashFitness:6"
+        ],
+        "suitability": "13-18 years"
+    }
 ]

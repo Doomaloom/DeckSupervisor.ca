@@ -1,34 +1,41 @@
-import React from 'react'
-import { levelOptionGroups, selectClass } from '../constants'
+import React from "react";
+import { levelOptionGroups, selectClass } from "../constants";
 
 type LevelSelectProps = {
-    value: string
-    onChange: (value: string) => void
-    placeholder?: string
-    disabled?: boolean
-}
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    disabled?: boolean;
+};
 
-function LevelSelect({ value, onChange, placeholder, disabled = false }: LevelSelectProps) {
+function LevelSelect(
+    { value, onChange, placeholder, disabled = false }: LevelSelectProps,
+) {
     return (
         <select
             data-component="level-select"
             className={selectClass}
             value={value}
-            onChange={event => onChange(event.target.value)}
+            onChange={(event) => onChange(event.target.value)}
             disabled={disabled}
         >
-            {placeholder ? <option value="">{placeholder}</option> : <option value={value}>{value}</option>}
-            {levelOptionGroups.map(group => (
+            {placeholder
+                ? <option value="">{placeholder}</option>
+                : <option value={value}>{value}</option>}
+            {levelOptionGroups.map((group) => (
                 <optgroup key={group.label} label={group.label}>
-                    {group.options.map(option => (
-                        <option key={`${group.label}-${option.value}`} value={option.value}>
+                    {group.options.map((option) => (
+                        <option
+                            key={`${group.label}-${option.value}`}
+                            value={option.value}
+                        >
                             {option.label}
                         </option>
                     ))}
                 </optgroup>
             ))}
         </select>
-    )
+    );
 }
 
-export default LevelSelect
+export default LevelSelect;

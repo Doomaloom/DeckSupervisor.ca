@@ -1,148 +1,186 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from "react";
 import {
     getExtractedClassesForSession,
     onExtractedClassesBySessionUpdated,
-} from '../../../lib/extractedClassesStorage'
+} from "../../../lib/extractedClassesStorage";
 import {
     getScheduleForDay,
     getStudentsForDay,
     onStudentsUpdated,
-    setInstructorsForDay,
     setInstructorCoursesForDay,
+    setInstructorsForDay,
     setScheduleForDay,
     setStudentsForDay,
-} from '../../../lib/storage'
-import { useCurrentSession } from '../../../app/useCurrentSession'
-import { invalidateCachedSchematicPdfs } from '../../../lib/printPdfCache'
-import { fetchSchematic, upsertSchematic } from '../../../lib/serverApi'
-import type { ExtractedClass, Student } from '../../../types/app'
-import { prefetchSchematicPdfs } from '../../print/utils/printCachePrefetch'
-import { SLOT_HEIGHT_REM, SLOT_MINUTES } from '../constants'
-import { buildCourses } from '../utils/courses'
-import { normalizeCourseCodeForCompare } from '../utils/courseCode'
-import type { StoredCourseLayout } from '../utils/layout'
-import { useSchematicBoard } from './useSchematicBoard'
-import { buildTimeLabels } from '../utils/time'
-import { showAppNotice } from '../../../lib/appNotice'
+} from "../../../lib/storage";
+import { useCurrentSession } from "../../../app/useCurrentSession";
+import { invalidateCachedSchematicPdfs } from "../../../lib/printPdfCache";
+import { fetchSchematic, upsertSchematic } from "../../../lib/serverApi";
+import type { ExtractedClass, Student } from "../../../types/app";
+import { prefetchSchematicPdfs } from "../../print/utils/printCachePrefetch";
+import { SLOT_HEIGHT_REM, SLOT_MINUTES } from "../constants";
+import { buildCourses } from "../utils/courses";
+import { normalizeCourseCodeForCompare } from "../utils/courseCode";
+import type { StoredCourseLayout } from "../utils/layout";
+import { useSchematicBoard } from "./useSchematicBoard";
+import { buildTimeLabels } from "../utils/time";
+import { showAppNotice } from "../../../lib/appNotice";
 
 export function useSchematicSchedule(selectedDay: string | null) {
-    const { access, session: currentSession, sessionId } = useCurrentSession()
-    const [students, setStudents] = useState<Student[]>([])
-    const [extractedClasses, setExtractedClasses] = useState<ExtractedClass[]>([])
-    const [remoteSchedule, setRemoteSchedule] = useState<StoredCourseLayout | null>(null)
+    const { access, session: currentSession, sessionId } = useCurrentSession();
+    const [students, setStudents] = useState<Student[]>([]);
+    const [extractedClasses, setExtractedClasses] = useState<ExtractedClass[]>(
+        [],
+    );
+    const [remoteSchedule, setRemoteSchedule] = useState<
+        StoredCourseLayout | null
+    >(null);
     useEffect(() => {
-        setStudents(getStudentsForDay(selectedDay ?? ''))
-    }, [selectedDay])
+        setStudents(getStudentsForDay(selectedDay ?? ""));
+    }, [selectedDay]);
 
     useEffect(() => {
-        return onStudentsUpdated(day => {
+        return onStudentsUpdated((day) => {
             if (day === selectedDay) {
-                setStudents(getStudentsForDay(selectedDay ?? ''))
+                setStudents(getStudentsForDay(selectedDay ?? ""));
             }
-        })
-    }, [selectedDay])
+        });
+    }, [selectedDay]);
 
     useEffect(() => {
         if (!sessionId) {
-            setExtractedClasses([])
-            return () => {}
+            setExtractedClasses([]);
+            return () => {};
         }
 
-        const load = () => setExtractedClasses(getExtractedClassesForSession(sessionId))
-        load()
+        const load = () =>
+            setExtractedClasses(getExtractedClassesForSession(sessionId));
+        load();
 
-        return onExtractedClassesBySessionUpdated(updatedSessionId => {
+        return onExtractedClassesBySessionUpdated((updatedSessionId) => {
             if (updatedSessionId === sessionId) {
-                load()
+                load();
             }
-        })
-    }, [sessionId])
+        });
+    }, [sessionId]);
 
     const extractedStudentCountByCode = useMemo(() => {
-        const counts = new Map<string, number>()
-        extractedClasses.forEach(classEntry => {
-            if (selectedDay && classEntry.dayOfWeek && classEntry.dayOfWeek !== selectedDay) {
-                return
+        const counts = new Map<string, number>();
+        extractedClasses.forEach((classEntry) => {
+            if (
+                selectedDay && classEntry.dayOfWeek &&
+                classEntry.dayOfWeek !== selectedDay
+            ) {
+                return;
             }
-            const normalizedCode = normalizeCourseCodeForCompare(classEntry.courseCode)
+            const normalizedCode = normalizeCourseCodeForCompare(
+                classEntry.courseCode,
+            );
             if (!normalizedCode || counts.has(normalizedCode)) {
-                return
+                return;
             }
-            counts.set(normalizedCode, Math.max(classEntry.studentCount, 0))
-        })
-        return counts
-    }, [extractedClasses, selectedDay])
+            counts.set(normalizedCode, Math.max(classEntry.studentCount, 0));
+        });
+        return counts;
+    }, [extractedClasses, selectedDay]);
 
     const courses = useMemo(() => {
-        const rosterCourses = buildCourses(students)
+        const rosterCourses = buildCourses(students);
         if (extractedStudentCountByCode.size === 0) {
-            return rosterCourses
+            return rosterCourses;
         }
-        return rosterCourses.map(course => {
-            const extractedCount = extractedStudentCountByCode.get(normalizeCourseCodeForCompare(course.code))
+        return rosterCourses.map((course) => {
+            const extractedCount = extractedStudentCountByCode.get(
+                normalizeCourseCodeForCompare(course.code),
+            );
             if (extractedCount === undefined) {
-                return course
+                return course;
             }
             return {
                 ...course,
                 studentCount: extractedCount,
-            }
-        })
-    }, [extractedStudentCountByCode, students])
+            };
+        });
+    }, [extractedStudentCountByCode, students]);
     const scheduleStartMinutes = useMemo(() => {
         if (courses.length === 0) {
-            return 0
+            return 0;
         }
-        const earliest = Math.min(...courses.map(course => course.startMinutes))
-        return earliest - (earliest % SLOT_MINUTES)
-    }, [courses])
+        const earliest = Math.min(
+            ...courses.map((course) => course.startMinutes),
+        );
+        return earliest - (earliest % SLOT_MINUTES);
+    }, [courses]);
     const timeLabels = useMemo(() => {
-        const earliest = courses[0]?.startTime ?? ''
+        const earliest = courses[0]?.startTime ?? "";
         const latest = courses.reduce((latestEnd, course) => {
-            return course.endTime > latestEnd ? course.endTime : latestEnd
-        }, '00:00')
-        return buildTimeLabels(earliest, latest)
-    }, [courses])
-    const scheduleHeightRem = Math.max(timeLabels.length * SLOT_HEIGHT_REM, SLOT_HEIGHT_REM)
-    const instructorRoster = useMemo(() => currentSession?.instructors.map((row, index) => ({
-        id: row.id ?? `legacy-${index}`, name: row.name,
-    })), [currentSession?.instructors])
-    const instructorOptions = useMemo(() => instructorRoster?.map((row, index) => ({
-        id: row.id, name: row.name,
-        label: !row.name.trim() ? `Instructor ${index + 1}` : instructorRoster.filter(other => other.name === row.name).length > 1
-            ? `${row.name} (Instructor ${index + 1})` : row.name,
-    })) ?? [], [instructorRoster])
+            return course.endTime > latestEnd ? course.endTime : latestEnd;
+        }, "00:00");
+        return buildTimeLabels(earliest, latest);
+    }, [courses]);
+    const scheduleHeightRem = Math.max(
+        timeLabels.length * SLOT_HEIGHT_REM,
+        SLOT_HEIGHT_REM,
+    );
+    const instructorRoster = useMemo(
+        () =>
+            currentSession?.instructors.map((row, index) => ({
+                id: row.id ?? `legacy-${index}`,
+                name: row.name,
+            })),
+        [currentSession?.instructors],
+    );
+    const instructorOptions = useMemo(
+        () =>
+            instructorRoster?.map((row, index) => ({
+                id: row.id,
+                name: row.name,
+                label: !row.name.trim()
+                    ? `Instructor ${index + 1}`
+                    : instructorRoster.filter((other) =>
+                            other.name === row.name
+                        ).length >
+                            1
+                    ? `${row.name} (Instructor ${index + 1})`
+                    : row.name,
+            })) ?? [],
+        [instructorRoster],
+    );
 
     useEffect(() => {
-        if (access.mode === 'guest' || !sessionId || !currentSession) {
-            setRemoteSchedule(null)
-            return
+        if (access.mode === "guest" || !sessionId || !currentSession) {
+            setRemoteSchedule(null);
+            return;
         }
-        let active = true
+        let active = true;
         const loadRemote = async () => {
-            const response = await fetchSchematic(sessionId)
+            const response = await fetchSchematic(sessionId);
             if (!active) {
-                return
+                return;
             }
-            const dataValue = response.schematic?.data as StoredCourseLayout | undefined | undefined
+            const dataValue = response.schematic?.data as
+                | StoredCourseLayout
+                | undefined
+                | undefined;
             if (dataValue?.codes?.length) {
                 setRemoteSchedule({
                     instructorIds: dataValue.instructorIds,
                     assignmentIds: dataValue.assignmentIds,
                     codes: dataValue.codes ?? [],
                     instructors: dataValue.instructors ?? [],
-                })
+                });
             } else {
-                setRemoteSchedule(null)
+                setRemoteSchedule(null);
             }
-        }
-        void loadRemote()
+        };
+        void loadRemote();
         return () => {
-            active = false
-        }
-    }, [access.mode, currentSession, sessionId])
+            active = false;
+        };
+    }, [access.mode, currentSession, sessionId]);
 
-    const storedLayout = access.mode === 'guest' ? getScheduleForDay(selectedDay ?? '') : remoteSchedule
+    const storedLayout = access.mode === "guest"
+        ? getScheduleForDay(selectedDay ?? "")
+        : remoteSchedule;
     const {
         assignmentIds,
         instructorIds,
@@ -162,82 +200,103 @@ export function useSchematicSchedule(selectedDay: string | null) {
         storedLayout,
         allowStoredEmptyColumns: true,
         instructorRoster,
-    })
+    });
 
     const handleSaveSchedule = async () => {
         if (!selectedDay) {
-            showAppNotice('Please select a day first.', 'error')
-            return
+            showAppNotice("Please select a day first.", "error");
+            return;
         }
-        if (currentSession && access.mode !== 'owner' && access.mode !== 'guest') {
-            showAppNotice('This schematic is view-only for shared sessions.', 'info')
-            return
+        if (
+            currentSession && access.mode !== "owner" && access.mode !== "guest"
+        ) {
+            showAppNotice(
+                "This schematic is view-only for shared sessions.",
+                "info",
+            );
+            return;
         }
-        const codes = columns.map(column => column.map(course => course.code).join(','))
+        const codes = columns.map((column) =>
+            column.map((course) => course.code).join(",")
+        );
         setScheduleForDay(selectedDay, {
-            assignmentIds, instructorIds,
+            assignmentIds,
+            instructorIds,
             instructors,
             codes,
-        })
+        });
 
         const assignments = columns.map((column, index) => ({
-            name: (instructors[index] ?? '').trim(),
-            codes: column.map(course => course.code),
-        })).filter(entry => entry.codes.length > 0 || entry.name)
+            name: (instructors[index] ?? "").trim(),
+            codes: column.map((course) => course.code),
+        })).filter((entry) => entry.codes.length > 0 || entry.name);
 
-        setInstructorCoursesForDay(selectedDay, { instructors: assignments })
+        setInstructorCoursesForDay(selectedDay, { instructors: assignments });
         setInstructorsForDay(selectedDay, {
-            names: assignments.map(entry => entry.name),
-            codes: assignments.map(entry => entry.codes.join(',')),
-        })
+            names: assignments.map((entry) => entry.name),
+            codes: assignments.map((entry) => entry.codes.join(",")),
+        });
 
-        const instructorByCode = new Map<string, string>()
-        assignments.forEach(entry => {
+        const instructorByCode = new Map<string, string>();
+        assignments.forEach((entry) => {
             if (!entry.name) {
-                return
+                return;
             }
-            entry.codes.forEach(code => instructorByCode.set(code, entry.name))
-        })
+            entry.codes.forEach((code) =>
+                instructorByCode.set(code, entry.name)
+            );
+        });
 
-        const dayStudents = getStudentsForDay(selectedDay)
-        const updated = dayStudents.map(student => {
-            const instructor = instructorByCode.get(student.code)
-            return { ...student, instructor: instructor ?? '' }
-        })
+        const dayStudents = getStudentsForDay(selectedDay);
+        const updated = dayStudents.map((student) => {
+            const instructor = instructorByCode.get(student.code);
+            return { ...student, instructor: instructor ?? "" };
+        });
 
-        if (access.mode === 'owner' && currentSession && sessionId) {
+        if (access.mode === "owner" && currentSession && sessionId) {
             const nextRemoteSchedule = {
                 assignmentIds,
                 instructorIds,
                 assignments: columns.map((column, index) => ({
-                    id: assignmentIds[index], name: instructors[index] ?? '', instructor_id: instructorIds[index] ?? null,
-                    classes: column.map(course => ({code: course.code, level: course.level,
-                        start_time: course.startTime, end_time: course.endTime})),
+                    id: assignmentIds[index],
+                    name: instructors[index] ?? "",
+                    instructor_id: instructorIds[index] ?? null,
+                    classes: column.map((course) => ({
+                        code: course.code,
+                        level: course.level,
+                        start_time: course.startTime,
+                        end_time: course.endTime,
+                    })),
                 })),
                 codes,
                 instructors,
-            }
+            };
             try {
-                await upsertSchematic(sessionId, nextRemoteSchedule)
+                await upsertSchematic(sessionId, nextRemoteSchedule);
             } catch (error) {
-                showAppNotice(`Failed to save schedule: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
-                return
+                showAppNotice(
+                    `Failed to save schedule: ${
+                        error instanceof Error ? error.message : "Unknown error"
+                    }`,
+                    "error",
+                );
+                return;
             }
 
-            setRemoteSchedule(nextRemoteSchedule)
+            setRemoteSchedule(nextRemoteSchedule);
         }
 
-        setStudentsForDay(selectedDay, updated)
+        setStudentsForDay(selectedDay, updated);
         if (sessionId) {
-            await invalidateCachedSchematicPdfs(sessionId, selectedDay)
+            await invalidateCachedSchematicPdfs(sessionId, selectedDay);
             void prefetchSchematicPdfs({
                 day: selectedDay,
                 sessionId,
                 session: currentSession,
-            })
+            });
         }
-        showAppNotice('Schedule saved successfully!', 'success')
-    }
+        showAppNotice("Schedule saved successfully!", "success");
+    };
 
     return {
         instructorIds,
@@ -257,5 +316,5 @@ export function useSchematicSchedule(selectedDay: string | null) {
         addTemporaryColumn,
         removeEmptyColumns,
         setInstructorAt,
-    }
+    };
 }

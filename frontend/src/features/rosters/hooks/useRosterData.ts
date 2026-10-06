@@ -1,163 +1,183 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     getInstructorsForDay,
     getStudentsForDay,
     onStudentsUpdated,
     setInstructorsForDay,
     setStudentsForDay,
-} from '../../../lib/storage'
+} from "../../../lib/storage";
 import {
     applyPersistedLevelEdits,
     fetchRosterLevelEdits,
     fetchRosterStudentEdits,
     hashStudentNames,
-} from '../../../lib/rosterEditsApi'
-import { fetchSchematic } from '../../../lib/serverApi'
-import type { Student } from '../../../types/app'
-import { buildRosterGroups } from '../utils'
+} from "../../../lib/rosterEditsApi";
+import { fetchSchematic } from "../../../lib/serverApi";
+import type { Student } from "../../../types/app";
+import { buildRosterGroups } from "../utils";
 
 type RemoteSchematicData = {
-    codes?: string[]
-    instructors?: string[]
-}
+    codes?: string[];
+    instructors?: string[];
+};
 
-function buildInstructorMap(data: RemoteSchematicData | null): Map<string, string> {
-    const byCode = new Map<string, string>()
+function buildInstructorMap(
+    data: RemoteSchematicData | null,
+): Map<string, string> {
+    const byCode = new Map<string, string>();
     if (!data?.codes?.length) {
-        return byCode
+        return byCode;
     }
-    const instructors = data.instructors ?? []
+    const instructors = data.instructors ?? [];
     data.codes.forEach((encodedCodes, index) => {
-        const instructor = (instructors[index] ?? '').trim()
+        const instructor = (instructors[index] ?? "").trim();
         if (!instructor) {
-            return
+            return;
         }
         encodedCodes
-            .split(',')
-            .map(code => code.trim())
+            .split(",")
+            .map((code) => code.trim())
             .filter(Boolean)
-            .forEach(code => byCode.set(code, instructor))
-    })
-    return byCode
+            .forEach((code) => byCode.set(code, instructor));
+    });
+    return byCode;
 }
 
-function applyInstructorAssignments(students: Student[], byCode: Map<string, string>): Student[] {
+function applyInstructorAssignments(
+    students: Student[],
+    byCode: Map<string, string>,
+): Student[] {
     if (students.length === 0 || byCode.size === 0) {
-        return students
+        return students;
     }
-    let changed = false
-    const next = students.map(student => {
-        const assigned = byCode.get(student.code)
+    let changed = false;
+    const next = students.map((student) => {
+        const assigned = byCode.get(student.code);
         if (!assigned || assigned === student.instructor) {
-            return student
+            return student;
         }
-        changed = true
-        return { ...student, instructor: assigned }
-    })
-    return changed ? next : students
+        changed = true;
+        return { ...student, instructor: assigned };
+    });
+    return changed ? next : students;
 }
 
-export function useRosterData(selectedDay: string, sessionId?: string, isGuest?: boolean) {
-    const [students, setStudents] = useState<Student[]>([])
-    const [remoteSchematic, setRemoteSchematic] = useState<RemoteSchematicData | null>(null)
-    const appliedEditsKey = useRef('')
+export function useRosterData(
+    selectedDay: string,
+    sessionId?: string,
+    isGuest?: boolean,
+) {
+    const [students, setStudents] = useState<Student[]>([]);
+    const [remoteSchematic, setRemoteSchematic] = useState<
+        RemoteSchematicData | null
+    >(null);
+    const appliedEditsKey = useRef("");
 
     useEffect(() => {
-        setStudents(getStudentsForDay(selectedDay))
-    }, [selectedDay])
+        setStudents(getStudentsForDay(selectedDay));
+    }, [selectedDay]);
 
     useEffect(() => {
-        return onStudentsUpdated(day => {
+        return onStudentsUpdated((day) => {
             if (day === selectedDay) {
-                setStudents(getStudentsForDay(selectedDay))
+                setStudents(getStudentsForDay(selectedDay));
             }
-        })
-    }, [selectedDay])
+        });
+    }, [selectedDay]);
 
     useEffect(() => {
         if (!sessionId || isGuest) {
-            setRemoteSchematic(null)
-            return
+            setRemoteSchematic(null);
+            return;
         }
-        let active = true
+        let active = true;
         const loadSchematic = async () => {
-            const response = await fetchSchematic(sessionId)
+            const response = await fetchSchematic(sessionId);
             if (!active) {
-                return
+                return;
             }
-            const value = (response.schematic?.data ?? null) as RemoteSchematicData | null
-            setRemoteSchematic(value)
+            const value = (response.schematic?.data ?? null) as
+                | RemoteSchematicData
+                | null;
+            setRemoteSchematic(value);
             if (selectedDay) {
                 setInstructorsForDay(selectedDay, {
                     names: value?.instructors ?? [],
                     codes: value?.codes ?? [],
-                })
+                });
             }
-        }
-        void loadSchematic()
+        };
+        void loadSchematic();
         return () => {
-            active = false
-        }
-    }, [isGuest, selectedDay, sessionId])
+            active = false;
+        };
+    }, [isGuest, selectedDay, sessionId]);
 
     useEffect(() => {
         if (!sessionId || isGuest || students.length === 0) {
-            return
+            return;
         }
-        const byCode = buildInstructorMap(remoteSchematic)
-        const next = applyInstructorAssignments(students, byCode)
+        const byCode = buildInstructorMap(remoteSchematic);
+        const next = applyInstructorAssignments(students, byCode);
         if (next === students) {
-            return
+            return;
         }
-        setStudents(next)
-        setStudentsForDay(selectedDay, next)
-    }, [isGuest, remoteSchematic, selectedDay, sessionId, students])
+        setStudents(next);
+        setStudentsForDay(selectedDay, next);
+    }, [isGuest, remoteSchematic, selectedDay, sessionId, students]);
 
     useEffect(() => {
         if (!sessionId || isGuest || students.length === 0) {
-            return
+            return;
         }
-        let active = true
+        let active = true;
         const applyEdits = async () => {
             const [rosterEdits, studentEdits] = await Promise.all([
                 fetchRosterLevelEdits(sessionId),
                 fetchRosterStudentEdits(sessionId),
-            ])
+            ]);
             if (!active) {
-                return
+                return;
             }
             const editsKey = JSON.stringify({
                 sessionId,
                 rosterEdits,
                 studentEdits,
                 studentCount: students.length,
-            })
+            });
             if (editsKey === appliedEditsKey.current) {
-                return
+                return;
             }
-            appliedEditsKey.current = editsKey
+            appliedEditsKey.current = editsKey;
 
-            const nameHashMap = await hashStudentNames(students.map(student => student.name))
-            const next = applyPersistedLevelEdits(students, rosterEdits, studentEdits, nameHashMap)
+            const nameHashMap = await hashStudentNames(
+                students.map((student) => student.name),
+            );
+            const next = applyPersistedLevelEdits(
+                students,
+                rosterEdits,
+                studentEdits,
+                nameHashMap,
+            );
 
-            setStudents(next)
-            setStudentsForDay(selectedDay, next)
-        }
-        void applyEdits()
+            setStudents(next);
+            setStudentsForDay(selectedDay, next);
+        };
+        void applyEdits();
         return () => {
-            active = false
-        }
-    }, [isGuest, selectedDay, sessionId, students])
+            active = false;
+        };
+    }, [isGuest, selectedDay, sessionId, students]);
 
-    const rosters = useMemo(() => buildRosterGroups(students), [students])
+    const rosters = useMemo(() => buildRosterGroups(students), [students]);
     const instructorOptions = useMemo(() => {
-        const instructorConfig = getInstructorsForDay(selectedDay)
-        return instructorConfig?.names?.filter(Boolean) ?? []
-    }, [selectedDay])
+        const instructorConfig = getInstructorsForDay(selectedDay);
+        return instructorConfig?.names?.filter(Boolean) ?? [];
+    }, [selectedDay]);
     return {
         students,
         setStudents,
         rosters,
         instructorOptions,
-    }
+    };
 }

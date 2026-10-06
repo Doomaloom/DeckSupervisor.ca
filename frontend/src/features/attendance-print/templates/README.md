@@ -1,8 +1,7 @@
 # Historical attendance templates
 
-These 23 files are copied from commit
-`c315c452d8c0b3aabfff324f702f89aee3ce8a2e` and are the production source of
-truth for attendance printing.
+These 23 files are copied from commit `c315c452d8c0b3aabfff324f702f89aee3ce8a2e`
+and are the production source of truth for attendance printing.
 
 The filename without `.html` is the template key. `SplashFitness.html` is the
 fallback for unknown keys. Each file must retain the `instructor`, `start_time`,

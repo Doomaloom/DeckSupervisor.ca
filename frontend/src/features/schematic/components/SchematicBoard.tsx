@@ -1,27 +1,31 @@
-import React from 'react'
-import { HEADER_HEIGHT_REM, SLOT_HEIGHT_REM } from '../constants'
-import type { Course } from '../types'
-import InstructorColumn from './InstructorColumn'
-import TimeRail from './TimeRail'
+import React from "react";
+import { HEADER_HEIGHT_REM, SLOT_HEIGHT_REM } from "../constants";
+import type { Course } from "../types";
+import InstructorColumn from "./InstructorColumn";
+import TimeRail from "./TimeRail";
 
 type SchematicBoardProps = {
-    columns: Course[][]
-    instructors: string[]
-    instructorIds?: (string | null)[]
-    lockedInstructors?: string[]
-    selectedCourseCodes?: string[]
-    timeLabels: string[]
-    scheduleHeightRem: number
-    scheduleStartMinutes: number
-    instructorOptions: (string | { id: string; name: string; label: string })[]
-    sessionLabel: string
-    readOnly?: boolean
-    onInstructorChange: (columnIndex: number, value: string) => void
-    onCourseSelect: (course: Course, columnIndex: number) => void
-    onColumnDrop: (columnIndex: number) => void
-    onCourseDrop: (course: Course, columnIndex: number) => void
-    onCourseDragStart: (event: React.DragEvent<HTMLDivElement>, course: Course, columnIndex: number) => void
-}
+    columns: Course[][];
+    instructors: string[];
+    instructorIds?: (string | null)[];
+    lockedInstructors?: string[];
+    selectedCourseCodes?: string[];
+    timeLabels: string[];
+    scheduleHeightRem: number;
+    scheduleStartMinutes: number;
+    instructorOptions: (string | { id: string; name: string; label: string })[];
+    sessionLabel: string;
+    readOnly?: boolean;
+    onInstructorChange: (columnIndex: number, value: string) => void;
+    onCourseSelect: (course: Course, columnIndex: number) => void;
+    onColumnDrop: (columnIndex: number) => void;
+    onCourseDrop: (course: Course, columnIndex: number) => void;
+    onCourseDragStart: (
+        event: React.DragEvent<HTMLDivElement>,
+        course: Course,
+        columnIndex: number,
+    ) => void;
+};
 
 function SchematicBoard({
     columns,
@@ -65,7 +69,8 @@ function SchematicBoard({
                     <div className="flex flex-col gap-3" id="main-content">
                         {columns.length === 0 && (
                             <p className="text-secondary">
-                                No schedule data loaded. Upload a CSV file to generate the schedule.
+                                No schedule data loaded. Upload a CSV file to
+                                generate the schedule.
                             </p>
                         )}
                         <div className="rounded-xl bg-primary px-4 py-2 text-center font-semibold text-accent">
@@ -77,9 +82,11 @@ function SchematicBoard({
                                     key={`column-${columnIndex}`}
                                     column={column}
                                     columnIndex={columnIndex}
-                                    instructor={instructors[columnIndex] ?? ''}
+                                    instructor={instructors[columnIndex] ?? ""}
                                     instructorId={instructorIds?.[columnIndex]}
-                                    lockedInstructor={lockedInstructors[columnIndex] ?? ''}
+                                    lockedInstructor={lockedInstructors[
+                                        columnIndex
+                                    ] ?? ""}
                                     selectedCourseCodes={selectedCourseCodes}
                                     instructorOptions={instructorOptions}
                                     scheduleHeightRem={scheduleHeightRem}
@@ -105,7 +112,7 @@ function SchematicBoard({
                 />
             </div>
         </div>
-    )
+    );
 }
 
-export default SchematicBoard
+export default SchematicBoard;

@@ -1,18 +1,107 @@
-import type { SessionRecord } from '../../app/useCurrentSession'
-import type { ExtractedClass, Student } from '../../types/app'
-export const session: SessionRecord = { id: 'export-test-session', team_id: null, created_by: '', session_day: 'Fr', session_season: 'Fall', session_year: 2026, start_date: '2026-09-04', end_date: '2026-09-25', location: 'Training Pool', source_locations: ['Training Pool'], session_start_time24: '16:00', session_end_time24: '18:00', instructors: [{ name: 'Alex' }, { name: 'Sam' }] }
+import type { SessionRecord } from "../../app/useCurrentSession";
+import type { ExtractedClass, Student } from "../../types/app";
+export const session: SessionRecord = {
+    id: "export-test-session",
+    team_id: null,
+    created_by: "",
+    session_day: "Fr",
+    session_season: "Fall",
+    session_year: 2026,
+    start_date: "2026-09-04",
+    end_date: "2026-09-25",
+    location: "Training Pool",
+    source_locations: ["Training Pool"],
+    session_start_time24: "16:00",
+    session_end_time24: "18:00",
+    instructors: [{ name: "Alex" }, { name: "Sam" }],
+};
 export const classes: ExtractedClass[] = [
-  { sessionKey: 'raw-session', dayOfWeek: 'Fr', sessionSeason: 'Fall', sessionYear: 2026, courseCode: '004201', serviceName: 'Splash 1', location: 'Training Pool', startTime24: '16:00', endTime24: '16:30', durationMinutes: 30, studentCount: 2, waitlistCount: 1 },
-  { sessionKey: 'raw-session', dayOfWeek: 'Fr', sessionSeason: 'Fall', sessionYear: 2026, courseCode: '004202', serviceName: 'Splash Private', location: 'Training Pool', startTime24: '16:30', endTime24: '17:00', durationMinutes: 30, studentCount: 1, waitlistCount: 0 },
-  { sessionKey: 'raw-session', dayOfWeek: 'Fr', sessionSeason: 'Fall', sessionYear: 2026, courseCode: '004203', serviceName: 'Little Splash 1', location: 'Training Pool', startTime24: '17:00', endTime24: '17:30', durationMinutes: 30, studentCount: 1, waitlistCount: 0 },
-]
-function pupil(id: string, code: string, name: string, time: string, level: string, instructor = 'Alex'): Student {
-  return { id, code, name, phone: `555-${id}`, instructor, level, service_name: level, time, day: 'Fr', location: 'Training Pool', schedule: 'Fr 2026-09-04 - 2026-09-25', waitlist: false }
+    {
+        sessionKey: "raw-session",
+        dayOfWeek: "Fr",
+        sessionSeason: "Fall",
+        sessionYear: 2026,
+        courseCode: "004201",
+        serviceName: "Splash 1",
+        location: "Training Pool",
+        startTime24: "16:00",
+        endTime24: "16:30",
+        durationMinutes: 30,
+        studentCount: 2,
+        waitlistCount: 1,
+    },
+    {
+        sessionKey: "raw-session",
+        dayOfWeek: "Fr",
+        sessionSeason: "Fall",
+        sessionYear: 2026,
+        courseCode: "004202",
+        serviceName: "Splash Private",
+        location: "Training Pool",
+        startTime24: "16:30",
+        endTime24: "17:00",
+        durationMinutes: 30,
+        studentCount: 1,
+        waitlistCount: 0,
+    },
+    {
+        sessionKey: "raw-session",
+        dayOfWeek: "Fr",
+        sessionSeason: "Fall",
+        sessionYear: 2026,
+        courseCode: "004203",
+        serviceName: "Little Splash 1",
+        location: "Training Pool",
+        startTime24: "17:00",
+        endTime24: "17:30",
+        durationMinutes: 30,
+        studentCount: 1,
+        waitlistCount: 0,
+    },
+];
+function pupil(
+    id: string,
+    code: string,
+    name: string,
+    time: string,
+    level: string,
+    instructor = "Alex",
+): Student {
+    return {
+        id,
+        code,
+        name,
+        phone: `555-${id}`,
+        instructor,
+        level,
+        service_name: level,
+        time,
+        day: "Fr",
+        location: "Training Pool",
+        schedule: "Fr 2026-09-04 - 2026-09-25",
+        waitlist: false,
+    };
 }
 export const students: Student[] = [
-  pupil('row-1', '004201', 'Harrold', '4:00 PM - 4:30 PM', 'Splash1'),
-  pupil('row-2', '004201', 'Johnny', '4:00 PM - 4:30 PM', 'Splash1'),
-  { ...pupil('waiting', '004201', 'Waiting Swimmer', '4:00 PM - 4:30 PM', 'Splash1'), waitlist: true },
-  pupil('row-3', '004202', 'Nikhil', '4:30 PM - 5:00 PM', 'Splash2B'),
-  pupil('row-4', '004203', 'Morgan', '5:00 PM - 5:30 PM', 'LittleSplash1', 'Sam'),
-]
+    pupil("row-1", "004201", "Harrold", "4:00 PM - 4:30 PM", "Splash1"),
+    pupil("row-2", "004201", "Johnny", "4:00 PM - 4:30 PM", "Splash1"),
+    {
+        ...pupil(
+            "waiting",
+            "004201",
+            "Waiting Swimmer",
+            "4:00 PM - 4:30 PM",
+            "Splash1",
+        ),
+        waitlist: true,
+    },
+    pupil("row-3", "004202", "Nikhil", "4:30 PM - 5:00 PM", "Splash2B"),
+    pupil(
+        "row-4",
+        "004203",
+        "Morgan",
+        "5:00 PM - 5:30 PM",
+        "LittleSplash1",
+        "Sam",
+    ),
+];

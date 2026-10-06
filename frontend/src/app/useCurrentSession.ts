@@ -1,131 +1,148 @@
-import { useEffect, useState } from 'react'
-import { useAuth } from './AuthContext'
-import { fetchCurrentSession } from '../lib/serverApi'
-import { getCurrentSessionId, loadSessions, onCurrentSessionChanged } from '../lib/sessionStorage'
-import { onStorageScopeChanged } from '../lib/storageScope'
+import { useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
+import { fetchCurrentSession } from "../lib/serverApi";
+import {
+    getCurrentSessionId,
+    loadSessions,
+    onCurrentSessionChanged,
+} from "../lib/sessionStorage";
+import { onStorageScopeChanged } from "../lib/storageScope";
 
 export type SessionRecord = {
-  id: string
-  team_id: string | null
-  created_by: string
-  session_day: string
-  session_season: string | null
-  session_year: number | null
-  start_date: string | null
-  end_date: string | null
-  location: string | null
-  source_locations: string[]
-  session_start_time24: string | null
-  session_end_time24: string | null
-  instructors: { id?: string; name: string }[]
-}
+    id: string;
+    team_id: string | null;
+    created_by: string;
+    session_day: string;
+    session_season: string | null;
+    session_year: number | null;
+    start_date: string | null;
+    end_date: string | null;
+    location: string | null;
+    source_locations: string[];
+    session_start_time24: string | null;
+    session_end_time24: string | null;
+    instructors: { id?: string; name: string }[];
+};
 
 export type SessionAccess = {
-  mode: 'guest' | 'owner' | 'shared' | 'none'
-  allowRosterEdits: boolean
-  shareDate?: string
-}
+    mode: "guest" | "owner" | "shared" | "none";
+    allowRosterEdits: boolean;
+    shareDate?: string;
+};
 
 export function useCurrentSession() {
-  const { isGuest, user } = useAuth()
-  const [session, setSession] = useState<SessionRecord | null>(null)
-  const [access, setAccess] = useState<SessionAccess>({ mode: 'guest', allowRosterEdits: false })
-  const [loading, setLoading] = useState(true)
-  const [sessionId, setSessionId] = useState(() => getCurrentSessionId())
-  const [refreshKey, setRefreshKey] = useState(0)
+    const { isGuest, user } = useAuth();
+    const [session, setSession] = useState<SessionRecord | null>(null);
+    const [access, setAccess] = useState<SessionAccess>({
+        mode: "guest",
+        allowRosterEdits: false,
+    });
+    const [loading, setLoading] = useState(true);
+    const [sessionId, setSessionId] = useState(() => getCurrentSessionId());
+    const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    const unsubscribe = onCurrentSessionChanged(id => {
-      setSessionId(id)
-      setRefreshKey(value => value + 1)
-    })
-    const scopeUnsubscribe = onStorageScopeChanged(() => {
-      setSessionId(getCurrentSessionId())
-      setRefreshKey(value => value + 1)
-    })
-    return () => {
-      unsubscribe()
-      scopeUnsubscribe()
-    }
-  }, [])
+    useEffect(() => {
+        const unsubscribe = onCurrentSessionChanged((id) => {
+            setSessionId(id);
+            setRefreshKey((value) => value + 1);
+        });
+        const scopeUnsubscribe = onStorageScopeChanged(() => {
+            setSessionId(getCurrentSessionId());
+            setRefreshKey((value) => value + 1);
+        });
+        return () => {
+            unsubscribe();
+            scopeUnsubscribe();
+        };
+    }, []);
 
-  useEffect(() => {
-    let active = true
-    const load = async () => {
-      setLoading(true)
-      if (!sessionId) {
-        if (active) {
-          setSession(null)
-          setAccess({ mode: isGuest ? 'guest' : 'none', allowRosterEdits: false })
-          setLoading(false)
-        }
-        return
-      }
-
-      if (isGuest || !user) {
-        const localSessions = loadSessions()
-        const local = localSessions.find(item => item.id === sessionId)
-        if (active) {
-          setSession(
-            local
-              ? {
-                  id: local.id,
-                  team_id: null,
-                  created_by: '',
-                  session_day: local.sessionDay,
-                  session_season: local.sessionSeason ?? null,
-                  session_year:
-                    local.sessionYear ??
-                    (local.startDate ? new Date(local.startDate).getFullYear() : null),
-                  start_date: local.startDate ?? null,
-                  end_date: local.endDate ?? null,
-                  location: local.location ?? null,
-                  source_locations: local.sourceLocations ?? (local.location ? [local.location] : []),
-                  session_start_time24: local.sessionStartTime24 ?? null,
-                  session_end_time24: local.sessionEndTime24 ?? null,
-                  instructors: local.instructors ?? [],
+    useEffect(() => {
+        let active = true;
+        const load = async () => {
+            setLoading(true);
+            if (!sessionId) {
+                if (active) {
+                    setSession(null);
+                    setAccess({
+                        mode: isGuest ? "guest" : "none",
+                        allowRosterEdits: false,
+                    });
+                    setLoading(false);
                 }
-              : null,
-          )
-          setAccess({ mode: 'guest', allowRosterEdits: false })
-          setLoading(false)
-        }
-        return
-      }
+                return;
+            }
 
-      try {
-        const data = await fetchCurrentSession(sessionId)
-        if (!active) {
-          return
-        }
-        if (!data.session) {
-          setSession(null)
-          setAccess({ mode: 'none', allowRosterEdits: false })
-          setLoading(false)
-          return
-        }
-        setSession(data.session as SessionRecord)
-        setAccess(data.access)
-        setLoading(false)
-        return
-      } catch {
-        setSession(null)
-        setAccess({ mode: 'none', allowRosterEdits: false })
-        setLoading(false)
-        return
-      }
-    }
+            if (isGuest || !user) {
+                const localSessions = loadSessions();
+                const local = localSessions.find((item) =>
+                    item.id === sessionId
+                );
+                if (active) {
+                    setSession(
+                        local
+                            ? {
+                                id: local.id,
+                                team_id: null,
+                                created_by: "",
+                                session_day: local.sessionDay,
+                                session_season: local.sessionSeason ?? null,
+                                session_year: local.sessionYear ??
+                                    (local.startDate
+                                        ? new Date(local.startDate)
+                                            .getFullYear()
+                                        : null),
+                                start_date: local.startDate ?? null,
+                                end_date: local.endDate ?? null,
+                                location: local.location ?? null,
+                                source_locations: local.sourceLocations ??
+                                    (local.location ? [local.location] : []),
+                                session_start_time24:
+                                    local.sessionStartTime24 ?? null,
+                                session_end_time24: local.sessionEndTime24 ??
+                                    null,
+                                instructors: local.instructors ?? [],
+                            }
+                            : null,
+                    );
+                    setAccess({ mode: "guest", allowRosterEdits: false });
+                    setLoading(false);
+                }
+                return;
+            }
 
-    void load()
-    return () => {
-      active = false
-    }
-  }, [isGuest, refreshKey, sessionId, user])
+            try {
+                const data = await fetchCurrentSession(sessionId);
+                if (!active) {
+                    return;
+                }
+                if (!data.session) {
+                    setSession(null);
+                    setAccess({ mode: "none", allowRosterEdits: false });
+                    setLoading(false);
+                    return;
+                }
+                setSession(data.session as SessionRecord);
+                setAccess(data.access);
+                setLoading(false);
+                return;
+            } catch {
+                setSession(null);
+                setAccess({ mode: "none", allowRosterEdits: false });
+                setLoading(false);
+                return;
+            }
+        };
 
-  return {
-    sessionId,
-    session,
-    access,
-    loading,
-  }
+        void load();
+        return () => {
+            active = false;
+        };
+    }, [isGuest, refreshKey, sessionId, user]);
+
+    return {
+        sessionId,
+        session,
+        access,
+        loading,
+    };
 }

@@ -1,54 +1,54 @@
 const escapeHtml = (value: string) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
+    value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
 
 type PdfViewerResult = {
-  pdfWindow: Window
-}
+    pdfWindow: Window;
+};
 
 type PdfWindowOptions = {
-  title?: string
-  filename?: string
-}
+    title?: string;
+    filename?: string;
+};
 
 type PdfViewerWindow = Window & {
-  __printEmbeddedPdf?: () => boolean
-}
+    __printEmbeddedPdf?: () => boolean;
+};
 
 const normalizePdfWindowOptions = (
-  options: PdfWindowOptions | string | undefined,
-  fallbackTitle: string,
+    options: PdfWindowOptions | string | undefined,
+    fallbackTitle: string,
 ): Required<PdfWindowOptions> => {
-  if (typeof options === 'string') {
-    return {
-      title: options,
-      filename: '',
+    if (typeof options === "string") {
+        return {
+            title: options,
+            filename: "",
+        };
     }
-  }
 
-  return {
-    title: options?.title?.trim() || fallbackTitle,
-    filename: options?.filename?.trim() || '',
-  }
-}
+    return {
+        title: options?.title?.trim() || fallbackTitle,
+        filename: options?.filename?.trim() || "",
+    };
+};
 
 const createPdfSource = (pdfBlob: Blob, filename: string) => {
-  if (!filename || typeof File === 'undefined') {
-    return pdfBlob
-  }
-  return new File([pdfBlob], filename, {
-    type: pdfBlob.type || 'application/pdf',
-  })
-}
+    if (!filename || typeof File === "undefined") {
+        return pdfBlob;
+    }
+    return new File([pdfBlob], filename, {
+        type: pdfBlob.type || "application/pdf",
+    });
+};
 
 const renderPdfViewer = (pdfWindow: Window, blobUrl: string, title: string) => {
-  const safeTitle = escapeHtml(title)
-  pdfWindow.document.open()
-  pdfWindow.document.write(`<!doctype html>
+    const safeTitle = escapeHtml(title);
+    pdfWindow.document.open();
+    pdfWindow.document.write(`<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -166,88 +166,96 @@ const renderPdfViewer = (pdfWindow: Window, blobUrl: string, title: string) => {
       }());
     </script>
   </body>
-</html>`)
-  pdfWindow.document.close()
-}
+</html>`);
+    pdfWindow.document.close();
+};
 
 const mountPdfViewer = (
-  pdfBlob: Blob,
-  existingWindow?: Window | null,
-  options?: PdfWindowOptions | string,
-  fallbackTitle = 'Print PDF',
+    pdfBlob: Blob,
+    existingWindow?: Window | null,
+    options?: PdfWindowOptions | string,
+    fallbackTitle = "Print PDF",
 ): PdfViewerResult | null => {
-  const normalizedOptions = normalizePdfWindowOptions(options, fallbackTitle)
-  const source = createPdfSource(pdfBlob, normalizedOptions.filename)
-  const blobUrl = window.URL.createObjectURL(source)
-  const pdfWindow = existingWindow ?? window.open('', '_blank')
+    const normalizedOptions = normalizePdfWindowOptions(options, fallbackTitle);
+    const source = createPdfSource(pdfBlob, normalizedOptions.filename);
+    const blobUrl = window.URL.createObjectURL(source);
+    const pdfWindow = existingWindow ?? window.open("", "_blank");
 
-  if (!pdfWindow) {
-    window.URL.revokeObjectURL(blobUrl)
-    return null
-  }
+    if (!pdfWindow) {
+        window.URL.revokeObjectURL(blobUrl);
+        return null;
+    }
 
-  renderPdfViewer(pdfWindow, blobUrl, normalizedOptions.title)
-  const cleanup = () => {
-    window.URL.revokeObjectURL(blobUrl)
-  }
-  pdfWindow.addEventListener('beforeunload', cleanup, { once: true })
+    renderPdfViewer(pdfWindow, blobUrl, normalizedOptions.title);
+    const cleanup = () => {
+        window.URL.revokeObjectURL(blobUrl);
+    };
+    pdfWindow.addEventListener("beforeunload", cleanup, { once: true });
 
-  return {
-    pdfWindow,
-  }
-}
+    return {
+        pdfWindow,
+    };
+};
 
-export function openPrintWindow(title = 'Preparing PDF') {
-  const printWindow = window.open('', '_blank')
-  if (!printWindow) {
-    return null
-  }
+export function openPrintWindow(title = "Preparing PDF") {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+        return null;
+    }
 
-  printWindow.document.open()
-  printWindow.document.write(
-    `<title>${escapeHtml(title)}</title><p style="font-family: sans-serif;">Preparing PDF...</p>`,
-  )
-  printWindow.document.close()
-  return printWindow
+    printWindow.document.open();
+    printWindow.document.write(
+        `<title>${
+            escapeHtml(title)
+        }</title><p style="font-family: sans-serif;">Preparing PDF...</p>`,
+    );
+    printWindow.document.close();
+    return printWindow;
 }
 
 export function openPdfPrintDialog(
-  pdfBlob: Blob,
-  existingWindow?: Window | null,
-  options?: PdfWindowOptions | string,
+    pdfBlob: Blob,
+    existingWindow?: Window | null,
+    options?: PdfWindowOptions | string,
 ) {
-  const viewer = mountPdfViewer(pdfBlob, existingWindow, options)
-  if (!viewer) {
-    return false
-  }
+    const viewer = mountPdfViewer(pdfBlob, existingWindow, options);
+    if (!viewer) {
+        return false;
+    }
 
-  const triggerPrint = () => {
-    const targetWindow = viewer.pdfWindow as PdfViewerWindow
-    targetWindow.focus()
-    targetWindow.__printEmbeddedPdf?.()
-  }
+    const triggerPrint = () => {
+        const targetWindow = viewer.pdfWindow as PdfViewerWindow;
+        targetWindow.focus();
+        targetWindow.__printEmbeddedPdf?.();
+    };
 
-  viewer.pdfWindow.onload = () => {
-    setTimeout(triggerPrint, 1000)
-  }
+    viewer.pdfWindow.onload = () => {
+        setTimeout(triggerPrint, 1000);
+    };
 
-  setTimeout(triggerPrint, 3000)
-  return true
+    setTimeout(triggerPrint, 3000);
+    return true;
 }
 
-export function openPdfPreview(pdfBlob: Blob, options?: PdfWindowOptions | string, existingWindow?: Window | null) {
-  return Boolean(mountPdfViewer(pdfBlob, existingWindow, options, 'Open PDF'))
+export function openPdfPreview(
+    pdfBlob: Blob,
+    options?: PdfWindowOptions | string,
+    existingWindow?: Window | null,
+) {
+    return Boolean(
+        mountPdfViewer(pdfBlob, existingWindow, options, "Open PDF"),
+    );
 }
 
 export function downloadBlob(blob: Blob, filename: string) {
-  const blobUrl = window.URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = blobUrl
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  setTimeout(() => {
-    window.URL.revokeObjectURL(blobUrl)
-  }, 1000)
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+    }, 1000);
 }

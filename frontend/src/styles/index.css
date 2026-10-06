@@ -3,8 +3,8 @@
 @config "../../tailwind.config.js";
 
 body {
-  background-color: #e6f7ff;
-  color: #333333;
-  font-family: 'Rubik', sans-serif;
-  line-height: 1.6;
+    background-color: #e6f7ff;
+    color: #333333;
+    font-family: 'Rubik', sans-serif;
+    line-height: 1.6;
 }

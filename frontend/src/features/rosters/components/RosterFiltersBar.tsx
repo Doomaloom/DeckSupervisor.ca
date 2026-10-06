@@ -1,16 +1,16 @@
-import React from 'react'
-import { inputClass, rowWidthClass, selectClass } from '../constants'
+import React from "react";
+import { inputClass, rowWidthClass, selectClass } from "../constants";
 
 type RosterFiltersBarProps = {
-    instructorOptions: string[]
-    levelOptions: string[]
-    instructorFilter: string
-    levelFilter: string
-    searchQuery: string
-    onInstructorFilterChange: (value: string) => void
-    onLevelFilterChange: (value: string) => void
-    onSearchChange: (value: string) => void
-}
+    instructorOptions: string[];
+    levelOptions: string[];
+    instructorFilter: string;
+    levelFilter: string;
+    searchQuery: string;
+    onInstructorFilterChange: (value: string) => void;
+    onLevelFilterChange: (value: string) => void;
+    onSearchChange: (value: string) => void;
+};
 
 function RosterFiltersBar({
     instructorOptions,
@@ -23,14 +23,19 @@ function RosterFiltersBar({
     onSearchChange,
 }: RosterFiltersBarProps) {
     return (
-        <div id="roster-filters-bar" data-component="roster-filters-bar" className={`grid gap-3 md:grid-cols-3 ${rowWidthClass}`}>
+        <div
+            id="roster-filters-bar"
+            data-component="roster-filters-bar"
+            className={`grid gap-3 md:grid-cols-3 ${rowWidthClass}`}
+        >
             <select
                 className={selectClass}
                 value={instructorFilter}
-                onChange={event => onInstructorFilterChange(event.target.value)}
+                onChange={(event) =>
+                    onInstructorFilterChange(event.target.value)}
             >
                 <option value="">Filter Classes by Instructor</option>
-                {instructorOptions.map(instructor => (
+                {instructorOptions.map((instructor) => (
                     <option key={instructor} value={instructor}>
                         {instructor}
                     </option>
@@ -39,10 +44,10 @@ function RosterFiltersBar({
             <select
                 className={selectClass}
                 value={levelFilter}
-                onChange={event => onLevelFilterChange(event.target.value)}
+                onChange={(event) => onLevelFilterChange(event.target.value)}
             >
                 <option value="">Filter Classes by Service Name</option>
-                {levelOptions.map(level => (
+                {levelOptions.map((level) => (
                     <option key={level} value={level}>
                         {level}
                     </option>
@@ -53,10 +58,10 @@ function RosterFiltersBar({
                 type="text"
                 placeholder="Search student or course code"
                 value={searchQuery}
-                onChange={event => onSearchChange(event.target.value)}
+                onChange={(event) => onSearchChange(event.target.value)}
             />
         </div>
-    )
+    );
 }
 
-export default RosterFiltersBar
+export default RosterFiltersBar;

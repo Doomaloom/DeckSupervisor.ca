@@ -1,79 +1,94 @@
-import type { Course } from '../types'
-import { normalizeCourseCodeForCompare } from './courseCode'
-import { coursesOverlap } from './courses'
-import { canPlaceCourses } from './drag'
+import type { Course } from "../types";
+import { normalizeCourseCodeForCompare } from "./courseCode";
+import { coursesOverlap } from "./courses";
+import { canPlaceCourses } from "./drag";
 
 export type StoredCourseLayout = {
-    assignmentIds?: string[]
-    instructorIds?: (string | null)[]
-    codes: string[]
-    instructors: string[]
-}
+    assignmentIds?: string[];
+    instructorIds?: (string | null)[];
+    codes: string[];
+    instructors: string[];
+};
 
 export type RequestAwareLayout = {
-    columns: Course[][]
-    instructors: string[]
-    lockedInstructors: string[]
-}
+    columns: Course[][];
+    instructors: string[];
+    lockedInstructors: string[];
+};
 
 type ColumnFitScore = {
-    columnIndex: number
-    totalGap: number
-    exactTouchCount: number
-    largestGap: number
-    blockSize: number
-}
+    columnIndex: number;
+    totalGap: number;
+    exactTouchCount: number;
+    largestGap: number;
+    blockSize: number;
+};
 
 type RestoredStoredLayout = {
-    columns: Course[][]
-    instructors: string[]
-    lockedInstructors: string[]
-    remainingCourses: Course[]
-}
+    columns: Course[][];
+    instructors: string[];
+    lockedInstructors: string[];
+    remainingCourses: Course[];
+};
 
-function restoreStoredLayout(courses: Course[], stored: StoredCourseLayout | null): RestoredStoredLayout | null {
-    if (!stored || (stored.codes.length === 0 && stored.instructors.length === 0)) {
-        return null
+function restoreStoredLayout(
+    courses: Course[],
+    stored: StoredCourseLayout | null,
+): RestoredStoredLayout | null {
+    if (
+        !stored ||
+        (stored.codes.length === 0 && stored.instructors.length === 0)
+    ) {
+        return null;
     }
 
-    const courseMap = new Map(courses.map(course => [normalizeCourseCodeForCompare(course.code), course]))
-    const seen = new Set<string>()
-    const columnCount = Math.max(stored.codes.length, stored.instructors.length)
-    const columns: Course[][] = []
-    const instructors: string[] = []
-    const lockedInstructors: string[] = []
+    const courseMap = new Map(
+        courses.map(
+            (course) => [normalizeCourseCodeForCompare(course.code), course],
+        ),
+    );
+    const seen = new Set<string>();
+    const columnCount = Math.max(
+        stored.codes.length,
+        stored.instructors.length,
+    );
+    const columns: Course[][] = [];
+    const instructors: string[] = [];
+    const lockedInstructors: string[] = [];
 
     for (let index = 0; index < columnCount; index += 1) {
-        const columnCourses = (stored.codes[index] ?? '')
-            .split(',')
-            .map(code => normalizeCourseCodeForCompare(code))
-            .map(code => {
+        const columnCourses = (stored.codes[index] ?? "")
+            .split(",")
+            .map((code) => normalizeCourseCodeForCompare(code))
+            .map((code) => {
                 if (!code || seen.has(code)) {
-                    return null
+                    return null;
                 }
-                const course = courseMap.get(code)
+                const course = courseMap.get(code);
                 if (!course) {
-                    return null
+                    return null;
                 }
-                seen.add(code)
-                return course
+                seen.add(code);
+                return course;
             })
-            .filter((course): course is Course => Boolean(course))
+            .filter((course): course is Course => Boolean(course));
 
-        const sortedColumn = sortCoursesByStart(columnCourses)
-        const lockedInstructor = getLockedInstructorForColumn(sortedColumn)
+        const sortedColumn = sortCoursesByStart(columnCourses);
+        const lockedInstructor = getLockedInstructorForColumn(sortedColumn);
 
-        columns.push(sortedColumn)
-        instructors.push(lockedInstructor || stored.instructors[index] || '')
-        lockedInstructors.push(lockedInstructor)
+        columns.push(sortedColumn);
+        instructors.push(lockedInstructor || stored.instructors[index] || "");
+        lockedInstructors.push(lockedInstructor);
     }
 
     return {
         columns,
         instructors,
         lockedInstructors,
-        remainingCourses: courses.filter(course => !seen.has(normalizeCourseCodeForCompare(course.code))),
-    }
+        remainingCourses: courses.filter((course) =>
+            !seen.has(normalizeCourseCodeForCompare(course.code))
+        ),
+    };
 }
 
 function getBestFitColumnIndex(
@@ -81,7 +96,7 @@ function getBestFitColumnIndex(
     course: Course,
     options?: { lockedInstructor?: string; lockedInstructors?: string[] },
 ) {
-    return getBestFitColumnIndexForBlock(columns, [course], options)
+    return getBestFitColumnIndexForBlock(columns, [course], options);
 }
 
 function getBestFitColumnIndexForBlock(
@@ -90,38 +105,48 @@ function getBestFitColumnIndexForBlock(
     options?: { lockedInstructor?: string; lockedInstructors?: string[] },
 ) {
     if (courses.length === 0) {
-        return -1
+        return -1;
     }
 
-    const scores: ColumnFitScore[] = []
-    const firstCourse = courses[0]
-    const lastCourse = courses[courses.length - 1]
+    const scores: ColumnFitScore[] = [];
+    const firstCourse = courses[0];
+    const lastCourse = courses[courses.length - 1];
 
     columns.forEach((column, columnIndex) => {
-        const lockedInstructor = options?.lockedInstructor?.trim() ?? ''
-        const columnLockedInstructor = options?.lockedInstructors?.[columnIndex]?.trim() ?? ''
+        const lockedInstructor = options?.lockedInstructor?.trim() ?? "";
+        const columnLockedInstructor =
+            options?.lockedInstructors?.[columnIndex]?.trim() ?? "";
         if (lockedInstructor && columnLockedInstructor !== lockedInstructor) {
-            return
+            return;
         }
         if (!canPlaceCourses(column, courses)) {
-            return
+            return;
         }
 
         const previousCourse = [...column]
-            .filter(entry => entry.endMinutes <= firstCourse.startMinutes)
-            .sort((left, right) => right.endMinutes - left.endMinutes)[0]
+            .filter((entry) => entry.endMinutes <= firstCourse.startMinutes)
+            .sort((left, right) => right.endMinutes - left.endMinutes)[0];
         const nextCourse = [...column]
-            .filter(entry => entry.startMinutes >= lastCourse.endMinutes)
-            .sort((left, right) => left.startMinutes - right.startMinutes)[0]
+            .filter((entry) => entry.startMinutes >= lastCourse.endMinutes)
+            .sort((left, right) => left.startMinutes - right.startMinutes)[0];
 
-        const gapBefore = previousCourse ? firstCourse.startMinutes - previousCourse.endMinutes : Number.POSITIVE_INFINITY
-        const gapAfter = nextCourse ? nextCourse.startMinutes - lastCourse.endMinutes : Number.POSITIVE_INFINITY
-        const exactTouchCount = Number(gapBefore === 0) + Number(gapAfter === 0)
-        const finiteGaps = [gapBefore, gapAfter].filter(value => Number.isFinite(value))
-        const totalGap =
-            finiteGaps.length > 0 ? finiteGaps.reduce((sum, value) => sum + value, 0) : Number.MAX_SAFE_INTEGER
-        const largestGap =
-            finiteGaps.length > 0 ? finiteGaps.reduce((largest, value) => Math.max(largest, value), 0) : Number.MAX_SAFE_INTEGER
+        const gapBefore = previousCourse
+            ? firstCourse.startMinutes - previousCourse.endMinutes
+            : Number.POSITIVE_INFINITY;
+        const gapAfter = nextCourse
+            ? nextCourse.startMinutes - lastCourse.endMinutes
+            : Number.POSITIVE_INFINITY;
+        const exactTouchCount = Number(gapBefore === 0) +
+            Number(gapAfter === 0);
+        const finiteGaps = [gapBefore, gapAfter].filter((value) =>
+            Number.isFinite(value)
+        );
+        const totalGap = finiteGaps.length > 0
+            ? finiteGaps.reduce((sum, value) => sum + value, 0)
+            : Number.MAX_SAFE_INTEGER;
+        const largestGap = finiteGaps.length > 0
+            ? finiteGaps.reduce((largest, value) => Math.max(largest, value), 0)
+            : Number.MAX_SAFE_INTEGER;
 
         scores.push({
             columnIndex,
@@ -129,120 +154,134 @@ function getBestFitColumnIndexForBlock(
             exactTouchCount,
             largestGap,
             blockSize: courses.length,
-        })
-    })
+        });
+    });
 
     scores.sort((left, right) => {
         if (left.blockSize !== right.blockSize) {
-            return right.blockSize - left.blockSize
+            return right.blockSize - left.blockSize;
         }
         if (left.exactTouchCount !== right.exactTouchCount) {
-            return right.exactTouchCount - left.exactTouchCount
+            return right.exactTouchCount - left.exactTouchCount;
         }
         if (left.totalGap !== right.totalGap) {
-            return left.totalGap - right.totalGap
+            return left.totalGap - right.totalGap;
         }
         if (left.largestGap !== right.largestGap) {
-            return left.largestGap - right.largestGap
+            return left.largestGap - right.largestGap;
         }
-        return left.columnIndex - right.columnIndex
-    })
+        return left.columnIndex - right.columnIndex;
+    });
 
-    return scores[0]?.columnIndex ?? -1
+    return scores[0]?.columnIndex ?? -1;
 }
 
 function getMaxCompatiblePrefix(courses: Course[]) {
     if (courses.length === 0) {
-        return []
+        return [];
     }
-    const block: Course[] = [courses[0]]
+    const block: Course[] = [courses[0]];
     for (let index = 1; index < courses.length; index += 1) {
-        const nextCourse = courses[index]
-        const lastCourse = block[block.length - 1]
+        const nextCourse = courses[index];
+        const lastCourse = block[block.length - 1];
         if (coursesOverlap(lastCourse, nextCourse)) {
-            break
+            break;
         }
-        block.push(nextCourse)
+        block.push(nextCourse);
     }
-    return block
+    return block;
 }
 
 function sortCoursesByStart(courses: Course[]) {
-    return [...courses].sort((left, right) => left.startTime.localeCompare(right.startTime))
+    return [...courses].sort((left, right) =>
+        left.startTime.localeCompare(right.startTime)
+    );
 }
 
 export function createRequestAwareLayout(
     courses: Course[],
     stored: StoredCourseLayout | null = null,
 ): RequestAwareLayout {
-    const restoredLayout = restoreStoredLayout(courses, stored)
+    const restoredLayout = restoreStoredLayout(courses, stored);
     const lockedCourses = (restoredLayout?.remainingCourses ?? courses).filter(
-        course => course.isLockedToInstructor && course.assignedInstructor,
-    )
-    const flexibleCourses = (restoredLayout?.remainingCourses ?? courses).filter(
-        course => !course.isLockedToInstructor || !course.assignedInstructor,
-    )
-    const columns: Course[][] = restoredLayout?.columns.map(column => [...column]) ?? []
-    const instructors: string[] = restoredLayout?.instructors.slice() ?? []
-    const lockedInstructors: string[] = restoredLayout?.lockedInstructors.slice() ?? []
+        (course) => course.isLockedToInstructor && course.assignedInstructor,
+    );
+    const flexibleCourses = (restoredLayout?.remainingCourses ?? courses)
+        .filter(
+            (course) =>
+                !course.isLockedToInstructor || !course.assignedInstructor,
+        );
+    const columns: Course[][] =
+        restoredLayout?.columns.map((column) => [...column]) ?? [];
+    const instructors: string[] = restoredLayout?.instructors.slice() ?? [];
+    const lockedInstructors: string[] =
+        restoredLayout?.lockedInstructors.slice() ?? [];
 
-    lockedCourses.forEach(course => {
+    lockedCourses.forEach((course) => {
         const targetIndex = getBestFitColumnIndex(columns, course, {
             lockedInstructor: course.assignedInstructor,
             lockedInstructors,
-        })
+        });
 
         if (targetIndex >= 0) {
-            columns[targetIndex].push(course)
-            columns[targetIndex] = sortCoursesByStart(columns[targetIndex])
-            instructors[targetIndex] = course.assignedInstructor ?? ''
-            lockedInstructors[targetIndex] = course.assignedInstructor ?? ''
-            return
+            columns[targetIndex].push(course);
+            columns[targetIndex] = sortCoursesByStart(columns[targetIndex]);
+            instructors[targetIndex] = course.assignedInstructor ?? "";
+            lockedInstructors[targetIndex] = course.assignedInstructor ?? "";
+            return;
         }
 
-        columns.push([course])
-        instructors.push(course.assignedInstructor ?? '')
-        lockedInstructors.push(course.assignedInstructor ?? '')
-    })
+        columns.push([course]);
+        instructors.push(course.assignedInstructor ?? "");
+        lockedInstructors.push(course.assignedInstructor ?? "");
+    });
 
-    const remainingFlexible = [...flexibleCourses]
+    const remainingFlexible = [...flexibleCourses];
     while (remainingFlexible.length > 0) {
-        const compatiblePrefix = getMaxCompatiblePrefix(remainingFlexible)
-        let placed = false
+        const compatiblePrefix = getMaxCompatiblePrefix(remainingFlexible);
+        let placed = false;
 
         for (let size = compatiblePrefix.length; size >= 1; size -= 1) {
-            const block = compatiblePrefix.slice(0, size)
-            const targetIndex = getBestFitColumnIndexForBlock(columns, block, { lockedInstructors })
+            const block = compatiblePrefix.slice(0, size);
+            const targetIndex = getBestFitColumnIndexForBlock(columns, block, {
+                lockedInstructors,
+            });
             if (targetIndex >= 0) {
-                columns[targetIndex].push(...block)
-                columns[targetIndex] = sortCoursesByStart(columns[targetIndex])
-                remainingFlexible.splice(0, size)
-                placed = true
-                break
+                columns[targetIndex].push(...block);
+                columns[targetIndex] = sortCoursesByStart(columns[targetIndex]);
+                remainingFlexible.splice(0, size);
+                placed = true;
+                break;
             }
         }
 
         if (placed) {
-            continue
+            continue;
         }
 
-        const fallbackCourse = remainingFlexible.shift()
+        const fallbackCourse = remainingFlexible.shift();
         if (!fallbackCourse) {
-            break
+            break;
         }
-        columns.push([fallbackCourse])
-        instructors.push('')
-        lockedInstructors.push('')
+        columns.push([fallbackCourse]);
+        instructors.push("");
+        lockedInstructors.push("");
     }
 
     return {
         columns,
-        instructors: instructors.map((value, index) => lockedInstructors[index] || value || ''),
+        instructors: instructors.map((value, index) =>
+            lockedInstructors[index] || value || ""
+        ),
         lockedInstructors,
-    }
+    };
 }
 
 export function getLockedInstructorForColumn(column: Course[]) {
-    const locked = Array.from(new Set(column.map(course => course.assignedInstructor).filter(Boolean)))
-    return locked[0] ?? ''
+    const locked = Array.from(
+        new Set(
+            column.map((course) => course.assignedInstructor).filter(Boolean),
+        ),
+    );
+    return locked[0] ?? "";
 }
