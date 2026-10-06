@@ -292,7 +292,7 @@ export function LessonEditor(
                             </tr>
                         </thead>
                         <tbody>
-                            {missing && (
+                            {missing && rows.length === 0 && (
                                 <tr>
                                     <td
                                         colSpan={6}

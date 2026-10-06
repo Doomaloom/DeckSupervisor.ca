@@ -46,6 +46,7 @@ it("keeps untouched plans null and retains drafts on save failure", async () => 
     expect(emptyPlan.tagName).toBe("TD");
     expect(api.saveLessonPlan).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Add activity" }));
+    expect(screen.queryByText(/No lesson plan saved/)).not.toBeInTheDocument();
     await user.selectOptions(
         screen.getByLabelText("Skill 1"),
         "Enter and Exit Shallow Water",
