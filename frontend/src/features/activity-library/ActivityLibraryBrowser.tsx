@@ -3,9 +3,14 @@ import { ActionButton, EmptyState, TextInput } from "../../general-components";
 import {
     activityCategories,
     type ActivityCategory,
+    drillSkills,
+    type DrillSkill,
     filterActivities,
     type LibraryActivity,
     librarySkills,
+    workoutGroups,
+    type WorkoutGroup,
+    workoutPrefix,
 } from "./activityLibrary";
 
 type Props = {
@@ -13,51 +18,123 @@ type Props = {
     selectedSkill?: { id: string; compactName: string };
 };
 
+function displayTitle(
+    activity: LibraryActivity,
+    drillSkill: DrillSkill | "All",
+    workoutGroup: WorkoutGroup | "All",
+) {
+    if (activity.category === "Drills" && drillSkill !== "All") {
+        const prefix = `${drillSkill}: `;
+        if (activity.title.startsWith(prefix)) {
+            return activity.title.slice(prefix.length);
+        }
+    }
+    if (activity.category === "Workouts" && workoutGroup !== "All") {
+        const prefix = workoutPrefix(workoutGroup);
+        if (activity.title.startsWith(prefix)) {
+            const title = activity.title.slice(prefix.length);
+            return workoutGroup === "Sample"
+                ? title.charAt(0).toUpperCase() + title.slice(1)
+                : title;
+        }
+    }
+    return activity.title;
+}
+
 export default function ActivityLibraryBrowser(
     { onUse, selectedSkill }: Props,
 ) {
     const searchId = useId();
     const [query, setQuery] = useState("");
     const [category, setCategory] = useState<ActivityCategory | "All">("All");
+    const [drillSkill, setDrillSkill] = useState<DrillSkill | "All">("All");
+    const [workoutGroup, setWorkoutGroup] = useState<WorkoutGroup | "All">("All");
     const [applicableOnly, setApplicableOnly] = useState(false);
     const results = filterActivities(
         query,
         category,
         applicableOnly ? selectedSkill?.id : undefined,
+        category === "Drills" && drillSkill !== "All" ? drillSkill : undefined,
+        category === "Workouts" && workoutGroup !== "All"
+            ? workoutGroup
+            : undefined,
     );
 
     return (
         <div className="min-w-0 space-y-5">
-            <label
-                htmlFor={searchId}
-                className="block space-y-2 text-sm font-semibold"
-            >
-                <span>Search activities</span>
-                <TextInput
-                    id={searchId}
-                    type="search"
-                    className="w-full"
-                    placeholder="Search names, instructions, or equipment"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                />
-            </label>
-            <div
-                role="group"
-                aria-label="Activity categories"
-                className="flex flex-wrap gap-2"
-            >
-                {(["All", ...activityCategories] as const).map((value) => (
-                    <ActionButton
-                        key={value}
-                        variant={category === value ? "primary" : "outline"}
-                        aria-pressed={category === value}
-                        onClick={() => setCategory(value)}
-                    >
-                        {value}
-                    </ActionButton>
-                ))}
+            <div className="flex flex-wrap items-end gap-4">
+                <div
+                    role="group"
+                    aria-label="Activity categories"
+                    className="flex flex-wrap gap-2"
+                >
+                    {(["All", ...activityCategories] as const).map((value) => (
+                        <ActionButton
+                            key={value}
+                            className="w-32"
+                            variant={category === value ? "primary" : "outline"}
+                            aria-pressed={category === value}
+                            onClick={() => {
+                                setCategory(value);
+                                if (value !== "Drills") setDrillSkill("All");
+                                if (value !== "Workouts") setWorkoutGroup("All");
+                            }}
+                        >
+                            {value}
+                        </ActionButton>
+                    ))}
+                </div>
+                <label
+                    htmlFor={searchId}
+                    className="min-w-[16rem] flex-1 space-y-2 text-sm font-semibold"
+                >
+                    <span>Search activities</span>
+                    <TextInput
+                        id={searchId}
+                        type="search"
+                        className="w-full"
+                        placeholder="Search names, instructions, or equipment"
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                    />
+                </label>
             </div>
+            {category === "Drills" && (
+                <div role="group" aria-label="Drill skills" className="space-y-2">
+                    <p className="text-sm font-semibold">Skill</p>
+                    <div className="flex flex-wrap gap-2">
+                        {(["All", ...drillSkills] as const).map((skill) => (
+                            <ActionButton
+                                key={skill}
+                                className="w-32"
+                                variant={drillSkill === skill ? "primary" : "outline"}
+                                aria-pressed={drillSkill === skill}
+                                onClick={() => setDrillSkill(skill)}
+                            >
+                                {skill}
+                            </ActionButton>
+                        ))}
+                    </div>
+                </div>
+            )}
+            {category === "Workouts" && (
+                <div role="group" aria-label="Workout groups" className="space-y-2">
+                    <p className="text-sm font-semibold">Workout group</p>
+                    <div className="flex flex-wrap gap-2">
+                        {(["All", ...workoutGroups] as const).map((group) => (
+                            <ActionButton
+                                key={group}
+                                className="w-40"
+                                variant={workoutGroup === group ? "primary" : "outline"}
+                                aria-pressed={workoutGroup === group}
+                                onClick={() => setWorkoutGroup(group)}
+                            >
+                                {group}
+                            </ActionButton>
+                        ))}
+                    </div>
+                </div>
+            )}
             {onUse && (
                 <div className="space-y-1">
                     <label className="flex items-start gap-2 text-sm font-semibold">
@@ -96,6 +173,8 @@ export default function ActivityLibraryBrowser(
                         onClick={() => {
                             setQuery("");
                             setCategory("All");
+                            setDrillSkill("All");
+                            setWorkoutGroup("All");
                             setApplicableOnly(false);
                         }}
                     >
@@ -125,7 +204,7 @@ export default function ActivityLibraryBrowser(
                                 className="rounded-2xl border border-secondary/20 bg-accent open:shadow-sm"
                             >
                                 <summary className="cursor-pointer rounded-2xl p-4 font-semibold focus-visible:outline-2 focus-visible:outline-primary">
-                                    {activity.title}
+                                    {displayTitle(activity, drillSkill, workoutGroup)}
                                 </summary>
                                 <div className="space-y-4 px-4 pb-4">
                                     {activity.suitability && (
@@ -175,7 +254,7 @@ export default function ActivityLibraryBrowser(
                                         <ActionButton
                                             variant="primary"
                                             onClick={() => onUse(activity)}
-                                            aria-label={`Use ${activity.title}`}
+                                            aria-label={`Use ${displayTitle(activity, drillSkill, workoutGroup)}`}
                                         >
                                             Use activity
                                         </ActionButton>
