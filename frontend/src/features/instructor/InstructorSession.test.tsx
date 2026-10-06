@@ -27,6 +27,19 @@ vi.mock(
     }),
 );
 vi.mock("../../lib/serverApi", () => api);
+const pdf = vi.hoisted(() => ({
+    generateLessonPlanPdf: vi.fn().mockResolvedValue({
+        blob: new Blob(["pdf"], { type: "application/pdf" }),
+        title: "Weekly lesson plan",
+        filename: "lesson-plan.pdf",
+    }),
+    generateCombinedLessonPlanPdf: vi.fn().mockResolvedValue({
+        blob: new Blob(["pdf"], { type: "application/pdf" }),
+        title: "Weekly lesson plans",
+        filename: "lesson-plans.pdf",
+    }),
+}));
+vi.mock("../pdf/lessonPlan/generateLessonPlanPdf", () => pdf);
 const sessions = ["a", "b"].map((id) => ({
     id,
     session_day: "Monday",
@@ -48,6 +61,8 @@ const course = (id: string) => ({
     end_time: "09:30:00",
 });
 beforeEach(() => {
+    URL.createObjectURL = vi.fn().mockReturnValue("blob:lesson-plan-preview");
+    URL.revokeObjectURL = vi.fn();
     sessionStorage.clear();
     vi.restoreAllMocks();
     api.fetchInstructorSessions.mockReset().mockResolvedValue({ sessions });
@@ -95,15 +110,26 @@ it("prints classes together without individual class selectors", async () => {
     expect(await screen.findByRole("button", {
         name: "Splash 1 · a · 09:00 · Alex",
     })).toBeInTheDocument();
+    expect(await screen.findByTitle("Lesson plan PDF preview"))
+        .toHaveAttribute("src", "blob:lesson-plan-preview");
+    const printButton = screen.getByRole("button", { name: "Print PDF" });
+    expect(printButton).toHaveClass("w-full");
+    expect(printButton.compareDocumentPosition(
+        screen.getByTitle("Lesson plan PDF preview"),
+    ) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(pdf.generateLessonPlanPdf).toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Together" }));
     expect(screen.getByRole("button", { name: "Together" }))
         .toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByRole("button", {
         name: "Splash 1 · a · 09:00 · Alex",
     })).not.toBeInTheDocument();
-    expect(await screen.findByText(/Print 1 saved class plan in one PDF/))
+    expect(await screen.findByText(/Showing 1 saved class plan in one PDF/))
         .toBeInTheDocument();
     expect(screen.getByText(/1 class has no saved plan/)).toBeInTheDocument();
+    expect(screen.getByTitle("Lesson plan PDF preview"))
+        .toHaveAttribute("src", "blob:lesson-plan-preview");
+    expect(pdf.generateCombinedLessonPlanPdf).toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Separately" }));
     expect(await screen.findByRole("button", {
         name: "Splash 1 · a · 09:00 · Alex",
