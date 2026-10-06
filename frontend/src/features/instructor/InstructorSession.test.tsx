@@ -8,6 +8,7 @@ import MyClasses from './MyClasses'
 import ActivityLibrary from '../activity-library/ActivityLibrary'
 import LessonPlans from './LessonPlans'
 import PrintPlans from './PrintPlans'
+import {closestUpcomingWeek} from './PlanSelection'
 
 const api=vi.hoisted(()=>({fetchInstructorSessions:vi.fn(),fetchInstructorClasses:vi.fn(),fetchLessonPlan:vi.fn()}))
 vi.mock('../../app/AuthContext',()=>({useAuth:()=>({user:{id:'staff'},loading:false,workflowCapabilities:{instructor:true,supervisor:true},signOut:vi.fn()})}))
@@ -48,7 +49,7 @@ it('honors deep links and updates their session after a confirmed draft discard'
  const router=setup('/instructor/lesson-plans?session=b&class=class-b')
  await screen.findByRole('button',{name:'Add activity'})
  expect(sessionStorage.getItem('instructor-session:staff')).toBe('b')
- expect(screen.getByLabelText('Class')).toHaveValue('class-b')
+ expect(screen.getByRole('button',{name:'Splash 1 · b · 09:00 · Alex'})).toHaveAttribute('aria-pressed','true')
  await user.click(screen.getByRole('button',{name:'Add activity'}))
  const confirm=vi.spyOn(window,'confirm').mockReturnValue(false)
  await user.click(screen.getByRole('link',{name:'Home'}))
@@ -61,7 +62,7 @@ it('honors deep links and updates their session after a confirmed draft discard'
  await waitFor(()=>expect(router.state.location.search).toBe('?session=a'))
  await user.click(screen.getByRole('link',{name:'Lesson Plans'}))
  await screen.findByRole('button',{name:'Add activity'})
- expect(screen.getByLabelText('Class')).toHaveValue('class-a')
+ expect(screen.getByRole('button',{name:'Splash 1 · a · 09:00 · Alex'})).toHaveAttribute('aria-pressed','true')
  expect(screen.queryByLabelText('Activity / drill 1')).not.toBeInTheDocument()
  expect(confirm).toHaveBeenCalledTimes(2)
  await user.click(screen.getByRole('link',{name:'Print'}))
@@ -103,7 +104,7 @@ it('opens a different session deep link without loading the previous session’s
  await act(async()=>{await router.navigate('/instructor/lesson-plans?session=b&class=class-b')})
  await screen.findByRole('button',{name:'Add activity'})
  expect(sessionStorage.getItem('instructor-session:staff')).toBe('b')
- expect(screen.getByLabelText('Class')).toHaveValue('class-b')
+ expect(screen.getByRole('button',{name:'Splash 1 · b · 09:00 · Alex'})).toHaveAttribute('aria-pressed','true')
  expect(api.fetchLessonPlan).toHaveBeenCalledWith('b','class-b','2026-10-05')
  expect(api.fetchLessonPlan.mock.calls.every(([session])=>session==='b')).toBe(true)
 })
@@ -147,4 +148,75 @@ it('opens the activity library without sessions or linked classes',async()=>{
  expect(screen.getByRole('searchbox')).toBeVisible()
  expect(screen.queryByRole('link',{name:'Choose a session'})).not.toBeInTheDocument()
  expect(api.fetchInstructorClasses).not.toHaveBeenCalled()
+})
+
+it.each([
+ ['2026-10-01T12:00:00Z','2026-10-05'],
+ ['2026-10-05T03:59:00Z','2026-10-05'],
+ ['2026-10-05T04:00:00Z','2026-10-05'],
+ ['2026-10-06T12:00:00Z','2026-10-12'],
+ ['2026-10-20T12:00:00Z','2026-10-26'],
+ ['2026-11-01T12:00:00Z','2026-10-26'],
+])('defaults to the next session week in Toronto at %s', (now,expected)=>{
+ expect(closestUpcomingWeek(['2026-10-05','2026-10-12','2026-10-26'],new Date(now))).toBe(expected)
+})
+it('handles sessions without any weeks',()=>{
+ expect(closestUpcomingWeek([],new Date('2026-10-05T12:00:00Z'))).toBe('')
+})
+
+it('opens the next week on Lesson Plans and Print',async()=>{
+ vi.useFakeTimers({toFake:['Date']})
+ vi.setSystemTime(new Date('2026-10-13T12:00:00Z'))
+ try {
+  api.fetchInstructorSessions.mockResolvedValue({sessions:[{...sessions[0],weeks:['2026-10-05','2026-10-12','2026-10-19']}]})
+  const user=userEvent.setup();setup('/instructor/lesson-plans?session=a')
+  await screen.findByRole('button',{name:'Add activity'})
+  expect(screen.getByRole('status',{name:'Selected week'})).toHaveTextContent('Week 3 | 2026-10-19')
+  expect(api.fetchLessonPlan).toHaveBeenCalledWith('a','class-a','2026-10-19')
+  await user.click(screen.getByRole('link',{name:'Print'}))
+  expect(screen.getByRole('status',{name:'Selected week'})).toHaveTextContent('Week 3 | 2026-10-19')
+ } finally {vi.useRealTimers()}
+})
+
+it('steps through session weeks within their bounds and guards picker changes with unsaved drafts',async()=>{
+ vi.useFakeTimers({toFake:['Date']})
+ vi.setSystemTime(new Date('2026-10-01T12:00:00Z'))
+ try {
+ const weeks=['2026-10-05','2026-10-12','2026-10-19','2026-10-26','2026-11-02','2026-11-09']
+ api.fetchInstructorSessions.mockResolvedValue({sessions:[{...sessions[0],weeks}]})
+ api.fetchInstructorClasses.mockResolvedValue({classes:[course('a'),{...course('a'),id:'second',code:'second',level:'Splash 2A'}]})
+ const user=userEvent.setup();setup('/instructor/lesson-plans?session=a&class=second')
+ await screen.findByRole('button',{name:'Add activity'})
+ const previous=screen.getByRole('button',{name:'Previous week'})
+ const next=screen.getByRole('button',{name:'Next week'})
+ expect(previous).toBeDisabled()
+ expect(screen.getByRole('status',{name:'Selected week'})).toHaveTextContent(`Week 1 | ${weeks[0]}`)
+ const firstClass=screen.getByRole('button',{name:'Splash 1 · a · 09:00 · Alex'})
+ const secondClass=screen.getByRole('button',{name:'Splash 2A · second · 09:00 · Alex'})
+ expect(secondClass).toHaveAttribute('aria-pressed','true')
+ for(let i=1;i<weeks.length;i++){
+  await user.click(next)
+  await waitFor(()=>expect(api.fetchLessonPlan).toHaveBeenLastCalledWith('a','second',weeks[i]))
+ }
+ expect(next).toBeDisabled()
+ expect(previous).toBeEnabled()
+ await waitFor(()=>expect(api.fetchLessonPlan).toHaveBeenLastCalledWith('a','second',weeks[5]))
+ await user.click(await screen.findByRole('button',{name:'Add activity'}))
+ const confirm=vi.spyOn(window,'confirm').mockReturnValue(false)
+ await user.click(previous)
+ await user.click(firstClass)
+ expect(screen.getByRole('status',{name:'Selected week'})).toHaveTextContent(`Week 6 | ${weeks[5]}`)
+ expect(secondClass).toHaveAttribute('aria-pressed','true')
+ expect(screen.getByLabelText('Activity / drill 1')).toBeInTheDocument()
+ await user.click(secondClass)
+ expect(confirm).toHaveBeenCalledTimes(2)
+ confirm.mockReturnValue(true)
+ await user.click(firstClass)
+ await waitFor(()=>expect(api.fetchLessonPlan).toHaveBeenLastCalledWith('a','class-a',weeks[5]))
+ expect(firstClass).toHaveAttribute('aria-pressed','true')
+ expect(screen.queryByLabelText('Activity / drill 1')).not.toBeInTheDocument()
+ await user.click(previous)
+ await waitFor(()=>expect(api.fetchLessonPlan).toHaveBeenLastCalledWith('a','class-a',weeks[4]))
+ expect(screen.getByRole('status',{name:'Selected week'})).toHaveTextContent(`Week 5 | ${weeks[4]}`)
+ } finally {vi.useRealTimers()}
 })
