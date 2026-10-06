@@ -105,21 +105,47 @@ it('drags rows to a new position using the left handle',async()=>{
  api.fetchLessonPlan.mockResolvedValue({plan:{rows:[{skill:'First',activity:'A',location:'Lane',duration:5},{skill:'Second',activity:'B',location:'Deep end',duration:10}]}})
  setup();await screen.findByLabelText('Skill 1')
  const handle=screen.getByRole('button',{name:'Reorder row 1'})
+ const firstRow=screen.getByLabelText('Skill 1').closest('tr')!
+ const secondRow=screen.getByLabelText('Skill 2').closest('tr')!
+ vi.spyOn(firstRow,'getBoundingClientRect').mockReturnValue({top:0,bottom:100} as DOMRect)
+ vi.spyOn(secondRow,'getBoundingClientRect').mockReturnValue({top:100,bottom:200} as DOMRect)
  handle.setPointerCapture=vi.fn()
  handle.releasePointerCapture=vi.fn()
  vi.stubGlobal('PointerEvent',MouseEvent)
- const elementFromPoint=vi.fn().mockReturnValue(screen.getByLabelText('Skill 2'))
- const originalElementFromPoint=document.elementFromPoint
- document.elementFromPoint=elementFromPoint
  try {
-  fireEvent.pointerDown(handle,{button:0})
-  fireEvent.pointerMove(handle,{clientX:50,clientY:200})
-  fireEvent.pointerUp(handle,{clientX:50,clientY:200})
-  expect(screen.getByLabelText('Skill 1')).toHaveValue('Second')
+  fireEvent.pointerDown(handle,{button:0,clientY:50,pointerId:1})
+  fireEvent.pointerMove(handle,{clientY:160,pointerId:1})
+  expect(firstRow).toHaveStyle({transform:'translate3d(0, 110px, 0)'})
+  expect(secondRow).toHaveStyle({transform:'translate3d(0, -100px, 0)'})
+  expect(screen.getByLabelText('Skill 1')).toHaveValue('First')
+  fireEvent.pointerUp(handle,{clientY:160,pointerId:1})
+  expect(firstRow).toHaveStyle({transform:'translate3d(0, 100px, 0)'})
+  expect(firstRow).toHaveClass('transition-transform')
+  await waitFor(()=>expect(screen.getByLabelText('Skill 1')).toHaveValue('Second'))
   expect(screen.getByLabelText('Activity / drill 2')).toHaveValue('A')
   expect(screen.getByText('Unsaved changes')).toBeVisible()
   expect(api.saveLessonPlan).not.toHaveBeenCalled()
- } finally {document.elementFromPoint=originalElementFromPoint;vi.unstubAllGlobals()}
+ } finally {vi.unstubAllGlobals();vi.restoreAllMocks()}
+})
+it('returns rows to their original positions when a drag is cancelled',async()=>{
+ api.fetchLessonPlan.mockResolvedValue({plan:{rows:[{skill:'First',activity:'A',location:'Lane',duration:5},{skill:'Second',activity:'B',location:'Deep end',duration:10}]}})
+ setup();await screen.findByLabelText('Skill 1')
+ const handle=screen.getByRole('button',{name:'Reorder row 1'})
+ const firstRow=screen.getByLabelText('Skill 1').closest('tr')!
+ const secondRow=screen.getByLabelText('Skill 2').closest('tr')!
+ vi.spyOn(firstRow,'getBoundingClientRect').mockReturnValue({top:0,bottom:100} as DOMRect)
+ vi.spyOn(secondRow,'getBoundingClientRect').mockReturnValue({top:100,bottom:200} as DOMRect)
+ handle.setPointerCapture=vi.fn()
+ vi.stubGlobal('PointerEvent',MouseEvent)
+ try {
+  fireEvent.pointerDown(handle,{button:0,clientY:50,pointerId:1})
+  fireEvent.pointerMove(handle,{clientY:160,pointerId:1})
+  expect(firstRow).toHaveStyle({transform:'translate3d(0, 110px, 0)'})
+  fireEvent.pointerCancel(handle,{pointerId:1})
+  expect(firstRow).not.toHaveStyle({transform:'translate3d(0, 110px, 0)'})
+  expect(screen.getByLabelText('Skill 1')).toHaveValue('First')
+  expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument()
+ } finally {vi.unstubAllGlobals();vi.restoreAllMocks()}
 })
 
 function mockLibraryDialog() {

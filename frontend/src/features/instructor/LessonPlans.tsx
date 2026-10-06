@@ -9,12 +9,16 @@ import {workoutText} from '../workout-builder/workout'
 import PlanSelection from './PlanSelection'
 import {curriculumLevels,findCurriculumLevel,isWorkoutSkill} from './lessonSkills'
 
+type RowDrag={from: number;to: number;startY: number;offsetY: number;height: number;positions: {top: number;bottom: number}[];settling: boolean}
+
 export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;classId: string;week: string;level: string}) {
  const [workoutRow,setWorkoutRow]=useState<number|null>(null)
  const [libraryRow,setLibraryRow]=useState<number|null>(null)
  const dragHelpId=useId()
  const tableRef=useRef<HTMLTableElement>(null)
- const [drag,setDrag]=useState<{from: number;to: number|null}|null>(null)
+ const [drag,setDrag]=useState<RowDrag|null>(null)
+ const dragTimer=useRef<number|null>(null)
+ const dropPending=useRef(false)
  const [reorderNotice,setReorderNotice]=useState('')
  const [rows,setRows]=useState<LessonRow[]>([])
  const [saved,setSaved]=useState<LessonRow[]>([])
@@ -39,6 +43,7 @@ export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;
   return()=>{current=false;active.current=false}
  },[sessionId,classId,week,retry])
  useEffect(()=>{window.dispatchEvent(new CustomEvent('instructor-draft',{detail:dirty}));const unload=(e: BeforeUnloadEvent)=>{if(dirty){e.preventDefault();e.returnValue=''}};window.addEventListener('beforeunload',unload);return()=>{window.removeEventListener('beforeunload',unload);window.dispatchEvent(new CustomEvent('instructor-draft',{detail:false}))}},[dirty])
+ useEffect(()=>()=>{if(dragTimer.current!==null)window.clearTimeout(dragTimer.current)},[])
  function edit(i: number,patch: Partial<LessonRow>){setNotice('');setRows(current=>current.map((r,index)=>index===i?{...r,...patch}:r))}
  function changeSkill(i: number,skill: string){
   if(rows[i].workout && !isWorkoutSkill(skill)){
@@ -53,9 +58,13 @@ export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;
   setReorderNotice(`Row ${from+1} moved to position ${to+1}.`)
   tableRef.current?.querySelector<HTMLButtonElement>(`[data-row-index="${to}"] button`)?.focus()
  }
- function rowAtPoint(x: number,y: number){
-  const row=document.elementFromPoint(x,y)?.closest<HTMLTableRowElement>('tr[data-row-index]')
-  return row && tableRef.current?.contains(row)?Number(row.dataset.rowIndex):null
+ function dragTarget(current: RowDrag,y: number){
+  const center=(current.positions[current.from].top+current.positions[current.from].bottom)/2+y-current.startY
+  return current.positions.reduce((to,position,index)=>to+(index!==current.from && center>(position.top+position.bottom)/2?1:0),0)
+ }
+ function cancelDrag(){
+  if(dragTimer.current!==null)window.clearTimeout(dragTimer.current)
+  dragTimer.current=null;dropPending.current=false;setDrag(null)
  }
  if(loading)return <p role="status">Loading saved lesson plan…</p>
  if(error && !dirty && !rows.length)return <Notice tone="danger" role="alert">{error} <ActionButton onClick={()=>setRetry(v=>v+1)}>Retry</ActionButton></Notice>
@@ -68,29 +77,37 @@ export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;
  <p id={dragHelpId} className="sr-only">Drag to reorder, or use the up and down arrow keys.</p>
  <p role="status" className="sr-only">{reorderNotice}</p>
  <p className="text-sm md:hidden">Scroll the activity table sideways to edit pool location, duration, and row order.</p><div className="overflow-x-auto rounded-2xl border border-secondary/20 bg-accent" tabIndex={0} role="region" aria-label="Scrollable activity table"><table ref={tableRef} className="w-full min-w-[960px] border-collapse text-left"><thead className="bg-primary text-accent"><tr><th className="w-12"><span className="sr-only">Reorder</span></th>{['Skill','Activity / drill','Pool location','Duration (minutes)'].map(h=><th key={h} className="border-b border-secondary/20 p-3 align-top">{h}</th>)}<th className="w-24"><span className="sr-only">Delete</span></th></tr></thead>
- <tbody>{missing && <tr><td colSpan={6} className="border-b border-secondary/20 bg-bg px-4 py-8 text-center text-sm text-secondary/70">No lesson plan saved for this week. Opening this editor creates no record.</td></tr>}{rows.map((row,i)=><tr key={i} data-row-index={i} className={drag?.to===i?'bg-secondary/10':undefined}>
+ <tbody>{missing && <tr><td colSpan={6} className="border-b border-secondary/20 bg-bg px-4 py-8 text-center text-sm text-secondary/70">No lesson plan saved for this week. Opening this editor creates no record.</td></tr>}{rows.map((row,i)=>{
+ const dragged=drag?.from===i
+ const shift=drag && !dragged && ((drag.from<i && i<=drag.to)?-drag.height:(drag.to<=i && i<drag.from)?drag.height:0)
+ return <tr key={i} data-row-index={i} style={{transform:dragged?`translate3d(0, ${drag.offsetY}px, 0)`:shift?`translate3d(0, ${shift}px, 0)`:undefined}} className={dragged?`relative z-10 bg-accent shadow-xl ring-2 ring-primary ${drag.settling?'transition-transform duration-200 ease-out motion-reduce:transition-none':''}`:drag?'transition-transform duration-200 ease-out motion-reduce:transition-none':undefined}>
  <td className="border-b border-secondary/20 p-3 align-top"><button type="button" aria-label={`Reorder row ${i+1}`} aria-describedby={dragHelpId} disabled={rows.length<2} className="flex h-11 w-11 touch-none select-none items-center justify-center rounded-lg text-secondary hover:bg-secondary/10 focus-visible:outline focus-visible:outline-2 disabled:opacity-40 cursor-grab active:cursor-grabbing" onKeyDown={e=>{
   if(e.key==='ArrowUp' || e.key==='ArrowDown'){e.preventDefault();move(i,i+(e.key==='ArrowUp'?-1:1))}
  }} onPointerDown={e=>{
-  if(e.button!==0 || saving)return
-  e.currentTarget.setPointerCapture(e.pointerId);setDrag({from:i,to:i})
+  if(e.button!==0 || saving || drag)return
+  const positions=Array.from(tableRef.current?.querySelectorAll<HTMLTableRowElement>('tr[data-row-index]')||[],row=>{const rect=row.getBoundingClientRect();return {top:rect.top,bottom:rect.bottom}})
+  if(positions.length!==rows.length)return
+  dropPending.current=false
+  e.currentTarget.setPointerCapture(e.pointerId)
+  setDrag({from:i,to:i,startY:e.clientY,offsetY:0,height:positions[i].bottom-positions[i].top,positions,settling:false})
  }} onPointerMove={e=>{
-  if(!drag)return
-  const to=rowAtPoint(e.clientX,e.clientY)
-  setDrag({...drag,to})
+  if(!drag || drag.from!==i || drag.settling)return
+  setDrag(current=>current && !current.settling?{...current,to:dragTarget(current,e.clientY),offsetY:e.clientY-current.startY}:current)
  }} onPointerUp={e=>{
-  if(!drag)return
-  const to=rowAtPoint(e.clientX,e.clientY)
-  if(to!==null)move(drag.from,to)
-  setDrag(null)
+  if(!drag || drag.from!==i || drag.settling)return
+  const to=dragTarget(drag,e.clientY)
+  const destination=to>drag.from?drag.positions[to].bottom-drag.height:drag.positions[to].top
+  dropPending.current=true
+  setDrag({...drag,to,offsetY:destination-drag.positions[drag.from].top,settling:true})
   e.currentTarget.releasePointerCapture(e.pointerId)
- }} onPointerCancel={()=>setDrag(null)} onLostPointerCapture={()=>setDrag(null)}><svg aria-hidden="true" width="20" height="24" viewBox="0 0 20 24" fill="currentColor">{[6,12,18].flatMap(y=>[7,13].map(x=><circle key={`${x}-${y}`} cx={x} cy={y} r="1.5"/>))}</svg></button></td>
+  dragTimer.current=window.setTimeout(()=>{if(to!==drag.from)move(drag.from,to);setDrag(null);dropPending.current=false;dragTimer.current=null},window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?0:200)
+ }} onPointerCancel={cancelDrag} onLostPointerCapture={()=>{if(!dropPending.current)cancelDrag()}}><svg aria-hidden="true" width="20" height="24" viewBox="0 0 20 24" fill="currentColor">{[6,12,18].flatMap(y=>[7,13].map(x=><circle key={`${x}-${y}`} cx={x} cy={y} r="1.5"/>))}</svg></button></td>
  <td className="border-b border-secondary/20 p-3 align-top"><Select title={row.skill || undefined} aria-label={`Skill ${i+1}`} className="w-full min-w-40 max-w-xs" disabled={!selectedLevel} value={row.skill} onChange={e=>changeSkill(i,e.target.value)}><option value="">{selectedLevel?'Select skill':'Choose curriculum level first'}</option>{row.skill && !skills.some(skill=>skill.name===row.skill) && <option value={row.skill}>{row.skill} (saved skill)</option>}{skills.map(skill=><option key={skill.id} value={skill.name}>{skill.compactName}</option>)}</Select></td>
  <td className="border-b border-secondary/20 p-3 align-top">{row.workout ? <><p className="whitespace-pre-wrap break-words text-sm" aria-label={`Workout summary ${i+1}`}>{row.activity}</p><div className="mt-2 flex flex-wrap gap-2">{isWorkoutSkill(row.skill) && <ActionButton size="sm" variant="outline" aria-label={`Edit workout for row ${i+1}`} onClick={()=>setWorkoutRow(i)}>Edit workout</ActionButton>}<ActionButton size="sm" variant="ghost" aria-label={`Convert workout in row ${i+1} to text`} onClick={()=>{if(window.confirm('Convert this workout to text? Its sets will no longer be editable in the workout builder.'))edit(i,{workout:undefined})}}>Convert to text</ActionButton></div></> : <><Textarea minRowsClassName="min-h-24" aria-label={`Activity / drill ${i+1}`} className="w-full min-w-48" maxLength={10000} value={row.activity} onChange={e=>edit(i,{activity:e.target.value})}/><div className="mt-2 flex flex-wrap gap-2"><ActionButton variant="outline" size="sm" aria-label={`Browse library for row ${i+1}`} onClick={()=>setLibraryRow(i)}>Browse library</ActionButton>{isWorkoutSkill(row.skill) && <ActionButton variant="outline" size="sm" aria-label={`Build workout for row ${i+1}`} onClick={()=>setWorkoutRow(i)}>Build workout</ActionButton>}</div></>}</td>
  <td className="border-b border-secondary/20 p-3 align-top"><Select aria-label={`Pool location ${i+1}`} value={row.location.startsWith('Lane')?'Lane':row.location} onChange={e=>edit(i,{location:e.target.value})}><option>Lane</option><option>Shallow end</option><option>Deep end</option></Select></td>
  <td className="border-b border-secondary/20 p-3 align-top"><TextInput className="w-24" aria-label={`Duration (minutes) ${i+1}`} type="number" min={1} max={240} step={1} required value={row.duration} onChange={e=>edit(i,{duration:Number(e.target.value)})}/></td>
  <td className="border-b border-secondary/20 p-3 align-top"><ActionButton type="button" variant="danger" aria-label={`Delete row ${i+1}`} onClick={()=>{setNotice('');setRows(current=>current.filter((_,index)=>index!==i))}}>Delete</ActionButton></td>
- </tr>)}</tbody></table></div>
+ </tr>})}</tbody></table></div>
  <div className="flex flex-wrap gap-3"><ActionButton variant="outline" type="button" disabled={rows.length>=200} onClick={()=>setRows(current=>[...current,{skill:'',activity:'',location:'Lane',duration:5}])}>Add activity</ActionButton>
  <ActionButton variant="primary" type="submit">{saving?'Saving…':'Save'}</ActionButton></div></fieldset>
  {libraryRow!==null && rows[libraryRow] && <ActivityLibraryModal selectedSkill={skills.find(skill=>skill.name===rows[libraryRow].skill)} onClose={()=>setLibraryRow(null)} onUse={activity=>{
