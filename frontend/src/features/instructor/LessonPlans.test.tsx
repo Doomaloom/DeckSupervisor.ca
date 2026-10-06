@@ -10,7 +10,10 @@ beforeEach(()=>{api.fetchLessonPlan.mockReset().mockResolvedValue({plan:null});a
 function setup(level="Splash 1"){return render(<RouterProvider router={createMemoryRouter([{path:'/',element:<LessonEditor sessionId="s" classId="c" week="2026-10-05" level={level}/>}])}/>)}
 it('keeps untouched plans null and retains drafts on save failure',async()=>{
  const user=userEvent.setup();setup()
- await screen.findByText(/No lesson plan saved/)
+ const emptyPlan=await screen.findByText(/No lesson plan saved/)
+ expect(emptyPlan.closest('tbody')).toBeInTheDocument()
+ expect(emptyPlan.closest('td')).toHaveAttribute('colspan','6')
+ expect(emptyPlan.tagName).toBe('TD')
  expect(api.saveLessonPlan).not.toHaveBeenCalled()
  await user.click(screen.getByRole('button',{name:'Add activity'}))
  await user.selectOptions(screen.getByLabelText('Skill 1'),'Enter and Exit Shallow Water')

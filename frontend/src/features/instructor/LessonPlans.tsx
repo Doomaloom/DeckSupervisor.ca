@@ -1,4 +1,4 @@
-import { Notice, EmptyState, Select, TextInput, Textarea, ActionButton } from '../../general-components'
+import { Notice, Select, TextInput, Textarea, ActionButton } from '../../general-components'
 import { useEffect,useId,useRef,useState } from 'react'
 import { useBlocker } from 'react-router-dom'
 import {fetchLessonPlan,saveLessonPlan,type LessonRow} from '../../lib/serverApi'
@@ -60,7 +60,6 @@ export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;
  if(loading)return <p role="status">Loading saved lesson plan…</p>
  if(error && !dirty && !rows.length)return <Notice tone="danger" role="alert">{error} <ActionButton onClick={()=>setRetry(v=>v+1)}>Retry</ActionButton></Notice>
  return <form className="flex flex-col gap-4" onSubmit={async e=>{e.preventDefault();setSaving(true);setError('');setNotice('');try{const result=await saveLessonPlan(sessionId,classId,week,rows,assignedLevel?null:curriculumLevel||null);if(active.current){setSaved(result.plan.rows);setSavedCurriculumLevel(result.plan.curriculum_level||'');setMissing(false);setNotice('Lesson plan saved.')}}catch(e){if(active.current)setError(e instanceof Error?e.message:'Save failed. Your draft is retained.')}finally{if(active.current)setSaving(false)}}}>
- {missing && <EmptyState>No lesson plan saved for this week. Opening this editor creates no record.</EmptyState>}
  {dirty && <Notice tone="warning" role="status">Unsaved changes</Notice>}
  {error && <Notice tone="danger" role="alert">{error} Your draft is retained.</Notice>}
  {notice && <Notice tone="success" role="status">{notice}</Notice>}
@@ -69,7 +68,7 @@ export function LessonEditor({sessionId,classId,week,level}: {sessionId: string;
  <p id={dragHelpId} className="sr-only">Drag to reorder, or use the up and down arrow keys.</p>
  <p role="status" className="sr-only">{reorderNotice}</p>
  <p className="text-sm md:hidden">Scroll the activity table sideways to edit pool location, duration, and row order.</p><div className="overflow-x-auto rounded-2xl border border-secondary/20 bg-accent" tabIndex={0} role="region" aria-label="Scrollable activity table"><table ref={tableRef} className="w-full min-w-[960px] border-collapse text-left"><thead className="bg-primary text-accent"><tr><th className="w-12"><span className="sr-only">Reorder</span></th>{['Skill','Activity / drill','Pool location','Duration (minutes)'].map(h=><th key={h} className="border-b border-secondary/20 p-3 align-top">{h}</th>)}<th className="w-24"><span className="sr-only">Delete</span></th></tr></thead>
- <tbody>{rows.map((row,i)=><tr key={i} data-row-index={i} className={drag?.to===i?'bg-secondary/10':undefined}>
+ <tbody>{missing && <tr><td colSpan={6} className="border-b border-secondary/20 bg-bg px-4 py-8 text-center text-sm text-secondary/70">No lesson plan saved for this week. Opening this editor creates no record.</td></tr>}{rows.map((row,i)=><tr key={i} data-row-index={i} className={drag?.to===i?'bg-secondary/10':undefined}>
  <td className="border-b border-secondary/20 p-3 align-top"><button type="button" aria-label={`Reorder row ${i+1}`} aria-describedby={dragHelpId} disabled={rows.length<2} className="flex h-11 w-11 touch-none select-none items-center justify-center rounded-lg text-secondary hover:bg-secondary/10 focus-visible:outline focus-visible:outline-2 disabled:opacity-40 cursor-grab active:cursor-grabbing" onKeyDown={e=>{
   if(e.key==='ArrowUp' || e.key==='ArrowDown'){e.preventDefault();move(i,i+(e.key==='ArrowUp'?-1:1))}
  }} onPointerDown={e=>{
