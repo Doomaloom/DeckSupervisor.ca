@@ -50,6 +50,14 @@ export function rowsForSave(rows: LessonRow[]) {
     );
 }
 
+function planContent(rows: LessonRow[], curriculumLevel: string | null) {
+    return JSON.stringify({ rows, curriculum_level: curriculumLevel }, (_key, value) =>
+        value && typeof value === "object" && !Array.isArray(value)
+            ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)))
+            : value
+    );
+}
+
 function withDefaultWorkout(row: LessonRow): LessonRow {
     if (row.workout || row.activity.trim() || row.activities?.some((entry) =>
         entry.text.trim()
@@ -81,10 +89,9 @@ export function LessonEditor(
     const dropPending = useRef(false);
     const [reorderNotice, setReorderNotice] = useState("");
     const [rows, setRows] = useState<LessonRow[]>([]);
-    const [saved, setSaved] = useState<LessonRow[]>([]);
+    const [savedContent, setSavedContent] = useState(() => planContent([], null));
     const assignedLevel = findCurriculumLevel(level);
     const [curriculumLevel, setCurriculumLevel] = useState("");
-    const [savedCurriculumLevel, setSavedCurriculumLevel] = useState("");
     const selectedLevel = assignedLevel ||
         curriculumLevels.find((l) => l.id === curriculumLevel);
     const skills = selectedLevel?.skills || [];
@@ -96,8 +103,11 @@ export function LessonEditor(
     const [retry, setRetry] = useState(0);
     const active = useRef(true);
     const persistableRows = useMemo(() => rowsForSave(rows), [rows]);
-    const dirty = JSON.stringify(persistableRows) !== JSON.stringify(saved) ||
-        (!assignedLevel && curriculumLevel !== savedCurriculumLevel);
+    const content = useMemo(() =>
+        planContent(persistableRows, assignedLevel ? null : curriculumLevel || null),
+        [persistableRows, assignedLevel, curriculumLevel]
+    );
+    const dirty = !loading && content !== savedContent;
     const blocker = useBlocker(dirty);
     useEffect(() => {
         if (blocker.state === "blocked") {
@@ -113,10 +123,11 @@ export function LessonEditor(
         setError("");
         fetchLessonPlan(sessionId, classId, week).then((r) => {
             if (current) {
-                setRows((r.plan?.rows || []).map(withDefaultWorkout));
-                setSaved(r.plan?.rows || []);
-                setCurriculumLevel(r.plan?.curriculum_level || "");
-                setSavedCurriculumLevel(r.plan?.curriculum_level || "");
+                const loadedRows = (r.plan?.rows || []).map(withDefaultWorkout);
+                const loadedLevel = r.plan?.curriculum_level || "";
+                setRows(loadedRows);
+                setCurriculumLevel(loadedLevel);
+                setSavedContent(planContent(rowsForSave(loadedRows), assignedLevel ? null : loadedLevel || null));
                 setMissing(!r.plan);
                 setLoading(false);
             }
@@ -130,7 +141,7 @@ export function LessonEditor(
             current = false;
             active.current = false;
         };
-    }, [sessionId, classId, week, retry]);
+    }, [sessionId, classId, week, retry, assignedLevel]);
     useEffect(() => {
         window.dispatchEvent(
             new CustomEvent("instructor-draft", { detail: dirty }),
@@ -151,21 +162,23 @@ export function LessonEditor(
     }, [dirty]);
     useEffect(() => {
         if (loading || saving || error || !dirty) return;
-        if (missing && !persistableRows.length && !curriculumLevel) return;
         const timer = window.setTimeout(async () => {
             setSaving(true);
             setNotice("");
             try {
-                const result = await saveLessonPlan(
+                const snapshot = JSON.parse(content) as {
+                    rows: LessonRow[];
+                    curriculum_level: string | null;
+                };
+                await saveLessonPlan(
                     sessionId,
                     classId,
                     week,
-                    persistableRows,
-                    assignedLevel ? null : curriculumLevel || null,
+                    snapshot.rows,
+                    snapshot.curriculum_level,
                 );
                 if (active.current) {
-                    setSaved(result.plan.rows);
-                    setSavedCurriculumLevel(result.plan.curriculum_level || "");
+                    setSavedContent(content);
                     setMissing(false);
                     setNotice("All changes saved.");
                 }
@@ -178,10 +191,10 @@ export function LessonEditor(
             } finally {
                 if (active.current) setSaving(false);
             }
-        }, 600);
+        }, 100);
         return () => window.clearTimeout(timer);
     }, [sessionId, classId, week, loading, saving, error, dirty,
-        persistableRows, curriculumLevel, assignedLevel, missing]);
+        content]);
     useEffect(() => () => {
         if (dragTimer.current !== null) window.clearTimeout(dragTimer.current);
     }, []);

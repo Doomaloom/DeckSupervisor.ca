@@ -1,4 +1,5 @@
 import {
+    act,
     cleanup,
     fireEvent,
     render,
@@ -41,6 +42,38 @@ function setup(level = "Splash 1") {
         />,
     );
 }
+it("saves changed content once after 100 ms idle, without saving on load or repeating server responses", async () => {
+    api.fetchLessonPlan.mockResolvedValue({
+        plan: { rows: [{ skill: "", activity: "Practice", location: "Lane", duration: 5 }] },
+    });
+    api.saveLessonPlan.mockImplementation(async (_s, _c, _w, rows) => ({
+        plan: { rows: rows.map((row: Record<string, unknown>) =>
+            Object.fromEntries(Object.entries(row).reverse())) },
+    }));
+    setup();
+    const activity = await screen.findByLabelText("Activity / drill 1");
+    vi.useFakeTimers();
+    try {
+        await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+        expect(api.saveLessonPlan).not.toHaveBeenCalled();
+        fireEvent.change(activity, { target: { value: "First edit" } });
+        await act(async () => { await vi.advanceTimersByTimeAsync(99); });
+        expect(api.saveLessonPlan).not.toHaveBeenCalled();
+        fireEvent.change(activity, { target: { value: "Final edit" } });
+        await act(async () => { await vi.advanceTimersByTimeAsync(99); });
+        expect(api.saveLessonPlan).not.toHaveBeenCalled();
+        await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+        expect(api.saveLessonPlan).toHaveBeenCalledTimes(1);
+        expect(api.saveLessonPlan.mock.lastCall?.[3][0].activity).toBe("Final edit");
+        await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+        fireEvent.change(activity, { target: { value: "Final edit" } });
+        await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+        expect(api.saveLessonPlan).toHaveBeenCalledTimes(1);
+    } finally {
+        cleanup();
+        vi.useRealTimers();
+    }
+});
 it("skips untouched rows and retries autosave after a new edit", async () => {
     const user = userEvent.setup();
     setup();
@@ -832,16 +865,20 @@ it("uses the skill's prescribed workout by default and opens a fresh custom buil
     }
 });
 
-it("fills a saved workout skill with its default when no workout or activity was supplied", async () => {
+it("fills a saved workout skill with its default without saving until the plan is edited", async () => {
     api.fetchLessonPlan.mockResolvedValue({ plan: { rows: [{
         skill: workoutSkill, activity: "", location: "Deep end", duration: 12,
     }] } });
     setup("Splash Fitness");
     const summary = await screen.findByLabelText("Workout summary 1");
     expect(summary.textContent).toBe(defaultWorkoutText(workoutSkill));
+    expect(api.saveLessonPlan).not.toHaveBeenCalled();
+    await userEvent.setup().click(screen.getByRole("button", {
+        name: "Increase duration by 1 minute for row 1",
+    }));
     await screen.findByText("All changes saved.");
     expect(api.saveLessonPlan.mock.calls[api.saveLessonPlan.mock.calls.length - 1][3][0]).toMatchObject({
         skill: workoutSkill, activity: defaultWorkoutText(workoutSkill),
-        location: "Deep end", duration: 12,
+        location: "Deep end", duration: 13,
     });
 });
