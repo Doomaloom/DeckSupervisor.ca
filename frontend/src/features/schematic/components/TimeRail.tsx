@@ -6,20 +6,36 @@ type TimeRailProps = {
     slotHeightRem: number;
     className?: string;
     keyPrefix?: string;
+    rowBorderClassName?: string;
+    headerClassName?: string;
+    headerHeight?: string;
+    slotHeight?: string;
 };
 
 function TimeRail(
-    { labels, headerHeightRem, slotHeightRem, className, keyPrefix = "rail" }:
-        TimeRailProps,
+    {
+        labels,
+        headerHeightRem,
+        slotHeightRem,
+        className,
+        keyPrefix = "rail",
+        rowBorderClassName = "border-black/40",
+        headerClassName,
+        headerHeight,
+        slotHeight,
+    }: TimeRailProps,
 ) {
     return (
         <div className={className}>
-            <div style={{ height: `${headerHeightRem}rem` }} />
+            <div
+                className={headerClassName}
+                style={{ height: headerHeight ?? `${headerHeightRem}rem` }}
+            />
             {labels.map((label) => (
                 <div
-                    className="flex items-center justify-center border-b border-black/40 last:border-b-0"
+                    className={`flex items-center justify-center border-b last:border-b-0 ${rowBorderClassName}`}
                     key={`${keyPrefix}-${label}`}
-                    style={{ height: `${slotHeightRem}rem` }}
+                    style={{ height: slotHeight ?? `${slotHeightRem}rem` }}
                 >
                     {label}
                 </div>
