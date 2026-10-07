@@ -753,24 +753,21 @@ export function LessonEditor(
                                                 className="mx-auto flex min-w-40 flex-col gap-2"
                                             >
                                                 {(["Lane", "Shallow end", "Deep end"] as const).map((location) => (
-                                                    <label
+                                                    <button
                                                         key={location}
-                                                        className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-2 py-2 text-sm font-semibold transition-colors ${
+                                                        type="button"
+                                                        aria-pressed={selectedLocation === location}
+                                                        onClick={() => {
+                                                            if (selectedLocation !== location) edit(i, { location });
+                                                        }}
+                                                        className={`flex items-center justify-center rounded-2xl border-2 px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                                                             selectedLocation === location
-                                                                ? "border-primary bg-primary/10 text-secondary"
-                                                                : "border-secondary/30 bg-accent text-secondary hover:bg-bg"
+                                                                ? "border-secondary bg-secondary text-accent shadow-sm"
+                                                                : "border-secondary/20 bg-accent text-secondary hover:border-primary"
                                                         }`}
                                                     >
-                                                        <input
-                                                            type="radio"
-                                                            name={`pool-location-${i}`}
-                                                            value={location}
-                                                            checked={selectedLocation === location}
-                                                            onChange={() => edit(i, { location })}
-                                                            className="h-4 w-4 accent-secondary"
-                                                        />
                                                         {location}
-                                                    </label>
+                                                    </button>
                                                 ))}
                                             </fieldset>
                                         </td>

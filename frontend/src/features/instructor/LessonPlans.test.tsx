@@ -106,15 +106,19 @@ it("skips untouched rows and retries autosave after a new edit", async () => {
     expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
 });
-it("selects pool location with radio buttons and saves the choice", async () => {
+it("selects pool location with tiles and saves the choice", async () => {
     const user = userEvent.setup();
     setup();
     await screen.findByText(/No lesson plan saved/);
     await user.click(screen.getByRole("button", { name: "Add activity" }));
     const location = screen.getByRole("group", { name: "Pool location 1" });
-    expect(within(location).getByRole("radio", { name: "Lane" })).toBeChecked();
-    await user.click(within(location).getByRole("radio", { name: "Deep end" }));
-    expect(within(location).getByRole("radio", { name: "Deep end" })).toBeChecked();
+    expect(within(location).getByRole("button", { name: "Lane" }))
+        .toHaveAttribute("aria-pressed", "true");
+    await user.click(within(location).getByRole("button", { name: "Deep end" }));
+    expect(within(location).getByRole("button", { name: "Deep end" }))
+        .toHaveAttribute("aria-pressed", "true");
+    expect(within(location).getByRole("button", { name: "Lane" }))
+        .toHaveAttribute("aria-pressed", "false");
     await waitFor(() => expect(api.saveLessonPlan.mock.lastCall?.[3][0].location)
         .toBe("Deep end"));
 });
@@ -530,7 +534,8 @@ it("inserts from the library without changing other row fields and autosaves", a
         expect(screen.getByText(/Five Little Ducks/)).toBeVisible();
         expect(screen.getByLabelText("Skill 1")).toHaveValue(skill.name);
         expect(within(screen.getByRole("group", { name: "Pool location 1" }))
-            .getByRole("radio", { name: "Deep end" })).toBeChecked();
+            .getByRole("button", { name: "Deep end" }))
+            .toHaveAttribute("aria-pressed", "true");
         expect(screen.getByLabelText("Duration (minutes) 1")).toHaveValue(12);
         expect(screen.getByLabelText("Activity / drill 2")).toHaveValue(
             "Keep this",
