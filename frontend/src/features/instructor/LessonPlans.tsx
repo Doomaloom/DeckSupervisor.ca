@@ -3,7 +3,6 @@ import {
     Notice,
     Select,
     Textarea,
-    TextInput,
 } from "../../general-components";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useBlocker } from "react-router-dom";
@@ -17,6 +16,7 @@ import { activityText } from "../activity-library/activityLibrary";
 import WorkoutBuilderModal from "../workout-builder/WorkoutBuilderModal";
 import { workoutText } from "../workout-builder/workout";
 import PlanSelection from "./PlanSelection";
+import DurationPicker from "./DurationPicker";
 import {
     curriculumLevels,
     defaultWorkoutText,
@@ -752,23 +752,11 @@ export function LessonEditor(
                                             </Select>
                                         </td>
                                         <td className="border-b border-secondary/20 p-3 align-top">
-                                            <TextInput
-                                                className="w-24"
-                                                aria-label={`Duration (minutes) ${
-                                                    i + 1
-                                                }`}
-                                                type="number"
-                                                min={1}
-                                                max={240}
-                                                step={1}
-                                                required
+                                            <DurationPicker
                                                 value={row.duration}
-                                                onChange={(e) =>
-                                                    edit(i, {
-                                                        duration: Number(
-                                                            e.target.value,
-                                                        ),
-                                                    })}
+                                                rowNumber={i + 1}
+                                                onChange={(duration) =>
+                                                    edit(i, { duration })}
                                             />
                                         </td>
                                         <td className="border-b border-secondary/20 p-3 align-top">
