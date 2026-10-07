@@ -101,3 +101,9 @@ version 1 workout metadata with required warm-up, main-set and cool-down arrays,
 up to 100 sets total, and bounded whole-number distances and timing. Legacy
 text rows and existing ownership policies remain compatible. The migration is
 transactional and safe to reapply.
+
+Multiple activity entries per lesson-plan row require
+`backend/supabase_lesson_plan_activities.sql` after the workout migration and
+before deploying the updated API and frontend. It permits optional custom and
+library entries while keeping the combined activity text for existing plans and
+PDFs. The migration is safe to reapply.

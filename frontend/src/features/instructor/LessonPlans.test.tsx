@@ -64,6 +64,7 @@ it("skips untouched rows and retries autosave after a new edit", async () => {
     expect(screen.getByLabelText("Skill 1")).toHaveValue(
         "Enter and Exit Shallow Water",
     );
+    await user.click(screen.getByRole("button", { name: "Custom activity for row 1" }));
     await user.type(screen.getByLabelText("Activity / drill 1"), "Practice");
     expect(await screen.findByText("All changes saved.")).toBeVisible();
     expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
@@ -75,12 +76,50 @@ it("autosaves edited rows without newly added untouched rows", async () => {
     await screen.findByText(/No lesson plan saved/);
     await user.click(screen.getByRole("button", { name: "Add activity" }));
     await user.click(screen.getByRole("button", { name: "Add activity" }));
+    await user.click(screen.getByRole("button", { name: "Custom activity for row 2" }));
     await user.type(screen.getByLabelText("Activity / drill 2"), "Practice floats");
     await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledWith(
         "s", "c", "2026-10-05",
-        [{ skill: "", activity: "Practice floats", location: "Lane", duration: 5 }],
+        [{ skill: "", activity: "Practice floats", activities: [{ kind: "custom", text: "Practice floats" }], location: "Lane", duration: 5 }],
         null,
     ));
+});
+it("adds, saves, and removes multiple custom activities in one row", async () => {
+    const user = userEvent.setup();
+    setup();
+    await screen.findByText(/No lesson plan saved/);
+    await user.click(screen.getByRole("button", { name: "Add activity" }));
+    const browse = screen.getByRole("button", { name: "Browse library for row 1" });
+    const custom = screen.getByRole("button", { name: "Custom activity for row 1" });
+    expect(browse.parentElement).toBe(custom.parentElement);
+    expect(screen.queryByLabelText("Activity / drill 1")).not.toBeInTheDocument();
+    await user.click(custom);
+    await user.type(screen.getByLabelText("Activity / drill 1"), "First drill");
+    await user.click(custom);
+    await user.type(
+        screen.getByLabelText("Activity / drill 1, activity 2"),
+        "Second drill",
+    );
+    await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledWith(
+        "s", "c", "2026-10-05",
+        [{
+            skill: "",
+            activity: "First drill\n\nSecond drill",
+            activities: [
+                { kind: "custom", text: "First drill" },
+                { kind: "custom", text: "Second drill" },
+            ],
+            location: "Lane",
+            duration: 5,
+        }],
+        null,
+    ));
+    await user.click(screen.getByRole("button", {
+        name: "Remove activity 1 from row 1",
+    }));
+    expect(screen.getByLabelText("Activity / drill 1")).toHaveValue("Second drill");
+    await waitFor(() => expect(api.saveLessonPlan.mock.lastCall?.[3][0].activity)
+        .toBe("Second drill"));
 });
 it("saves edits made while an earlier autosave is still running", async () => {
     let finishFirst!: (value: unknown) => void;
@@ -91,6 +130,7 @@ it("saves edits made while an earlier autosave is still running", async () => {
     setup();
     await screen.findByText(/No lesson plan saved/);
     await user.click(screen.getByRole("button", { name: "Add activity" }));
+    await user.click(screen.getByRole("button", { name: "Custom activity for row 1" }));
     await user.type(screen.getByLabelText("Activity / drill 1"), "First");
     await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledTimes(1));
     await user.type(screen.getByLabelText("Activity / drill 1"), " second");
@@ -439,11 +479,7 @@ it("inserts from the library without changing other row fields and autosaves", a
         );
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
         expect(trigger).toHaveFocus();
-        const inserted =
-            (screen.getByLabelText("Activity / drill 1") as HTMLTextAreaElement)
-                .value;
-        expect(inserted).toContain("Five Little Ducks");
-        expect(inserted).toContain("blow bubbles");
+        expect(screen.getByText(/Five Little Ducks/)).toBeVisible();
         expect(screen.getByLabelText("Skill 1")).toHaveValue(skill.name);
         expect(screen.getByLabelText("Pool location 1")).toHaveValue(
             "Deep end",
@@ -454,7 +490,14 @@ it("inserts from the library without changing other row fields and autosaves", a
         );
         expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
         await screen.findByText("All changes saved.");
-        const expected = [{ ...original[0], activity: inserted }, original[1]];
+        const inserted = api.saveLessonPlan.mock.calls[0][3][0].activity;
+        expect(inserted).toContain("Five Little Ducks");
+        expect(inserted).toContain("blow bubbles");
+        const expected = [{
+            ...original[0],
+            activity: inserted,
+            activities: [{ kind: "library", text: inserted }],
+        }, original[1]];
         expect(api.saveLessonPlan).toHaveBeenCalledWith(
             "s",
             "c",
@@ -465,16 +508,13 @@ it("inserts from the library without changing other row fields and autosaves", a
         view.unmount();
         api.fetchLessonPlan.mockResolvedValue({ plan: { rows: expected } });
         setup();
-        expect(await screen.findByLabelText("Activity / drill 1")).toHaveValue(
-            inserted,
-        );
+        expect(await screen.findByText(/Five Little Ducks/)).toBeVisible();
     } finally {
         restore();
     }
 });
-it("confirms replacement and preserves the draft and picker when replacement is cancelled", async () => {
+it("adds a library activity alongside existing custom instructions", async () => {
     const restore = mockLibraryDialog();
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     api.fetchLessonPlan.mockResolvedValue({
         plan: {
             rows: [{
@@ -505,27 +545,15 @@ it("confirms replacement and preserves the draft and picker when replacement is 
                 name: "Use Chop, Chop, Timber",
             }),
         );
-        expect(confirm).toHaveBeenCalledWith(
-            "Replace this row’s activity text with the selected library activity?",
-        );
         expect(screen.getByLabelText("Activity / drill 1")).toHaveValue(
             "My own instructions",
         );
-        expect(dialog).toBeVisible();
-        confirm.mockReturnValue(true);
-        await user.click(
-            within(dialog).getByRole("button", {
-                name: "Use Chop, Chop, Timber",
-            }),
-        );
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-        expect(screen.getByLabelText("Activity / drill 1")).not.toHaveValue(
-            "My own instructions",
-        );
-        expect(api.saveLessonPlan).not.toHaveBeenCalled();
+        expect(screen.getByText(/Chop, Chop, Timber/)).toBeVisible();
+        await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalled());
+        expect(api.saveLessonPlan.mock.calls[0][3][0].activities).toHaveLength(2);
     } finally {
         restore();
-        confirm.mockRestore();
     }
 });
 it("closes the library with the close button or Escape without dirtying the plan", async () => {
@@ -555,7 +583,7 @@ it("closes the library with the close button or Escape without dirtying the plan
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
         expect(trigger).toHaveFocus();
         expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
-        expect(screen.getByLabelText("Activity / drill 1")).toHaveValue("");
+        expect(screen.queryByLabelText("Activity / drill 1")).not.toBeInTheDocument();
     } finally {
         restore();
     }

@@ -158,6 +158,7 @@ it("honors deep links and updates their session after a confirmed draft discard"
     expect(screen.getByRole("button", { name: "Splash 1 · b · 09:00 · Alex" }))
         .toHaveAttribute("aria-pressed", "true");
     await user.click(screen.getByRole("button", { name: "Add activity" }));
+    await user.click(screen.getByRole("button", { name: "Custom activity for row 1" }));
     await user.type(screen.getByLabelText("Activity / drill 1"), "Practice");
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     await user.click(screen.getByRole("link", { name: "Home" }));
@@ -442,6 +443,7 @@ it("steps through session weeks within their bounds and guards picker changes wi
         await user.click(
             await screen.findByRole("button", { name: "Add activity" }),
         );
+        await user.click(screen.getByRole("button", { name: "Custom activity for row 1" }));
         await user.type(screen.getByLabelText("Activity / drill 1"), "Practice");
         const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
         await user.click(previous);

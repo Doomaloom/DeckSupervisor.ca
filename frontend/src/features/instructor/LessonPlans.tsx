@@ -34,10 +34,24 @@ type RowDrag = {
 };
 
 export function rowsForSave(rows: LessonRow[]) {
-    return rows.filter((row) =>
+    return rows.map((row) => {
+        if (!row.activities) return row;
+        const activities = row.activities.filter((activity) => activity.text.trim());
+        return {
+            ...row,
+            activities: activities.length ? activities : undefined,
+            activity: activities.map((activity) => activity.text).join("\n\n"),
+        };
+    }).filter((row) =>
         row.skill.trim() || row.activity.trim() || row.workout ||
         row.location !== "Lane" || row.duration !== 5
     );
+}
+
+function rowActivities(row: LessonRow) {
+    return row.activities || (row.activity && !row.workout
+        ? [{ kind: "custom" as const, text: row.activity }]
+        : []);
 }
 
 export function LessonEditor(
@@ -167,6 +181,15 @@ export function LessonEditor(
         setRows((current) =>
             current.map((r, index) => index === i ? { ...r, ...patch } : r)
         );
+    }
+    function editActivities(i: number, activities: NonNullable<LessonRow["activities"]>) {
+        const activity = activities.filter((entry) => entry.text.trim())
+            .map((entry) => entry.text).join("\n\n");
+        if (activity.length > 10000) {
+            setError("Activities in one row cannot exceed 10,000 characters.");
+            return;
+        }
+        edit(i, { activities, activity });
     }
     function changeSkill(i: number, skill: string) {
         if (rows[i].workout && !isWorkoutSkill(skill)) {
@@ -612,25 +635,58 @@ export function LessonEditor(
                                                 )
                                                 : (
                                                     <>
-                                                        <Textarea
-                                                            minRowsClassName="min-h-24"
-                                                            aria-label={`Activity / drill ${
-                                                                i + 1
-                                                            }`}
-                                                            className="w-full min-w-48"
-                                                            maxLength={10000}
-                                                            value={row.activity}
-                                                            onChange={(e) =>
-                                                                edit(i, {
-                                                                    activity:
-                                                                        e.target
-                                                                            .value,
-                                                                })}
-                                                        />
+                                                        <div className="space-y-3">
+                                                            {rowActivities(row).map((entry, activityIndex) => (
+                                                                <div key={activityIndex} className="rounded-xl border border-secondary/20 p-2">
+                                                                    <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold">
+                                                                        <span>
+                                                                            {entry.kind === "library" ? "Library activity" : "Custom activity"} {activityIndex + 1}
+                                                                        </span>
+                                                                        <ActionButton
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            aria-label={`Remove activity ${activityIndex + 1} from row ${i + 1}`}
+                                                                            onClick={() => editActivities(
+                                                                                i,
+                                                                                rowActivities(row).filter((_, index) => index !== activityIndex),
+                                                                            )}
+                                                                        >
+                                                                            Remove
+                                                                        </ActionButton>
+                                                                    </div>
+                                                                    {entry.kind === "custom"
+                                                                        ? (
+                                                                            <Textarea
+                                                                                minRowsClassName="min-h-24"
+                                                                                aria-label={activityIndex === 0
+                                                                                    ? `Activity / drill ${i + 1}`
+                                                                                    : `Activity / drill ${i + 1}, activity ${activityIndex + 1}`}
+                                                                                className="w-full min-w-48"
+                                                                                maxLength={10000}
+                                                                                value={entry.text}
+                                                                                onChange={(e) => editActivities(
+                                                                                    i,
+                                                                                    rowActivities(row).map((activity, index) =>
+                                                                                        index === activityIndex
+                                                                                            ? { ...activity, text: e.target.value }
+                                                                                            : activity
+                                                                                    ),
+                                                                                )}
+                                                                            />
+                                                                        )
+                                                                        : (
+                                                                            <p className="whitespace-pre-wrap break-words text-sm">
+                                                                                {entry.text}
+                                                                            </p>
+                                                                        )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                         <div className="mt-2 flex flex-wrap gap-2">
                                                             <ActionButton
                                                                 variant="outline"
                                                                 size="sm"
+                                                                disabled={rowActivities(row).length >= 100}
                                                                 aria-label={`Browse library for row ${
                                                                     i + 1
                                                                 }`}
@@ -641,25 +697,31 @@ export function LessonEditor(
                                                             >
                                                                 Browse library
                                                             </ActionButton>
-                                                            {isWorkoutSkill(
-                                                                row.skill,
-                                                            ) && (
+                                                            <ActionButton
+                                                                variant="outline"
+                                                                size="sm"
+                                                                disabled={rowActivities(row).length >= 100}
+                                                                aria-label={`Custom activity for row ${i + 1}`}
+                                                                onClick={() => editActivities(
+                                                                    i,
+                                                                    [...rowActivities(row), { kind: "custom", text: "" }],
+                                                                )}
+                                                            >
+                                                                Custom
+                                                            </ActionButton>
+                                                        </div>
+                                                        {isWorkoutSkill(row.skill) && (
+                                                            <div className="mt-2">
                                                                 <ActionButton
                                                                     variant="outline"
                                                                     size="sm"
-                                                                    aria-label={`Build workout for row ${
-                                                                        i + 1
-                                                                    }`}
-                                                                    onClick={() =>
-                                                                        setWorkoutRow(
-                                                                            i,
-                                                                        )}
+                                                                    aria-label={`Build workout for row ${i + 1}`}
+                                                                    onClick={() => setWorkoutRow(i)}
                                                                 >
-                                                                    Build
-                                                                    workout
+                                                                    Build workout
                                                                 </ActionButton>
-                                                            )}
-                                                        </div>
+                                                            </div>
+                                                        )}
                                                     </>
                                                 )}
                                         </td>
@@ -757,13 +819,10 @@ export function LessonEditor(
                     )}
                     onClose={() => setLibraryRow(null)}
                     onUse={(activity) => {
-                        if (
-                            rows[libraryRow].activity.trim() &&
-                            !window.confirm(
-                                "Replace this row’s activity text with the selected library activity?",
-                            )
-                        ) return;
-                        edit(libraryRow, { activity: activityText(activity) });
+                        editActivities(libraryRow, [
+                            ...rowActivities(rows[libraryRow]),
+                            { kind: "library", text: activityText(activity) },
+                        ]);
                         setLibraryRow(null);
                     }}
                 />
@@ -784,6 +843,7 @@ export function LessonEditor(
                         edit(workoutRow, {
                             workout,
                             activity: workoutText(workout),
+                            activities: undefined,
                         });
                         setWorkoutRow(null);
                     }}

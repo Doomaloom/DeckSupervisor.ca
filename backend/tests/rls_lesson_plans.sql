@@ -5,6 +5,8 @@
 \ir ../supabase_lesson_plan_curriculum.sql
 \ir ../supabase_lesson_plan_workouts.sql
 \ir ../supabase_lesson_plan_workouts.sql
+\ir ../supabase_lesson_plan_activities.sql
+\ir ../supabase_lesson_plan_activities.sql
 begin;
 update sessions set session_day='Mo',start_date='2026-10-05',end_date='2026-10-26' where id='20000000-0000-0000-0000-000000000004';
 insert into instructor_assignments(session_id,id,name,account_id) values('20000000-0000-0000-0000-000000000004','50000000-0000-0000-0000-000000000001','Alex','00000000-0000-0000-0000-000000000007');
@@ -37,6 +39,17 @@ begin
 end $$;
 
 select pg_temp.assert_true((select rows->0->>'activity'='First' and rows->1->>'activity'='Second' from instructor_plans where class_id='60000000-0000-0000-0000-000000000001' and week='2026-10-05'),'row ordering and four columns persist');
+update instructor_plans set rows='[{"skill":"Float","activity":"First\n\nSecond","activities":[{"kind":"custom","text":"First"},{"kind":"library","text":"Second"}],"location":"Lane","duration":5}]'
+ where class_id='60000000-0000-0000-0000-000000000002' and week='2026-10-05';
+select pg_temp.assert_true((select rows->0->'activities'->1->>'kind'='library' from instructor_plans where class_id='60000000-0000-0000-0000-000000000002' and week='2026-10-05'),'multiple row activities persist');
+do $$
+begin
+ begin
+  update instructor_plans set rows='[{"skill":"Float","activity":"Wrong","activities":[{"kind":"custom","text":"First"}],"location":"Lane","duration":5}]'
+   where class_id='60000000-0000-0000-0000-000000000002' and week='2026-10-05';
+  raise exception 'FAIL: accepted mismatched activity summary';
+ exception when check_violation then raise notice 'PASS: mismatched activity summary denied'; end;
+end $$;
 select pg_temp.denied($q$insert into instructor_plans(session_id,class_id,week,rows,updated_by) values('20000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000001','2026-10-06','[]',auth.uid())$q$,'non-Monday denied');
 do $$
 declare

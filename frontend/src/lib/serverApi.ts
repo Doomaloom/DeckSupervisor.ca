@@ -1025,6 +1025,7 @@ export function fetchInstructorClasses(sessionId: string) {
 export type LessonRow = {
     skill: string;
     activity: string;
+    activities?: { kind: "library" | "custom"; text: string }[];
     location: string;
     duration: number;
     workout?: Workout;

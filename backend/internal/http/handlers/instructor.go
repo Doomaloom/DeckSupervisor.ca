@@ -125,11 +125,17 @@ func SearchLinkableProfiles(w http.ResponseWriter, r *http.Request) {
 var poolLocationPattern = regexp.MustCompile(`^(Lane( [1-9][0-9]?)?|Shallow end|Deep end)$`)
 
 type lessonRow struct {
-	Skill    string         `json:"skill"`
-	Activity string         `json:"activity"`
-	Location string         `json:"location"`
-	Duration int            `json:"duration"`
-	Workout  *lessonWorkout `json:"workout,omitempty"`
+	Skill      string           `json:"skill"`
+	Activity   string           `json:"activity"`
+	Activities []lessonActivity `json:"activities,omitempty"`
+	Location   string           `json:"location"`
+	Duration   int              `json:"duration"`
+	Workout    *lessonWorkout   `json:"workout,omitempty"`
+}
+
+type lessonActivity struct {
+	Kind string `json:"kind"`
+	Text string `json:"text"`
 }
 
 func InstructorPlan(w http.ResponseWriter, r *http.Request) {
@@ -164,6 +170,22 @@ func InstructorPlan(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, row := range body.Rows {
 			if len(row.Skill) > 2000 || len(row.Activity) > 10000 || row.Duration < 1 || row.Duration > 240 || !poolLocationPattern.MatchString(row.Location) || !validLessonWorkout(row.Workout) {
+				http.Error(w, "Invalid activity row", 400)
+				return
+			}
+			if len(row.Activities) > 100 || (row.Workout != nil && len(row.Activities) > 0) {
+				http.Error(w, "Invalid activity row", 400)
+				return
+			}
+			texts := make([]string, 0, len(row.Activities))
+			for _, activity := range row.Activities {
+				if (activity.Kind != "library" && activity.Kind != "custom") || len(activity.Text) > 10000 || strings.TrimSpace(activity.Text) == "" {
+					http.Error(w, "Invalid activity row", 400)
+					return
+				}
+				texts = append(texts, activity.Text)
+			}
+			if len(texts) > 0 && row.Activity != strings.Join(texts, "\n\n") {
 				http.Error(w, "Invalid activity row", 400)
 				return
 			}

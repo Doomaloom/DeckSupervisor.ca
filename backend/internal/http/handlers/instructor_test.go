@@ -209,6 +209,45 @@ func TestInstructorPlanCurriculumRoundTrip(t *testing.T) {
 	}
 }
 
+func TestInstructorPlanMultipleActivitiesRoundTrip(t *testing.T) {
+	var saved map[string]any
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/rest/v1/rpc/can_plan_class":
+			io.WriteString(w, "true")
+		case "/rest/v1/instructor_plans":
+			if r.Method == "POST" {
+				if err := json.NewDecoder(r.Body).Decode(&saved); err != nil {
+					t.Fatal(err)
+				}
+			}
+			json.NewEncoder(w).Encode([]map[string]any{saved})
+		default:
+			t.Fatalf("unexpected %s", r.URL.Path)
+		}
+	})
+	path := "/api/instructor/sessions/session-a/classes/class-a/plans/2026-10-05"
+	body := `{"rows":[{"skill":"Float","activity":"First\n\nSecond","activities":[{"kind":"custom","text":"First"},{"kind":"library","text":"Second"}],"location":"Lane","duration":5}]}`
+	w := staffRequest("PUT", path, body, true)
+	if w.Code != 200 {
+		t.Fatalf("save %d %s", w.Code, w.Body)
+	}
+	w = staffRequest("GET", path, "", true)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"kind":"library"`) {
+		t.Fatalf("load %d %s", w.Code, w.Body)
+	}
+	for _, invalid := range []string{
+		`{"rows":[{"skill":"Float","activity":"First","activities":[{"kind":"unknown","text":"First"}],"location":"Lane","duration":5}]}`,
+		`{"rows":[{"skill":"Float","activity":"First","activities":[{"kind":"custom","text":""}],"location":"Lane","duration":5}]}`,
+		`{"rows":[{"skill":"Float","activity":"Wrong","activities":[{"kind":"custom","text":"First"}],"location":"Lane","duration":5}]}`,
+	} {
+		w = staffRequest("PUT", path, invalid, true)
+		if w.Code != 400 {
+			t.Fatalf("accepted invalid activities: %d %s", w.Code, w.Body)
+		}
+	}
+}
+
 func TestSessionRosterReadAndCombinedSaveUseOwnerScope(t *testing.T) {
 	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/rest/v1/profiles" {
