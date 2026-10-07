@@ -54,11 +54,12 @@ end $$;
 -- Session dates are local calendar dates in America/Toronto, not UTC instants.
 create or replace function public.instructor_weeks(p_start date,p_end date,p_day text)
 returns table(week date) language sql immutable set search_path=public as $$
- select distinct date_trunc('week',d)::date
+ select min(d)::date
  from generate_series(p_start::timestamp,p_end::timestamp,interval '1 day') d
  where trim(to_char(d,'Day'))=p_day
  or (array['Mo','Tu','We','Th','Fr','Sa','Su'])[extract(isodow from d)::int]=any(string_to_array(p_day,','))
  or (p_day like 'Mini Session %' and extract(isodow from d)<=5)
+ group by date_trunc('week',d)
  order by 1
 $$;
 -- Links never grant access to sessions or schematics. This function returns only session context.

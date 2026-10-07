@@ -5,13 +5,34 @@ create table if not exists public.instructor_plans (
  updated_at timestamptz not null default now(), primary key(session_id,class_id,week),
  foreign key(session_id,class_id) references public.instructor_classes(session_id,id) on delete cascade
 );
+-- Older plans use the Monday of their lesson week. Move them to that week's
+-- scheduled date so existing work remains available under the new week list.
+do $$
+begin
+ if exists (
+  select 1 from public.instructor_plans p
+  join public.sessions s on s.id=p.session_id
+  cross join lateral public.instructor_weeks(s.start_date,s.end_date,s.session_day) w
+  where p.week=date_trunc('week',w.week)::date and p.week<>w.week
+  and exists (select 1 from public.instructor_plans current_plan
+   where current_plan.session_id=p.session_id and current_plan.class_id=p.class_id
+   and current_plan.week=w.week)
+ ) then
+  raise exception 'Lesson plan date migration found both Monday and session-day plans for the same class and week';
+ end if;
+ update public.instructor_plans p set week=w.week
+ from public.sessions s
+ cross join lateral public.instructor_weeks(s.start_date,s.end_date,s.session_day) w
+ where s.id=p.session_id and p.week=date_trunc('week',w.week)::date
+ and p.week<>w.week;
+end $$;
 -- Uses live links, so unlinking immediately revokes access and reassignment retains plans.
 create or replace function public.can_plan_class(p_session uuid,p_class uuid,p_week date)
 returns boolean language sql stable security definer set search_path=public as $$
  select exists(select 1 from instructor_classes c join instructor_assignments a
  on a.session_id=c.session_id and a.id=c.assignment_id join sessions s on s.id=c.session_id
  where c.id=p_class and c.session_id=p_session and c.active and a.active and a.account_id=auth.uid()
- and extract(isodow from p_week)=1 and exists(
+ and exists(
  select 1 from instructor_weeks(s.start_date,s.end_date,s.session_day) w where w.week=p_week))
 $$;
 alter table public.instructor_plans enable row level security;

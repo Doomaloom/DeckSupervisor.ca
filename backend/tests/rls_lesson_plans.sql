@@ -15,8 +15,10 @@ insert into instructor_classes(id,session_id,assignment_id,code,level,start_time
 ('60000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000004','50000000-0000-0000-0000-000000000001','B','Swimmer 2','09:30','10:00');
 set role authenticated;
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000007","role":"authenticated"}',true);
-select pg_temp.assert_true((select count(*)=4 from instructor_weeks('2026-10-05','2026-10-26','Mo')),'Monday-start calendar weeks');
+select pg_temp.assert_true((select array_agg(week order by week)=array['2026-10-05','2026-10-12','2026-10-19','2026-10-26']::date[] from instructor_weeks('2026-10-05','2026-10-26','Mo')),'Monday lesson dates');
+select pg_temp.assert_true((select array_agg(week order by week)=array['2026-10-06','2026-10-13','2026-10-20']::date[] from instructor_weeks('2026-10-05','2026-10-20','Tu')),'Tuesday lesson dates');
 select pg_temp.assert_true((select count(*)=2 from instructor_weeks('2026-10-05','2026-10-16','Mini Session 1')),'mini session weekday weeks');
+select pg_temp.assert_true((select array_agg(week order by week)=array['2026-10-07','2026-10-12']::date[] from instructor_weeks('2026-10-07','2026-10-16','Mini Session 1')),'partial mini session starts on first lesson day');
 select pg_temp.assert_true((select count(*)=0 from instructor_plans),'opening weeks leaves plans null');
 insert into instructor_plans(session_id,class_id,week,rows,updated_by) values
 ('20000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000001','2026-10-05','[{"skill":"Float","activity":"First","location":"Shallow end","duration":5},{"skill":"Kick","activity":"Second","location":"Lane 2","duration":10}]',auth.uid()),
@@ -89,5 +91,13 @@ update instructor_assignments set account_id='00000000-0000-0000-0000-0000000000
 set role authenticated;
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000008","role":"authenticated"}',true);
 select pg_temp.assert_true((select count(*)=3 from instructor_plans),'reassignment transfers saved plan access');
+reset role;
+update sessions set session_day='Tu' where id='20000000-0000-0000-0000-000000000004';
+set role authenticated;
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000008","role":"authenticated"}',true);
+select pg_temp.assert_true(can_plan_class('20000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000001','2026-10-06'),'Tuesday plan date allowed');
+select pg_temp.assert_true(not can_plan_class('20000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000001','2026-10-05'),'Monday date denied for Tuesday session');
+insert into instructor_plans(session_id,class_id,week,rows,updated_by) values('20000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000001','2026-10-06','[]',auth.uid());
+select pg_temp.assert_true((select count(*)=1 from instructor_plans where week='2026-10-06'),'Tuesday plan persists');
 reset role;
 rollback;

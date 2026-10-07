@@ -74,6 +74,13 @@ and frontend after the database update. When rerunning the earlier instructor
 script, rerun the session instructor script afterward: it replaces schematic
 saving with the roster-aware implementation.
 
+Weekly lesson plans now use the session's scheduled lesson date. Reapply the
+instructor and lesson-plan scripts in that order before deploying the frontend.
+The lesson-plan script moves existing Monday-keyed plans to the matching
+session dates; it stops if both dates already have a plan for the same class
+and week, so neither plan is overwritten. Mini sessions use the first weekday
+in each calendar week, including partial first weeks.
+
 The session instructor upgrade is transactional and repeatable. It migrates active
 saved column links, including legacy full-time accounts, into ordered instructor
 rows. Unique matching session names share their saved column row; ambiguous duplicate

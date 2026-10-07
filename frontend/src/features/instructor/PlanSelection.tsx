@@ -115,7 +115,7 @@ export default function PlanSelection(
                                 <legend className="mb-2 text-sm font-semibold">
                                     Week{" "}
                                     <span className="font-normal">
-                                        (Monday, America/Toronto)
+                                        (lesson date, America/Toronto)
                                     </span>
                                 </legend>
                                 <div className="grid grid-cols-[3.5rem_minmax(0,1fr)_3.5rem] items-stretch gap-2 sm:grid-cols-[5rem_minmax(0,1fr)_5rem] sm:gap-3">

@@ -355,6 +355,34 @@ it("handles sessions without any weeks", () => {
     expect(closestUpcomingWeek([], new Date("2026-10-05T12:00:00Z"))).toBe("");
 });
 
+it("uses Tuesday lesson dates on Lesson Plans and Print", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-05T12:00:00Z"));
+    try {
+        api.fetchInstructorSessions.mockResolvedValue({
+            sessions: [{
+                ...sessions[0],
+                session_day: "Tuesday",
+                weeks: ["2026-10-06", "2026-10-13"],
+            }],
+        });
+        const user = userEvent.setup();
+        setup("/instructor/lesson-plans?session=a");
+        await screen.findByRole("button", { name: "Add activity" });
+        expect(screen.getByRole("status", { name: "Selected week" }))
+            .toHaveTextContent("Week 1 | 2026-10-06");
+        expect(api.fetchLessonPlan).toHaveBeenCalledWith("a", "class-a", "2026-10-06");
+        await user.click(screen.getByRole("button", { name: "Next week" }));
+        expect(screen.getByRole("status", { name: "Selected week" }))
+            .toHaveTextContent("Week 2 | 2026-10-13");
+        await user.click(screen.getByRole("link", { name: "Print" }));
+        expect(screen.getByRole("status", { name: "Selected week" }))
+            .toHaveTextContent("Week 1 | 2026-10-06");
+    } finally {
+        vi.useRealTimers();
+    }
+});
+
 it("opens the next week on Lesson Plans and Print", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-10-13T12:00:00Z"));
