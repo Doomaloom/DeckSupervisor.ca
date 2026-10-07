@@ -4,7 +4,6 @@ import {
     EmptyState,
     Notice,
     PageShell,
-    SelectableCard,
 } from "../../general-components";
 import { type ReactNode, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -14,9 +13,9 @@ import type { InstructorClass, InstructorSession } from "../../lib/serverApi";
 const pickerGridClassName =
     "grid auto-rows-fr grid-cols-[repeat(auto-fill,minmax(min(100%,12rem),1fr))] gap-3";
 const weekArrowClassName =
-    "flex h-14 min-w-0 items-center justify-center px-0 py-2 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+    "flex h-14 min-w-0 items-center justify-center rounded-2xl border border-secondary/20 bg-accent px-0 py-2 text-center font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:text-secondary/40 disabled:hover:translate-y-0 disabled:hover:border-secondary/20";
 const classButtonClassName =
-    "flex h-full min-h-24 min-w-0 flex-col justify-center gap-1 rounded-2xl border-2 px-4 py-3 text-left text-secondary transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+    "flex h-full min-h-24 min-w-0 flex-col justify-center gap-1 rounded-2xl border-2 px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 export function closestUpcomingWeek(weeks: string[], now = new Date()) {
     if (!weeks.length) return "";
@@ -33,8 +32,9 @@ export function closestUpcomingWeek(weeks: string[], now = new Date()) {
 }
 
 export default function PlanSelection(
-    { title, children, printMode, onPrintModeChange, renderTogether }: {
+    { title, children, printMode, onPrintModeChange, renderTogether, unframed }: {
         title: string;
+        unframed?: boolean;
         children: (
             s: InstructorSession,
             c: InstructorClass,
@@ -83,9 +83,11 @@ export default function PlanSelection(
         }
     }
     return (
-        <PageShell>
-            <Card className="flex min-w-0 flex-col gap-6">
-                <h2 className="text-2xl font-semibold">{title}</h2>
+        <PageShell className="min-w-0">
+            <Card variant={unframed ? "plain" : "panel"} className="flex min-w-0 flex-col gap-6">
+                <header className="flex flex-col gap-1">
+                    <h2 className="text-2xl font-semibold">{title}</h2>
+                </header>
                 {state.loading && <p role="status">Loading linked classes…</p>}
                 {state.error && (
                     <Notice tone="danger" role="alert">
@@ -119,7 +121,8 @@ export default function PlanSelection(
                                     </span>
                                 </legend>
                                 <div className="grid grid-cols-[3.5rem_minmax(0,1fr)_3.5rem] items-stretch gap-2 sm:grid-cols-[5rem_minmax(0,1fr)_5rem] sm:gap-3">
-                                    <SelectableCard
+                                    <button
+                                        type="button"
                                         aria-label="Previous week"
                                         disabled={weekIndex <= 0}
                                         className={weekArrowClassName}
@@ -138,15 +141,16 @@ export default function PlanSelection(
                                         >
                                             <path d="m15 6-6 6 6 6" />
                                         </svg>
-                                    </SelectableCard>
+                                    </button>
                                     <div
                                         role="status"
                                         aria-label="Selected week"
-                                        className="flex h-14 min-w-0 items-center justify-center rounded-2xl border border-secondary/20 bg-bg px-3 text-center font-semibold text-secondary"
+                                        className="flex h-14 min-w-0 items-center justify-center rounded-2xl border border-secondary/20 bg-accent px-3 text-center font-semibold text-secondary"
                                     >
                                         Week {weekIndex + 1} | {week}
                                     </div>
-                                    <SelectableCard
+                                    <button
+                                        type="button"
                                         aria-label="Next week"
                                         disabled={weekIndex < 0 ||
                                             weekIndex >= weeks.length - 1}
@@ -166,7 +170,7 @@ export default function PlanSelection(
                                         >
                                             <path d="m9 6 6 6-6 6" />
                                         </svg>
-                                    </SelectableCard>
+                                    </button>
                                 </div>
                             </fieldset>
                         )}
@@ -208,8 +212,8 @@ export default function PlanSelection(
                                         } · ${c.instructor}`}
                                         className={`${classButtonClassName} ${
                                             classId === c.id
-                                                ? "border-primary bg-bg shadow-sm ring-2 ring-primary/20"
-                                                : "border-secondary/20 bg-accent"
+                                                ? "border-secondary bg-secondary text-accent shadow-sm"
+                                                : "border-secondary/20 bg-accent text-secondary hover:border-primary"
                                         }`}
                                         onClick={() => {
                                             if (classId !== c.id) {
@@ -220,10 +224,18 @@ export default function PlanSelection(
                                         <span className="w-full break-words font-semibold">
                                             {c.level}
                                         </span>
-                                        <span className="w-fit max-w-full truncate rounded-full border border-secondary/20 bg-accent px-2 py-0.5 text-xs font-semibold">
+                                        <span className={`w-fit max-w-full truncate rounded-full border px-2 py-0.5 text-xs font-semibold ${
+                                            classId === c.id
+                                                ? "border-accent/40 bg-accent/15 text-accent"
+                                                : "border-secondary/20 bg-accent text-secondary"
+                                        }`}>
                                             {c.code}
                                         </span>
-                                        <span className="flex w-full min-w-0 items-center gap-1 text-sm text-secondary/80">
+                                        <span className={`flex w-full min-w-0 items-center gap-1 text-sm ${
+                                            classId === c.id
+                                                ? "text-accent/90"
+                                                : "text-secondary/80"
+                                        }`}>
                                             <span className="shrink-0 tabular-nums">
                                                 {c.start_time.slice(0, 5)}
                                             </span>

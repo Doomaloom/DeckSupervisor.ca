@@ -49,8 +49,11 @@ it("skips untouched rows and retries autosave after a new edit", async () => {
     expect(emptyPlan.closest("td")).toHaveAttribute("colspan", "6");
     expect(emptyPlan.tagName).toBe("TD");
     expect(api.saveLessonPlan).not.toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: "Add activity" }));
+    const addActivity = screen.getByRole("button", { name: "Add activity" });
+    expect(addActivity.closest("tr")).toBe(addActivity.closest("tbody")?.lastElementChild);
+    await user.click(addActivity);
     expect(screen.queryByText(/No lesson plan saved/)).not.toBeInTheDocument();
+    expect(addActivity.closest("tr")).toBe(addActivity.closest("tbody")?.lastElementChild);
     await new Promise((resolve) => setTimeout(resolve, 700));
     expect(api.saveLessonPlan).not.toHaveBeenCalled();
     api.saveLessonPlan.mockRejectedValueOnce(new Error("Offline"));
@@ -69,6 +72,18 @@ it("skips untouched rows and retries autosave after a new edit", async () => {
     expect(await screen.findByText("All changes saved.")).toBeVisible();
     expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+});
+it("selects pool location with radio buttons and saves the choice", async () => {
+    const user = userEvent.setup();
+    setup();
+    await screen.findByText(/No lesson plan saved/);
+    await user.click(screen.getByRole("button", { name: "Add activity" }));
+    const location = screen.getByRole("group", { name: "Pool location 1" });
+    expect(within(location).getByRole("radio", { name: "Lane" })).toBeChecked();
+    await user.click(within(location).getByRole("radio", { name: "Deep end" }));
+    expect(within(location).getByRole("radio", { name: "Deep end" })).toBeChecked();
+    await waitFor(() => expect(api.saveLessonPlan.mock.lastCall?.[3][0].location)
+        .toBe("Deep end"));
 });
 it("autosaves edited rows without newly added untouched rows", async () => {
     const user = userEvent.setup();
@@ -481,9 +496,8 @@ it("inserts from the library without changing other row fields and autosaves", a
         expect(trigger).toHaveFocus();
         expect(screen.getByText(/Five Little Ducks/)).toBeVisible();
         expect(screen.getByLabelText("Skill 1")).toHaveValue(skill.name);
-        expect(screen.getByLabelText("Pool location 1")).toHaveValue(
-            "Deep end",
-        );
+        expect(within(screen.getByRole("group", { name: "Pool location 1" }))
+            .getByRole("radio", { name: "Deep end" })).toBeChecked();
         expect(screen.getByLabelText("Duration (minutes) 1")).toHaveValue(12);
         expect(screen.getByLabelText("Activity / drill 2")).toHaveValue(
             "Keep this",

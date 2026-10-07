@@ -4,6 +4,7 @@ import {
     Select,
     Textarea,
 } from "../../general-components";
+import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useBlocker } from "react-router-dom";
 import {
@@ -303,14 +304,14 @@ export function LessonEditor(
                     duration, and row order.
                 </p>
                 <div
-                    className="overflow-x-auto rounded-2xl border border-secondary/20 bg-accent"
+                    className="overflow-x-auto rounded-2xl border border-secondary/20 bg-accent text-secondary shadow-sm"
                     tabIndex={0}
                     role="region"
                     aria-label="Scrollable activity table"
                 >
                     <table
                         ref={tableRef}
-                        className="w-full min-w-[960px] border-collapse text-left"
+                        className="w-full min-w-[960px] border-collapse text-center"
                     >
                         <thead className="bg-primary text-accent">
                             <tr>
@@ -321,16 +322,16 @@ export function LessonEditor(
                                     "Skill",
                                     "Activity / drill",
                                     "Pool location",
-                                    "Duration (minutes)",
+                                    "Duration",
                                 ].map((h) => (
                                     <th
                                         key={h}
-                                        className="border-b border-secondary/20 p-3 align-top"
+                                        className="border-b border-secondary/20 p-3 align-middle"
                                     >
                                         {h}
                                     </th>
                                 ))}
-                                <th className="w-24">
+                                <th className="w-14">
                                     <span className="sr-only">Delete</span>
                                 </th>
                             </tr>
@@ -349,6 +350,9 @@ export function LessonEditor(
                             )}
                             {rows.map((row, i) => {
                                 const dragged = drag?.from === i;
+                                const selectedLocation = row.location.startsWith("Lane")
+                                    ? "Lane"
+                                    : row.location;
                                 const shift = drag && !dragged &&
                                     ((drag.from < i && i <= drag.to)
                                         ? -drag.height
@@ -376,7 +380,7 @@ export function LessonEditor(
                                             ? "transition-transform duration-200 ease-out motion-reduce:transition-none"
                                             : undefined}
                                     >
-                                        <td className="border-b border-secondary/20 p-3 align-top">
+                                        <td className="border-b border-secondary/20 p-3 align-middle">
                                             <button
                                                 type="button"
                                                 aria-label={`Reorder row ${
@@ -384,7 +388,7 @@ export function LessonEditor(
                                                 }`}
                                                 aria-describedby={dragHelpId}
                                                 disabled={rows.length < 2}
-                                                className="flex h-11 w-11 touch-none select-none items-center justify-center rounded-lg text-secondary hover:bg-secondary/10 focus-visible:outline focus-visible:outline-2 disabled:opacity-40 cursor-grab active:cursor-grabbing"
+                                                className="mx-auto flex h-11 w-11 touch-none select-none items-center justify-center rounded-lg text-secondary hover:bg-secondary/10 focus-visible:outline focus-visible:outline-2 disabled:opacity-40 cursor-grab active:cursor-grabbing"
                                                 onKeyDown={(e) => {
                                                     if (
                                                         e.key === "ArrowUp" ||
@@ -552,11 +556,11 @@ export function LessonEditor(
                                                 </svg>
                                             </button>
                                         </td>
-                                        <td className="border-b border-secondary/20 p-3 align-top">
+                                        <td className="border-b border-secondary/20 p-3 align-middle">
                                             <Select
                                                 title={row.skill || undefined}
                                                 aria-label={`Skill ${i + 1}`}
-                                                className="w-full min-w-40 max-w-xs"
+                                                className="mx-auto w-full min-w-40 max-w-xs text-center"
                                                 disabled={!selectedLevel}
                                                 value={row.skill}
                                                 onChange={(e) =>
@@ -589,7 +593,7 @@ export function LessonEditor(
                                                 ))}
                                             </Select>
                                         </td>
-                                        <td className="border-b border-secondary/20 p-3 align-top">
+                                        <td className="border-b border-secondary/20 p-3 align-middle">
                                             {row.workout || isWorkoutSkill(row.skill)
                                                 ? (
                                                     <>
@@ -601,7 +605,7 @@ export function LessonEditor(
                                                         >
                                                             {row.activity || "Choose a custom workout for this skill."}
                                                         </p>
-                                                        <div className="mt-2 flex flex-wrap gap-2">
+                                                        <div className="mt-2 flex flex-wrap justify-center gap-2">
                                                             {isWorkoutSkill(
                                                                 row.skill,
                                                             ) && (
@@ -654,7 +658,7 @@ export function LessonEditor(
                                                         <div className="space-y-3">
                                                             {rowActivities(row).map((entry, activityIndex) => (
                                                                 <div key={activityIndex} className="rounded-xl border border-secondary/20 p-2">
-                                                                    <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold">
+                                                                    <div className="mb-2 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold">
                                                                         <span>
                                                                             {entry.kind === "library" ? "Library activity" : "Custom activity"} {activityIndex + 1}
                                                                         </span>
@@ -677,7 +681,7 @@ export function LessonEditor(
                                                                                 aria-label={activityIndex === 0
                                                                                     ? `Activity / drill ${i + 1}`
                                                                                     : `Activity / drill ${i + 1}, activity ${activityIndex + 1}`}
-                                                                                className="w-full min-w-48"
+                                                                                className="w-full min-w-48 text-center"
                                                                                 maxLength={10000}
                                                                                 value={entry.text}
                                                                                 onChange={(e) => editActivities(
@@ -698,7 +702,7 @@ export function LessonEditor(
                                                                 </div>
                                                             ))}
                                                         </div>
-                                                        <div className="mt-2 flex flex-wrap gap-2">
+                                                        <div className="mt-2 flex flex-wrap justify-center gap-2">
                                                             <ActionButton
                                                                 variant="outline"
                                                                 size="sm"
@@ -730,28 +734,34 @@ export function LessonEditor(
                                                     </>
                                                 )}
                                         </td>
-                                        <td className="border-b border-secondary/20 p-3 align-top">
-                                            <Select
-                                                aria-label={`Pool location ${
-                                                    i + 1
-                                                }`}
-                                                value={row.location.startsWith(
-                                                        "Lane",
-                                                    )
-                                                    ? "Lane"
-                                                    : row.location}
-                                                onChange={(e) =>
-                                                    edit(i, {
-                                                        location:
-                                                            e.target.value,
-                                                    })}
+                                        <td className="border-b border-secondary/20 p-3 align-middle">
+                                            <fieldset
+                                                aria-label={`Pool location ${i + 1}`}
+                                                className="mx-auto flex min-w-40 flex-col gap-2"
                                             >
-                                                <option>Lane</option>
-                                                <option>Shallow end</option>
-                                                <option>Deep end</option>
-                                            </Select>
+                                                {(["Lane", "Shallow end", "Deep end"] as const).map((location) => (
+                                                    <label
+                                                        key={location}
+                                                        className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-2 py-2 text-sm font-semibold transition-colors ${
+                                                            selectedLocation === location
+                                                                ? "border-primary bg-primary/10 text-secondary"
+                                                                : "border-secondary/30 bg-accent text-secondary hover:bg-bg"
+                                                        }`}
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name={`pool-location-${i}`}
+                                                            value={location}
+                                                            checked={selectedLocation === location}
+                                                            onChange={() => edit(i, { location })}
+                                                            className="h-4 w-4 accent-secondary"
+                                                        />
+                                                        {location}
+                                                    </label>
+                                                ))}
+                                            </fieldset>
                                         </td>
-                                        <td className="border-b border-secondary/20 p-3 align-top">
+                                        <td className="border-b border-secondary/20 p-3 align-middle">
                                             <DurationPicker
                                                 value={row.duration}
                                                 rowNumber={i + 1}
@@ -759,13 +769,13 @@ export function LessonEditor(
                                                     edit(i, { duration })}
                                             />
                                         </td>
-                                        <td className="border-b border-secondary/20 p-3 align-top">
-                                            <ActionButton
+                                        <td className="relative w-14 border-b border-secondary/20 p-0">
+                                            <button
                                                 type="button"
-                                                variant="danger"
                                                 aria-label={`Delete row ${
                                                     i + 1
                                                 }`}
+                                                className="absolute inset-0 flex h-full w-full items-center justify-center bg-danger text-accent transition-colors hover:bg-dangerHover focus-visible:z-10 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
                                                 onClick={() => {
                                                     setNotice("");
                                                     setError("");
@@ -777,32 +787,36 @@ export function LessonEditor(
                                                     );
                                                 }}
                                             >
-                                                Delete
-                                            </ActionButton>
+                                                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                                            </button>
                                         </td>
                                     </tr>
                                 );
                             })}
+                            <tr className="border-t border-secondary/20">
+                                <td colSpan={6} className="p-0">
+                                    <button
+                                        type="button"
+                                        disabled={rows.length >= 200}
+                                        className="flex w-full items-center justify-center gap-2 bg-bg px-4 py-3 text-sm font-semibold text-secondary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-bg"
+                                        onClick={() => {
+                                            setError("");
+                                            setRows((current) => [...current, {
+                                                skill: "",
+                                                activity: "",
+                                                location: "Lane",
+                                                duration: 5,
+                                            }]);
+                                        }}
+                                    >
+                                        <PlusIcon className="h-4 w-4" aria-hidden="true" />
+                                        Add activity
+                                    </button>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                    <ActionButton
-                        variant="outline"
-                        type="button"
-                        disabled={rows.length >= 200}
-                        onClick={() => {
-                            setError("");
-                            setRows((current) => [...current, {
-                                skill: "",
-                                activity: "",
-                                location: "Lane",
-                                duration: 5,
-                            }]);
-                        }}
-                    >
-                        Add activity
-                    </ActionButton>
+                    <div className="h-3 w-full min-w-[960px] bg-primary" aria-hidden="true" />
                 </div>
             </fieldset>
             {libraryRow !== null && rows[libraryRow] && (
@@ -839,7 +853,7 @@ export function LessonEditor(
 }
 export default function LessonPlans() {
     return (
-        <PlanSelection title="Lesson Plans">
+        <PlanSelection title="Lesson Plans" unframed>
             {(s, c, w) => (
                 <LessonEditor
                     key={`${s.id}:${c.id}:${w}`}
