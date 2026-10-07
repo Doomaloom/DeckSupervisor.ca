@@ -18,7 +18,7 @@ it("groups the library and combines category, search, and skill filters", async 
     expect(
         screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent),
     )
-        .toEqual(["Songs (37)", "Games (4)", "Drills (66)", "Workouts (14)"]);
+        .toEqual(["Songs (37)", "Games (4)", "Drills (66)", "Workouts (18)"]);
     const check = screen.getByRole("checkbox", {
         name: /Only activities for Submerge/,
     });
@@ -41,7 +41,7 @@ it("groups the library and combines category, search, and skill filters", async 
         .toBeVisible();
     await user.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(check).not.toBeChecked();
-    expect(screen.getByRole("status")).toHaveTextContent("121 activities");
+    expect(screen.getByRole("status")).toHaveTextContent("125 activities");
 });
 
 it("allows browsing without a skill but explains the disabled skill filter", () => {

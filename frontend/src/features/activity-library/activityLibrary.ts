@@ -19,11 +19,14 @@ export const workoutGroups = [
     "11 years & under",
     "11-14 years",
     "13-18 years",
-    "Sample",
+    "Warm-ups",
+    "Cool-downs",
 ] as const;
 export type WorkoutGroup = typeof workoutGroups[number];
 export function workoutPrefix(group: WorkoutGroup) {
-    return group === "Sample" ? "Sample " : `${group}: `;
+    if (group === "Warm-ups") return "Warm-up ";
+    if (group === "Cool-downs") return "Cool-down ";
+    return `${group}: `;
 }
 export type LibraryActivity = {
     id: string;

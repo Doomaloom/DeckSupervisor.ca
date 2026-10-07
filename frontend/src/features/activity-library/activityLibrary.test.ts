@@ -17,7 +17,7 @@ it("contains the reviewed source inventory with valid skill links and bounded le
             ]),
         ),
     )
-        .toEqual({ Songs: 37, Games: 4, Drills: 66, Workouts: 14 });
+        .toEqual({ Songs: 37, Games: 4, Drills: 66, Workouts: 18 });
     expect(new Set(activities.map((a) => a.id)).size).toBe(activities.length);
     const skills = new Set(librarySkills.map((skill) => skill.id));
     for (const activity of activities) {

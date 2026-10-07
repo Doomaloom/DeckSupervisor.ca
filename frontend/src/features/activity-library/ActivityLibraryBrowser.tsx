@@ -32,10 +32,7 @@ function displayTitle(
     if (activity.category === "Workouts" && workoutGroup !== "All") {
         const prefix = workoutPrefix(workoutGroup);
         if (activity.title.startsWith(prefix)) {
-            const title = activity.title.slice(prefix.length);
-            return workoutGroup === "Sample"
-                ? title.charAt(0).toUpperCase() + title.slice(1)
-                : title;
+            return activity.title.slice(prefix.length);
         }
     }
     return activity.title;
@@ -186,82 +183,61 @@ export default function ActivityLibraryBrowser(
                 const entries = results.filter((activity) =>
                     activity.category === group
                 );
-                return entries.length > 0 && (
-                    <section
-                        key={group}
-                        aria-label={group}
-                        className="space-y-3"
+                const isAgeWorkoutGroup = group === "Workouts" &&
+                    workoutGroup !== "All" &&
+                    workoutGroup !== "Warm-ups" &&
+                    workoutGroup !== "Cool-downs";
+                const intervalWorkouts = entries.filter((activity) =>
+                    activity.title.includes("Interval workout")
+                );
+                const components = entries.filter((activity) =>
+                    !activity.title.includes("Interval workout")
+                );
+                const renderActivity = (activity: LibraryActivity) => (
+                    <details
+                        key={activity.id}
+                        className="rounded-2xl border border-secondary/20 bg-accent open:shadow-sm"
                     >
+                        <summary className="cursor-pointer rounded-2xl p-4 font-semibold focus-visible:outline-2 focus-visible:outline-primary">
+                            {displayTitle(activity, drillSkill, workoutGroup)}
+                        </summary>
+                        <div className="space-y-4 px-4 pb-4">
+                            {activity.suitability && <p className="text-sm"><strong>Suitable for:</strong> {activity.suitability}</p>}
+                            {activity.equipment && <p className="text-sm"><strong>Equipment:</strong> {activity.equipment}</p>}
+                            <p className="whitespace-pre-wrap break-words leading-relaxed">{activity.instructions}</p>
+                            {!!activity.skillIds.length && (
+                                <details className="text-sm">
+                                    <summary className="cursor-pointer font-semibold">Applicable skills</summary>
+                                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                                        {librarySkills.filter((skill) => activity.skillIds.includes(skill.id)).map((skill) => (
+                                            <li key={skill.id}>{skill.level}: {skill.compactName}</li>
+                                        ))}
+                                    </ul>
+                                </details>
+                            )}
+                            <p className="text-xs text-secondary/70">
+                                Source: Lifesaving Society, Teaching Swim for Life · Activity library.pdf, {activity.sourcePages.length === 1 ? "scan page" : "scan pages"} {activity.sourcePages.join(", ")}
+                            </p>
+                            {onUse && <ActionButton variant="primary" onClick={() => onUse(activity)} aria-label={`Use ${displayTitle(activity, drillSkill, workoutGroup)}`}>Use activity</ActionButton>}
+                        </div>
+                    </details>
+                );
+                return entries.length > 0 && (
+                    <section key={group} aria-label={group} className="space-y-3">
                         <h3 className="text-xl font-semibold">
                             {group}{" "}
-                            <span className="text-sm font-normal text-secondary/70">
-                                ({entries.length})
-                            </span>
+                            <span className="text-sm font-normal text-secondary/70">({entries.length})</span>
                         </h3>
-                        {entries.map((activity) => (
-                            <details
-                                key={activity.id}
-                                className="rounded-2xl border border-secondary/20 bg-accent open:shadow-sm"
-                            >
-                                <summary className="cursor-pointer rounded-2xl p-4 font-semibold focus-visible:outline-2 focus-visible:outline-primary">
-                                    {displayTitle(activity, drillSkill, workoutGroup)}
-                                </summary>
-                                <div className="space-y-4 px-4 pb-4">
-                                    {activity.suitability && (
-                                        <p className="text-sm">
-                                            <strong>Suitable for:</strong>{" "}
-                                            {activity.suitability}
-                                        </p>
-                                    )}
-                                    {activity.equipment && (
-                                        <p className="text-sm">
-                                            <strong>Equipment:</strong>{" "}
-                                            {activity.equipment}
-                                        </p>
-                                    )}
-                                    <p className="whitespace-pre-wrap break-words leading-relaxed">
-                                        {activity.instructions}
-                                    </p>
-                                    {!!activity.skillIds.length && (
-                                        <details className="text-sm">
-                                            <summary className="cursor-pointer font-semibold">
-                                                Applicable skills
-                                            </summary>
-                                            <ul className="mt-2 list-disc space-y-1 pl-5">
-                                                {librarySkills.filter((skill) =>
-                                                    activity.skillIds.includes(
-                                                        skill.id,
-                                                    )
-                                                ).map((skill) => (
-                                                    <li key={skill.id}>
-                                                        {skill.level}:{" "}
-                                                        {skill.compactName}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </details>
-                                    )}
-                                    <p className="text-xs text-secondary/70">
-                                        Source: Lifesaving Society, Teaching
-                                        Swim for Life · Activity library.pdf,
-                                        {" "}
-                                        {activity.sourcePages.length === 1
-                                            ? "scan page"
-                                            : "scan pages"}{" "}
-                                        {activity.sourcePages.join(", ")}
-                                    </p>
-                                    {onUse && (
-                                        <ActionButton
-                                            variant="primary"
-                                            onClick={() => onUse(activity)}
-                                            aria-label={`Use ${displayTitle(activity, drillSkill, workoutGroup)}`}
-                                        >
-                                            Use activity
-                                        </ActionButton>
-                                    )}
-                                </div>
-                            </details>
-                        ))}
+                        {isAgeWorkoutGroup && intervalWorkouts.length > 0 && (
+                            <h4 className="text-lg font-semibold">Interval Workouts</h4>
+                        )}
+                        {(isAgeWorkoutGroup ? intervalWorkouts : entries).map(renderActivity)}
+                        {isAgeWorkoutGroup && components.length > 0 && (
+                            <>
+                                <h4 className="pt-3 text-lg font-semibold">Main Set Components</h4>
+                                {components.map(renderActivity)}
+                            </>
+                        )}
                     </section>
                 );
             })}

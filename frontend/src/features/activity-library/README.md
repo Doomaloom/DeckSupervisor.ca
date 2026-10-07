@@ -21,9 +21,13 @@ pixels and checked visually against OCR before entering the data.
 | 1-3        | 7-11          | 37 song guides and 4 games                                        |
 | 8-11       | 20-27         | 18 front crawl, 20 back crawl, and 15 breaststroke drills         |
 | 23         | 58-59         | 13 dry-land stretches/exercises                                   |
-| 23-24      | 59-61         | 6 main sets, 6 complete interval workouts, 1 warm-up, 1 cool-down |
+| 23-24      | 59-61         | 6 main sets, 6 complete interval workouts, 3 warm-ups, 3 cool-downs |
 
-Total: **121 entries** (Songs 37, Games 4, Drills 66, Workouts 14).
+Total: **125 entries** (Songs 37, Games 4, Drills 66, Workouts 18). The three
+warm-ups and three cool-downs are stored as separate entries, split from the
+source's sample warm-up and cool-down without adding material. The six complete
+workouts are the entries titled “Interval workout”; the age-group main sets are
+components.
 
 Songs contain titles and original descriptions of their themes/actions, not full
 lyrics. Games and drills use edited instructions preserving the practical steps,
@@ -53,8 +57,8 @@ Review details:
 - Scan page 23's shoulder-stretch text repeats “left arm” inconsistently. The
   edited guide describes the cross-chest action without repeating that
   side-label error.
-- Preserve both the 4 × 50 m pace sequence and the 25/50/75/100 m progression
-  shown under the sample warm-up, without inventing rest times. Unspecified
+- Keep the source's 4 × 50 m pace sequence and 25/50/75/100 m progression as
+  separate warm-up components, without inventing rest times. Unspecified
   ladder strokes and main-set intervals remain unspecified.
 - The 13-18 main set A uses 2:45 and 2:35 send-offs; the 11-14 main set A uses
   2:00, 1:20, and 55 seconds. The final workout uses a 200 m middle repetition,

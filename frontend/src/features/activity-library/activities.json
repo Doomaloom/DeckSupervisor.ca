@@ -1765,10 +1765,34 @@
         "suitability": "Fitness Swimmer: stretches for swimmers"
     },
     {
-        "id": "workouts-sample-warm-up",
+        "id": "workouts-warm-up-1",
         "category": "Workouts",
-        "title": "Sample warm-up",
-        "instructions": "200 m mixed strokes at an easy pace, changing stroke every 25 or 50 m.\n4 × 50 m varying the time: begin relaxed, then slightly faster, then strong effort, then fast.\nPace progression shown in the source: 25 m relaxed; 50 m slightly faster; 75 m strong effort; 100 m fast.\n\nThis is a warm-up component, not a complete workout.",
+        "title": "Warm-up 1",
+        "instructions": "200 m mixed strokes at an easy pace, changing stroke every 25 or 50 m.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:6"
+        ]
+    },
+    {
+        "id": "workouts-warm-up-2",
+        "category": "Workouts",
+        "title": "Warm-up 2",
+        "instructions": "4 × 50 m varying the time: begin relaxed, then slightly faster, then strong effort, then fast.",
+        "sourcePages": [
+            23
+        ],
+        "skillIds": [
+            "SplashFitness:6"
+        ]
+    },
+    {
+        "id": "workouts-warm-up-3",
+        "category": "Workouts",
+        "title": "Warm-up 3",
+        "instructions": "Pace progression shown in the source: 25 m relaxed; 50 m slightly faster; 75 m strong effort; 100 m fast.",
         "sourcePages": [
             23
         ],
@@ -1862,10 +1886,34 @@
         "suitability": "13-18 years"
     },
     {
-        "id": "workouts-sample-cool-down",
+        "id": "workouts-cool-down-1",
         "category": "Workouts",
-        "title": "Sample cool-down",
-        "instructions": "200 m easy mixed strokes, changing stroke every 25 or 50 m.\n4 × 50 m easy swimming, stroke of choice, with a distance-per-stroke focus.\n6 × 25 m, stroke of choice, with 25 seconds of rest after each repeat.\n\nDPS means distance per stroke. This is a cool-down component, not a complete workout.",
+        "title": "Cool-down 1",
+        "instructions": "200 m easy mixed strokes, changing stroke every 25 or 50 m.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:6"
+        ]
+    },
+    {
+        "id": "workouts-cool-down-2",
+        "category": "Workouts",
+        "title": "Cool-down 2",
+        "instructions": "4 × 50 m easy swimming, stroke of choice, with a distance-per-stroke focus.\n\nDPS means distance per stroke.",
+        "sourcePages": [
+            24
+        ],
+        "skillIds": [
+            "SplashFitness:6"
+        ]
+    },
+    {
+        "id": "workouts-cool-down-3",
+        "category": "Workouts",
+        "title": "Cool-down 3",
+        "instructions": "6 × 25 m, stroke of choice, with 25 seconds of rest after each repeat.",
         "sourcePages": [
             24
         ],
