@@ -193,7 +193,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
         handleDrop,
         handleDropOnCourse,
         addTemporaryColumn,
-        removeEmptyColumns,
+        removeEmptyColumn,
         setInstructorAt,
     } = useSchematicBoard({
         courses,
@@ -314,7 +314,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
         handleDropOnCourse,
         handleSaveSchedule,
         addTemporaryColumn,
-        removeEmptyColumns,
+        removeEmptyColumn,
         setInstructorAt,
     };
 }

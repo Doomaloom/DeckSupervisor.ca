@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { showAppNotice } from "../../../lib/appNotice";
 import type { Course, DragState } from "../types";
 import {
@@ -87,16 +87,24 @@ export function useSchematicBoard({
     const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>(
         [],
     );
-    const [extraEmptyColumns, setExtraEmptyColumns] = useState(0);
+    const extraEmptyColumns = useRef(0);
+    const removedBaseColumns = useRef(new Set<number>());
+    const baseColumnCount = useRef(0);
     const storedLayoutKey = `${(storedLayout?.codes ?? []).join("\u0001")}::${
         (storedLayout?.instructors ?? []).join("\u0001")
-    }::${(storedLayout?.instructorIds ?? []).join("\u0001")}`;
+    }::${(storedLayout?.instructorIds ?? []).join("\u0001")}::${
+        (storedLayout?.assignmentIds ?? []).join("\u0001")
+    }`;
+
+    const resetKey = `${allowStoredEmptyColumns}::${storedLayoutKey}`;
+    const previousLayoutKey = useRef(resetKey);
 
     useEffect(() => {
-        setExtraEmptyColumns(0);
-    }, [allowStoredEmptyColumns, storedLayoutKey]);
-
-    useEffect(() => {
+        if (previousLayoutKey.current !== resetKey) {
+            extraEmptyColumns.current = 0;
+            removedBaseColumns.current.clear();
+            previousLayoutKey.current = resetKey;
+        }
         const storedInstructorByCode = new Map(
             (storedLayout?.codes ?? []).flatMap((codes, index) =>
                 codes.split(",").filter(Boolean).map((code) =>
@@ -132,41 +140,64 @@ export function useSchematicBoard({
             })
             : courses;
         const layout = createRequestAwareLayout(effectiveCourses, storedLayout);
-        for (let index = 0; index < extraEmptyColumns; index += 1) {
+        baseColumnCount.current = layout.columns.length;
+        const visibleBaseIndices = layout.columns.map((_, index) => index)
+            .filter((index) =>
+                !removedBaseColumns.current.has(index) ||
+                layout.columns[index].length > 0
+            );
+        const baseInstructors = visibleBaseIndices.map((index) =>
+            layout.instructors[index]
+        );
+        const baseLockedInstructors = visibleBaseIndices.map((index) =>
+            layout.lockedInstructors[index]
+        );
+        layout.columns = visibleBaseIndices.map((index) => layout.columns[index]);
+        layout.instructors = baseInstructors;
+        layout.lockedInstructors = baseLockedInstructors;
+        for (let index = 0; index < extraEmptyColumns.current; index += 1) {
             layout.columns.push([]);
             layout.instructors.push("");
             layout.lockedInstructors.push("");
         }
         setAssignmentIds(
-            layout.columns.map((_, index) =>
-                storedLayout?.assignmentIds?.[index] ?? crypto.randomUUID()
-            ),
+            [
+                ...visibleBaseIndices.map((index) =>
+                    storedLayout?.assignmentIds?.[index] ?? crypto.randomUUID()
+                ),
+                ...Array.from(
+                    { length: extraEmptyColumns.current },
+                    () => crypto.randomUUID(),
+                ),
+            ],
         );
         setColumns(layout.columns);
-        const ids = layout.columns.map((_, index) => {
+        const ids = visibleBaseIndices.map((index, visibleIndex) => {
             if (
                 storedLayout?.instructorIds &&
                 index < storedLayout.instructorIds.length
             ) return storedLayout.instructorIds[index];
             const matches = instructorRoster?.filter((row) =>
-                row.name && row.name === layout.instructors[index]
+                row.name && row.name === baseInstructors[visibleIndex]
             ) ?? [];
             return matches.length === 1 ? matches[0].id : null;
         });
-        setInstructorIds(ids);
+        setInstructorIds([
+            ...ids,
+            ...Array.from({ length: extraEmptyColumns.current }, () => null),
+        ]);
         setInstructors(
             instructorRoster
-                ? ids.map((id) =>
-                    instructorRoster.find((row) => row.id === id)?.name ?? ""
+                ? layout.columns.map((_, index) =>
+                    instructorRoster.find((row) => row.id === ids[index])?.name ??
+                        ""
                 )
                 : layout.instructors,
         );
         setLockedInstructors(layout.lockedInstructors);
     }, [
         courses,
-        extraEmptyColumns,
-        storedLayout,
-        storedLayoutKey,
+        resetKey,
         instructorRoster,
     ]);
 
@@ -409,29 +440,47 @@ export function useSchematicBoard({
     };
 
     const addTemporaryColumn = () => {
+        extraEmptyColumns.current += 1;
         setAssignmentIds((current) => [...current, crypto.randomUUID()]);
         setColumns((current) => [...current, []]);
         setInstructors((current) => [...current, ""]);
         setInstructorIds((current) => [...current, null]);
         setLockedInstructors((current) => [...current, ""]);
-        setExtraEmptyColumns((current) => current + 1);
     };
 
-    const removeEmptyColumns = () => {
-        const keepIndices = columns
-            .map((column, index) => ({ column, index }))
-            .filter(({ column }) => column.length > 0)
-            .map(({ index }) => index);
-        setAssignmentIds(keepIndices.map((index) => assignmentIds[index]));
-        setColumns(keepIndices.map((index) => columns[index]));
-        setInstructors(keepIndices.map((index) => instructors[index] ?? ""));
-        setInstructorIds(
-            keepIndices.map((index) => instructorIds[index] ?? null),
+    const removeEmptyColumn = (index: number) => {
+        if (
+            !columns[index] || columns[index].length > 0 ||
+            instructors[index]?.trim() || instructorIds[index] ||
+            lockedInstructors[index]?.trim()
+        ) return;
+
+        const visibleBaseCount = columns.length - extraEmptyColumns.current;
+        if (index >= visibleBaseCount) {
+            extraEmptyColumns.current -= 1;
+        } else {
+            const baseIndex = Array.from(
+                { length: baseColumnCount.current },
+                (_, baseIndex) => baseIndex,
+            ).filter((baseIndex) =>
+                !removedBaseColumns.current.has(baseIndex)
+            )[index];
+            if (baseIndex !== undefined) {
+                removedBaseColumns.current.add(baseIndex);
+            }
+        }
+        setAssignmentIds((current) => current.filter((_, i) => i !== index));
+        setColumns((current) => current.filter((_, i) => i !== index));
+        setInstructors((current) => current.filter((_, i) => i !== index));
+        setInstructorIds((current) => current.filter((_, i) => i !== index));
+        setLockedInstructors((current) =>
+            current.filter((_, i) => i !== index)
         );
-        setLockedInstructors(
-            keepIndices.map((index) => lockedInstructors[index] ?? ""),
+        setDragged((current) =>
+            current && current.columnIndex > index
+                ? { ...current, columnIndex: current.columnIndex - 1 }
+                : current
         );
-        setExtraEmptyColumns(0);
     };
 
     const setInstructorAt = (index: number, value: string) => {
@@ -470,7 +519,7 @@ export function useSchematicBoard({
         handleDrop,
         handleDropOnCourse,
         addTemporaryColumn,
-        removeEmptyColumns,
+        removeEmptyColumn,
         setInstructorAt,
     };
 }

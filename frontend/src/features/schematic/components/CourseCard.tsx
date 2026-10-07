@@ -26,12 +26,12 @@ function CourseCard({
 }: CourseCardProps) {
     const requestClass = course.isRequested
         ? "bg-yellow-200 ring-2 ring-yellow-500"
-        : "bg-white";
+        : "bg-accent hover:bg-bg";
     const selectedClass = selected ? "ring-4 ring-secondary ring-offset-1" : "";
 
     return (
         <div
-            className={`absolute left-0 right-0 flex cursor-pointer flex-col overflow-hidden border border-black text-xs text-black ${requestClass} ${selectedClass}`}
+            className={`absolute inset-x-0 flex cursor-pointer flex-col overflow-x-hidden overflow-y-auto border border-secondary/50 text-[clamp(0.8125rem,0.95vw,1.05rem)] leading-tight text-secondary transition-colors ${requestClass} ${selectedClass}`}
             draggable={draggable}
             onClick={onClick}
             onDragStart={onDragStart}
@@ -39,12 +39,14 @@ function CourseCard({
             onDrop={onDrop}
             style={style}
         >
-            <div className="flex flex-1 flex-col items-center justify-center gap-1 px-2 py-1 text-center">
-                <p className="font-semibold">{course.level}</p>
-                <p>{course.code}</p>
+            <div className="flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-0.5 text-center">
+                <p className="w-full break-words font-semibold">
+                    {course.level}
+                </p>
+                <p className="w-full">{course.code}</p>
                 {course.isRequested && course.assignedInstructor
                     ? (
-                        <p className="rounded-full bg-yellow-400 px-2 py-0.5 text-[0.65rem] font-semibold">
+                        <p className="max-w-full rounded-full bg-yellow-400 px-1 py-0.5 text-[0.625rem] font-semibold">
                             Request: {course.assignedInstructor}
                         </p>
                     )
@@ -52,13 +54,13 @@ function CourseCard({
                 {course.studentName &&
                     course.level.toLowerCase().includes("private") &&
                     (
-                        <p className="text-[0.7rem] font-semibold">
+                        <p className="w-full break-words text-[0.625rem] font-semibold">
                             {course.studentName}
                         </p>
                     )}
             </div>
             <div
-                className={`border-t border-black px-2 py-0.5 text-center text-[0.7rem] font-semibold ${capacityClass}`}
+                className={`shrink-0 border-t border-secondary/50 px-1 py-0.5 text-center text-[clamp(0.6875rem,0.75vw,0.875rem)] font-semibold ${capacityClass}`}
             >
                 {course.studentCount} of {capacity}
             </div>

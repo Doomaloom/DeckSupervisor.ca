@@ -3,6 +3,8 @@ import { SESSION_DAY_LABELS } from "../../shared/session/sessionDays";
 export const SLOT_MINUTES = 15;
 export const SLOT_HEIGHT_REM = 2.5;
 export const HEADER_HEIGHT_REM = 4.95;
+export const SCHEDULE_SLOT_HEIGHT = "clamp(2.5rem, 2.8vw, 3.75rem)";
+export const SCHEDULE_HEADER_HEIGHT = "clamp(4.95rem, 5.5vw, 7.4rem)";
 export const DEFAULT_CAPACITY = 12;
 export const COLUMN_MIN_WIDTH_PX = 150;
 

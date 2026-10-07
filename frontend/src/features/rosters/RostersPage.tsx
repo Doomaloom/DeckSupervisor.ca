@@ -456,7 +456,7 @@ function RostersPage() {
         handleDrop: handleFullTimeDrop,
         handleDropOnCourse: handleFullTimeDropOnCourse,
         addTemporaryColumn: addFullTimeTemporaryColumn,
-        removeEmptyColumns: removeFullTimeEmptyColumns,
+        removeEmptyColumn: removeFullTimeEmptyColumn,
         setInstructorAt: setFullTimeInstructorAt,
     } = useSchematicBoard({
         courses: fullTimeSchematicCourses,
@@ -1157,22 +1157,6 @@ function RostersPage() {
                                             )
                                             : (
                                                 <div className="mt-5">
-                                                    <div className="mb-4 flex flex-wrap justify-center gap-3">
-                                                        <button
-                                                            type="button"
-                                                            className="rounded-2xl border border-secondary/30 bg-bg px-5 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
-                                                            onClick={addFullTimeTemporaryColumn}
-                                                        >
-                                                            Add Temporary Column
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            className="rounded-2xl border border-secondary/30 bg-bg px-5 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
-                                                            onClick={removeFullTimeEmptyColumns}
-                                                        >
-                                                            Remove Empty Columns
-                                                        </button>
-                                                    </div>
                                                     {selectedFullTimeCourse
                                                         ? (
                                                             <div className="mb-4 rounded-2xl border border-secondary/20 bg-bg p-4 text-secondary">
@@ -1397,6 +1381,8 @@ function RostersPage() {
                                                         onColumnDrop={handleFullTimeDrop}
                                                         onCourseDrop={handleFullTimeDropOnCourse}
                                                         onCourseDragStart={handleFullTimeDragStart}
+                                                        onAddColumn={addFullTimeTemporaryColumn}
+                                                        onRemoveColumn={removeFullTimeEmptyColumn}
                                                     />
                                                 </div>
                                             )}

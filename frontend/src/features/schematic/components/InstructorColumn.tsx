@@ -1,6 +1,8 @@
 import React from "react";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import {
-    COLUMN_MIN_WIDTH_PX,
+    SCHEDULE_HEADER_HEIGHT,
+    SCHEDULE_SLOT_HEIGHT,
     SLOT_HEIGHT_REM,
     SLOT_MINUTES,
 } from "../constants";
@@ -18,7 +20,9 @@ type InstructorColumnProps = {
     instructorOptions: (string | { id: string; name: string; label: string })[];
     scheduleHeightRem: number;
     scheduleStartMinutes: number;
+    slotCount: number;
     readOnly?: boolean;
+    onRemoveColumn?: (columnIndex: number) => void;
     onInstructorChange: (columnIndex: number, value: string) => void;
     onCourseSelect: (course: Course, columnIndex: number) => void;
     onColumnDrop: (columnIndex: number) => void;
@@ -40,36 +44,50 @@ function InstructorColumn({
     instructorOptions,
     scheduleHeightRem,
     scheduleStartMinutes,
+    slotCount,
     readOnly = false,
+    onRemoveColumn,
     onInstructorChange,
     onCourseSelect,
     onColumnDrop,
     onCourseDrop,
     onCourseDragStart,
 }: InstructorColumnProps) {
-    const columnBorderClass = columnIndex === 0
-        ? "border-black"
-        : "border-black border-l-0";
+    const canRemove = !readOnly && column.length === 0 &&
+        !instructor.trim() && !instructorId && !lockedInstructor &&
+        Boolean(onRemoveColumn);
     return (
         <div
-            className="flex flex-1 flex-col"
-            style={{ minWidth: `${COLUMN_MIN_WIDTH_PX}px` }}
+            className="flex min-w-24 flex-1 flex-col"
             onDragOver={(event) => event.preventDefault()}
             onDrop={() => onColumnDrop(columnIndex)}
         >
             <div
-                className={`border border-black bg-accent p-2 ${columnBorderClass}`}
+                className="flex items-center justify-center border-b border-primary bg-primary px-1 py-2 text-center text-[clamp(0.8125rem,0.9vw,1.125rem)] font-semibold text-accent"
+                style={{ height: SCHEDULE_HEADER_HEIGHT }}
             >
-                {readOnly || lockedInstructor
+                {canRemove
                     ? (
-                        <div className="w-full rounded-none border border-black bg-white px-2 py-1 text-sm text-black">
+                        <button
+                            type="button"
+                            aria-label={`Delete empty column ${columnIndex + 1}`}
+                            className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-accent/60 bg-accent/10 px-1 py-2 text-sm font-semibold text-accent transition hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                            onClick={() => onRemoveColumn?.(columnIndex)}
+                        >
+                            <TrashIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            Delete
+                        </button>
+                    )
+                    : readOnly || lockedInstructor
+                    ? (
+                        <div className="w-full break-words">
                             {lockedInstructor || instructor ||
                                 `Instructor ${columnIndex + 1}`}
                         </div>
                     )
                     : (
                         <select
-                            className="w-full rounded-none border border-black bg-white px-2 py-1 text-sm text-black"
+                            className="w-full min-w-0 rounded-lg border border-secondary/30 bg-accent px-1 py-2 text-[clamp(0.75rem,0.85vw,1rem)] font-medium text-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                             value={instructorId === undefined
                                 ? instructor
                                 : instructorId ?? ""}
@@ -100,9 +118,19 @@ function InstructorColumn({
                     )}
             </div>
             <div
-                className={`relative border border-black border-t-0 bg-bg ${columnBorderClass}`}
-                style={{ height: `${scheduleHeightRem}rem` }}
+                className="relative border-l border-secondary/20 bg-accent"
+                style={{
+                    height:
+                        `calc(${scheduleHeightRem / SLOT_HEIGHT_REM} * ${SCHEDULE_SLOT_HEIGHT})`,
+                }}
             >
+                {Array.from({ length: slotCount }, (_, index) => (
+                    <div
+                        key={index}
+                        className="border-b border-secondary/20 last:border-b-0"
+                        style={{ height: SCHEDULE_SLOT_HEIGHT }}
+                    />
+                ))}
                 {column.map((course) => {
                     const startOffset =
                         (course.startMinutes - scheduleStartMinutes) /
@@ -123,8 +151,10 @@ function InstructorColumn({
                                 onCourseDragStart(event, course, columnIndex)}
                             onDrop={() => onCourseDrop(course, columnIndex)}
                             style={{
-                                top: `${startOffset * SLOT_HEIGHT_REM}rem`,
-                                height: `${courseHeight * SLOT_HEIGHT_REM}rem`,
+                                top:
+                                    `calc(${startOffset} * ${SCHEDULE_SLOT_HEIGHT})`,
+                                height:
+                                    `calc(${courseHeight} * ${SCHEDULE_SLOT_HEIGHT})`,
                             }}
                         />
                     );

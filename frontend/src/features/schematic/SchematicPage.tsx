@@ -10,6 +10,11 @@ import SchematicBoard from "./components/SchematicBoard";
 import { useFullTimeSchematicView } from "./hooks/useFullTimeSchematicView";
 import { useSchematicSchedule } from "./hooks/useSchematicSchedule";
 
+function pageWidthForSchematic(columnCount: number) {
+    const preferredWidthRem = 8 + columnCount * 8;
+    return `min(calc(100% + 1rem), max(min(100%, 72rem), ${preferredWidthRem}rem))`;
+}
+
 function SchematicPage() {
     const { accountType } = useAuth();
     const { selectedDay, setSelectedDay } = useDay();
@@ -45,7 +50,7 @@ function SchematicPage() {
         handleDropOnCourse,
         handleSaveSchedule,
         addTemporaryColumn,
-        removeEmptyColumns,
+        removeEmptyColumn,
         setInstructorAt,
     } = useSchematicSchedule(selectedDay);
 
@@ -81,18 +86,25 @@ function SchematicPage() {
 
     if (accountType === "full_time") {
         return (
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-                <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary/70">
-                        Full-Time Schematic
-                    </p>
-                    <h2 className="mt-2 text-xl font-semibold">
+            <div
+                className="relative left-1/2 flex -translate-x-1/2 flex-col gap-6"
+                style={{
+                    width: pageWidthForSchematic(
+                        fullTimeView.columns.length,
+                    ),
+                }}
+            >
+                <header className="flex flex-col gap-1">
+                    <h2 className="text-2xl font-semibold text-secondary">
                         Team Schematic View
                     </h2>
-                    <p className="mt-2 text-sm text-secondary/80">
+                    <p className="text-sm text-secondary/75">
                         View saved schematics by day and location for the
                         selected team and session term.
                     </p>
+                </header>
+
+                <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
 
                     <div className="mt-4 flex flex-wrap gap-2">
                         {fullTimeView.days.map((day) => {
@@ -276,29 +288,9 @@ function SchematicPage() {
         <div
             id="schematic-page"
             data-component="schematic-page"
-            className="mx-auto flex w-full max-w-6xl flex-col gap-6"
+            className="relative left-1/2 flex -translate-x-1/2 flex-col gap-6"
+            style={{ width: pageWidthForSchematic(columns.length) }}
         >
-            {!isReadOnly
-                ? (
-                    <div className="flex flex-wrap justify-center gap-3">
-                        <button
-                            type="button"
-                            className="rounded-2xl border border-secondary/30 bg-bg px-5 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
-                            onClick={addTemporaryColumn}
-                        >
-                            Add Temporary Column
-                        </button>
-                        <button
-                            type="button"
-                            className="rounded-2xl border border-secondary/30 bg-bg px-5 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
-                            onClick={removeEmptyColumns}
-                        >
-                            Remove Empty Columns
-                        </button>
-                    </div>
-                )
-                : null}
-
             <SchematicBoard
                 columns={columns}
                 instructors={instructors}
@@ -311,6 +303,8 @@ function SchematicPage() {
                 instructorOptions={instructorOptions}
                 sessionLabel={sessionLabel}
                 readOnly={isReadOnly}
+                onAddColumn={isReadOnly ? undefined : addTemporaryColumn}
+                onRemoveColumn={isReadOnly ? undefined : removeEmptyColumn}
                 onInstructorChange={isReadOnly ? () => {} : setInstructorAt}
                 onCourseSelect={isReadOnly ? () => {} : toggleCourseSelection}
                 onColumnDrop={isReadOnly ? () => {} : handleDrop}

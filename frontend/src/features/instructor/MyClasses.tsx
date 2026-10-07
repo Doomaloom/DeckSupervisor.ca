@@ -9,13 +9,15 @@ import useInstructorClasses, { sessionLabel } from "./useInstructorClasses";
 import TimeRail from "../schematic/components/TimeRail";
 import {
     HEADER_HEIGHT_REM,
+    SCHEDULE_HEADER_HEIGHT,
+    SCHEDULE_SLOT_HEIGHT,
     SLOT_HEIGHT_REM,
     SLOT_MINUTES,
 } from "../schematic/constants";
 import { buildTimeLabels, timeToMinutes } from "../schematic/utils/time";
 
-const slotHeight = "clamp(2.5rem, 2.8vw, 3.75rem)";
-const headerHeight = "clamp(4.95rem, 5.5vw, 7.4rem)";
+const slotHeight = SCHEDULE_SLOT_HEIGHT;
+const headerHeight = SCHEDULE_HEADER_HEIGHT;
 
 export default function MyClasses() {
     const { session, classes, loading, error, refresh } =
@@ -125,7 +127,7 @@ export default function MyClasses() {
                                                 } to ${
                                                     c.end_time.slice(0, 5)
                                                 }, ${c.code}`}
-                                                className="absolute inset-x-0 overflow-auto border border-secondary/50 bg-accent px-2 py-1 text-center text-[clamp(0.875rem,1.05vw,1.25rem)] leading-snug transition-colors hover:bg-primary/10 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+                                                className="absolute inset-x-0 overflow-auto border border-secondary/50 bg-accent px-2 py-1 text-center text-[clamp(0.875rem,1.05vw,1.25rem)] leading-snug transition-colors hover:bg-bg focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
                                                 style={{
                                                     top: `calc(${
                                                         (timeToMinutes(
