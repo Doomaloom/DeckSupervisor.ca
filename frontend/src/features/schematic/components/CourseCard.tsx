@@ -1,4 +1,5 @@
 import React from "react";
+import { useCoursePointerDrag } from "../hooks/useCoursePointerDrag";
 import type { Course } from "../types";
 
 type CourseCardProps = {
@@ -9,8 +10,10 @@ type CourseCardProps = {
     selected?: boolean;
     draggable?: boolean;
     onClick: () => void;
-    onDragStart: (event: React.DragEvent<HTMLDivElement>) => void;
-    onDrop: () => void;
+    onDragStart: () => void;
+    onDropAt: (x: number, y: number) => void;
+    onHoverAt: (x: number | null, y: number | null) => void;
+    highlighted?: boolean;
 };
 
 function CourseCard({
@@ -22,22 +25,39 @@ function CourseCard({
     draggable = true,
     onClick,
     onDragStart,
-    onDrop,
+    onDropAt,
+    onHoverAt,
+    highlighted = false,
 }: CourseCardProps) {
-    const requestClass = course.isRequested
-        ? "bg-yellow-200 ring-2 ring-yellow-500"
+    const pointerDrag = useCoursePointerDrag(
+        draggable,
+        onDragStart,
+        onDropAt,
+        onHoverAt,
+    );
+    const backgroundClass = highlighted || selected
+        ? "bg-bg"
+        : course.isRequested
+        ? "bg-yellow-200"
         : "bg-accent hover:bg-bg";
-    const selectedClass = selected ? "ring-4 ring-secondary ring-offset-1" : "";
+    const requestClass = course.isRequested ? "ring-2 ring-yellow-500" : "";
 
     return (
         <div
-            className={`absolute inset-x-0 flex cursor-pointer flex-col overflow-x-hidden overflow-y-auto border border-secondary/50 text-[clamp(0.8125rem,0.95vw,1.05rem)] leading-tight text-secondary transition-colors ${requestClass} ${selectedClass}`}
-            draggable={draggable}
-            onClick={onClick}
-            onDragStart={onDragStart}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={onDrop}
-            style={style}
+            className={`absolute inset-x-0 flex cursor-pointer flex-col overflow-x-hidden overflow-y-auto border border-secondary/50 text-[clamp(0.8125rem,0.95vw,1.05rem)] leading-tight text-secondary transition-colors ${backgroundClass} ${requestClass}`}
+            data-course-code={course.code}
+            data-course-selected={selected}
+            draggable={false}
+            onPointerDown={pointerDrag.onPointerDown}
+            onClick={(event) => {
+                if (pointerDrag.suppressClick.current) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+                onClick();
+            }}
+            style={{ ...style, touchAction: draggable ? "none" : undefined, userSelect: "none" }}
         >
             <div className="flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-0.5 text-center">
                 <p className="w-full break-words font-semibold">

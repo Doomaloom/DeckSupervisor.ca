@@ -1,4 +1,3 @@
-import React from "react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import {
     SCHEDULE_HEADER_HEIGHT,
@@ -17,18 +16,17 @@ type InstructorColumnProps = {
     instructorId?: string | null;
     lockedInstructor?: string;
     selectedCourseCodes?: string[];
+    highlightedCourseCodes: string[];
     instructorOptions: (string | { id: string; name: string; label: string })[];
     scheduleHeightRem: number;
     scheduleStartMinutes: number;
-    slotCount: number;
     readOnly?: boolean;
     onRemoveColumn?: (columnIndex: number) => void;
     onInstructorChange: (columnIndex: number, value: string) => void;
     onCourseSelect: (course: Course, columnIndex: number) => void;
-    onColumnDrop: (columnIndex: number) => void;
-    onCourseDrop: (course: Course, columnIndex: number) => void;
+    onDropAt: (x: number, y: number) => void;
+    onHoverAt: (x: number | null, y: number | null) => void;
     onCourseDragStart: (
-        event: React.DragEvent<HTMLDivElement>,
         course: Course,
         columnIndex: number,
     ) => void;
@@ -41,17 +39,17 @@ function InstructorColumn({
     instructorId,
     lockedInstructor,
     selectedCourseCodes = [],
+    highlightedCourseCodes,
     instructorOptions,
     scheduleHeightRem,
     scheduleStartMinutes,
-    slotCount,
     readOnly = false,
     onRemoveColumn,
     onInstructorChange,
     onCourseSelect,
-    onColumnDrop,
-    onCourseDrop,
     onCourseDragStart,
+    onDropAt,
+    onHoverAt,
 }: InstructorColumnProps) {
     const canRemove = !readOnly && column.length === 0 &&
         !instructor.trim() && !instructorId && !lockedInstructor &&
@@ -59,8 +57,7 @@ function InstructorColumn({
     return (
         <div
             className="flex min-w-24 flex-1 flex-col"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={() => onColumnDrop(columnIndex)}
+            data-schematic-column={columnIndex}
         >
             <div
                 className="flex items-center justify-center border-b border-primary bg-primary px-1 py-2 text-center text-[clamp(0.8125rem,0.9vw,1.125rem)] font-semibold text-accent"
@@ -124,13 +121,6 @@ function InstructorColumn({
                         `calc(${scheduleHeightRem / SLOT_HEIGHT_REM} * ${SCHEDULE_SLOT_HEIGHT})`,
                 }}
             >
-                {Array.from({ length: slotCount }, (_, index) => (
-                    <div
-                        key={index}
-                        className="border-b border-secondary/20 last:border-b-0"
-                        style={{ height: SCHEDULE_SLOT_HEIGHT }}
-                    />
-                ))}
                 {column.map((course) => {
                     const startOffset =
                         (course.startMinutes - scheduleStartMinutes) /
@@ -145,11 +135,13 @@ function InstructorColumn({
                             capacity={capacity}
                             capacityClass={capacityClass}
                             selected={selectedCourseCodes.includes(course.code)}
-                            draggable={!readOnly}
+                            highlighted={highlightedCourseCodes.includes(course.code)}
+                            draggable={!readOnly && !course.isLockedToInstructor}
                             onClick={() => onCourseSelect(course, columnIndex)}
-                            onDragStart={(event) =>
-                                onCourseDragStart(event, course, columnIndex)}
-                            onDrop={() => onCourseDrop(course, columnIndex)}
+                            onDragStart={() =>
+                                onCourseDragStart(course, columnIndex)}
+                            onDropAt={onDropAt}
+                            onHoverAt={onHoverAt}
                             style={{
                                 top:
                                     `calc(${startOffset} * ${SCHEDULE_SLOT_HEIGHT})`,

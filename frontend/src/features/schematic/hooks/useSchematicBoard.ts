@@ -244,12 +244,10 @@ export function useSchematicBoard({
     };
 
     const handleDragStart = (
-        event: React.DragEvent<HTMLDivElement>,
         course: Course,
         columnIndex: number,
     ) => {
         if (course.isLockedToInstructor) {
-            event.preventDefault();
             return;
         }
         const selectedInSameColumn = selectedCourseCodes.length > 0 &&
@@ -267,11 +265,6 @@ export function useSchematicBoard({
 
         setSelectedCourseCodes(selectedInSameColumn ?? []);
         setDragged(nextDragged);
-        const target = event.currentTarget;
-        const rect = target.getBoundingClientRect();
-        const offsetX = event.clientX - rect.left;
-        const offsetY = event.clientY - rect.top;
-        event.dataTransfer.setDragImage(target, offsetX, offsetY);
     };
 
     const handleDrop = (columnIndex: number) => {
@@ -514,6 +507,8 @@ export function useSchematicBoard({
         instructors,
         lockedInstructors,
         selectedCourseCodes,
+        draggedCourseCodes: dragged?.codes ?? [],
+        draggedColumnIndex: dragged?.columnIndex ?? null,
         toggleCourseSelection,
         handleDragStart,
         handleDrop,

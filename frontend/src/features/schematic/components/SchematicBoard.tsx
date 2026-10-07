@@ -7,6 +7,12 @@ import {
     SLOT_HEIGHT_REM,
 } from "../constants";
 import type { Course } from "../types";
+import {
+    canPlaceCourses,
+    canReplaceByStart,
+    canSwapSingleCourses,
+    findContiguousSwapIndices,
+} from "../utils/drag";
 import InstructorColumn from "./InstructorColumn";
 import TimeRail from "./TimeRail";
 
@@ -16,6 +22,8 @@ type SchematicBoardProps = {
     instructorIds?: (string | null)[];
     lockedInstructors?: string[];
     selectedCourseCodes?: string[];
+    draggedCourseCodes?: string[];
+    draggedColumnIndex?: number | null;
     timeLabels: string[];
     scheduleHeightRem: number;
     scheduleStartMinutes: number;
@@ -29,7 +37,6 @@ type SchematicBoardProps = {
     onColumnDrop: (columnIndex: number) => void;
     onCourseDrop: (course: Course, columnIndex: number) => void;
     onCourseDragStart: (
-        event: React.DragEvent<HTMLDivElement>,
         course: Course,
         columnIndex: number,
     ) => void;
@@ -41,6 +48,8 @@ function SchematicBoard({
     instructorIds,
     lockedInstructors = [],
     selectedCourseCodes = [],
+    draggedCourseCodes = [],
+    draggedColumnIndex = null,
     timeLabels,
     scheduleHeightRem,
     scheduleStartMinutes,
@@ -55,8 +64,123 @@ function SchematicBoard({
     onCourseDrop,
     onCourseDragStart,
 }: SchematicBoardProps) {
+    const boardRef = React.useRef<HTMLDivElement>(null);
+    const [hoveredCourseCodes, setHoveredCourseCodes] = React.useState<string[]>([]);
+    const findDropTarget = (x: number, y: number) => {
+        const target = document.elementFromPoint(x, y);
+        if (!target || !boardRef.current?.contains(target)) return null;
+        const column = target.closest<HTMLElement>("[data-schematic-column]");
+        if (!column) return null;
+        const columnIndex = Number(column.dataset.schematicColumn);
+        const card = target.closest<HTMLElement>("[data-course-code]");
+        const course = columns[columnIndex]?.find(
+            (entry) => entry.code === card?.dataset.courseCode,
+        );
+        return { columnIndex, course };
+    };
+    const handleHoverAt = (x: number | null, y: number | null) => {
+        if (x === null || y === null || draggedColumnIndex === null) {
+            setHoveredCourseCodes([]);
+            return;
+        }
+        const target = findDropTarget(x, y);
+        if (!target || target.columnIndex === draggedColumnIndex) {
+            setHoveredCourseCodes([]);
+            return;
+        }
+        const sourceColumn = columns[draggedColumnIndex] ?? [];
+        const movingCourses = sourceColumn.filter((course) =>
+            draggedCourseCodes.includes(course.code)
+        );
+        const sourceAfterMove = sourceColumn.filter((course) =>
+            !draggedCourseCodes.includes(course.code)
+        );
+        const targetColumn = columns[target.columnIndex] ?? [];
+        let affectedCourses: Course[] = [];
+        if (
+            movingCourses.length !== draggedCourseCodes.length ||
+            movingCourses.some((course) => course.isLockedToInstructor)
+        ) {
+            setHoveredCourseCodes([]);
+            return;
+        }
+        if (target.course && movingCourses.length === 1) {
+            const moving = movingCourses[0];
+            const targetIndex = targetColumn.findIndex((course) =>
+                course.code === target.course?.code
+            );
+            if (!target.course.isLockedToInstructor && targetIndex !== -1) {
+                const swapIndices = findContiguousSwapIndices(
+                    targetColumn,
+                    moving,
+                );
+                const swapCourses = swapIndices.map((index) =>
+                    targetColumn[index]
+                );
+                if (swapCourses.length > 0) {
+                    if (canPlaceCourses(sourceAfterMove, swapCourses)) {
+                        affectedCourses = [moving, ...swapCourses];
+                    }
+                } else if (
+                    canReplaceByStart(targetColumn, moving, targetIndex)
+                ) {
+                    if (canPlaceCourses(sourceAfterMove, [target.course])) {
+                        affectedCourses = [moving, target.course];
+                    }
+                } else if (
+                    canSwapSingleCourses(
+                        sourceAfterMove,
+                        targetColumn,
+                        moving,
+                        target.course,
+                    )
+                ) {
+                    affectedCourses = [moving, target.course];
+                }
+            }
+        } else if (canPlaceCourses(targetColumn, movingCourses)) {
+            affectedCourses = movingCourses;
+        } else {
+            const overlappingCourses = targetColumn.filter((course) =>
+                movingCourses.some((moving) =>
+                    moving.startMinutes < course.endMinutes &&
+                    course.startMinutes < moving.endMinutes
+                )
+            );
+            if (
+                overlappingCourses.length > 0 &&
+                overlappingCourses.every((course) =>
+                    !course.isLockedToInstructor
+                )
+            ) {
+                const remainingTarget = targetColumn.filter((course) =>
+                    !overlappingCourses.some((entry) => entry.code === course.code)
+                );
+                if (
+                    canPlaceCourses(remainingTarget, movingCourses) &&
+                    canPlaceCourses(sourceAfterMove, overlappingCourses)
+                ) {
+                    affectedCourses = [...movingCourses, ...overlappingCourses];
+                }
+            }
+        }
+        const nextCodes = affectedCourses.map((course) => course.code);
+        setHoveredCourseCodes((current) =>
+            current.length === nextCodes.length &&
+                    current.every((code) => nextCodes.includes(code))
+                ? current
+                : nextCodes
+        );
+    };
+    const handleDropAt = (x: number, y: number) => {
+        const target = findDropTarget(x, y);
+        if (!target) return;
+        if (target.course) onCourseDrop(target.course, target.columnIndex);
+        else onColumnDrop(target.columnIndex);
+    };
+
     return (
-        <div className="flex min-w-0 w-full flex-col gap-4">
+        <div ref={boardRef} className="flex min-w-0 w-full flex-col gap-4">
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
                     <h2 className="text-2xl font-semibold text-secondary">
@@ -118,17 +242,17 @@ function SchematicBoard({
                                             columnIndex
                                         ] ?? ""}
                                         selectedCourseCodes={selectedCourseCodes}
+                                        highlightedCourseCodes={hoveredCourseCodes}
                                         instructorOptions={instructorOptions}
                                         scheduleHeightRem={scheduleHeightRem}
                                         scheduleStartMinutes={scheduleStartMinutes}
-                                        slotCount={timeLabels.length}
                                         readOnly={readOnly}
                                         onRemoveColumn={onRemoveColumn}
                                         onInstructorChange={onInstructorChange}
                                         onCourseSelect={onCourseSelect}
-                                        onColumnDrop={onColumnDrop}
-                                        onCourseDrop={onCourseDrop}
                                         onCourseDragStart={onCourseDragStart}
+                                        onDropAt={handleDropAt}
+                                        onHoverAt={handleHoverAt}
                                     />
                                 ))}
                                 <div

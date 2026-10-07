@@ -40,6 +40,8 @@ function SchematicPage() {
         instructorIds,
         lockedInstructors,
         selectedCourseCodes,
+        draggedCourseCodes,
+        draggedColumnIndex,
         timeLabels,
         scheduleHeightRem,
         scheduleStartMinutes,
@@ -274,7 +276,6 @@ function SchematicPage() {
                             onColumnDrop={(_columnIndex) => {}}
                             onCourseDrop={(_course, _columnIndex) => {}}
                             onCourseDragStart={(
-                                _event,
                                 _course,
                                 _columnIndex,
                             ) => {}}
@@ -297,6 +298,8 @@ function SchematicPage() {
                 instructorIds={instructorIds}
                 lockedInstructors={lockedInstructors}
                 selectedCourseCodes={selectedCourseCodes}
+                draggedCourseCodes={draggedCourseCodes}
+                draggedColumnIndex={draggedColumnIndex}
                 timeLabels={timeLabels}
                 scheduleHeightRem={scheduleHeightRem}
                 scheduleStartMinutes={scheduleStartMinutes}
