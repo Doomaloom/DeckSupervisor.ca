@@ -19,6 +19,7 @@ import { workoutText } from "../workout-builder/workout";
 import PlanSelection from "./PlanSelection";
 import {
     curriculumLevels,
+    defaultWorkoutText,
     findCurriculumLevel,
     isWorkoutSkill,
 } from "./lessonSkills";
@@ -46,6 +47,14 @@ export function rowsForSave(rows: LessonRow[]) {
         row.skill.trim() || row.activity.trim() || row.workout ||
         row.location !== "Lane" || row.duration !== 5
     );
+}
+
+function withDefaultWorkout(row: LessonRow): LessonRow {
+    if (row.workout || row.activity.trim() || row.activities?.some((entry) =>
+        entry.text.trim()
+    )) return row;
+    const activity = defaultWorkoutText(row.skill);
+    return activity ? { ...row, activity, activities: undefined } : row;
 }
 
 function rowActivities(row: LessonRow) {
@@ -103,7 +112,7 @@ export function LessonEditor(
         setError("");
         fetchLessonPlan(sessionId, classId, week).then((r) => {
             if (current) {
-                setRows(r.plan?.rows || []);
+                setRows((r.plan?.rows || []).map(withDefaultWorkout));
                 setSaved(r.plan?.rows || []);
                 setCurriculumLevel(r.plan?.curriculum_level || "");
                 setSavedCurriculumLevel(r.plan?.curriculum_level || "");
@@ -192,6 +201,11 @@ export function LessonEditor(
         edit(i, { activities, activity });
     }
     function changeSkill(i: number, skill: string) {
+        const activity = defaultWorkoutText(skill);
+        if (activity) {
+            edit(i, { skill, activity, workout: undefined, activities: undefined });
+            return;
+        }
         if (rows[i].workout && !isWorkoutSkill(skill)) {
             if (
                 !window.confirm(
@@ -576,7 +590,7 @@ export function LessonEditor(
                                             </Select>
                                         </td>
                                         <td className="border-b border-secondary/20 p-3 align-top">
-                                            {row.workout
+                                            {row.workout || isWorkoutSkill(row.skill)
                                                 ? (
                                                     <>
                                                         <p
@@ -585,7 +599,7 @@ export function LessonEditor(
                                                                 i + 1
                                                             }`}
                                                         >
-                                                            {row.activity}
+                                                            {row.activity || "Choose a custom workout for this skill."}
                                                         </p>
                                                         <div className="mt-2 flex flex-wrap gap-2">
                                                             {isWorkoutSkill(
@@ -594,7 +608,7 @@ export function LessonEditor(
                                                                 <ActionButton
                                                                     size="sm"
                                                                     variant="outline"
-                                                                    aria-label={`Edit workout for row ${
+                                                                    aria-label={`Use custom workout for row ${
                                                                         i + 1
                                                                     }`}
                                                                     onClick={() =>
@@ -602,34 +616,36 @@ export function LessonEditor(
                                                                             i,
                                                                         )}
                                                                 >
-                                                                    Edit workout
+                                                                    Use custom workout
                                                                 </ActionButton>
                                                             )}
-                                                            <ActionButton
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                aria-label={`Convert workout in row ${
-                                                                    i + 1
-                                                                } to text`}
-                                                                onClick={() => {
-                                                                    if (
-                                                                        window
-                                                                            .confirm(
-                                                                                "Convert this workout to text? Its sets will no longer be editable in the workout builder.",
-                                                                            )
-                                                                    ) {
-                                                                        edit(
-                                                                            i,
-                                                                            {
-                                                                                workout:
-                                                                                    undefined,
-                                                                            },
-                                                                        );
-                                                                    }
-                                                                }}
-                                                            >
-                                                                Convert to text
-                                                            </ActionButton>
+                                                            {!isWorkoutSkill(row.skill) && (
+                                                                <ActionButton
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    aria-label={`Convert workout in row ${
+                                                                        i + 1
+                                                                    } to text`}
+                                                                    onClick={() => {
+                                                                        if (
+                                                                            window
+                                                                                .confirm(
+                                                                                    "Convert this workout to text? Its sets will no longer be editable in the workout builder.",
+                                                                                )
+                                                                        ) {
+                                                                            edit(
+                                                                                i,
+                                                                                {
+                                                                                    workout:
+                                                                                        undefined,
+                                                                                },
+                                                                            );
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Convert to text
+                                                                </ActionButton>
+                                                            )}
                                                         </div>
                                                     </>
                                                 )
@@ -710,18 +726,7 @@ export function LessonEditor(
                                                                 Custom
                                                             </ActionButton>
                                                         </div>
-                                                        {isWorkoutSkill(row.skill) && (
-                                                            <div className="mt-2">
-                                                                <ActionButton
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    aria-label={`Build workout for row ${i + 1}`}
-                                                                    onClick={() => setWorkoutRow(i)}
-                                                                >
-                                                                    Build workout
-                                                                </ActionButton>
-                                                            </div>
-                                                        )}
+
                                                     </>
                                                 )}
                                         </td>
@@ -830,16 +835,8 @@ export function LessonEditor(
             {workoutRow !== null && rows[workoutRow] &&
                 isWorkoutSkill(rows[workoutRow].skill) && (
                 <WorkoutBuilderModal
-                    initialWorkout={rows[workoutRow].workout}
                     onClose={() => setWorkoutRow(null)}
                     onUse={(workout) => {
-                        if (
-                            !rows[workoutRow].workout &&
-                            rows[workoutRow].activity.trim() &&
-                            !window.confirm(
-                                "Replace this row’s activity text with the workout?",
-                            )
-                        ) return;
                         edit(workoutRow, {
                             workout,
                             activity: workoutText(workout),

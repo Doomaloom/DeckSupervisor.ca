@@ -10,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { beforeEach, expect, it, vi } from "vitest";
 import { LessonEditor } from "./LessonPlans";
-import { curriculumLevels } from "./lessonSkills";
+import { curriculumLevels, defaultWorkoutText } from "./lessonSkills";
 const api = vi.hoisted(() => ({
     fetchLessonPlan: vi.fn(),
     saveLessonPlan: vi.fn(),
@@ -593,7 +593,7 @@ const workoutSkill =
     curriculumLevels.find((level) => level.id === "SplashFitness")!.skills.find(
         (skill) => skill.compactName === "Workout 300m",
     )!.name;
-it("builds, saves, reopens and converts a structured workout while preserving row fields", async () => {
+it("builds and saves custom workouts, reopening the builder fresh while preserving row fields", async () => {
     const restore = mockLibraryDialog();
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     try {
@@ -614,7 +614,7 @@ it("builds, saves, reopens and converts a structured workout while preserving ro
         setup("Splash Fitness");
         await screen.findByLabelText("Skill 1");
         await user.click(
-            screen.getByRole("button", { name: "Build workout for row 1" }),
+            screen.getByRole("button", { name: "Use custom workout for row 1" }),
         );
         const dialog = screen.getByRole("dialog", { name: "Workout builder" });
         expect(within(dialog).queryAllByRole("option", {
@@ -662,16 +662,6 @@ it("builds, saves, reopens and converts a structured workout while preserving ro
         await user.click(
             within(dialog).getByRole("button", { name: "Use workout" }),
         );
-        expect(confirm).toHaveBeenCalledWith(
-            "Replace this row’s activity text with the workout?",
-        );
-        expect(screen.getByLabelText("Activity / drill 1")).toHaveValue(
-            "Original text",
-        );
-        confirm.mockReturnValue(true);
-        await user.click(
-            within(dialog).getByRole("button", { name: "Use workout" }),
-        );
         const summary = screen.getByLabelText("Workout summary 1").textContent;
         expect(summary).toContain("Total distance: 550 m");
         await screen.findByText("All changes saved.");
@@ -683,8 +673,11 @@ it("builds, saves, reopens and converts a structured workout while preserving ro
             workout: { version: 1 },
         });
         await user.click(
-            screen.getByRole("button", { name: "Edit workout for row 1" }),
+            screen.getByRole("button", { name: "Use custom workout for row 1" }),
         );
+        expect(screen.getByLabelText("Workout title")).toHaveValue("Workout");
+        expect(screen.queryByLabelText("Warm-up set 1 distance"))
+            .not.toBeInTheDocument();
         await user.clear(screen.getByLabelText("Workout title"));
         await user.type(screen.getByLabelText("Workout title"), "Changed");
         confirm.mockReturnValue(false);
@@ -699,26 +692,9 @@ it("builds, saves, reopens and converts a structured workout while preserving ro
         expect(screen.getByLabelText("Workout summary 1").textContent).toBe(
             summary,
         );
-        confirm.mockReturnValue(false);
-        await user.click(
-            screen.getByRole("button", {
-                name: "Convert workout in row 1 to text",
-            }),
-        );
-        expect(screen.getByLabelText("Workout summary 1")).toBeVisible();
-        confirm.mockReturnValue(true);
-        await user.click(
-            screen.getByRole("button", {
-                name: "Convert workout in row 1 to text",
-            }),
-        );
-        expect(screen.getByLabelText("Activity / drill 1")).toHaveValue(
-            summary,
-        );
-        await waitFor(() =>
-            expect(api.saveLessonPlan).toHaveBeenCalledTimes(2)
-        );
-        expect(api.saveLessonPlan.mock.calls[1][3][0].workout).toBeUndefined();
+        expect(screen.queryByRole("button", {
+            name: "Convert workout in row 1 to text",
+        })).not.toBeInTheDocument();
     } finally {
         confirm.mockRestore();
         restore();
@@ -734,7 +710,7 @@ it("only offers the builder for catalog workout skills and confirms conversion w
         await screen.findByText(/No lesson plan saved/);
         await user.click(screen.getByRole("button", { name: "Add activity" }));
         expect(
-            screen.queryByRole("button", { name: "Build workout for row 1" }),
+            screen.queryByRole("button", { name: "Use custom workout for row 1" }),
         )
             .not.toBeInTheDocument();
         const ordinary = curriculumLevels.find((level) =>
@@ -742,7 +718,7 @@ it("only offers the builder for catalog workout skills and confirms conversion w
         )!.skills[0].name;
         await user.selectOptions(screen.getByLabelText("Skill 1"), ordinary);
         expect(
-            screen.queryByRole("button", { name: "Build workout for row 1" }),
+            screen.queryByRole("button", { name: "Use custom workout for row 1" }),
         )
             .not.toBeInTheDocument();
         await user.selectOptions(
@@ -750,7 +726,7 @@ it("only offers the builder for catalog workout skills and confirms conversion w
             workoutSkill,
         );
         await user.click(
-            screen.getByRole("button", { name: "Build workout for row 1" }),
+            screen.getByRole("button", { name: "Use custom workout for row 1" }),
         );
         for (const section of ["warm-up", "main set", "cool-down"]) {
             await user.click(
@@ -763,16 +739,16 @@ it("only offers the builder for catalog workout skills and confirms conversion w
         const text = screen.getByLabelText("Workout summary 1").textContent;
         await user.selectOptions(screen.getByLabelText("Skill 1"), ordinary);
         expect(screen.getByLabelText("Skill 1")).toHaveValue(workoutSkill);
-        expect(screen.getByRole("button", { name: "Edit workout for row 1" }))
+        expect(screen.getByRole("button", { name: "Use custom workout for row 1" }))
             .toBeVisible();
         confirm.mockReturnValue(true);
         await user.selectOptions(screen.getByLabelText("Skill 1"), ordinary);
         expect(screen.getByLabelText("Activity / drill 1")).toHaveValue(text);
         expect(
-            screen.queryByRole("button", { name: "Build workout for row 1" }),
+            screen.queryByRole("button", { name: "Use custom workout for row 1" }),
         )
             .not.toBeInTheDocument();
-        expect(screen.queryByRole("button", { name: "Edit workout for row 1" }))
+        expect(screen.queryByRole("button", { name: "Use custom workout for row 1" }))
             .not
             .toBeInTheDocument();
     } finally {
@@ -803,11 +779,55 @@ it("keeps previously saved workouts under ordinary skills readable without openi
     });
     setup();
     await screen.findByLabelText("Workout summary 1");
-    expect(screen.queryByRole("button", { name: "Edit workout for row 1" })).not
+    expect(screen.queryByRole("button", { name: "Use custom workout for row 1" })).not
         .toBeInTheDocument();
     expect(
         screen.getByRole("button", {
             name: "Convert workout in row 1 to text",
         }),
     ).toBeVisible();
+});
+
+it("uses the skill's prescribed workout by default and opens a fresh custom builder", async () => {
+    const restore = mockLibraryDialog();
+    try {
+        const user = userEvent.setup();
+        setup("Splash Fitness");
+        await screen.findByText(/No lesson plan saved/);
+        await user.click(screen.getByRole("button", { name: "Add activity" }));
+        await user.selectOptions(screen.getByLabelText("Skill 1"), workoutSkill);
+        const expected = defaultWorkoutText(workoutSkill)!;
+        expect(screen.getByLabelText("Workout summary 1").textContent).toBe(expected);
+        expect(screen.queryByRole("button", { name: "Browse library for row 1" }))
+            .not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Custom activity for row 1" }))
+            .not.toBeInTheDocument();
+        await screen.findByText("All changes saved.");
+        expect(api.saveLessonPlan.mock.calls[api.saveLessonPlan.mock.calls.length - 1][3][0].activity).toBe(expected);
+        await user.click(screen.getByRole("button", {
+            name: "Use custom workout for row 1",
+        }));
+        expect(screen.queryByLabelText("Warm-up set 1 distance"))
+            .not.toBeInTheDocument();
+        expect(screen.queryByLabelText("Main set 1 distance"))
+            .not.toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: "Close workout builder" }));
+        expect(screen.getByLabelText("Workout summary 1").textContent).toBe(expected);
+    } finally {
+        restore();
+    }
+});
+
+it("fills a saved workout skill with its default when no workout or activity was supplied", async () => {
+    api.fetchLessonPlan.mockResolvedValue({ plan: { rows: [{
+        skill: workoutSkill, activity: "", location: "Deep end", duration: 12,
+    }] } });
+    setup("Splash Fitness");
+    const summary = await screen.findByLabelText("Workout summary 1");
+    expect(summary.textContent).toBe(defaultWorkoutText(workoutSkill));
+    await screen.findByText("All changes saved.");
+    expect(api.saveLessonPlan.mock.calls[api.saveLessonPlan.mock.calls.length - 1][3][0]).toMatchObject({
+        skill: workoutSkill, activity: defaultWorkoutText(workoutSkill),
+        location: "Deep end", duration: 12,
+    });
 });

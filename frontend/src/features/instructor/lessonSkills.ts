@@ -24,3 +24,9 @@ const workoutSkillNames = new Set(
 export function isWorkoutSkill(name: string) {
     return workoutSkillNames.has(name);
 }
+
+export function defaultWorkoutText(name: string) {
+    return curriculumLevels.flatMap((level) => level.skills).find((skill) =>
+        skill.name === name
+    )?.defaultWorkoutText;
+}

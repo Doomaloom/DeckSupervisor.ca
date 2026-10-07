@@ -935,7 +935,8 @@
             {
                 "id": "Splash6:12",
                 "name": "Workout 300 m; 50 m Warm-up (Choice of Strokes); 4x25 m Front Crawl with 15 Sec Rests; 4x25 m Back Crawl with 15 Sec Rests; 50 m Cool-Down (Choice of Strokes)",
-                "compactName": "Workout 300m"
+                "compactName": "Workout 300m",
+                "defaultWorkoutText": "Workout 300 m\n50 m Warm-up (Choice of Strokes)\n4x25 m Front Crawl with 15 Sec Rests\n4x25 m Back Crawl with 15 Sec Rests\n50 m Cool-Down (Choice of Strokes)"
             },
             {
                 "id": "Splash6:13",
@@ -1001,7 +1002,8 @@
             {
                 "id": "Splash7:9",
                 "name": "Complete a 350 m or yd workout on 3 different Occasions Throughout the Training Course",
-                "compactName": "Workout 350m/yd ×3"
+                "compactName": "Workout 350m/yd ×3",
+                "defaultWorkoutText": "Warm-up:\n100 m or yd Swimmer's choice\n\nWork Set:\n6 x 25 m or yd any Stroke on 60 sec\n\nCool Down:\n100 m or yd Swimmer's choice"
             },
             {
                 "id": "Splash7:10",
@@ -1213,7 +1215,8 @@
             {
                 "id": "Splash9:10",
                 "name": "Complete a 600 m or yd Workout At Least 3 Times During the Training Course.",
-                "compactName": "Workout 600m/yd ×3"
+                "compactName": "Workout 600m/yd ×3",
+                "defaultWorkoutText": "Warm-up:\n25 m or yd Lifesaving kick,\n50 m or yd Back Crawl,\n50 m or yd Breaststroke,\n50 m or yd Front Crawl\n\nStroke drills:\n5 x 25 m or yd Instructor's choice\n\nWork Set:\n4 x 50 m or yd on 90 sec Instructor's choice\n\nCool down:\n100 m or yd Swimmer's choice"
             },
             {
                 "id": "Splash9:11",
@@ -1269,7 +1272,8 @@
             {
                 "id": "SplashFitness:5",
                 "name": "Workout (300 m): 50 m Warm-up, 4 x 25 m Front or Back Crawl with 15 sec. rests, 4 x 25 m Choice of Strokes with 15 sec. rests, 50 m Cool-Down",
-                "compactName": "Workout 300m"
+                "compactName": "Workout 300m",
+                "defaultWorkoutText": "Warm-up:\n50 m (choice of Strokes)\n\nmain set(s):\n4 x 25 m front or back crawl with 15 sec rests\n4 x 25 m (choice of strokes) with 15 sec rests\n\nCool Down:\n50 m (choice of strokes)"
             },
             {
                 "id": "SplashFitness:6",
@@ -1577,7 +1581,8 @@
             {
                 "id": "TeenAdult3:13",
                 "name": "Workout 300 m: 50 m Warm-up (choice of strokes); 4 x 25 Front Crawl with 15 sec Rests; 4 x 25 m Back Crawl with 15 sec Rests; 50 m Cool-down (choice of strokes)",
-                "compactName": "Workout 300m"
+                "compactName": "Workout 300m",
+                "defaultWorkoutText": "Workout 300 m: 50 m Warm-up (choice of strokes)\n4 x 25 Front Crawl with 15 sec Rests\n4 x 25 m Back Crawl with 15 sec Rests\n50 m Cool-down (choice of strokes)"
             },
             {
                 "id": "TeenAdult3:14",

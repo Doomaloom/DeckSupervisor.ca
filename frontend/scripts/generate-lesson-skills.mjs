@@ -16,18 +16,44 @@ const compactTitles = JSON.parse(
         "utf8",
     ),
 );
+function defaultWorkoutText(skill) {
+    if (!/\bworkouts?\b/i.test(skill.name)) return undefined;
+    const sets = (skill.subskills || []).filter((subskill) =>
+        /\d+\s*m\b/i.test(subskill.text) &&
+        subskill.group.some((group) =>
+            /warm[- ]?up|cool[- ]?down|work set|main set|stroke drills/i.test(group)
+        )
+    );
+    if (sets.length) {
+        let previousGroup = "";
+        return sets.flatMap((set) => {
+            const group = set.group.join(" / ").replace(/:$/, "");
+            const lines = group === previousGroup
+                ? [set.text]
+                : [...(previousGroup ? [""] : []), `${group}:`, set.text];
+            previousGroup = group;
+            return lines;
+        }).join("\n");
+    }
+    // Some curricula put the prescribed sets in the skill name.
+    if (/\d+\s*m[;:]/i.test(skill.name)) {
+        return skill.name.replace(/;\s*/g, "\n");
+    }
+    return undefined;
+}
 const levels = catalog.levels.map(({ id, name, skills }) => ({
     id,
     name,
-    skills: skills.map(({ id, name }) => ({
-        id,
-        name,
-        compactName: compactTitles[id] || name,
+    skills: skills.map((skill) => ({
+        id: skill.id,
+        name: skill.name,
+        compactName: compactTitles[skill.id] || skill.name,
+        defaultWorkoutText: defaultWorkoutText(skill),
     })),
 }));
 await writeFile(
     new URL("frontend/src/features/instructor/lessonSkills.json", root),
-    JSON.stringify(levels, null, 2) + "\n",
+    JSON.stringify(levels, null, 4) + "\n",
 );
 const supported = levels.filter((level) => level.skills.length).map((level) =>
     level.id
