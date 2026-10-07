@@ -1,3 +1,4 @@
+import activityCatalog from "../activity-library/activities.json";
 import type { WorkoutSection, WorkoutSet } from "./workout";
 export type WorkoutPreset = {
     id: string;
@@ -5,6 +6,7 @@ export type WorkoutPreset = {
     section: WorkoutSection;
     age: string;
     sourcePage: number;
+    sourceKind: "component" | "workout";
     sets: WorkoutSet[];
 };
 const s = (
@@ -29,54 +31,57 @@ function add(
     age: string,
     sourcePage: number,
     sets: WorkoutSet[],
+    sourceKind: WorkoutPreset["sourceKind"] = "component",
 ) {
-    presets.push({ id, title, section, age, sourcePage, sets });
+    presets.push({ id, title, section, age, sourcePage, sets, sourceKind });
 }
-add("sample-warm-up", "Sample warm-up", "warmUp", "All", 23, [
-    s(
-        1,
-        200,
-        "Mixed strokes",
-        undefined,
-        undefined,
-        "Easy pace; change stroke every 25 or 50 m.",
-    ),
-    s(
-        4,
-        50,
-        "Choice of stroke",
-        undefined,
-        undefined,
-        "Progress from relaxed to slightly faster, strong effort, then fast.",
-    ),
+function addComponent(
+    activityId: string,
+    section: WorkoutSection,
+    sets: WorkoutSet[],
+) {
+    const activity = activityCatalog.find((entry) => entry.id === activityId);
+    if (!activity || activity.category !== "Workouts") {
+        throw new Error(`Missing workout component: ${activityId}`);
+    }
+    add(
+        activity.id,
+        activity.title,
+        section,
+        "suitability" in activity ? activity.suitability ?? "All" : "All",
+        activity.sourcePages[0],
+        sets,
+    );
+}
+addComponent("workouts-warm-up-1", "warmUp", [
+    s(1, 200, "Mixed strokes", undefined, undefined,
+        "Easy pace; change stroke every 25 or 50 m."),
+]);
+addComponent("workouts-warm-up-2", "warmUp", [
+    s(4, 50, "Choice of stroke", undefined, undefined,
+        "Progress from relaxed to slightly faster, strong effort, then fast."),
+]);
+addComponent("workouts-warm-up-3", "warmUp", [
     s(1, 25, "Choice of stroke", undefined, undefined, "Relaxed."),
     s(1, 50, "Choice of stroke", undefined, undefined, "Slightly faster."),
     s(1, 75, "Choice of stroke", undefined, undefined, "Strong effort."),
     s(1, 100, "Choice of stroke", undefined, undefined, "Fast."),
 ]);
-add("sample-cool-down", "Sample cool-down", "coolDown", "All", 24, [
-    s(
-        1,
-        200,
-        "Mixed strokes",
-        undefined,
-        undefined,
-        "Easy pace; change stroke every 25 or 50 m.",
-    ),
-    s(
-        4,
-        50,
-        "Choice of stroke",
-        undefined,
-        undefined,
-        "Easy swimming; focus on distance per stroke.",
-    ),
+addComponent("workouts-cool-down-1", "coolDown", [
+    s(1, 200, "Mixed strokes", undefined, undefined,
+        "Easy pace; change stroke every 25 or 50 m."),
+]);
+addComponent("workouts-cool-down-2", "coolDown", [
+    s(4, 50, "Choice of stroke", undefined, undefined,
+        "Easy swimming; focus on distance per stroke."),
+]);
+addComponent("workouts-cool-down-3", "coolDown", [
     s(6, 25, "Choice of stroke", "rest", 25),
 ]);
 const young = "11 years and under",
     middle = "11-14 years",
     older = "13-18 years";
-add("young-main-a", "Main set A", "mainSet", young, 23, [
+addComponent("workouts-11-years-under-main-set-a", "mainSet", [
     s(4, 25, "Front crawl", "interval", 60),
     s(2, 25, "Flutter kick", "rest", 20, "With a kickboard."),
     s(2, 25, "Flutter kick", "rest", 20, "Without a board."),
@@ -89,7 +94,7 @@ add("young-main-a", "Main set A", "mainSet", young, 23, [
         "Odd lengths: closed fists. Even lengths: distance-per-stroke focus.",
     ),
 ]);
-add("young-main-b", "Main set B", "mainSet", young, 23, [
+addComponent("workouts-11-years-under-main-set-b", "mainSet", [
     s(2, 50, "Front crawl", "interval", 100),
     ...[25, 50, 75, 75, 50, 25].map((d) =>
         s(
@@ -102,12 +107,12 @@ add("young-main-b", "Main set B", "mainSet", young, 23, [
         )
     ),
 ]);
-add("middle-main-a", "Main set A", "mainSet", middle, 23, [
+addComponent("workouts-11-14-years-main-set-a", "mainSet", [
     s(4, 75, "Front crawl", "interval", 120),
     s(3, 50, "Front crawl", "interval", 80),
     s(2, 25, "Front crawl", "interval", 55),
 ]);
-add("middle-main-b", "Main set B", "mainSet", middle, 23, [
+addComponent("workouts-11-14-years-main-set-b", "mainSet", [
     s(
         8,
         25,
@@ -133,12 +138,12 @@ add("middle-main-b", "Main set B", "mainSet", middle, 23, [
         "Each repetition: 25 m whip kick without a board, then 50 m breaststroke.",
     ),
 ]);
-add("older-main-a", "Main set A", "mainSet", older, 24, [
+addComponent("workouts-13-18-years-main-set-a", "mainSet", [
     s(3, 100, "Front crawl", "interval", 165),
     s(2, 100, "Front crawl", "interval", 155),
     s(1, 100, "Front crawl", undefined, undefined, "Sprint."),
 ]);
-add("older-main-b", "Main set B: pyramid", "mainSet", older, 24, [
+addComponent("workouts-13-18-years-main-set-b", "mainSet", [
     s(1, 25, "Front crawl", "rest", 20),
     s(1, 50, "Back crawl", "rest", 30),
     s(1, 75, "Breaststroke", "rest", 45),
@@ -155,9 +160,9 @@ function complete(
     main: WorkoutSet[],
     cool: WorkoutSet[],
 ) {
-    add(id + "-warm", title, "warmUp", age, 24, warm);
-    add(id + "-main", title, "mainSet", age, 24, main);
-    add(id + "-cool", title, "coolDown", age, 24, cool);
+    add(id + "-warm", title, "warmUp", age, 24, warm, "workout");
+    add(id + "-main", title, "mainSet", age, 24, main, "workout");
+    add(id + "-cool", title, "coolDown", age, 24, cool, "workout");
 }
 const ladder = () =>
     [25, 50, 75].map((d) => s(1, d, "Choice of stroke", "rest", 20));
@@ -206,4 +211,7 @@ complete("older-2", "Interval workout 2", older, [
     s(1, 25, "Front crawl", "rest", 15),
 ], [s(1, 200, "Choice of stroke")]);
 export const workoutPresets = presets;
+export const workoutComponentPresets = presets.filter((preset) =>
+    preset.sourceKind === "component"
+);
 export const workoutAgeRanges = [young, middle, older];

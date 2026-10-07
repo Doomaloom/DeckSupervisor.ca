@@ -1,3 +1,4 @@
+import catalog from "../activity-library/activities.json";
 import { expect, it } from "vitest";
 import {
     newSet,
@@ -7,7 +8,7 @@ import {
     workoutError,
     workoutText,
 } from "./workout";
-import { workoutPresets } from "./workoutPresets";
+import { workoutComponentPresets, workoutPresets } from "./workoutPresets";
 
 it("preserves PDF distances and differentiates rest from send-offs", () => {
     const workout = newWorkout();
@@ -27,8 +28,8 @@ it("preserves PDF distances and differentiates rest from send-offs", () => {
     expect(workoutText(workout)).toContain("Total distance: 500 m");
 });
 it("all source presets produce valid sections without sharing editable state", () => {
-    expect(workoutPresets).toHaveLength(26);
-    expect(new Set(workoutPresets.map((p) => p.id)).size).toBe(26);
+    expect(workoutPresets).toHaveLength(30);
+    expect(new Set(workoutPresets.map((p) => p.id)).size).toBe(30);
     for (const preset of workoutPresets) {
         const workout = newWorkout();
         workout.sections = {
@@ -63,4 +64,23 @@ it("rejects incomplete, fractional, oversized and invalid timed workouts", () =>
         () => ({ ...newSet(), notes: "泳".repeat(500) }),
     );
     expect(workoutError(workout)).toMatch(/10,000-byte/);
+});
+
+it("matches the standalone workout components in the activity library", () => {
+    const components = catalog.filter((activity) =>
+        activity.category === "Workouts" &&
+        !activity.title.includes("Interval workout")
+    );
+    expect(workoutComponentPresets.map((preset) => preset.id).sort()).toEqual(
+        components.map((activity) => activity.id).sort(),
+    );
+    for (const preset of workoutComponentPresets) {
+        const activity = components.find((entry) => entry.id === preset.id)!;
+        expect(preset.title).toBe(activity.title);
+        expect(preset.sourcePage).toBe(activity.sourcePages[0]);
+    }
+    expect(workoutComponentPresets.filter((p) => p.section === "warmUp")
+        .map((p) => sectionDistance(p.sets))).toEqual([200, 200, 250]);
+    expect(workoutComponentPresets.filter((p) => p.section === "coolDown")
+        .map((p) => sectionDistance(p.sets))).toEqual([200, 200, 150]);
 });

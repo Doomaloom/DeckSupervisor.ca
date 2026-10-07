@@ -20,7 +20,7 @@ import {
     type WorkoutSet,
     workoutText,
 } from "./workout";
-import { workoutAgeRanges, workoutPresets } from "./workoutPresets";
+import { workoutAgeRanges, workoutComponentPresets } from "./workoutPresets";
 
 const activities = [
     "Choice of stroke",
@@ -167,7 +167,7 @@ export default function WorkoutBuilderModal(
                                     className="block w-full"
                                     value=""
                                     onChange={(event) => {
-                                        const preset = workoutPresets.find((
+                                        const preset = workoutComponentPresets.find((
                                             value,
                                         ) => value.id === event.target.value);
                                         if (
@@ -190,7 +190,7 @@ export default function WorkoutBuilderModal(
                                     <option value="">
                                         Select a PDF preset
                                     </option>
-                                    {workoutPresets.filter((preset) =>
+                                    {workoutComponentPresets.filter((preset) =>
                                         preset.section === section &&
                                         (age === "All" ||
                                             preset.age === "All" ||
@@ -200,8 +200,7 @@ export default function WorkoutBuilderModal(
                                             key={preset.id}
                                             value={preset.id}
                                         >
-                                            {preset.title} · {preset.age}{" "}
-                                            · scan page {preset.sourcePage}
+                                            {preset.title} · scan page {preset.sourcePage}
                                         </option>
                                     ))}
                                 </Select>

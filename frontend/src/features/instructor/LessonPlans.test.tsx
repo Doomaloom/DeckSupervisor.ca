@@ -617,17 +617,20 @@ it("builds, saves, reopens and converts a structured workout while preserving ro
             screen.getByRole("button", { name: "Build workout for row 1" }),
         );
         const dialog = screen.getByRole("dialog", { name: "Workout builder" });
+        expect(within(dialog).queryAllByRole("option", {
+            name: /Interval workout/,
+        })).toHaveLength(0);
         await user.click(
             within(dialog).getByRole("button", { name: "Use workout" }),
         );
         expect(within(dialog).getByRole("alert")).toHaveTextContent("warm-up");
         await user.selectOptions(
             within(dialog).getByLabelText("Choose warm-up preset"),
-            "young-1-warm",
+            "workouts-warm-up-1",
         );
         await user.selectOptions(
             within(dialog).getByLabelText("Choose main set preset"),
-            "young-1-main",
+            "workouts-11-years-under-main-set-a",
         );
         await user.click(
             within(dialog).getByRole("button", {
@@ -670,7 +673,7 @@ it("builds, saves, reopens and converts a structured workout while preserving ro
             within(dialog).getByRole("button", { name: "Use workout" }),
         );
         const summary = screen.getByLabelText("Workout summary 1").textContent;
-        expect(summary).toContain("Total distance: 400 m");
+        expect(summary).toContain("Total distance: 550 m");
         await screen.findByText("All changes saved.");
         const rows = api.saveLessonPlan.mock.calls[0][3];
         expect(rows[0]).toMatchObject({
