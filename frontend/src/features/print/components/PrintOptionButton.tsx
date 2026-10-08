@@ -1,4 +1,3 @@
-import React from "react";
 import type { PrintOption } from "../types";
 
 type PrintOptionButtonProps = {
@@ -19,11 +18,12 @@ function PrintOptionButton({
     const Icon = option.icon;
 
     return (
-        <div className="group relative flex h-full flex-col justify-between rounded-card border-2 border-secondary/20 bg-accent p-6 text-left text-secondary shadow-md transition hover:-translate-y-0.5 hover:border-secondary">
+        <div className={`group relative flex h-full flex-col justify-between rounded-card border-2 border-secondary/20 bg-accent p-6 text-left text-secondary shadow-md transition ${option.disabled ? "opacity-70" : "hover:-translate-y-0.5 hover:border-secondary"}`}>
             <button
                 type="button"
-                className="flex h-full w-full items-center gap-4 rounded-2xl border-2 border-transparent p-2 text-left transition hover:border-secondary/40 focus-visible:border-secondary"
+                className={`flex h-full w-full items-center gap-4 rounded-2xl border-2 border-transparent p-2 text-left transition ${option.disabled ? "cursor-not-allowed" : "hover:border-secondary/40 focus-visible:border-secondary"}`}
                 aria-label={option.title}
+                disabled={option.disabled}
                 onClick={onOpen}
             >
                 <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/10 text-secondary">

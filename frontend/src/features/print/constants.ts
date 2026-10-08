@@ -1,4 +1,5 @@
 import {
+    ArrowPathIcon,
     CalendarDaysIcon,
     ClipboardDocumentListIcon,
     FolderIcon,
@@ -20,6 +21,13 @@ export const printOptions: PrintOption[] = [
         description:
             "Create instructor-ready packets grouped by class or block.",
         icon: UsersIcon,
+    },
+    {
+        key: "updates",
+        title: "Print Updates",
+        description: "Print Updates will be available here soon.",
+        icon: ArrowPathIcon,
+        disabled: true,
     },
     {
         key: "masterlist",
