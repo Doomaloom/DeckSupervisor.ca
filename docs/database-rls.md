@@ -37,8 +37,12 @@ hashes for comparison on future uploads.
 
 The disposable database suite (`scripts/test-rls.sh`) covers this migration's
 repeatability, baseline comparisons, deduplication, removal/new-class handling,
-session isolation, read/write permissions and stale acknowledgements. This
-migration has not been applied to a hosted database as part of local development.
+session isolation, read/write permissions and stale acknowledgements.
+
+Applied through Supabase MCP to project `eralmonpesbqjgxagabb` on 2026-10-08,
+recorded as migration `20261008152305_roster_print_updates`. Verified both tables,
+session/course primary keys, foreign keys, RLS policies, authenticated RPC access,
+and denial of anonymous access and direct authenticated table writes.
 
 Use [`backend/supabase_rls_reset.sql`](../backend/supabase_rls_reset.sql) as the single policy installation/update script. It supersedes the three historical RLS/invite scripts; do not run those afterward. It covers all 14 application tables defined in this repository. The script does not provision missing tables, change application records, or touch policies on other tables or Supabase-managed schemas.
 
