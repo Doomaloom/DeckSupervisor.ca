@@ -173,6 +173,7 @@ it("honors deep links and updates their session after a confirmed draft discard"
     );
     await user.click(screen.getByRole("link", { name: "Lesson Plans" }));
     await screen.findByRole("button", { name: "Add activity" });
+    expect(screen.getByText("0 / 30 min planned")).toBeVisible();
     expect(screen.getByRole("button", { name: "Splash 1 · a · 09:00 · Alex" }))
         .toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByLabelText("Activity / drill 1")).not

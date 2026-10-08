@@ -18,6 +18,7 @@ import WorkoutBuilderModal from "../workout-builder/WorkoutBuilderModal";
 import { workoutText } from "../workout-builder/workout";
 import PlanSelection from "./PlanSelection";
 import DurationPicker from "./DurationPicker";
+import { timeToMinutes } from "../schematic/utils/time";
 import {
     curriculumLevels,
     defaultWorkoutText,
@@ -73,11 +74,12 @@ function rowActivities(row: LessonRow) {
 }
 
 export function LessonEditor(
-    { sessionId, classId, week, level }: {
+    { sessionId, classId, week, level, lessonDuration }: {
         sessionId: string;
         classId: string;
         week: string;
         level: string;
+        lessonDuration: number;
     },
 ) {
     const [workoutRow, setWorkoutRow] = useState<number | null>(null);
@@ -89,6 +91,8 @@ export function LessonEditor(
     const dropPending = useRef(false);
     const [reorderNotice, setReorderNotice] = useState("");
     const [rows, setRows] = useState<LessonRow[]>([]);
+    const totalDuration = rows.reduce((total, row) =>
+        total + (Number.isFinite(row.duration) ? Math.max(0, row.duration) : 0), 0);
     const [savedContent, setSavedContent] = useState(() => planContent([], null));
     const assignedLevel = findCurriculumLevel(level);
     const [curriculumLevel, setCurriculumLevel] = useState("");
@@ -327,7 +331,6 @@ export function LessonEditor(
                                     "Skill",
                                     "Activity / drill",
                                     "Pool location",
-                                    "Duration",
                                 ].map((h) => (
                                     <th
                                         key={h}
@@ -336,6 +339,12 @@ export function LessonEditor(
                                         {h}
                                     </th>
                                 ))}
+                                <th scope="col" className="border-b border-secondary/20 p-3 align-middle">
+                                    <span className="sr-only">Duration: </span>
+                                    <span className="block whitespace-nowrap">
+                                        {totalDuration}{lessonDuration > 0 ? ` / ${lessonDuration}` : ""} min planned
+                                    </span>
+                                </th>
                                 <th className="w-14">
                                     <span className="sr-only">Delete</span>
                                 </th>
@@ -862,6 +871,7 @@ export default function LessonPlans() {
                     classId={c.id}
                     week={w}
                     level={c.level}
+                    lessonDuration={(timeToMinutes(c.end_time) - timeToMinutes(c.start_time) + 1440) % 1440}
                 />
             )}
         </PlanSelection>

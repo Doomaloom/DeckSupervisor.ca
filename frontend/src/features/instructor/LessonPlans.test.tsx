@@ -36,6 +36,7 @@ function setup(level = "Splash 1") {
                         classId="c"
                         week="2026-10-05"
                         level={level}
+                        lessonDuration={30}
                     />
                 ),
             }])}
@@ -73,6 +74,23 @@ it("saves changed content once after 100 ms idle, without saving on load or repe
         cleanup();
         vi.useRealTimers();
     }
+});
+it("compares the total activity duration with the lesson length as rows change", async () => {
+    api.fetchLessonPlan.mockResolvedValue({ plan: { rows: [
+        { skill: "", activity: "First", location: "Lane", duration: 12 },
+        { skill: "", activity: "Second", location: "Lane", duration: 10 },
+    ] } });
+    const user = userEvent.setup();
+    setup();
+    expect(await screen.findByText("22 / 30 min planned")).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Duration (minutes) 1"), { target: { value: "20" } });
+    expect(screen.getByText("30 / 30 min planned")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Increase duration by 5 minutes for row 2" }));
+    expect(screen.getByText("35 / 30 min planned")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Delete row 1" }));
+    expect(screen.getByText("15 / 30 min planned")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Add activity" }));
+    expect(screen.getByText("20 / 30 min planned")).toBeVisible();
 });
 it("skips untouched rows and retries autosave after a new edit", async () => {
     const user = userEvent.setup();
@@ -335,6 +353,7 @@ it("guards navigation when only the private curriculum level has changed", async
                 classId="c"
                 week="2026-10-05"
                 level="Splash Private"
+                lessonDuration={30}
             />
         ),
     }, { path: "/away", element: <p>Another page</p> }]);
