@@ -619,6 +619,11 @@ function SessionPlanningPage() {
             data-component="session-planning-page"
             className="mx-auto flex w-full max-w-7xl flex-col gap-6"
         >
+            <header>
+                <h2 className="text-2xl font-semibold text-secondary">
+                    Session Planning
+                </h2>
+            </header>
             <PlannerHeader
                 dataset={dataset}
                 error={error}
@@ -669,7 +674,7 @@ function SessionPlanningPage() {
                     <div
                         className={`grid gap-6 ${
                             isInfoPanelOpen
-                                ? "lg:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.7fr)]"
+                                ? "xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
                                 : ""
                         }`}
                     >

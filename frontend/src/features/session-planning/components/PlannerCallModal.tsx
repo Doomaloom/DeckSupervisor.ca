@@ -61,14 +61,14 @@ function PlannerCallModal({
         >
             <div
                 data-component="planner-call-modal-panel"
-                className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-card border-2 border-secondary/20 bg-accent p-7 text-secondary shadow-lg"
+                className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-card border-2 border-secondary/20 bg-accent p-4 text-secondary shadow-xl md:p-6"
             >
-                <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-secondary/20 pb-4">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
                             Call Script
                         </p>
-                        <h3 className="mt-2 text-2xl font-semibold">
+                        <h3 className="mt-2 text-2xl font-semibold text-secondary">
                             {activeCallParticipant.name}
                         </h3>
                         <p className="mt-1 text-sm text-secondary/70">
@@ -80,7 +80,7 @@ function PlannerCallModal({
                     </div>
                     <button
                         type="button"
-                        className="rounded-full border border-secondary/30 px-3 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
+                        className="rounded-2xl border border-secondary/30 bg-bg px-3 py-2 text-sm font-semibold text-secondary transition hover:border-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                         onClick={onClose}
                     >
                         Close

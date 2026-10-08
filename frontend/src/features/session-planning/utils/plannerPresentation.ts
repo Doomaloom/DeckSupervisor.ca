@@ -17,19 +17,6 @@ export const dayNames = SESSION_DAY_LABELS;
 
 export const dayOrder = SESSION_DAY_ORDER;
 
-export function statusClasses(status: PlannerClassStatus) {
-    switch (status) {
-        case "planned_move":
-            return "border-sky-400 bg-sky-50 text-sky-900";
-        case "pending_cancellation":
-            return "border-amber-400 bg-amber-50 text-amber-900";
-        case "cancelled":
-            return "border-rose-400 bg-rose-50 text-rose-900";
-        default:
-            return "border-emerald-400 bg-emerald-50 text-emerald-900";
-    }
-}
-
 export function capacityClasses(plannerClass: PlannerClass) {
     switch (getPlannerClassCapacityBand(plannerClass)) {
         case "red":
@@ -130,7 +117,7 @@ export function getPlannerBoardStatusClasses(
     status: PlannerClassStatus,
     isSelected: boolean,
 ) {
-    const selectedRing = isSelected ? "ring-2 ring-secondary ring-inset" : "";
+    const selectedRing = isSelected ? "ring-2 ring-primary ring-inset" : "";
     switch (status) {
         case "planned_move":
             return `${selectedRing} border-sky-500 bg-sky-100 text-sky-950`;
@@ -139,6 +126,6 @@ export function getPlannerBoardStatusClasses(
         case "cancelled":
             return `${selectedRing} border-rose-500 bg-rose-100 text-rose-950`;
         default:
-            return `${selectedRing} border-black text-black`;
+            return `${selectedRing} border-secondary/50 text-secondary`;
     }
 }

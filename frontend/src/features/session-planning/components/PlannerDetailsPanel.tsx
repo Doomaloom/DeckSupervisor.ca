@@ -13,7 +13,7 @@ import {
     type PlannerAlternativeGroups,
     plannerCallStatusOptions,
 } from "../../../lib/sessionPlanner";
-import { dayNames, statusClasses } from "../utils/plannerPresentation";
+import { dayNames } from "../utils/plannerPresentation";
 
 type PlannerDetailsPanelProps = {
     alternatives: PlannerAlternativeGroups;
@@ -99,19 +99,11 @@ function PlannerDetailsPanel({
         ...alternatives.availableAlternatives,
         ...alternatives.fullAlternatives,
     ];
-    const statusLabel = selectedClass?.planningStatus === "planned_move"
-        ? "Planned Move"
-        : selectedClass?.planningStatus === "pending_cancellation"
-        ? "Pending Cancellation"
-        : selectedClass?.planningStatus === "cancelled"
-        ? "Cancelled"
-        : "";
-
     return (
         <div
             id="planner-details-panel"
             data-component="planner-details-panel"
-            className="flex min-h-[70vh] flex-col gap-4 rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md"
+            className="flex min-w-0 flex-col gap-4 rounded-card border-2 border-secondary/20 bg-accent p-4 text-secondary shadow-md md:p-6 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto"
         >
             {!selectedClass || !dataset
                 ? (
@@ -127,7 +119,7 @@ function PlannerDetailsPanel({
                             </div>
                             <button
                                 type="button"
-                                className="rounded-full border border-secondary/30 px-3 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
+                                className="rounded-2xl border border-secondary/30 bg-bg px-3 py-2 text-sm font-semibold text-secondary transition hover:border-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                                 onClick={() => setIsInfoPanelOpen(false)}
                             >
                                 Close
@@ -141,89 +133,51 @@ function PlannerDetailsPanel({
                 )
                 : (
                     <>
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
-                                    {dayNames[selectedClass.dayOfWeek] ??
-                                        selectedClass.dayOfWeek} •{" "}
-                                    {selectedClass.facility}
-                                </p>
-                                <div className="mt-2 flex flex-wrap items-center gap-2">
-                                    <h3 className="text-xl font-semibold">
-                                        {selectedClass.serviceName} -{" "}
-                                        {selectedClass.eventId}
+                        <div className="space-y-4 border-b border-secondary/20 pb-4">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-secondary/70">
+                                        Class details
+                                    </p>
+                                    <h3 className="mt-1 break-words text-xl font-semibold">
+                                        {selectedClass.serviceName}
                                     </h3>
-                                    {selectedClass.planningStatus !== "active"
-                                        ? (
-                                            <span
-                                                className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${
-                                                    statusClasses(
-                                                        selectedClass
-                                                            .planningStatus,
-                                                    )
-                                                }`}
-                                            >
-                                                {statusLabel}
-                                            </span>
-                                        )
-                                        : null}
+                                    <p className="mt-1 text-sm text-secondary/75">
+                                        {selectedClass.eventId} · {selectedClass.eventTime}
+                                    </p>
+                                    <p className="text-sm text-secondary/75">
+                                        {dayNames[selectedClass.dayOfWeek] ?? selectedClass.dayOfWeek} · {selectedClass.facility}
+                                    </p>
                                 </div>
-                                <p className="mt-1 text-sm text-secondary/70">
-                                    {selectedClass.eventTime}
-                                </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
                                 <button
                                     type="button"
-                                    className="rounded-full border border-secondary/30 px-3 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-bg"
+                                    className="rounded-2xl border border-secondary/30 bg-bg px-3 py-2 text-sm font-semibold text-secondary transition hover:border-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                                     onClick={() => setIsInfoPanelOpen(false)}
                                 >
                                     Close
                                 </button>
-                                <button
-                                    type="button"
-                                    className="rounded-full bg-sky-100 px-3 py-2 text-sm font-semibold text-sky-900 transition hover:-translate-y-0.5"
-                                    onClick={() =>
-                                        void setClassStatus(
-                                            selectedClass.classKey,
-                                            "planned_move",
-                                        )}
-                                >
-                                    Planned Move
-                                </button>
-                                <button
-                                    type="button"
-                                    className="rounded-full bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-900 transition hover:-translate-y-0.5"
-                                    onClick={() =>
-                                        void setClassStatus(
-                                            selectedClass.classKey,
-                                            "pending_cancellation",
-                                        )}
-                                >
-                                    Pending Cancellation
-                                </button>
-                                <button
-                                    type="button"
-                                    className="rounded-full bg-rose-100 px-3 py-2 text-sm font-semibold text-rose-900 transition hover:-translate-y-0.5"
-                                    onClick={() =>
-                                        void setClassStatus(
-                                            selectedClass.classKey,
-                                            "cancelled",
-                                        )}
-                                >
-                                    Cancelled
-                                </button>
-                                <button
-                                    type="button"
-                                    className="rounded-full bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-900 transition hover:-translate-y-0.5"
-                                    onClick={() =>
-                                        void setClassStatus(
-                                            selectedClass.classKey,
-                                            "active",
-                                        )}
-                                >
-                                    Active
-                                </button>
+                            </div>
+                            <div role="group" aria-label="Planning status" className="grid grid-cols-2 gap-2">
+                                {([
+                                    ["active", "Active", "border-emerald-400 bg-emerald-50 text-emerald-900"],
+                                    ["planned_move", "Planned Move", "border-sky-400 bg-sky-50 text-sky-900"],
+                                    ["pending_cancellation", "Pending Cancellation", "border-amber-400 bg-amber-50 text-amber-900"],
+                                    ["cancelled", "Cancelled", "border-rose-400 bg-rose-50 text-rose-900"],
+                                ] as const).map(([status, label, colorClass]) => (
+                                    <button
+                                        key={status}
+                                        type="button"
+                                        aria-pressed={selectedClass.planningStatus === status}
+                                        className={`min-h-11 rounded-2xl border-2 px-2 py-2 text-sm font-semibold transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${colorClass} ${
+                                            selectedClass.planningStatus === status
+                                                ? "ring-2 ring-secondary/30 ring-offset-2"
+                                                : "opacity-75 hover:opacity-100"
+                                        }`}
+                                        onClick={() => void setClassStatus(selectedClass.classKey, status)}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 

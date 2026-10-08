@@ -6,7 +6,6 @@ import {
 } from "../../../lib/sessionPlanner";
 import {
     COLUMN_MIN_WIDTH_PX,
-    HEADER_HEIGHT_REM,
     SLOT_MINUTES,
 } from "../../schematic/constants";
 import { buildTimeLabels, timeToMinutes } from "../../schematic/utils/time";
@@ -270,8 +269,8 @@ export function usePlannerViewModel(
 }
 
 export const plannerBoardLayout = {
-    columnMinWidthPx: COLUMN_MIN_WIDTH_PX,
-    headerHeightRem: HEADER_HEIGHT_REM,
+    columnMinWidthPx: Math.max(COLUMN_MIN_WIDTH_PX, 180),
+    headerHeightRem: 3.5,
     slotHeightRem: PLANNER_SLOT_HEIGHT_REM,
     slotMinutes: SLOT_MINUTES,
 };

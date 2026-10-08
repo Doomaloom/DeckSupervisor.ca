@@ -84,17 +84,10 @@ function PlannerHeader({
         <div
             id="planner-header"
             data-component="planner-header"
-            className="rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md"
+            className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md"
         >
-            <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary/70">
-                        Session Planning
-                    </p>
-                    <h2 className="mt-3 text-2xl font-semibold">
-                        Session Planning / Reorganization
-                    </h2>
-                </div>
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-secondary/20 pb-4">
+                <h3 className="text-lg font-semibold">Workspace tools</h3>
                 <div className="flex flex-wrap gap-2">
                     <button
                         type="button"
@@ -143,16 +136,11 @@ function PlannerHeader({
                         : null}
                 </div>
             </div>
-            <p className="mt-2 max-w-3xl text-secondary/80">
-                Upload the matching activity summary and roster exports. The
-                activity summary supplies every class, while the roster attaches
-                participant details.
-            </p>
             {!shareCode
                 ? (
                     <>
-                        <div className="mt-5 flex flex-wrap items-center gap-4">
-                            <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-secondary bg-bg px-5 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-primary">
+                        <div className="mt-5 flex flex-wrap items-center gap-3">
+                            <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-secondary/30 bg-bg px-5 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-primary hover:shadow-sm">
                                 <span>
                                     {activitySummaryFile
                                         ? activitySummaryFile.name
@@ -170,7 +158,7 @@ function PlannerHeader({
                                     }}
                                 />
                             </label>
-                            <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-5 text-sm font-semibold text-primary transition hover:-translate-y-0.5 hover:border-primary hover:bg-primary/10">
+                            <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-secondary/30 bg-bg px-5 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-primary hover:shadow-sm">
                                 <span>
                                     {rosterFile
                                         ? rosterFile.name

@@ -230,253 +230,212 @@ function PlannerBoard({
     };
 
     return (
-        <div
+        <section
             id="planner-board"
             data-component="planner-board"
-            className="flex min-h-[70vh] flex-col gap-4 rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md"
+            className="min-w-0 space-y-4"
         >
-            <div className="flex flex-wrap gap-2">
-                {availableDays.map((day) => (
-                    <button
-                        key={day}
-                        type="button"
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                            selectedDay === day
-                                ? "bg-secondary text-accent"
-                                : "bg-bg text-secondary hover:bg-secondary/10"
-                        }`}
-                        onClick={() => setSelectedDay(day)}
-                    >
-                        {dayNames[day] ?? day}
-                    </button>
-                ))}
+            <div className="space-y-4 rounded-card border-2 border-secondary/20 bg-accent p-4 text-secondary shadow-md md:p-6">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 className="text-lg font-semibold">Class schedule</h3>
+                    <p className="text-sm text-secondary/70">
+                        {visibleClasses.length} classes · {boardColumns.length} lanes
+                    </p>
+                </div>
+                <div role="group" aria-label="Planning day" className="space-y-2">
+                    <p className="text-sm font-semibold">Day</p>
+                    <div className="flex flex-wrap gap-2">
+                        {availableDays.map((day) => (
+                            <button
+                                key={day}
+                                type="button"
+                                aria-pressed={selectedDay === day}
+                                className={`min-h-11 rounded-2xl border-2 px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                                    selectedDay === day
+                                        ? "border-secondary bg-secondary text-accent shadow-sm"
+                                        : "border-secondary/20 bg-accent text-secondary hover:border-primary hover:shadow-sm"
+                                }`}
+                                onClick={() => setSelectedDay(day)}
+                            >
+                                {dayNames[day] ?? day}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div role="group" aria-label="Planning location" className="space-y-2 border-t border-secondary/20 pt-4">
+                    <p className="text-sm font-semibold">Location</p>
+                    <div className="flex flex-wrap gap-2">
+                        {availableLocations.map((location) => (
+                            <button
+                                key={location}
+                                type="button"
+                                aria-pressed={selectedLocation === location}
+                                className={`min-h-11 rounded-2xl border-2 px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                                    selectedLocation === location
+                                        ? "border-secondary bg-secondary text-accent shadow-sm"
+                                        : "border-secondary/20 bg-accent text-secondary hover:border-primary hover:shadow-sm"
+                                }`}
+                                onClick={() => setSelectedLocation(location)}
+                            >
+                                {location}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-                {availableLocations.map((location) => (
-                    <button
-                        key={location}
-                        type="button"
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                            selectedLocation === location
-                                ? "bg-primary text-accent"
-                                : "bg-bg text-secondary hover:bg-primary/10"
-                        }`}
-                        onClick={() => setSelectedLocation(location)}
+            {visibleClasses.length === 0
+                ? (
+                    <div className="rounded-2xl border border-secondary/20 bg-accent p-5 text-sm text-secondary/70 shadow-sm">
+                        No classes found for this day and location.
+                    </div>
+                )
+                : (
+                    <div
+                        className="min-w-0 overflow-x-auto rounded-2xl border border-secondary/20 bg-accent text-secondary shadow-sm"
+                        aria-label="Planning schematic"
                     >
-                        {location}
-                    </button>
-                ))}
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto pr-1">
-                {visibleClasses.length === 0
-                    ? (
-                        <div className="rounded-2xl border border-secondary/20 bg-bg p-5 text-sm text-secondary/70">
-                            No classes found for this day and location.
-                        </div>
-                    )
-                    : (
-                        <div className="flex min-w-[760px] items-start justify-center gap-4">
-                            <TimeRail
-                                className="mt-8 flex min-w-[70px] flex-col items-center text-xs text-secondary"
-                                headerHeightRem={headerHeightRem}
-                                slotHeightRem={slotHeightRem}
-                                labels={timeLabels}
-                                keyPrefix="planner-left"
-                            />
-
-                            <div className="flex-1">
-                                <div className="flex flex-col gap-3">
-                                    <div className="rounded-xl bg-primary px-4 py-2 text-center font-semibold text-accent">
-                                        {dayNames[selectedDay] ?? selectedDay} •
-                                        {" "}
-                                        {selectedLocation}
-                                    </div>
-                                    <div className="flex">
-                                        {boardColumns.map((
-                                            column,
-                                            columnIndex,
-                                        ) => (
-                                            <div
-                                                key={`planner-column-${columnIndex}`}
-                                                className="flex flex-1 flex-col"
-                                                style={{
-                                                    minWidth:
-                                                        `${columnMinWidthPx}px`,
-                                                }}
-                                                onDragOver={(event) =>
-                                                    event.preventDefault()}
-                                                onDrop={() =>
-                                                    void handleColumnDrop(
-                                                        columnIndex,
-                                                    )}
-                                            >
-                                                <div
-                                                    className={`border border-black bg-accent p-2 ${
-                                                        columnIndex === 0
-                                                            ? "border-black"
-                                                            : "border-black border-l-0"
-                                                    }`}
-                                                >
-                                                    <div className="w-full rounded-none border border-black bg-white px-2 py-1 text-center text-sm font-semibold text-black">
-                                                        Class Lane{" "}
-                                                        {columnIndex + 1}
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    className={`relative border border-black border-t-0 bg-bg ${
-                                                        columnIndex === 0
-                                                            ? "border-black"
-                                                            : "border-black border-l-0"
-                                                    }`}
-                                                    style={{
-                                                        height:
-                                                            `${scheduleHeightRem}rem`,
-                                                    }}
-                                                >
-                                                    {column.map((course) => {
-                                                        const startOffset =
-                                                            (course
-                                                                .startMinutes -
-                                                                scheduleStartMinutes) /
-                                                            slotMinutes;
-                                                        const courseHeight =
-                                                            course.runningTime /
-                                                            slotMinutes;
-                                                        const plannerClass =
-                                                            visibleClasses.find(
-                                                                (item) =>
-                                                                    item.classKey ===
-                                                                        course
-                                                                            .classKey,
-                                                            );
-                                                        const isSelected =
-                                                            selectedClassKey ===
-                                                                course.classKey;
-                                                        const statusLabel =
-                                                            course
-                                                                    .planningStatus ===
-                                                                    "planned_move"
-                                                                ? "Planned Move"
-                                                                : course
-                                                                        .planningStatus ===
-                                                                        "pending_cancellation"
-                                                                ? "Pending Cancellation"
-                                                                : course
-                                                                        .planningStatus ===
-                                                                        "cancelled"
-                                                                ? "Cancelled"
-                                                                : "";
-                                                        return (
-                                                            <button
-                                                                key={course
-                                                                    .classKey}
-                                                                type="button"
-                                                                draggable
-                                                                className={`absolute left-0 right-0 flex flex-col overflow-hidden border text-left text-xs transition hover:z-10 hover:-translate-y-0.5 ${
-                                                                    getPlannerBoardStatusClasses(
-                                                                        course
-                                                                            .planningStatus,
-                                                                        isSelected,
-                                                                    )
-                                                                } ${
-                                                                    plannerClass
-                                                                        ? capacityClasses(
-                                                                            plannerClass,
-                                                                        )
-                                                                        : "bg-white"
-                                                                }`}
-                                                                onClick={() => {
-                                                                    setSelectedClassKey(
-                                                                        course
-                                                                            .classKey,
-                                                                    );
-                                                                    setIsInfoPanelOpen(
-                                                                        true,
-                                                                    );
-                                                                }}
-                                                                onDragStart={(
-                                                                    event,
-                                                                ) => handleDragStart(
-                                                                    event,
-                                                                    course,
-                                                                    columnIndex,
-                                                                )}
-                                                                onDragOver={(
-                                                                    event,
-                                                                ) => event
-                                                                    .preventDefault()}
-                                                                onDrop={() =>
-                                                                    void handleCourseDrop(
-                                                                        course,
-                                                                        columnIndex,
-                                                                    )}
-                                                                style={{
-                                                                    top: `${
-                                                                        startOffset *
-                                                                        slotHeightRem
-                                                                    }rem`,
-                                                                    height: `${
-                                                                        courseHeight *
-                                                                        slotHeightRem
-                                                                    }rem`,
-                                                                }}
-                                                            >
-                                                                <div className="flex flex-1 flex-col gap-1 px-2 py-2">
-                                                                    <div className="flex items-start justify-between gap-2">
-                                                                        <p className="line-clamp-2 font-semibold">
-                                                                            {course
-                                                                                .serviceName}
-                                                                        </p>
-                                                                        <span className="rounded-full border border-black/20 bg-white/70 px-1.5 py-0.5 text-[0.6rem] font-semibold">
-                                                                            {course
-                                                                                .eventId}
-                                                                        </span>
-                                                                    </div>
-                                                                    {statusLabel
-                                                                        ? (
-                                                                            <span className="w-fit rounded-full border border-current/20 bg-white/65 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.08em]">
-                                                                                {statusLabel}
-                                                                            </span>
-                                                                        )
-                                                                        : null}
-                                                                    <p className="text-[0.7rem]">
-                                                                        {course
-                                                                            .eventTime}
-                                                                    </p>
-                                                                </div>
-                                                                <div className="border-t border-black bg-white/70 px-2 py-0.5 text-center text-[0.7rem] font-semibold">
-                                                                    {course
-                                                                        .bookedCount}
-                                                                    {" "}
-                                                                    / {course
-                                                                        .maximumCapacity}
-                                                                    {" "}
-                                                                    • W {course
-                                                                        .waitlistCount}
-                                                                </div>
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
+                        <div
+                            className="w-max min-w-full"
+                            style={{
+                                minWidth: `${Math.max(760, 128 + boardColumns.length * columnMinWidthPx)}px`,
+                            }}
+                        >
+                            <div className="flex">
+                                <TimeRail
+                                    className="sticky left-0 z-20 w-16 shrink-0 bg-accent text-xs font-medium"
+                                    headerClassName="bg-primary"
+                                    rowBorderClassName="border-secondary/20"
+                                    headerHeightRem={headerHeightRem}
+                                    slotHeightRem={slotHeightRem}
+                                    labels={timeLabels}
+                                    keyPrefix="planner-left"
+                                />
+                                {boardColumns.map((column, columnIndex) => (
+                                    <div
+                                        key={`planner-column-${columnIndex}`}
+                                        className="min-w-0 flex-1"
+                                        style={{ minWidth: `${columnMinWidthPx}px` }}
+                                        onDragOver={(event) => event.preventDefault()}
+                                        onDrop={(event) => {
+                                            event.preventDefault();
+                                            void handleColumnDrop(columnIndex);
+                                        }}
+                                    >
+                                        <div
+                                            className="flex items-center justify-center border-l border-primary bg-primary px-2 py-2 text-center text-sm font-semibold text-accent"
+                                            style={{ height: `${headerHeightRem}rem` }}
+                                        >
+                                            Class Lane {columnIndex + 1}
+                                        </div>
+                                        <div
+                                            className="relative border-l border-secondary/20 bg-accent"
+                                            style={{ height: `${scheduleHeightRem}rem` }}
+                                        >
+                                            <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                                                {timeLabels.map((label) => (
+                                                    <div
+                                                        key={`${columnIndex}-${label}`}
+                                                        className="border-b border-secondary/10 last:border-b-0"
+                                                        style={{ height: `${slotHeightRem}rem` }}
+                                                    />
+                                                ))}
                                             </div>
-                                        ))}
+                                            {column.map((course) => {
+                                                const startOffset =
+                                                    (course.startMinutes - scheduleStartMinutes) /
+                                                    slotMinutes;
+                                                const courseHeight = course.runningTime / slotMinutes;
+                                                const plannerClass = visibleClasses.find(
+                                                    (item) => item.classKey === course.classKey,
+                                                );
+                                                const isSelected = selectedClassKey === course.classKey;
+                                                const statusLabel = course.planningStatus === "planned_move"
+                                                    ? "Planned Move"
+                                                    : course.planningStatus === "pending_cancellation"
+                                                    ? "Pending Cancellation"
+                                                    : course.planningStatus === "cancelled"
+                                                    ? "Cancelled"
+                                                    : "";
+                                                return (
+                                                    <button
+                                                        key={course.classKey}
+                                                        type="button"
+                                                        draggable
+                                                        data-planner-course={course.classKey}
+                                                        aria-pressed={isSelected}
+                                                        aria-label={`${course.serviceName}, ${course.eventTime}, ${course.eventId}`}
+                                                        className={`absolute inset-x-0 z-10 flex flex-col overflow-hidden border text-left text-[clamp(0.75rem,0.85vw,0.95rem)] leading-tight transition-colors hover:z-20 hover:brightness-95 focus-visible:z-20 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary ${
+                                                            getPlannerBoardStatusClasses(
+                                                                course.planningStatus,
+                                                                isSelected,
+                                                            )
+                                                        } ${
+                                                            course.planningStatus === "active" && plannerClass
+                                                                ? capacityClasses(plannerClass)
+                                                                : ""
+                                                        }`}
+                                                        onClick={() => {
+                                                            setSelectedClassKey(course.classKey);
+                                                            setIsInfoPanelOpen(true);
+                                                        }}
+                                                        onDragStart={(event) => handleDragStart(
+                                                            event,
+                                                            course,
+                                                            columnIndex,
+                                                        )}
+                                                        onDragEnd={() => setDragged(null)}
+                                                        onDragOver={(event) => event.preventDefault()}
+                                                        onDrop={(event) => {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
+                                                            void handleCourseDrop(course, columnIndex);
+                                                        }}
+                                                        style={{
+                                                            top: `${startOffset * slotHeightRem}rem`,
+                                                            height: `${courseHeight * slotHeightRem}rem`,
+                                                        }}
+                                                    >
+                                                        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-0.5 px-2 py-1 text-center">
+                                                            <span className="w-full break-words font-semibold">
+                                                                {course.serviceName}
+                                                            </span>
+                                                            <span className="w-full truncate text-[0.7rem]">
+                                                                {course.eventId} · {course.eventTime}
+                                                            </span>
+                                                            {statusLabel && (
+                                                                <span className="max-w-full truncate rounded-full border border-current/25 bg-white/65 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wide">
+                                                                    {statusLabel}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className="shrink-0 border-t border-current/25 bg-white/60 px-1 py-0.5 text-center text-[0.7rem] font-semibold">
+                                                            {course.bookedCount} of {course.maximumCapacity}
+                                                            {course.waitlistCount > 0
+                                                                ? ` · ${course.waitlistCount} waiting`
+                                                                : ""}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
+                                <TimeRail
+                                    className="sticky right-0 z-20 w-16 shrink-0 border-l border-secondary/20 bg-accent text-xs font-medium"
+                                    headerClassName="bg-primary"
+                                    rowBorderClassName="border-secondary/20"
+                                    headerHeightRem={headerHeightRem}
+                                    slotHeightRem={slotHeightRem}
+                                    labels={timeLabels}
+                                    keyPrefix="planner-right"
+                                />
                             </div>
-
-                            <TimeRail
-                                className="mt-8 flex min-w-[70px] flex-col items-center text-xs text-secondary"
-                                headerHeightRem={headerHeightRem}
-                                slotHeightRem={slotHeightRem}
-                                labels={timeLabels}
-                                keyPrefix="planner-right"
-                            />
+                            <div className="h-3 bg-primary" aria-hidden="true" />
                         </div>
-                    )}
-            </div>
-        </div>
+                    </div>
+                )}
+        </section>
     );
 }
 
