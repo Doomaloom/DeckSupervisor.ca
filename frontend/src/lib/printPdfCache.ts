@@ -1,4 +1,4 @@
-import { PDF_RENDERER_VERSION } from "../features/pdf/types";
+import { PDF_RENDERER_VERSION } from "../shared/pdf/types";
 
 const DB_NAME = "decksupervisor-print-pdf-cache";
 const DB_VERSION = 3;

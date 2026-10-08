@@ -1,0 +1,529 @@
+import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
+
+import { PlannerHeaderProps, usePlannerHeaderLogic } from "./PlannerHeader.logic";
+function PlannerHeader(props: PlannerHeaderProps) {
+    const viewModel = usePlannerHeaderLogic(props);
+    const {
+        onSaveState,
+        dataset,
+        onLoadState,
+        showPlannedChangesButton,
+        onOpenPlannedChanges,
+        isPopout,
+        onOpenPopout,
+        shareCode,
+        activitySummaryFile,
+        setActivitySummaryFile,
+        rosterFile,
+        setRosterFile,
+        onHandleImport,
+        shareDisplayName,
+        onSetShareDisplayName,
+        facilities,
+        shareLocationOverrides,
+        onSetShareLocationOverride,
+        sharePhoneNumber,
+        onSetSharePhoneNumber,
+        shareCcEmail,
+        onSetShareCcEmail,
+        onStartSharing,
+        isSharingBusy,
+        isSharedMode,
+        onJoinSharedPlanner,
+        shareSession,
+        shareNotice,
+        isShareHost,
+        onStopSharing,
+        onLeaveSharedPlannerSession,
+        onSaveSharedDetails,
+        statusMessage,
+        error,
+    } = viewModel;
+    return (
+        <div
+            id="planner-header"
+            data-component="planner-header"
+            className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md"
+        >
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-secondary/20 pb-4">
+                <h3 className="text-lg font-semibold">Workspace tools</h3>
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={onSaveState}
+                        disabled={!dataset}
+                    >
+                        Save State
+                    </button>
+                    <label className="relative inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10">
+                        <span>Load State</span>
+                        <input
+                            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                            type="file"
+                            accept=".txt,.json"
+                            onChange={(event) => {
+                                void onLoadState(
+                                    event.target.files?.[0] ?? null,
+                                );
+                                event.target.value = "";
+                            }}
+                        />
+                    </label>
+                    {showPlannedChangesButton
+                        ? (
+                            <button
+                                type="button"
+                                className="inline-flex items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10"
+                                onClick={onOpenPlannedChanges}
+                            >
+                                Planned Changes
+                            </button>
+                        )
+                        : null}
+                    {!isPopout
+                        ? (
+                            <button
+                                type="button"
+                                className="inline-flex items-center gap-2 rounded-2xl border border-secondary/30 bg-bg px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-primary/10"
+                                onClick={onOpenPopout}
+                            >
+                                <ArrowsPointingOutIcon className="h-4 w-4" />
+                                Pop Out Planner
+                            </button>
+                        )
+                        : null}
+                </div>
+            </div>
+            {!shareCode
+                ? (
+                    <>
+                        <div className="mt-5 flex flex-wrap items-center gap-3">
+                            <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-secondary/30 bg-bg px-5 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-primary hover:shadow-sm">
+                                <span>
+                                    {activitySummaryFile
+                                        ? activitySummaryFile.name
+                                        : "Choose Activity Summary CSV"}
+                                </span>
+                                <input
+                                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={(event) => {
+                                        setActivitySummaryFile(
+                                            event.target.files?.[0] ?? null,
+                                        );
+                                        event.target.value = "";
+                                    }}
+                                />
+                            </label>
+                            <label className="relative flex h-12 items-center justify-center rounded-2xl border-2 border-secondary/30 bg-bg px-5 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-primary hover:shadow-sm">
+                                <span>
+                                    {rosterFile
+                                        ? rosterFile.name
+                                        : "Choose Roster CSV"}
+                                </span>
+                                <input
+                                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={(event) => {
+                                        setRosterFile(
+                                            event.target.files?.[0] ?? null,
+                                        );
+                                        event.target.value = "";
+                                    }}
+                                />
+                            </label>
+                            <button
+                                type="button"
+                                className="h-12 rounded-2xl bg-primary px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={!activitySummaryFile || !rosterFile}
+                                onClick={() => {
+                                    if (activitySummaryFile && rosterFile) {
+                                        void onHandleImport(
+                                            activitySummaryFile,
+                                            rosterFile,
+                                            false,
+                                        );
+                                    }
+                                }}
+                            >
+                                {dataset
+                                    ? "Replace Planner Data"
+                                    : "Load Planner"}
+                            </button>
+                            {dataset
+                                ? (
+                                    <button
+                                        type="button"
+                                        className="h-12 rounded-2xl border border-primary px-5 text-sm font-semibold text-primary transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                                        disabled={!activitySummaryFile ||
+                                            !rosterFile}
+                                        onClick={() => {
+                                            if (
+                                                activitySummaryFile &&
+                                                rosterFile
+                                            ) {
+                                                void onHandleImport(
+                                                    activitySummaryFile,
+                                                    rosterFile,
+                                                    true,
+                                                );
+                                            }
+                                        }}
+                                    >
+                                        Add to Planner
+                                    </button>
+                                )
+                                : null}
+                            {dataset
+                                ? (
+                                    <p className="text-sm text-secondary/70">
+                                        Loaded:{" "}
+                                        <span className="font-semibold text-secondary">
+                                            {dataset.sourceFileName}
+                                        </span>
+                                    </p>
+                                )
+                                : null}
+                        </div>
+                        {dataset
+                            ? (
+                                <div className="mt-4 flex flex-wrap items-end gap-3 rounded-2xl border border-secondary/20 bg-bg p-4">
+                                    <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                                        Shared session name
+                                        <input
+                                            className="rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
+                                            value={shareDisplayName}
+                                            onChange={(event) =>
+                                                onSetShareDisplayName(
+                                                    event.target.value,
+                                                )}
+                                            placeholder="Your name"
+                                        />
+                                    </label>
+                                    {facilities.length > 0
+                                        ? (
+                                            <div className="flex min-w-[280px] flex-[1.4] flex-col gap-2">
+                                                <p className="text-sm font-semibold text-secondary">
+                                                    Location overrides
+                                                    (optional)
+                                                </p>
+                                                <div className="grid gap-2">
+                                                    {facilities.map((
+                                                        facility,
+                                                    ) => (
+                                                        <label
+                                                            key={facility}
+                                                            className="grid gap-2 text-sm font-semibold text-secondary md:grid-cols-[minmax(0,180px)_minmax(0,1fr)] md:items-center"
+                                                        >
+                                                            <span className="break-words">
+                                                                {facility}
+                                                            </span>
+                                                            <input
+                                                                className="rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
+                                                                value={shareLocationOverrides[
+                                                                    facility
+                                                                ] ?? ""}
+                                                                onChange={(
+                                                                    event,
+                                                                ) => onSetShareLocationOverride(
+                                                                    facility,
+                                                                    event.target
+                                                                        .value,
+                                                                )}
+                                                                placeholder="Recreation centre name"
+                                                            />
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )
+                                        : null}
+                                    <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                                        Callback phone (optional)
+                                        <input
+                                            className="rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
+                                            value={sharePhoneNumber}
+                                            onChange={(event) =>
+                                                onSetSharePhoneNumber(
+                                                    event.target.value,
+                                                )}
+                                            placeholder="905-555-1234"
+                                        />
+                                    </label>
+                                    <label className="flex min-w-[240px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                                        CC email (optional)
+                                        <input
+                                            className="rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
+                                            value={shareCcEmail}
+                                            onChange={(event) =>
+                                                onSetShareCcEmail(
+                                                    event.target.value,
+                                                )}
+                                            placeholder="staff@centre.ca"
+                                        />
+                                    </label>
+                                    <button
+                                        type="button"
+                                        className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                                        onClick={() => void onStartSharing()}
+                                        disabled={isSharingBusy}
+                                    >
+                                        {isSharingBusy
+                                            ? "Starting..."
+                                            : "Start Sharing"}
+                                    </button>
+                                </div>
+                            )
+                            : null}
+                    </>
+                )
+                : !isSharedMode
+                    ? (
+                        <div className="mt-5 rounded-2xl border border-secondary/20 bg-bg p-5">
+                            <h3 className="text-lg font-semibold text-secondary">
+                                Join Shared Planner
+                            </h3>
+                            <p className="mt-2 text-sm text-secondary/70">
+                                Enter a display name to join share code{" "}
+                                <span className="font-semibold text-secondary">
+                                    {shareCode}
+                                </span>.
+                            </p>
+                            <div className="mt-4 flex flex-wrap items-end gap-3">
+                                <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                                    Display name
+                                    <input
+                                        className="rounded-xl border border-secondary/30 bg-accent px-3 py-2 text-sm text-secondary"
+                                        value={shareDisplayName}
+                                        onChange={(event) =>
+                                            onSetShareDisplayName(
+                                                event.target.value,
+                                            )}
+                                        placeholder="Your name"
+                                    />
+                                </label>
+                                <button
+                                    type="button"
+                                    className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                                    onClick={() => void onJoinSharedPlanner()}
+                                    disabled={isSharingBusy}
+                                >
+                                    {isSharingBusy
+                                        ? "Joining..."
+                                        : "Join Shared Planner"}
+                                </button>
+                            </div>
+                        </div>
+                    )
+                    : shareSession
+                        ? (
+                            <div className="mt-5 rounded-2xl border border-secondary/20 bg-bg p-5">
+                                <div className="flex flex-wrap items-start justify-between gap-4">
+                                    <div>
+                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
+                                            Shared Session
+                                        </p>
+                                        <p className="mt-2 text-lg font-semibold text-secondary">
+                                            Code {shareSession.code}{" "}
+                                            • v{shareSession.version}
+                                        </p>
+                                        <p className="mt-1 text-sm text-secondary/70">
+                                            Expires {new Date(shareSession.expiresAt)
+                                                .toLocaleString()}
+                                        </p>
+                                        {shareNotice
+                                            ? (
+                                                <p className="mt-2 text-sm text-secondary/80">
+                                                    {shareNotice}
+                                                </p>
+                                            )
+                                            : null}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            className="rounded-2xl border border-secondary/30 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                                            onClick={() =>
+                                                void navigator.clipboard.writeText(
+                                                    shareSession.shareUrl,
+                                                )}
+                                        >
+                                            Copy Share Link
+                                        </button>
+                                        {isShareHost
+                                            ? (
+                                                <button
+                                                    type="button"
+                                                    className="rounded-2xl bg-rose-100 px-4 py-2 text-sm font-semibold text-rose-900 transition hover:-translate-y-0.5"
+                                                    onClick={() => void onStopSharing()}
+                                                    disabled={isSharingBusy}
+                                                >
+                                                    Stop Sharing
+                                                </button>
+                                            )
+                                            : (
+                                                <button
+                                                    type="button"
+                                                    className="rounded-2xl border border-secondary/30 px-4 py-2 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                                                    onClick={() =>
+                                                        void onLeaveSharedPlannerSession()}
+                                                    disabled={isSharingBusy}
+                                                >
+                                                    Leave Shared Planner
+                                                </button>
+                                            )}
+                                    </div>
+                                </div>
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    {shareSession.participants.map((participant) => (
+                                        <span
+                                            key={participant.id}
+                                            className={`rounded-full border px-3 py-1 text-sm font-semibold ${participant.isHost
+                                                ? "border-primary bg-primary/10 text-primary"
+                                                : "border-secondary/20 bg-accent text-secondary"
+                                                }`}
+                                        >
+                                            {participant.displayName}
+                                            {participant.isHost ? " • Host" : ""}
+                                        </span>
+                                    ))}
+                                </div>
+                                <div className="mt-4 rounded-2xl border border-secondary/20 bg-accent p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary/70">
+                                        Shared Call Details
+                                    </p>
+                                    {isShareHost
+                                        ? (
+                                            <div className="mt-3 flex flex-wrap items-end gap-3">
+                                                <div className="flex min-w-[280px] flex-[1.4] flex-col gap-2">
+                                                    <p className="text-sm font-semibold text-secondary">
+                                                        Location overrides
+                                                    </p>
+                                                    <div className="grid gap-2">
+                                                        {facilities.map((facility) => (
+                                                            <label
+                                                                key={facility}
+                                                                className="grid gap-2 text-sm font-semibold text-secondary md:grid-cols-[minmax(0,180px)_minmax(0,1fr)] md:items-center"
+                                                            >
+                                                                <span className="break-words">
+                                                                    {facility}
+                                                                </span>
+                                                                <input
+                                                                    className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
+                                                                    value={shareLocationOverrides[
+                                                                        facility
+                                                                    ] ?? ""}
+                                                                    onChange={(event) =>
+                                                                        onSetShareLocationOverride(
+                                                                            facility,
+                                                                            event.target
+                                                                                .value,
+                                                                        )}
+                                                                    placeholder="Recreation centre name"
+                                                                />
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <label className="flex min-w-[220px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                                                    Callback phone
+                                                    <input
+                                                        className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
+                                                        value={sharePhoneNumber}
+                                                        onChange={(event) =>
+                                                            onSetSharePhoneNumber(
+                                                                event.target.value,
+                                                            )}
+                                                        placeholder="905-555-1234"
+                                                    />
+                                                </label>
+                                                <label className="flex min-w-[240px] flex-1 flex-col gap-2 text-sm font-semibold text-secondary">
+                                                    CC email
+                                                    <input
+                                                        className="rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
+                                                        value={shareCcEmail}
+                                                        onChange={(event) =>
+                                                            onSetShareCcEmail(
+                                                                event.target.value,
+                                                            )}
+                                                        placeholder="staff@centre.ca"
+                                                    />
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    onClick={() =>
+                                                        void onSaveSharedDetails()}
+                                                    disabled={isSharingBusy}
+                                                >
+                                                    {isSharingBusy
+                                                        ? "Saving..."
+                                                        : "Update Shared Info"}
+                                                </button>
+                                            </div>
+                                        )
+                                        : (
+                                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                                <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
+                                                    <span className="font-semibold">
+                                                        Location overrides:
+                                                    </span>{" "}
+                                                    {Object.keys(
+                                                        shareSession
+                                                            .locationOverrides ??
+                                                        {},
+                                                    )
+                                                        .length > 0
+                                                        ? Object.entries(
+                                                            shareSession
+                                                                .locationOverrides,
+                                                        )
+                                                            .map(([facility, name]) =>
+                                                                `${facility}: ${name}`
+                                                            )
+                                                            .join(" | ")
+                                                        : "Not provided"}
+                                                </div>
+                                                <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
+                                                    <span className="font-semibold">
+                                                        Callback phone:
+                                                    </span>{" "}
+                                                    {shareSession.callbackPhoneNumber ||
+                                                        "Not provided"}
+                                                </div>
+                                                <div className="rounded-xl border border-secondary/20 bg-bg px-3 py-3 text-sm text-secondary">
+                                                    <span className="font-semibold">
+                                                        CC email:
+                                                    </span>{" "}
+                                                    {shareSession.ccEmail ||
+                                                        "Not provided"}
+                                                </div>
+                                            </div>
+                                        )}
+                                </div>
+                            </div>
+                        )
+                        : null}
+            {statusMessage
+                ? (
+                    <p className="mt-4 text-sm font-semibold text-primary">
+                        {statusMessage}
+                    </p>
+                )
+                : null}
+            {error
+                ? (
+                    <p className="mt-4 text-sm font-semibold text-danger">
+                        {error}
+                    </p>
+                )
+                : null}
+        </div>
+    );
+}
+
+export default PlannerHeader;
+

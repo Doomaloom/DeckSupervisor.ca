@@ -1,0 +1,656 @@
+import { useEffect, useMemo, useState } from "react";
+
+import { useLocation, useNavigate } from "react-router-dom";
+
+import type { PlannerCallRecordUpdate, PlannerCallStatus, PlannerClass, PlannerClassStatus, PlannerDataset, PlannerParticipant, PlannerParticipantCallRecord, } from "../../../types/app";
+
+import { applyPlannerSaveState, buildPlannerSaveState, getPlannerMoveTargetLabel, loadPlannerDataset, mergePlannerDatasets, parsePlannerSaveState, plannerSaveStateToSharePayload, plannerSaveStateToText, savePlannerDataset, updatePlannerCallRecord, updatePlannerClassLanes, updatePlannerClassMetadata, updatePlannerClassMove, updatePlannerClassStatus, } from "../../../lib/sessionPlanner";
+
+import { applyPlannerShareSaveState, fetchSessionPlannerAnalyze, updatePlannerShareCallRecord, updatePlannerShareClassLanes, updatePlannerShareClassMetadata, updatePlannerShareClassMove, updatePlannerShareClassStatus, } from "../../../lib/serverApi";
+
+import { usePlannerShareSession } from "./hooks/usePlannerShareSession";
+
+import { usePlannerViewModel } from "./hooks/usePlannerViewModel";
+
+import { openPlannerEmailDraft } from "./utils/plannerEmailDraft";
+
+export function useSessionPlanningLogic() {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const [dataset, setDataset] = useState<PlannerDataset | null>(null);
+    const [error, setError] = useState("");
+    const [statusMessage, setStatusMessage] = useState("");
+    const [isInfoPanelOpen, setIsInfoPanelOpen] = useState(true);
+    const [activeCallParticipantId, setActiveCallParticipantId] = useState("");
+    const [callScriptMode, setCallScriptMode] = useState<"live" | "voicemail">(
+        "live",
+    );
+    const [isPlannedChangesOpen, setIsPlannedChangesOpen] = useState(false);
+    const [selectedDay, setSelectedDay] = useState("");
+    const [selectedLocation, setSelectedLocation] = useState("");
+    const [selectedClassKey, setSelectedClassKey] = useState("");
+
+    const {
+        applySharedSession,
+        isPopout,
+        isSharedMode,
+        isShareHost,
+        isSharingBusy,
+        joinSharedPlanner,
+        leaveSharedPlannerSession,
+        shareCode,
+        shareDisplayName,
+        shareLocationOverrides,
+        shareNotice,
+        shareParticipantId,
+        sharePhoneNumber,
+        shareCcEmail,
+        shareSession,
+        saveSharedDetails,
+        startSharing,
+        stopSharing,
+        syncQueryParams,
+        setShareDisplayName,
+        setShareLocationOverrides,
+        setSharePhoneNumber,
+        setShareCcEmail,
+    } = usePlannerShareSession({
+        location,
+        navigate,
+        dataset,
+        setDataset,
+        setError,
+        loadLocalDataset: loadPlannerDataset,
+    });
+
+    useEffect(() => {
+        if (shareCode) {
+            return;
+        }
+        setDataset(loadPlannerDataset());
+    }, [shareCode]);
+
+    const {
+        activeCallParticipant,
+        activeCallRecord,
+        alternatives,
+        availableDays,
+        availableLocations,
+        boardColumns,
+        bookedParticipants,
+        scheduleHeightRem,
+        scheduleStartMinutes,
+        selectedClass,
+        timeLabels,
+        visibleClasses,
+        waitingParticipants,
+    } = usePlannerViewModel(dataset, activeCallParticipantId, {
+        selectedDay,
+        selectedLocation,
+        selectedClassKey,
+        setSelectedDay,
+        setSelectedLocation,
+        setSelectedClassKey,
+    });
+
+    const persistLocalDataset = (nextDataset: PlannerDataset) => {
+        setDataset(nextDataset);
+        savePlannerDataset(nextDataset);
+    };
+
+    const handlePlannerImport = async (
+        activitySummaryFile: File,
+        rosterFile: File,
+        mergeWithCurrent: boolean,
+    ) => {
+        try {
+            setStatusMessage("Analyzing activity summary and roster...");
+            const response = await fetchSessionPlannerAnalyze(
+                activitySummaryFile,
+                rosterFile,
+            );
+            const nextDataset = mergeWithCurrent && dataset
+                ? mergePlannerDatasets(dataset, response.dataset)
+                : response.dataset;
+            persistLocalDataset(nextDataset);
+            setError("");
+            const summary =
+                `Loaded ${response.meta.classCount} classes and ${response.meta.participantCount} participants.`;
+            setStatusMessage([summary, ...response.meta.warnings].join(" "));
+            setIsInfoPanelOpen(true);
+            if (!mergeWithCurrent) {
+                setActiveCallParticipantId("");
+            }
+            if (shareCode) {
+                syncQueryParams("");
+            }
+        } catch (uploadError) {
+            setStatusMessage("");
+            setError(
+                uploadError instanceof Error
+                    ? uploadError.message
+                    : "Failed to import the session planner CSVs.",
+            );
+        }
+    };
+
+    const setClassStatus = async (
+        classKey: string,
+        status: PlannerClassStatus,
+    ) => {
+        if (!dataset) {
+            return;
+        }
+        try {
+            if (shareCode && shareParticipantId) {
+                const response = await updatePlannerShareClassStatus(
+                    shareCode,
+                    {
+                        participantId: shareParticipantId,
+                        classKey,
+                        status,
+                    },
+                );
+                applySharedSession(response.session);
+            } else {
+                persistLocalDataset(
+                    updatePlannerClassStatus(dataset, classKey, status),
+                );
+            }
+            setError("");
+            setStatusMessage("");
+        } catch (statusError) {
+            setError(
+                statusError instanceof Error
+                    ? statusError.message
+                    : "Failed to update class status.",
+            );
+        }
+    };
+
+    const setClassLanes = async (laneIndexes: Record<string, number>) => {
+        if (!dataset) {
+            return;
+        }
+        try {
+            if (shareCode && shareParticipantId) {
+                const response = await updatePlannerShareClassLanes(shareCode, {
+                    participantId: shareParticipantId,
+                    classLaneIndexes: laneIndexes,
+                });
+                applySharedSession(response.session);
+            } else {
+                persistLocalDataset(
+                    updatePlannerClassLanes(dataset, laneIndexes),
+                );
+            }
+            setError("");
+            setStatusMessage("");
+        } catch (laneError) {
+            setError(
+                laneError instanceof Error
+                    ? laneError.message
+                    : "Failed to update planner columns.",
+            );
+        }
+    };
+
+    const setClassMove = async (
+        classKey: string,
+        update: {
+            plannedMoveType?: "new_time" | "target_class" | "";
+            plannedMoveTime?: string;
+            plannedMoveTargetClassKey?: string;
+        },
+    ) => {
+        if (!dataset) {
+            return;
+        }
+        try {
+            if (shareCode && shareParticipantId) {
+                const response = await updatePlannerShareClassMove(shareCode, {
+                    participantId: shareParticipantId,
+                    classKey,
+                    plannedMoveType: update.plannedMoveType ?? "",
+                    plannedMoveTime: update.plannedMoveTime ?? "",
+                    plannedMoveTargetClassKey:
+                        update.plannedMoveTargetClassKey ?? "",
+                });
+                applySharedSession(response.session);
+            } else {
+                persistLocalDataset(
+                    updatePlannerClassMove(dataset, classKey, update),
+                );
+            }
+            setError("");
+            setStatusMessage("");
+        } catch (moveError) {
+            setError(
+                moveError instanceof Error
+                    ? moveError.message
+                    : "Failed to update planned move.",
+            );
+        }
+    };
+
+    const setClassMetadata = async (
+        classKey: string,
+        update: { barcodeCancelledAt?: string },
+    ) => {
+        if (!dataset) {
+            return;
+        }
+        try {
+            if (shareCode && shareParticipantId) {
+                const response = await updatePlannerShareClassMetadata(
+                    shareCode,
+                    {
+                        participantId: shareParticipantId,
+                        classKey,
+                        barcodeCancelledAt: update.barcodeCancelledAt ?? "",
+                    },
+                );
+                applySharedSession(response.session);
+            } else {
+                persistLocalDataset(
+                    updatePlannerClassMetadata(dataset, classKey, update),
+                );
+            }
+            setError("");
+            setStatusMessage("");
+        } catch (metadataError) {
+            setError(
+                metadataError instanceof Error
+                    ? metadataError.message
+                    : "Failed to update class metadata.",
+            );
+        }
+    };
+
+    const setCallRecord = async (
+        participantId: string,
+        update: PlannerCallRecordUpdate,
+    ) => {
+        if (!dataset) {
+            return;
+        }
+        try {
+            if (shareCode && shareParticipantId) {
+                const response = await updatePlannerShareCallRecord(shareCode, {
+                    participantId: shareParticipantId,
+                    participantRecordId: participantId,
+                    update,
+                });
+                applySharedSession(response.session);
+            } else {
+                persistLocalDataset(
+                    updatePlannerCallRecord(dataset, participantId, update),
+                );
+            }
+            setError("");
+            setStatusMessage("");
+        } catch (recordError) {
+            setError(
+                recordError instanceof Error
+                    ? recordError.message
+                    : "Failed to update call record.",
+            );
+        }
+    };
+
+    const startCall = async (participantId: string) => {
+        setCallScriptMode("live");
+        setActiveCallParticipantId(participantId);
+        await setCallRecord(participantId, { status: "called" });
+    };
+
+    const closeCallModal = () => {
+        setActiveCallParticipantId("");
+        setCallScriptMode("live");
+    };
+
+    const finishCall = async () => {
+        if (!activeCallParticipant || !activeCallRecord) {
+            return;
+        }
+
+        let nextStatus: PlannerCallStatus = activeCallRecord.status;
+        if (activeCallRecord.status === "voicemail") {
+            nextStatus = "voicemail";
+        } else if (activeCallRecord.acceptedAlternativeClassKey) {
+            nextStatus = "accepted_alternative";
+        } else if (activeCallRecord.offeredAlternativeClassKey) {
+            nextStatus = "declined_alternatives";
+        } else if (nextStatus === "called" || nextStatus === "not_started") {
+            nextStatus = "reached";
+        }
+
+        await setCallRecord(activeCallParticipant.id, { status: nextStatus });
+        closeCallModal();
+    };
+
+    const openPopout = () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("popout", "1");
+        window.open(
+            url.toString(),
+            "_blank",
+            "popup=yes,width=1600,height=980",
+        );
+    };
+
+    const downloadPlannerState = () => {
+        if (!dataset) {
+            setError("Load the planner CSVs before saving planner state.");
+            return;
+        }
+
+        const state = buildPlannerSaveState({
+            dataset,
+            shareDisplayName,
+            locationOverrides: shareLocationOverrides,
+            callbackPhoneNumber: sharePhoneNumber,
+            selectedDay,
+            selectedLocation,
+            selectedClassKey,
+        });
+        const blob = new Blob([plannerSaveStateToText(state)], {
+            type: "text/plain;charset=utf-8",
+        });
+        const link = document.createElement("a");
+        const timestamp = state.exportedAt.replace(/[:.]/g, "-");
+        link.href = URL.createObjectURL(blob);
+        link.download = `session-planner-state-${timestamp}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        setError("");
+        setStatusMessage(
+            "Planner state downloaded. Re-add the matching CSVs before loading it later.",
+        );
+    };
+
+    const loadPlannerState = async (file: File | null) => {
+        if (!file) {
+            return;
+        }
+        if (!dataset) {
+            setError(
+                "Load the planner CSVs before importing a planner state file.",
+            );
+            return;
+        }
+
+        try {
+            const importedState = parsePlannerSaveState(await file.text());
+            const localRestoreResult = applyPlannerSaveState(
+                dataset,
+                importedState,
+            );
+            setShareDisplayName(importedState.shareDisplayName);
+            setSelectedDay(importedState.selection.selectedDay);
+            setSelectedLocation(importedState.selection.selectedLocation);
+            setSelectedClassKey(importedState.selection.selectedClassKey);
+
+            if (shareCode && shareParticipantId) {
+                const response = await applyPlannerShareSaveState(shareCode, {
+                    participantId: shareParticipantId,
+                    ...plannerSaveStateToSharePayload(importedState),
+                });
+                applySharedSession(response.session);
+            } else {
+                persistLocalDataset(localRestoreResult.dataset);
+            }
+
+            if (!shareCode || isShareHost) {
+                setShareLocationOverrides(importedState.locationOverrides);
+                setSharePhoneNumber(importedState.callbackPhoneNumber);
+            }
+
+            const summary = shareCode && shareParticipantId
+                ? `Planner state loaded. Shared planner metadata was applied to the live session${isShareHost ? "." : ", except host-only call details."
+                }`
+                : `Planner state loaded. Restored ${localRestoreResult.matchedClasses} class updates and ${localRestoreResult.matchedCallRecords} call records. Skipped ${localRestoreResult.skippedClasses +
+                localRestoreResult.skippedCallRecords
+                } unmatched items.`;
+
+            setError("");
+            setStatusMessage(summary);
+            setIsInfoPanelOpen(true);
+        } catch (loadError) {
+            setStatusMessage("");
+            setError(
+                loadError instanceof Error
+                    ? loadError.message
+                    : "Failed to load planner state.",
+            );
+        }
+    };
+
+    const callerName = shareDisplayName.trim() || "Deck Supervisor";
+    const callerLocationName =
+        (selectedClass?.facility
+            ? shareLocationOverrides[selectedClass.facility]?.trim()
+            : "") ||
+        selectedClass?.facility ||
+        "the recreation centre";
+    const callerPhoneNumber = sharePhoneNumber.trim() ||
+        "our main office number";
+    const plannedMoveLabel = dataset && selectedClass
+        ? getPlannerMoveTargetLabel(dataset, selectedClass)
+        : "";
+    const shouldShowPlanner = Boolean(dataset && (!shareCode || isSharedMode));
+    const plannedChangeGroups = useMemo(() => {
+        if (!dataset) {
+            return [];
+        }
+
+        return dataset.classes
+            .map((plannerClass) => {
+                const rows = plannerClass.participantIds
+                    .map((participantId) => {
+                        const participant = dataset.participants.find((entry) =>
+                            entry.id === participantId
+                        );
+                        const callRecord = dataset.callRecords[participantId];
+                        if (
+                            !participant || !callRecord ||
+                            callRecord.status === "not_started"
+                        ) {
+                            return null;
+                        }
+                        return { participant, callRecord };
+                    })
+                    .filter(
+                        (
+                            row,
+                        ): row is {
+                            participant: (typeof dataset.participants)[number];
+                            callRecord: (typeof dataset.callRecords)[string];
+                        } => Boolean(row),
+                    )
+                    .sort((left, right) => {
+                        if (
+                            left.callRecord.completedAt &&
+                            !right.callRecord.completedAt
+                        ) {
+                            return 1;
+                        }
+                        if (
+                            !left.callRecord.completedAt &&
+                            right.callRecord.completedAt
+                        ) {
+                            return -1;
+                        }
+                        return left.participant.name.localeCompare(
+                            right.participant.name,
+                        );
+                    });
+
+                return rows.length > 0 ? { plannerClass, rows } : null;
+            })
+            .filter((group): group is NonNullable<typeof group> =>
+                Boolean(group)
+            )
+            .sort((left, right) => {
+                if (
+                    left.plannerClass.dayOfWeek !== right.plannerClass.dayOfWeek
+                ) {
+                    return left.plannerClass.dayOfWeek.localeCompare(
+                        right.plannerClass.dayOfWeek,
+                    );
+                }
+                if (
+                    left.plannerClass.eventTime !== right.plannerClass.eventTime
+                ) {
+                    return left.plannerClass.eventTime.localeCompare(
+                        right.plannerClass.eventTime,
+                    );
+                }
+                return left.plannerClass.serviceName.localeCompare(
+                    right.plannerClass.serviceName,
+                );
+            });
+    }, [dataset]);
+
+    const togglePlannedChangeComplete = async (
+        participantId: string,
+        isComplete: boolean,
+    ) => {
+        await setCallRecord(participantId, {
+            completedAt: isComplete ? new Date().toISOString() : "",
+        });
+    };
+
+    const togglePlannedChangeEmailSent = async (
+        participantId: string,
+        isSent: boolean,
+    ) => {
+        await setCallRecord(participantId, {
+            emailSentAt: isSent ? new Date().toISOString() : "",
+        });
+    };
+
+    const toggleAcceptedChecklistItem = async (
+        participantId: string,
+        field:
+            | "withdrawRefundAt"
+            | "refundReceiptSentAt"
+            | "reRegisteredAt"
+            | "registrationConfirmationSentAt",
+        isDone: boolean,
+    ) => {
+        await setCallRecord(participantId, {
+            [field]: isDone ? new Date().toISOString() : "",
+        });
+    };
+
+    const toggleBarcodeCancelled = async (
+        classKey: string,
+        isDone: boolean,
+    ) => {
+        await setClassMetadata(classKey, {
+            barcodeCancelledAt: isDone ? new Date().toISOString() : "",
+        });
+    };
+
+    const openPlannedChangeEmailDraft = (
+        participant: PlannerParticipant,
+        plannerClass: PlannerClass,
+        callRecord: PlannerParticipantCallRecord,
+    ) => {
+        if (!dataset) {
+            return;
+        }
+        const locationName =
+            shareLocationOverrides[plannerClass.facility]?.trim() ||
+            plannerClass.facility || "the recreation centre";
+        openPlannerEmailDraft({
+            participant,
+            plannerClass,
+            callRecord,
+            dataset,
+            senderName: callerName,
+            locationName,
+            callbackPhoneNumber: sharePhoneNumber.trim(),
+            ccEmail: shareCcEmail.trim(),
+        });
+    };
+
+    return {
+        view: "ready" as const,
+        dataset,
+        error,
+        isPopout,
+        isSharedMode,
+        isShareHost,
+        isSharingBusy,
+        shareCode,
+        shareDisplayName,
+        shareLocationOverrides,
+        shareNotice,
+        sharePhoneNumber,
+        shareCcEmail,
+        shareSession,
+        statusMessage,
+        plannedChangeGroups,
+        handlePlannerImport,
+        joinSharedPlanner,
+        leaveSharedPlannerSession,
+        loadPlannerState,
+        openPopout,
+        setIsPlannedChangesOpen,
+        downloadPlannerState,
+        setShareDisplayName,
+        setShareLocationOverrides,
+        setSharePhoneNumber,
+        setShareCcEmail,
+        saveSharedDetails,
+        startSharing,
+        stopSharing,
+        shouldShowPlanner,
+        isInfoPanelOpen,
+        availableDays,
+        availableLocations,
+        boardColumns,
+        scheduleHeightRem,
+        scheduleStartMinutes,
+        selectedClassKey,
+        selectedDay,
+        selectedLocation,
+        setClassLanes,
+        setIsInfoPanelOpen,
+        setSelectedClassKey,
+        setSelectedDay,
+        setSelectedLocation,
+        timeLabels,
+        visibleClasses,
+        alternatives,
+        bookedParticipants,
+        selectedClass,
+        setCallRecord,
+        setClassMove,
+        setClassStatus,
+        startCall,
+        waitingParticipants,
+        activeCallParticipant,
+        activeCallRecord,
+        callScriptMode,
+        callerLocationName,
+        callerName,
+        callerPhoneNumber,
+        plannedMoveLabel,
+        closeCallModal,
+        finishCall,
+        setCallScriptMode,
+        isPlannedChangesOpen,
+        openPlannedChangeEmailDraft,
+        toggleAcceptedChecklistItem,
+        toggleBarcodeCancelled,
+        togglePlannedChangeComplete,
+        togglePlannedChangeEmailSent,
+    };
+
+}

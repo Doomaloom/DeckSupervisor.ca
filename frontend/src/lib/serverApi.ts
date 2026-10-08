@@ -1,4 +1,4 @@
-import type { Workout } from "../features/workout-builder/workout";
+import type { Workout } from "../shared/workouts/workout";
 import type { RosterClassHash, RosterPrintUpdate } from "./rosterPrintUpdates";
 import type {
     ClassRoster,

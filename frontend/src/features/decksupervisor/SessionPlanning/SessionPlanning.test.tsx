@@ -1,0 +1,25 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { beforeEach, expect, it, vi } from "vitest";
+import { installLocalStorage } from "../../../test/storage";
+import SessionPlanning from "./SessionPlanning.component";
+const api = vi.hoisted(() => ({ fetchSessionPlannerAnalyze: vi.fn() }));
+vi.mock("../../../lib/serverApi", async (importOriginal) => ({ ...await importOriginal<object>(), fetchSessionPlannerAnalyze: api.fetchSessionPlannerAnalyze }));
+beforeEach(() => { installLocalStorage(); api.fetchSessionPlannerAnalyze.mockReset(); });
+it("shows the import workflow when no dataset is stored", () => { render(<MemoryRouter><SessionPlanning /></MemoryRouter>); expect(screen.getByText("Upload the matching activity summary and roster CSVs to start planning.")).toBeVisible(); expect(api.fetchSessionPlannerAnalyze).not.toHaveBeenCalled(); });
+it("explains the shared-planner join state for a deep link", async () => { render(<MemoryRouter initialEntries={["/?share=missing"]}><SessionPlanning /></MemoryRouter>); expect(screen.getByRole("heading", { name: /Session Planning/i })).toBeVisible(); expect(screen.getByText("Join the shared planner to start collaborating.")).toBeVisible(); });
+it("submits both import files and surfaces analysis failures", async () => {
+    api.fetchSessionPlannerAnalyze.mockRejectedValue(new Error("Bad CSV"));
+    vi.spyOn(console, "error").mockImplementation(() => { });
+    const user = userEvent.setup();
+    const { container } = render(<MemoryRouter><SessionPlanning /></MemoryRouter>);
+    const files = container.querySelectorAll<HTMLInputElement>('input[type="file"][accept=".csv"]');
+    const summary = new File(["summary"], "summary.csv", { type: "text/csv" });
+    const roster = new File(["roster"], "roster.csv", { type: "text/csv" });
+    await user.upload(files[0], summary);
+    await user.upload(files[1], roster);
+    await user.click(screen.getByRole("button", { name: /Import|Load Planner/ }));
+    expect(api.fetchSessionPlannerAnalyze).toHaveBeenCalledWith(summary, roster);
+    expect(await screen.findByText("Bad CSV")).toBeVisible();
+});

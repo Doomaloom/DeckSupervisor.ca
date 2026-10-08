@@ -1,0 +1,23 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { expect, it, vi } from "vitest";
+import Print from "./Print.component";
+vi.mock("../../../app/AuthContext", () => ({ useAuth: () => ({ profile: null, isGuest: true }) }));
+vi.mock("../../../app/DayContext", () => ({ useDay: () => ({ selectedDay: "Mo" }) }));
+vi.mock("../../../app/useCurrentSession", () => ({ useCurrentSession: () => ({ session: null }) }));
+vi.mock("../../../app/useCurrentTerm", () => ({ useCurrentTerm: () => ({ currentTerm: null }) }));
+vi.mock("./hooks/useSessionInstructors", () => ({ useSessionInstructors: () => [] }));
+vi.mock("../Schematic/hooks/useSchematicSchedule", () => ({ useSchematicSchedule: () => ({ columns: [], instructors: [], instructorIds: [], timeLabels: [], scheduleStartMinutes: 0 }) }));
+it("opens day-one options, changes cover settings, and closes the dialog", async () => {
+    const user = userEvent.setup();
+    render(<Print />);
+    await user.click(screen.getByRole("button", { name: "Day 1 Print" }));
+    expect(screen.getByRole("heading", { name: "Day 1 Print Options" })).toBeVisible();
+    const cover = screen.getByRole("checkbox", { name: "Schematic Cover Page" });
+    expect(cover).not.toBeChecked();
+    await user.click(cover);
+    expect(cover).toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Close day 1 print options" }));
+    expect(screen.queryByRole("heading", { name: "Day 1 Print Options" })).not.toBeInTheDocument();
+});
+it("shows and hides print option help", async () => { const user = userEvent.setup(); render(<Print />); await user.click(screen.getByRole("button", { name: "About Print Schematic" })); expect(screen.getByText("Export the session schematic layout for quick reference.")).toBeVisible(); await user.click(screen.getByRole("button", { name: "About Print Schematic" })); expect(screen.queryByText("Export the session schematic layout for quick reference.")).not.toBeInTheDocument(); });

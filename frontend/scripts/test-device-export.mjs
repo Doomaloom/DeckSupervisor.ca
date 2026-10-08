@@ -13,7 +13,7 @@ const output = resolve(
 await mkdir(output, { recursive: true });
 const fixtureJS = await transform(
     await readFile(
-        resolve(root, "src/features/device-export/fixtures.ts"),
+        resolve(root, "src/features/decksupervisor/DeviceExport/fixtures.ts"),
         "utf8",
     ),
     { loader: "ts", format: "esm" },
@@ -114,7 +114,6 @@ try {
     assert(await exportButton.isDisabled());
     const download = async (filename) => {
         await page.getByRole("combobox").selectOption("Alex");
-        await page.getByRole("checkbox", { name: /I checked/ }).check();
         const pending = page.waitForEvent("download");
         await exportButton.click();
         const file = await pending;

@@ -1,0 +1,24 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import FullTimerTools from "./FullTimerTools.component";
+const mocks = vi.hoisted(() => ({ setCurrentTeamId: vi.fn(), clearCurrentTerm: vi.fn(), setCurrentTermKey: vi.fn(), showAppNotice: vi.fn() }));
+vi.mock("../../../app/useCurrentTeam", () => ({ useCurrentTeam: () => ({ teams: [{ id: "team", name: "Aquatics" }], currentTeamId: "", currentTeam: null, loading: false, setCurrentTeamId: mocks.setCurrentTeamId }) }));
+vi.mock("../../../app/useCurrentTerm", async (importOriginal) => ({ ...await importOriginal<object>(), useCurrentTerm: () => ({ currentTermKey: "", setCurrentTermKey: mocks.setCurrentTermKey, clearCurrentTerm: mocks.clearCurrentTerm }) }));
+vi.mock("../../../lib/appNotice", () => ({ showAppNotice: mocks.showAppNotice }));
+beforeEach(() => vi.clearAllMocks());
+afterEach(() => vi.unstubAllGlobals());
+it("changes team scope and clears the previous term", async () => { render(<FullTimerTools />); await userEvent.setup().selectOptions(screen.getByLabelText("Team"), "team"); expect(mocks.setCurrentTeamId).toHaveBeenCalledWith("team"); expect(mocks.clearCurrentTerm).toHaveBeenCalled(); });
+it("requires a CSV and reports generation failures", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => { });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, text: async () => "Offline" });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    const { container } = render(<FullTimerTools />);
+    await user.click(screen.getByRole("button", { name: "Generate Workbook" }));
+    expect(mocks.showAppNotice).toHaveBeenCalledWith("Please upload the schematic maker CSV file.", "error");
+    await user.upload(container.querySelector('input[type="file"]')!, new File(["csv"], "schematic.csv", { type: "text/csv" }));
+    await user.click(screen.getByRole("button", { name: "Generate Workbook" }));
+    expect(fetchMock).toHaveBeenCalledWith("/api/schematic-maker", expect.objectContaining({ method: "POST", body: expect.any(FormData) }));
+    expect(mocks.showAppNotice).toHaveBeenCalledWith(expect.stringContaining("Unable to generate"), "error");
+});

@@ -10,13 +10,13 @@ const server = await createServer({
 });
 try {
     const { generateLessonPlanPdf } = await server.ssrLoadModule(
-        "/src/features/pdf/lessonPlan/generateLessonPlanPdf.tsx",
+        "/src/shared/pdf/lessonPlan/generateLessonPlanPdf.tsx",
     );
     const { newWorkout, workoutText } = await server.ssrLoadModule(
-        "/src/features/workout-builder/workout.ts",
+        "/src/shared/workouts/workout.ts",
     );
     const { workoutPresets } = await server.ssrLoadModule(
-        "/src/features/workout-builder/workoutPresets.ts",
+        "/src/features/instructor/LessonPlans/LessonEditor/WorkoutBuilderModal/workoutPresets.ts",
     );
     const workout = newWorkout();
     workout.title = "PDF workout check";

@@ -52,7 +52,7 @@ const levels = catalog.levels.map(({ id, name, skills }) => ({
     })),
 }));
 await writeFile(
-    new URL("frontend/src/features/instructor/lessonSkills.json", root),
+    new URL("frontend/src/features/instructor/LessonPlans/lessonSkills.json", root),
     JSON.stringify(levels, null, 4) + "\n",
 );
 const supported = levels.filter((level) => level.skills.length).map((level) =>

@@ -32,8 +32,8 @@ import {
     getStudentsForDay,
     setCustomRostersForDay,
 } from "../../lib/storage";
-import { prefetchSchematicPdfs } from "../../features/print/utils/printCachePrefetch";
-import type { StoredCourseLayout } from "../../features/schematic/utils/layout";
+import { prefetchSchematicPdfs } from "../../features/decksupervisor/Print/services/printCachePrefetch";
+import type { StoredCourseLayout } from "../../features/decksupervisor/Schematic/utils/layout";
 import AppNoticeBanner from "../AppNoticeBanner";
 
 type LayoutProps = {

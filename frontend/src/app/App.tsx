@@ -3,7 +3,7 @@ import {
     RouterProvider,
     useLocation,
 } from "react-router-dom";
-import InstructorLayout from "../features/instructor/InstructorLayout";
+import InstructorLayout from "../features/instructor/InstructorLayout/InstructorLayout.component";
 import Layout from "../components/Layout/Layout";
 import { CsvImportFlowProvider } from "./CsvImportFlowContext";
 import AppRoutes from "./routes";
