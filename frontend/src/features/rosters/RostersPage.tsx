@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useCsvImportFlow } from "../../app/CsvImportFlowContext";
 import { useDay } from "../../app/DayContext";
 import { useCurrentTeam } from "../../app/useCurrentTeam";
 import { useCurrentTerm } from "../../app/useCurrentTerm";
@@ -145,7 +144,6 @@ function convertClassRosterToItem(roster: ClassRoster): FullTimeRosterItem {
 }
 
 function RostersPage() {
-    const { requestCsvFile } = useCsvImportFlow();
     const { selectedDay } = useDay();
     const { accountType, isGuest, user } = useAuth();
     const { access, sessionId } = useCurrentSession();
@@ -945,77 +943,37 @@ function RostersPage() {
                         event.target.value = "";
                     }}
                 />
-                <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary/70">
-                        Full-Time Rosters
-                    </p>
-                    <h2 className="mt-2 text-xl font-semibold">
-                        Team Roster View
+                <header>
+                    <h2 className="text-2xl font-semibold text-secondary">
+                        Rosters
                     </h2>
-                    <p className="mt-2 text-sm text-secondary/80">
-                        Upload a roster CSV from this page. The page will load
-                        all days found in that upload into its own local roster
-                        dataset.
-                    </p>
-                    <div className="mt-4 grid grid-cols-1 gap-2 text-sm text-secondary/80 md:grid-cols-2">
-                        <p>
-                            Team:{" "}
-                            <span className="font-semibold">
-                                {currentTeam?.name ?? "No team selected"}
-                            </span>
-                        </p>
-                        <p>
-                            Session Term:{" "}
-                            <span className="font-semibold">
-                                {currentTerm?.label ?? "No term selected"}
-                            </span>
-                        </p>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
-                                fullTimeViewTab === "rosters"
-                                    ? "border-secondary bg-secondary text-accent"
-                                    : "border-secondary/30 bg-bg text-secondary hover:bg-accent"
-                            }`}
-                            onClick={() => setFullTimeViewTab("rosters")}
-                        >
-                            Roster View
-                        </button>
-                        <button
-                            type="button"
-                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
-                                fullTimeViewTab === "schematic"
-                                    ? "border-secondary bg-secondary text-accent"
-                                    : "border-secondary/30 bg-bg text-secondary hover:bg-accent"
-                            }`}
-                            onClick={() => setFullTimeViewTab("schematic")}
-                        >
-                            Schematic View
-                        </button>
-                        <button
-                            type="button"
-                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
-                                fullTimeViewTab === "instructors"
-                                    ? "border-secondary bg-secondary text-accent"
-                                    : "border-secondary/30 bg-bg text-secondary hover:bg-accent"
-                            }`}
-                            onClick={() => setFullTimeViewTab("instructors")}
-                        >
-                            Instructors
-                        </button>
-                        <button
-                            type="button"
-                            className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
-                                fullTimeViewTab === "requests"
-                                    ? "border-secondary bg-secondary text-accent"
-                                    : "border-secondary/30 bg-bg text-secondary hover:bg-accent"
-                            }`}
-                            onClick={() => setFullTimeViewTab("requests")}
-                        >
-                            Request List
-                        </button>
+                </header>
+                <div className="rounded-card border-2 border-secondary/20 bg-accent p-4 text-secondary shadow-md md:p-6">
+                    <div
+                        role="group"
+                        aria-label="Roster views"
+                        className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-2"
+                    >
+                        {([
+                            ["rosters", "Roster View"],
+                            ["schematic", "Schematic View"],
+                            ["instructors", "Instructors"],
+                            ["requests", "Request List"],
+                        ] as const).map(([view, label]) => (
+                            <button
+                                key={view}
+                                type="button"
+                                aria-pressed={fullTimeViewTab === view}
+                                className={`min-h-11 rounded-2xl border-2 px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                                    fullTimeViewTab === view
+                                        ? "border-secondary bg-secondary text-accent shadow-sm"
+                                        : "border-secondary/20 bg-accent text-secondary hover:border-primary hover:shadow-sm"
+                                }`}
+                                onClick={() => setFullTimeViewTab(view)}
+                            >
+                                {label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
@@ -1407,29 +1365,11 @@ function RostersPage() {
             data-component="rosters-page"
             className="mx-auto flex w-full max-w-6xl flex-col gap-6"
         >
-            <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary/70">
-                            Roster Data
-                        </p>
-                        <h2 className="mt-2 text-xl font-semibold">
-                            Upload and Review Rosters
-                        </h2>
-                        <p className="mt-2 text-sm text-secondary/70">
-                            Import a roster CSV directly from this page, then
-                            review or edit the loaded classes below.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        className="rounded-2xl bg-primary px-5 py-2 text-sm font-semibold text-accent transition hover:-translate-y-0.5"
-                        onClick={requestCsvFile}
-                    >
-                        Upload Roster
-                    </button>
-                </div>
-            </div>
+            <header>
+                <h2 className="text-2xl font-semibold text-secondary">
+                    Rosters
+                </h2>
+            </header>
 
             <RostersTabs activeTab={activeTab} onChange={setActiveTab} />
             <div className="flex flex-col gap-6">

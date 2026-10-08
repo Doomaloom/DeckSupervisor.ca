@@ -54,6 +54,5 @@ export const levelOptionGroups: LevelOptionGroup[] = [
 ];
 
 export const selectClass =
-    "w-full rounded-lg border-2 border-secondary bg-accent px-3 py-2 text-primary disabled:cursor-not-allowed disabled:opacity-60";
+    "w-full rounded-2xl border-2 border-secondary bg-bg px-3 py-2 text-sm text-secondary disabled:cursor-not-allowed disabled:opacity-60";
 export const inputClass = `${selectClass} placeholder:text-secondary/60`;
-export const rowWidthClass = "w-full max-w-[900px] mx-auto";

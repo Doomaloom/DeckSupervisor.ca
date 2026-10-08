@@ -13,10 +13,11 @@ function RostersTabs({ activeTab, onChange }: RostersTabsProps) {
         <div
             id="rosters-tabs"
             data-component="rosters-tabs"
-            className="flex w-full gap-3"
+            className="flex w-full flex-wrap gap-3"
         >
             <button
                 type="button"
+                aria-pressed={activeTab === "default"}
                 className={tabButtonClass(activeTab === "default")}
                 onClick={() => onChange("default")}
             >
@@ -24,6 +25,7 @@ function RostersTabs({ activeTab, onChange }: RostersTabsProps) {
             </button>
             <button
                 type="button"
+                aria-pressed={activeTab === "custom"}
                 className={tabButtonClass(activeTab === "custom")}
                 onClick={() => onChange("custom")}
             >

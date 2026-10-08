@@ -235,9 +235,9 @@ export function getEmptyMessage(studentsCount: number) {
 }
 
 export function tabButtonClass(active: boolean) {
-    return `flex-1 rounded-2xl px-4 py-2 font-semibold transition hover:-translate-y-0.5 ${
+    return `min-h-11 flex-1 rounded-2xl border-2 px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
         active
-            ? "border-2 border-dashed border-secondary bg-accent text-secondary"
-            : "bg-secondary text-accent"
+            ? "border-secondary bg-secondary text-accent shadow-sm"
+            : "border-secondary/20 bg-accent text-secondary hover:border-primary hover:shadow-sm"
     }`;
 }
