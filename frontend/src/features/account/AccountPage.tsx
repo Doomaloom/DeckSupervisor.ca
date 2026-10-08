@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../app/AuthContext";
+import { PageShell } from "../../general-components";
 import {
     acceptTeamInvite,
     declineTeamInvite,
@@ -21,7 +22,7 @@ type MembershipEntry = {
 };
 
 function AccountPage() {
-    const { accountType, completeProfile, isGuest, profile, user } = useAuth();
+    const { completeProfile, isGuest, profile, user } = useAuth();
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [location, setLocation] = useState("");
@@ -115,15 +116,21 @@ function AccountPage() {
 
     if (isGuest) {
         return (
-            <div
+            <PageShell
                 id="account-page"
                 data-component="account-page"
-                className="mx-auto flex w-full max-w-xl flex-col gap-6"
+                maxWidth="xl"
+                className="min-w-0"
             >
-                <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
-                    <h2 className="text-xl font-semibold">
-                        Sign in to manage your account
+                <header>
+                    <h2 className="text-2xl font-semibold text-secondary">
+                        Account
                     </h2>
+                </header>
+                <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
+                    <h3 className="text-xl font-semibold">
+                        Sign in to manage your account
+                    </h3>
                     <p className="mt-2 text-sm text-secondary/70">
                         You are currently using guest mode. Sign in to view
                         invites and your teams.
@@ -135,25 +142,22 @@ function AccountPage() {
                         Go to Sign In
                     </Link>
                 </div>
-            </div>
+            </PageShell>
         );
     }
 
     return (
-        <div
+        <PageShell
             id="account-page"
             data-component="account-page"
-            className="mx-auto flex w-full max-w-5xl flex-col gap-6"
+            maxWidth="5xl"
+            className="min-w-0"
         >
-            <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
-                <h2 className="text-2xl font-semibold">Account</h2>
-                <p className="mt-2 text-sm text-secondary/70">
-                    Signed in as {profile?.email ?? user?.email}
-                </p>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-secondary/70">
-                    {accountType === "full_time" ? "Full-time" : "Part-time"}
-                </p>
-            </div>
+            <header>
+                <h2 className="text-2xl font-semibold text-secondary">
+                    Account
+                </h2>
+            </header>
 
             <div className="rounded-card border-2 border-secondary/20 bg-accent p-6 text-secondary shadow-md">
                 <h3 className="text-lg font-semibold">Profile</h3>
@@ -231,7 +235,7 @@ function AccountPage() {
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         <button
                                             type="button"
-                                            className="rounded-lg bg-secondary px-3 py-1 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
+                                            className="rounded-2xl bg-secondary px-3 py-1 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:bg-accent hover:text-secondary"
                                             onClick={() =>
                                                 void handleAcceptInvite(invite)}
                                             disabled={loading}
@@ -240,7 +244,7 @@ function AccountPage() {
                                         </button>
                                         <button
                                             type="button"
-                                            className="rounded-lg border border-secondary/40 px-3 py-1 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
+                                            className="rounded-2xl border border-secondary/40 px-3 py-1 text-sm font-semibold text-secondary transition hover:-translate-y-0.5 hover:bg-accent"
                                             onClick={() =>
                                                 void handleDeclineInvite(
                                                     invite,
@@ -282,7 +286,7 @@ function AccountPage() {
                         </div>
                     )}
             </div>
-        </div>
+        </PageShell>
     );
 }
 
