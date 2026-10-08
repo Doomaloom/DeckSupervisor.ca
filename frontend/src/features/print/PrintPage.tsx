@@ -1320,7 +1320,7 @@ function PrintPage() {
                 <h2 className="text-2xl font-semibold text-secondary">Print</h2>
             </header>
 
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="flex w-full flex-col gap-5">
                 {printOptions.map((option) => (
                     <PrintOptionButton
                         key={option.key}
