@@ -99,7 +99,6 @@ export function LessonEditor(
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
-    const [notice, setNotice] = useState("");
     const [retry, setRetry] = useState(0);
     const active = useRef(true);
     const persistableRows = useMemo(() => rowsForSave(rows), [rows]);
@@ -164,7 +163,6 @@ export function LessonEditor(
         if (loading || saving || error || !dirty) return;
         const timer = window.setTimeout(async () => {
             setSaving(true);
-            setNotice("");
             try {
                 const snapshot = JSON.parse(content) as {
                     rows: LessonRow[];
@@ -180,7 +178,6 @@ export function LessonEditor(
                 if (active.current) {
                     setSavedContent(content);
                     setMissing(false);
-                    setNotice("All changes saved.");
                 }
             } catch (e) {
                 if (active.current) {
@@ -199,7 +196,6 @@ export function LessonEditor(
         if (dragTimer.current !== null) window.clearTimeout(dragTimer.current);
     }, []);
     function edit(i: number, patch: Partial<LessonRow>) {
-        setNotice("");
         setError("");
         setRows((current) =>
             current.map((r, index) => index === i ? { ...r, ...patch } : r)
@@ -231,7 +227,6 @@ export function LessonEditor(
     }
     function move(from: number, to: number) {
         if (from === to || to < 0 || to >= rows.length) return;
-        setNotice("");
         setError("");
         setRows((current) => {
             const next = [...current];
@@ -282,8 +277,6 @@ export function LessonEditor(
                     {error} Your draft is retained.
                 </Notice>
             )}
-            {saving && <p role="status" className="text-sm">Saving…</p>}
-            {notice && <p role="status" className="text-sm">{notice}</p>}
             <fieldset className="min-w-0 space-y-4">
                 {!assignedLevel && (
                     <label className="mb-4 flex flex-col gap-2 text-sm font-semibold">
@@ -294,7 +287,6 @@ export function LessonEditor(
                             className="max-w-full"
                             value={curriculumLevel}
                             onChange={(e) => {
-                                setNotice("");
                                 setError("");
                                 setCurriculumLevel(e.target.value);
                             }}
@@ -787,7 +779,6 @@ export function LessonEditor(
                                                 }`}
                                                 className="absolute inset-0 flex h-full w-full items-center justify-center bg-danger text-accent transition-colors hover:bg-dangerHover focus-visible:z-10 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
                                                 onClick={() => {
-                                                    setNotice("");
                                                     setError("");
                                                     setRows((current) =>
                                                         current.filter((

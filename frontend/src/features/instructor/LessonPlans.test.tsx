@@ -102,7 +102,8 @@ it("skips untouched rows and retries autosave after a new edit", async () => {
     );
     await user.click(screen.getByRole("button", { name: "Custom activity for row 1" }));
     await user.type(screen.getByLabelText("Activity / drill 1"), "Practice");
-    expect(await screen.findByText("All changes saved.")).toBeVisible();
+    await waitFor(() => expect(api.saveLessonPlan.mock.lastCall?.[3][0].activity).toBe("Practice"));
+    expect(screen.queryByText("All changes saved.")).not.toBeInTheDocument();
     expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
 });
@@ -285,7 +286,7 @@ it("requires a plan level for private classes, preserves rows on changes, and re
     await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledWith(
         "s", "c", "2026-10-05", plan.rows, "Splash2A",
     ));
-    await screen.findByText("All changes saved.");
+    await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalled());
     expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
     view.unmount();
     api.fetchLessonPlan.mockResolvedValue({ plan });
@@ -541,7 +542,7 @@ it("inserts from the library without changing other row fields and autosaves", a
             "Keep this",
         );
         expect(screen.queryByText("Unsaved changes")).not.toBeInTheDocument();
-        await screen.findByText("All changes saved.");
+        await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalled());
         const inserted = api.saveLessonPlan.mock.calls[0][3][0].activity;
         expect(inserted).toContain("Five Little Ducks");
         expect(inserted).toContain("blow bubbles");
@@ -716,7 +717,7 @@ it("builds and saves custom workouts, reopening the builder fresh while preservi
         );
         const summary = screen.getByLabelText("Workout summary 1").textContent;
         expect(summary).toContain("Total distance: 550 m");
-        await screen.findByText("All changes saved.");
+        await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalled());
         const rows = api.saveLessonPlan.mock.calls[0][3];
         expect(rows[0]).toMatchObject({
             skill: workoutSkill,
@@ -854,7 +855,7 @@ it("uses the skill's prescribed workout by default and opens a fresh custom buil
             .not.toBeInTheDocument();
         expect(screen.queryByRole("button", { name: "Custom activity for row 1" }))
             .not.toBeInTheDocument();
-        await screen.findByText("All changes saved.");
+        await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalled());
         expect(api.saveLessonPlan.mock.calls[api.saveLessonPlan.mock.calls.length - 1][3][0].activity).toBe(expected);
         await user.click(screen.getByRole("button", {
             name: "Use custom workout for row 1",
@@ -881,7 +882,7 @@ it("fills a saved workout skill with its default without saving until the plan i
     await userEvent.setup().click(screen.getByRole("button", {
         name: "Increase duration by 1 minute for row 1",
     }));
-    await screen.findByText("All changes saved.");
+    await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalled());
     expect(api.saveLessonPlan.mock.calls[api.saveLessonPlan.mock.calls.length - 1][3][0]).toMatchObject({
         skill: workoutSkill, activity: defaultWorkoutText(workoutSkill),
         location: "Deep end", duration: 13,
