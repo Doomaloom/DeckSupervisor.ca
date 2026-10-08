@@ -1,4 +1,5 @@
 import type { Workout } from "../features/workout-builder/workout";
+import type { RosterClassHash, RosterPrintUpdate } from "./rosterPrintUpdates";
 import type {
     ClassRoster,
     CsvSessionCandidate,
@@ -68,6 +69,26 @@ export type AccountDataResponse = {
 
 export function fetchAccountData() {
     return request<AccountDataResponse>("/api/account");
+}
+
+export function syncRosterClassHashes(sessionId: string, classes: ClassRoster[]) {
+    return request<{ classes: RosterClassHash[] }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/roster-hashes`,
+        { method: "POST", body: { classes } },
+    );
+}
+
+export function fetchRosterPrintUpdates(sessionId: string) {
+    return request<{ updates: RosterPrintUpdate[] }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/print-updates`,
+    );
+}
+
+export function resolveRosterPrintUpdates(sessionId: string, updates: RosterPrintUpdate[]) {
+    return request<{ removed: string[] }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/print-updates/resolve`,
+        { method: "POST", body: { updates: updates.map(({ code, revision }) => ({ code, revision })) } },
+    );
 }
 
 export function updateProfile(

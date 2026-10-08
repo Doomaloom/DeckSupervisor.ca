@@ -56,6 +56,7 @@ import { useAuth } from "../../app/AuthContext";
 import { useCurrentSession } from "../../app/useCurrentSession";
 import { fetchCsvAnalyze } from "../../lib/serverApi";
 import { showAppNotice } from "../../lib/appNotice";
+import { trackMatchedSessionRosters } from "../../lib/rosterPrintUpdates";
 
 type FullTimeRosterItem = {
     day: string;
@@ -535,6 +536,7 @@ function RostersPage() {
                     instructor: "",
                 })),
             }));
+            await trackMatchedSessionRosters(analyzed.candidates ?? [], analyzed.rostersByCandidateKey ?? {});
             setFullTimeRosterClasses(classes);
             setFullTimeRosterFileName(file.name);
             saveStoredFullTimeRosters(currentTeamId, file.name, classes);

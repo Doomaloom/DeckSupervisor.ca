@@ -37,6 +37,7 @@ import Day1OptionsModal from "./components/Day1OptionsModal";
 import InstructorOptionsModal from "./components/InstructorOptionsModal";
 import MasterlistOptionsModal from "./components/MasterlistOptionsModal";
 import PrintOptionButton from "./components/PrintOptionButton";
+import PrintUpdatesModal from "./components/PrintUpdatesModal";
 import SchematicOptionsModal from "./components/SchematicOptionsModal";
 import { useSchematicSchedule } from "../schematic/hooks/useSchematicSchedule";
 import { getCapacity } from "../schematic/utils/capacity";
@@ -100,7 +101,7 @@ type BlockedPrintJob = {
 };
 
 function PrintPage() {
-    const { profile } = useAuth();
+    const { profile, isGuest } = useAuth();
     const { selectedDay } = useDay();
     const { session: currentSession } = useCurrentSession();
     const { currentTerm } = useCurrentTerm();
@@ -1333,6 +1334,15 @@ function PrintPage() {
                 ))}
             </div>
 
+            {activeModal === "updates" && (
+                <PrintUpdatesModal
+                    key={currentSession?.id ?? "no-session"}
+                    sessionId={currentSession?.id ?? null}
+                    sessionTitle={sessionTitle}
+                    isGuest={isGuest}
+                    onClose={() => setActiveModal(null)}
+                />
+            )}
             <Day1OptionsModal
                 open={activeModal === "day1"}
                 options={day1Options}

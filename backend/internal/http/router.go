@@ -70,6 +70,9 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/schematics", handlers.GetSchematics).Methods("GET")
 
 	// Roster edits
+	r.HandleFunc("/api/sessions/{sessionId}/roster-hashes", handlers.SyncRosterClassHashes).Methods("POST")
+	r.HandleFunc("/api/sessions/{sessionId}/print-updates", handlers.GetRosterPrintUpdates).Methods("GET")
+	r.HandleFunc("/api/sessions/{sessionId}/print-updates/resolve", handlers.ResolveRosterPrintUpdates).Methods("POST")
 	r.HandleFunc("/api/roster-edits", handlers.GetRosterEdits).Methods("GET")
 	r.HandleFunc("/api/roster-edits/level", handlers.UpsertRosterLevelEdit).Methods("POST")
 	r.HandleFunc("/api/roster-edits/student", handlers.UpsertRosterStudentLevelEdit).Methods("POST")

@@ -33,6 +33,7 @@ import type {
 } from "../types/app";
 import CsvSessionImportModal from "../components/CsvSessionImportModal";
 import { showAppNotice } from "../lib/appNotice";
+import { trackUploadedRosters } from "../lib/rosterPrintUpdates";
 
 type CsvImportFlowContextValue = {
     requestCsvFile: () => void;
@@ -382,6 +383,7 @@ export function CsvImportFlowProvider(
                         "No roster data was returned for the selected CSV session.",
                     );
                 }
+                await trackUploadedRosters(targetSession.id, candidateRosters);
                 storeProcessedRosters(candidateRosters);
             }
             const dayStudents = getStudentsForDay(candidate.dayOfWeek);

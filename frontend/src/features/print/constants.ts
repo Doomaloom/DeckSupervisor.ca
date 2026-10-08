@@ -25,9 +25,8 @@ export const printOptions: PrintOption[] = [
     {
         key: "updates",
         title: "Print Updates",
-        description: "Print Updates will be available here soon.",
+        description: "Print or dismiss classes whose students changed since the previous roster upload.",
         icon: ArrowPathIcon,
-        disabled: true,
     },
     {
         key: "masterlist",

@@ -1,5 +1,45 @@
 # Database RLS replacement
 
+## Roster print updates upgrade
+
+Apply [`backend/supabase_roster_print_updates.sql`](../backend/supabase_roster_print_updates.sql)
+after the base RLS reset and before deploying the roster upload / Print Updates
+feature. The migration is transactional and repeatable. It creates
+`roster_class_hashes` and `roster_print_updates`, with `(session_id, code)` primary
+keys so each session has one baseline and at most one pending update per course.
+These tables retain hashes and class metadata; student rows stay in the existing
+browser session storage.
+
+The first upload for a saved session establishes its baseline. Subsequent uploads
+queue changed or new classes. Reordering students, whitespace, letter case, and
+instructor assignment changes do not change a hash; student additions/removals,
+name/contact/age/level changes and waitlist changes do. Classes absent from an
+upload are tracked as empty rosters, retaining their metadata for a blank sheet.
+Team roster uploads track each matched saved session separately; unsaved sessions
+must be created through the normal session import flow first. Guest uploads do
+not use this database feature.
+
+Session readers can see and acknowledge updates. Owners, coverage recipients with
+roster edit permission, and full-time staff with access to the team's session can
+track uploads. Direct database writes are denied; authorized RPCs serialize uploads
+and acknowledgements by session. A queue revision changes on each roster change,
+and printing/dismissing only removes the selected revision, preserving any newer
+upload. Pending entries survive identical uploads and retain the latest change.
+
+Print Updates uses the latest matching roster snapshot on the current browser;
+if it is missing or stale, upload the current roster there before printing. Print
+opens the existing instructor-sheet template workflow. Because browsers cannot
+report whether a print dialog was completed or cancelled, users confirm **Mark
+printed** to clear the queue, or choose **Keep queued** after cancelling. Failed
+preparation, blocked popups, and failed queue acknowledgements leave updates
+pending. **Dismiss** also removes selected queue revisions while keeping baseline
+hashes for comparison on future uploads.
+
+The disposable database suite (`scripts/test-rls.sh`) covers this migration's
+repeatability, baseline comparisons, deduplication, removal/new-class handling,
+session isolation, read/write permissions and stale acknowledgements. This
+migration has not been applied to a hosted database as part of local development.
+
 Use [`backend/supabase_rls_reset.sql`](../backend/supabase_rls_reset.sql) as the single policy installation/update script. It supersedes the three historical RLS/invite scripts; do not run those afterward. It covers all 14 application tables defined in this repository. The script does not provision missing tables, change application records, or touch policies on other tables or Supabase-managed schemas.
 
 ## Apply

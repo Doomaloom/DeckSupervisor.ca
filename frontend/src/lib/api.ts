@@ -64,7 +64,7 @@ async function processCsv(
     return (await response.json()) as ProcessCsvResponse;
 }
 
-function rosterToStudents(rosters: ClassRoster[]): Student[] {
+export function rosterToStudents(rosters: ClassRoster[]): Student[] {
     const students: Student[] = [];
     rosters.forEach((roster) => {
         roster.students.forEach((student) => {
