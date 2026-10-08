@@ -58,33 +58,33 @@ export default function ActivityLibraryBrowser(
     );
 
     return (
-        <div className="min-w-0 space-y-5">
-            <div className="flex flex-wrap items-end gap-4">
-                <div
-                    role="group"
-                    aria-label="Activity categories"
-                    className="flex flex-wrap gap-2"
-                >
-                    {(["All", ...activityCategories] as const).map((value) => (
-                        <ActionButton
-                            key={value}
-                            className="w-32"
-                            variant={category === value ? "primary" : "outline"}
-                            aria-pressed={category === value}
-                            onClick={() => {
-                                setCategory(value);
-                                if (value !== "Drills") setDrillSkill("All");
-                                if (value !== "Workouts") setWorkoutGroup("All");
-                            }}
-                        >
-                            {value}
-                        </ActionButton>
-                    ))}
+        <div className="min-w-0 space-y-6">
+            <div className="min-w-0 space-y-5 rounded-card border-2 border-secondary/20 bg-accent p-4 text-secondary shadow-md md:p-6">
+                <div role="group" aria-label="Activity categories" className="space-y-2">
+                    <p className="text-sm font-semibold">Category</p>
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,8rem),1fr))] gap-2">
+                        {(["All", ...activityCategories] as const).map((value) => (
+                            <button
+                                key={value}
+                                type="button"
+                                className={`min-h-11 rounded-2xl border-2 px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                                    category === value
+                                        ? "border-secondary bg-secondary text-accent shadow-sm"
+                                        : "border-secondary/20 bg-accent text-secondary hover:border-primary hover:shadow-sm"
+                                }`}
+                                aria-pressed={category === value}
+                                onClick={() => {
+                                    setCategory(value);
+                                    if (value !== "Drills") setDrillSkill("All");
+                                    if (value !== "Workouts") setWorkoutGroup("All");
+                                }}
+                            >
+                                {value}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                <label
-                    htmlFor={searchId}
-                    className="min-w-[16rem] flex-1 space-y-2 text-sm font-semibold"
-                >
+                <label htmlFor={searchId} className="block space-y-2 text-sm font-semibold">
                     <span>Search activities</span>
                     <TextInput
                         id={searchId}
@@ -95,68 +95,76 @@ export default function ActivityLibraryBrowser(
                         onChange={(event) => setQuery(event.target.value)}
                     />
                 </label>
+                {category === "Drills" && (
+                    <div role="group" aria-label="Drill skills" className="space-y-2 border-t border-secondary/20 pt-5">
+                        <p className="text-sm font-semibold">Skill</p>
+                        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,8rem),1fr))] gap-2">
+                            {(["All", ...drillSkills] as const).map((skill) => (
+                                <button
+                                    key={skill}
+                                    type="button"
+                                    className={`min-h-11 rounded-2xl border-2 px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                                        drillSkill === skill
+                                            ? "border-secondary bg-secondary text-accent shadow-sm"
+                                            : "border-secondary/20 bg-accent text-secondary hover:border-primary hover:shadow-sm"
+                                    }`}
+                                    aria-pressed={drillSkill === skill}
+                                    onClick={() => setDrillSkill(skill)}
+                                >
+                                    {skill}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {category === "Workouts" && (
+                    <div role="group" aria-label="Workout groups" className="space-y-2 border-t border-secondary/20 pt-5">
+                        <p className="text-sm font-semibold">Workout group</p>
+                        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-2">
+                            {(["All", ...workoutGroups] as const).map((group) => (
+                                <button
+                                    key={group}
+                                    type="button"
+                                    className={`min-h-11 rounded-2xl border-2 px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                                        workoutGroup === group
+                                            ? "border-secondary bg-secondary text-accent shadow-sm"
+                                            : "border-secondary/20 bg-accent text-secondary hover:border-primary hover:shadow-sm"
+                                    }`}
+                                    aria-pressed={workoutGroup === group}
+                                    onClick={() => setWorkoutGroup(group)}
+                                >
+                                    {group}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {onUse && (
+                    <div className="space-y-1 border-t border-secondary/20 pt-5">
+                        <label className="flex items-start gap-2 text-sm font-semibold">
+                            <input
+                                className="mt-1 h-4 w-4 shrink-0"
+                                type="checkbox"
+                                checked={applicableOnly}
+                                disabled={!selectedSkill}
+                                onChange={(event) =>
+                                    setApplicableOnly(event.target.checked)}
+                            />
+                            <span>
+                                {selectedSkill
+                                    ? `Only activities for ${selectedSkill.compactName}`
+                                    : "Only activities for the selected skill"}
+                            </span>
+                        </label>
+                        {!selectedSkill && (
+                            <p className="text-sm text-secondary/80">
+                                Choose a curriculum skill in the lesson row to
+                                filter by skill.
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
-            {category === "Drills" && (
-                <div role="group" aria-label="Drill skills" className="space-y-2">
-                    <p className="text-sm font-semibold">Skill</p>
-                    <div className="flex flex-wrap gap-2">
-                        {(["All", ...drillSkills] as const).map((skill) => (
-                            <ActionButton
-                                key={skill}
-                                className="w-32"
-                                variant={drillSkill === skill ? "primary" : "outline"}
-                                aria-pressed={drillSkill === skill}
-                                onClick={() => setDrillSkill(skill)}
-                            >
-                                {skill}
-                            </ActionButton>
-                        ))}
-                    </div>
-                </div>
-            )}
-            {category === "Workouts" && (
-                <div role="group" aria-label="Workout groups" className="space-y-2">
-                    <p className="text-sm font-semibold">Workout group</p>
-                    <div className="flex flex-wrap gap-2">
-                        {(["All", ...workoutGroups] as const).map((group) => (
-                            <ActionButton
-                                key={group}
-                                className="w-40"
-                                variant={workoutGroup === group ? "primary" : "outline"}
-                                aria-pressed={workoutGroup === group}
-                                onClick={() => setWorkoutGroup(group)}
-                            >
-                                {group}
-                            </ActionButton>
-                        ))}
-                    </div>
-                </div>
-            )}
-            {onUse && (
-                <div className="space-y-1">
-                    <label className="flex items-start gap-2 text-sm font-semibold">
-                        <input
-                            className="mt-1 h-4 w-4 shrink-0"
-                            type="checkbox"
-                            checked={applicableOnly}
-                            disabled={!selectedSkill}
-                            onChange={(event) =>
-                                setApplicableOnly(event.target.checked)}
-                        />
-                        <span>
-                            {selectedSkill
-                                ? `Only activities for ${selectedSkill.compactName}`
-                                : "Only activities for the selected skill"}
-                        </span>
-                    </label>
-                    {!selectedSkill && (
-                        <p className="text-sm text-secondary/80">
-                            Choose a curriculum skill in the lesson row to
-                            filter by skill.
-                        </p>
-                    )}
-                </div>
-            )}
             <p role="status" className="text-sm text-secondary/80">
                 {results.length}{" "}
                 {results.length === 1 ? "activity" : "activities"}
@@ -196,9 +204,9 @@ export default function ActivityLibraryBrowser(
                 const renderActivity = (activity: LibraryActivity) => (
                     <details
                         key={activity.id}
-                        className="rounded-2xl border border-secondary/20 bg-accent open:shadow-sm"
+                        className="rounded-2xl border border-secondary/20 bg-accent text-secondary shadow-sm open:border-secondary/40 open:shadow-md"
                     >
-                        <summary className="cursor-pointer rounded-2xl p-4 font-semibold focus-visible:outline-2 focus-visible:outline-primary">
+                        <summary className="cursor-pointer rounded-2xl p-4 font-semibold transition hover:bg-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                             {displayTitle(activity, drillSkill, workoutGroup)}
                         </summary>
                         <div className="space-y-4 px-4 pb-4">
