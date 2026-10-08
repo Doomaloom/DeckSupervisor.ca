@@ -3,6 +3,7 @@ import { useAuth } from "../../app/AuthContext";
 import { useCurrentSession } from "../../app/useCurrentSession";
 import { useCurrentTeam } from "../../app/useCurrentTeam";
 import { useCurrentTerm } from "../../app/useCurrentTerm";
+import { PageShell } from "../../general-components";
 import {
     getSessionTermLabel,
     syncReportCardsForDay,
@@ -21,7 +22,6 @@ import {
     setStudentsForDay,
 } from "../../lib/storage";
 import type { Student } from "../../types/app";
-import { dayNames } from "../schematic/constants";
 import {
     buildEmployeeReportCardSummaries,
     buildStudentReportCardSummary,
@@ -169,9 +169,6 @@ function ReportCardsPage() {
         [students],
     );
 
-    const dayLabel = selectedDay
-        ? (dayNames[selectedDay] ?? selectedDay)
-        : "Select Day";
     const totalEmployeeReportCards = useMemo(
         () => employeeTotals.reduce((sum, employee) => sum + employee.total, 0),
         [employeeTotals],
@@ -237,55 +234,16 @@ function ReportCardsPage() {
     ]);
 
     return (
-        <div
+        <PageShell
             id="report-cards-page"
             data-component="report-cards-page"
-            className="mx-auto flex w-full max-w-6xl flex-col gap-6"
+            className="min-w-0"
         >
-            <div className="relative overflow-hidden rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
-                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-secondary/15" />
-                <div className="absolute -bottom-12 left-10 h-24 w-24 rounded-full bg-secondary/10" />
-                <div className="relative">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary/70">
-                        Report Cards
-                    </p>
-                    <h2 className="mt-3 text-2xl font-semibold">
-                        Report Cards
-                    </h2>
-                    <p className="mt-2 max-w-2xl text-secondary">
-                        {accountType === "full_time"
-                            ? "Overview of total report card counts by employee for the selected team and term."
-                            : "Overview of report card counts by instructor and lesson block."}
-                    </p>
-                    {accountType === "full_time"
-                        ? (
-                            <>
-                                <p className="mt-3 text-sm font-semibold text-secondary/80">
-                                    Team:{" "}
-                                    <span className="font-semibold">
-                                        {currentTeam?.name ??
-                                            "No team selected"}
-                                    </span>
-                                </p>
-                                <p className="mt-1 text-sm font-semibold text-secondary/80">
-                                    Session Term:{" "}
-                                    <span className="font-semibold">
-                                        {currentTerm?.label ??
-                                            "No term selected"}
-                                    </span>
-                                </p>
-                            </>
-                        )
-                        : (
-                            <p className="mt-3 text-sm font-semibold text-secondary/80">
-                                Day:{" "}
-                                <span className="font-semibold">
-                                    {dayLabel}
-                                </span>
-                            </p>
-                        )}
-                </div>
-            </div>
+            <header>
+                <h2 className="text-2xl font-semibold text-secondary">
+                    Report Cards
+                </h2>
+            </header>
 
             {accountType === "full_time"
                 ? (
@@ -450,7 +408,7 @@ function ReportCardsPage() {
                         </section>
                     </>
                 )}
-        </div>
+        </PageShell>
     );
 }
 
