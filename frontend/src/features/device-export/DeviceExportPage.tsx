@@ -1,6 +1,8 @@
 import {
     ActionButton,
+    EmptyState,
     Notice,
+    PageShell,
     Select,
     Textarea,
     TextInput,
@@ -55,16 +57,20 @@ export default function DeviceExportPage() {
     }
     if (!session || !sessionId) {
         return (
-            <section className={panel}>
-                <h2 className="text-2xl font-semibold">Device Exports</h2>
-                <p className="my-4">
+            <PageShell maxWidth="5xl" className="min-w-0">
+                <header className="flex flex-col gap-1">
+                    <h2 className="text-2xl font-semibold text-secondary">
+                        Device Exports
+                    </h2>
+                </header>
+                <EmptyState>
                     Select a session and load its class data to export
-                    instructor lessons.
-                </p>
-                <Link className="underline" to="/manage-sessions">
-                    Manage sessions
-                </Link>
-            </section>
+                    instructor lessons. {" "}
+                    <Link className="underline" to="/manage-sessions">
+                        Manage sessions
+                    </Link>
+                </EmptyState>
+            </PageShell>
         );
     }
     return (
@@ -331,19 +337,12 @@ function ExportSession(
         }
     };
     return (
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
-            <section className={panel}>
-                <h2 className="text-2xl font-semibold">Device Exports</h2>
-                <p className="mt-2">
-                    Review instructor packages and either download JSON or
-                    create temporary Rec Tablet import codes.
-                </p>
-                <p className="mt-3 font-semibold">
-                    {session.session_day} · {session.session_season}{" "}
-                    {session.session_year} · {session.location}
-                </p>
-                <p>{session.start_date} – {session.end_date}</p>
-            </section>
+        <PageShell maxWidth="5xl" className="min-w-0">
+            <header>
+                <h2 className="text-2xl font-semibold text-secondary">
+                    Device Exports
+                </h2>
+            </header>
             {error && <Notice tone="danger" role="alert">{error}</Notice>}
             {notice && <Notice tone="success" role="status">{notice}</Notice>}
             <section className={panel}>
@@ -422,9 +421,9 @@ function ExportSession(
                                         {selected.map((course) => (
                                             <details
                                                 key={course.code}
-                                                className="rounded-2xl border border-secondary/20 bg-bg p-4"
+                                                className="rounded-2xl border border-secondary/20 bg-bg p-4 shadow-sm open:border-secondary/40 open:shadow-md"
                                             >
-                                                <summary className="cursor-pointer font-semibold">
+                                                <summary className="cursor-pointer font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                                                     {course.startTime} ·{" "}
                                                     {course.name} ·{" "}
                                                     {course.code} ·{" "}
@@ -580,6 +579,6 @@ function ExportSession(
                     </label>
                 </div>
             </section>
-        </div>
+        </PageShell>
     );
 }
