@@ -3,6 +3,7 @@ import { useAuth } from "../../app/AuthContext";
 import { useDay } from "../../app/DayContext";
 import { useCurrentSession } from "../../app/useCurrentSession";
 import { useCurrentTerm } from "../../app/useCurrentTerm";
+import { PageShell } from "../../general-components";
 import PrintPopupBlockedNotice from "../../components/PrintPopupBlockedNotice";
 import {
     getCustomRosterDayKey,
@@ -1310,27 +1311,14 @@ function PrintPage() {
     };
 
     return (
-        <div
+        <PageShell
             id="print-page"
             data-component="print-page"
-            className="mx-auto flex w-full max-w-6xl flex-col gap-8"
+            className="min-w-0"
         >
-            <div className="relative overflow-hidden rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
-                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-secondary/15" />
-                <div className="absolute -bottom-12 left-10 h-24 w-24 rounded-full bg-secondary/10" />
-                <div className="relative">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary/70">
-                        Print Center
-                    </p>
-                    <h2 className="mt-3 text-2xl font-semibold">
-                        Pick a print tool
-                    </h2>
-                    <p className="mt-2 max-w-2xl text-secondary">
-                        Prepare attendance, instructor packets, master lists,
-                        and schematic snapshots from one place.
-                    </p>
-                </div>
-            </div>
+            <header>
+                <h2 className="text-2xl font-semibold text-secondary">Print</h2>
+            </header>
 
             <div className="grid gap-5 md:grid-cols-2">
                 {printOptions.map((option) => (
@@ -1437,7 +1425,7 @@ function PrintPage() {
                 onResetScale={handleResetSchematicScale}
                 onPrint={handlePrint}
             />
-        </div>
+        </PageShell>
     );
 }
 
