@@ -181,15 +181,19 @@ export default function PlanSelection(
                                 </legend>
                                 <div className="grid grid-cols-2 gap-2" role="group" aria-label="Print classes">
                                     {(["separate", "together"] as const).map((mode) => (
-                                        <ActionButton
+                                        <button
                                             key={mode}
+                                            type="button"
                                             aria-pressed={printMode === mode}
-                                            variant={printMode === mode ? "primary" : "outline"}
-                                            fullWidth
+                                            className={`min-h-11 rounded-2xl border-2 px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                                                printMode === mode
+                                                    ? "border-secondary bg-secondary text-accent shadow-sm"
+                                                    : "border-secondary/20 bg-accent text-secondary hover:border-primary hover:shadow-sm"
+                                            }`}
                                             onClick={() => onPrintModeChange(mode)}
                                         >
                                             {mode === "separate" ? "Separately" : "Together"}
-                                        </ActionButton>
+                                        </button>
                                     ))}
                                 </div>
                             </fieldset>

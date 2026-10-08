@@ -20,7 +20,6 @@ function PlanPrintPreview(
         combined: boolean;
     },
 ) {
-    const [entries, setEntries] = useState<SavedEntry[]>([]);
     const [artifact, setArtifact] = useState<PdfArtifact | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -30,7 +29,6 @@ function PlanPrintPreview(
     useEffect(() => {
         let active = true;
         let objectUrl: string | null = null;
-        setEntries([]);
         setArtifact(null);
         setPreviewUrl(null);
         setLoading(true);
@@ -46,7 +44,6 @@ function PlanPrintPreview(
                 const saved = results.filter((entry): entry is SavedEntry =>
                     entry.plan !== null
                 );
-                setEntries(saved);
                 if (!saved.length) return;
 
                 const { generateCombinedLessonPlanPdf, generateLessonPlanPdf } =
@@ -92,7 +89,6 @@ function PlanPrintPreview(
         }
     }
 
-    const missing = courses.length - entries.length;
     return (
         <div className="flex min-w-0 flex-col gap-4">
             {error && (
@@ -108,7 +104,7 @@ function PlanPrintPreview(
                     Print PDF
                 </ActionButton>
             )}
-            <section className="min-w-0 rounded-2xl border-2 border-secondary p-3">
+            <section className="min-w-0 rounded-2xl border border-secondary/20 bg-accent p-4 text-secondary shadow-sm">
                 <div className="flex items-center justify-between gap-3 px-1 pb-3">
                     <h3 className="text-sm font-semibold">Live Preview</h3>
                     {loading && (
@@ -183,6 +179,7 @@ export default function PrintPlans() {
     return (
         <PlanSelection
             title="Print"
+            unframed
             printMode={printMode}
             onPrintModeChange={setPrintMode}
             renderTogether={(session, classes, week) => (
