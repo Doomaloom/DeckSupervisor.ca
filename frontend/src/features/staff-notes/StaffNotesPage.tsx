@@ -3,6 +3,7 @@ import { useAuth } from "../../app/AuthContext";
 import { useCurrentSession } from "../../app/useCurrentSession";
 import { useCurrentTeam } from "../../app/useCurrentTeam";
 import { useCurrentTerm } from "../../app/useCurrentTerm";
+import { PageShell } from "../../general-components";
 import { getCurrentSessionId } from "../../lib/sessionStorage";
 import { showAppNotice } from "../../lib/appNotice";
 import {
@@ -511,17 +512,15 @@ function StaffNotesPage() {
         !isEditable;
 
     return (
-        <div
+        <PageShell
             id="staff-notes-page"
             data-component="staff-notes-page"
-            className="mx-auto flex w-full max-w-5xl flex-col gap-6"
+            maxWidth="5xl"
+            className="min-w-0"
         >
-            <div className="rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-md">
-                <h2 className="text-2xl font-semibold">Notes</h2>
-                <p className="mt-2 text-base">
-                    Capture session notes, employee updates, todos, and reports.
-                </p>
-            </div>
+            <header>
+                <h2 className="text-2xl font-semibold text-secondary">Notes</h2>
+            </header>
 
             {!isSessionReady
                 ? (
@@ -604,7 +603,7 @@ function StaffNotesPage() {
                         )}
                 </div>
             </div>
-        </div>
+        </PageShell>
     );
 }
 
