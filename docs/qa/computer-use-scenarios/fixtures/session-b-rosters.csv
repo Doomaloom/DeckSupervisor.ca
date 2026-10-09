@@ -1,0 +1,2 @@
+ServiceName,MinimumCapacity,MaximumCapacity,Booked,DayOfTheWeek,EventName,EventTime,EventID,EventSchedule,Facility,Staff,CalendarName,Supervisor,EventStatus,textBox4,textBox12,Alert,ServiceRowNumber,AttendeeName,AttendeeStatus,AttendeePhone,Age,E-mail,MedicalCondition,ExtraFee
+Splash 1,1,6,1,Mo,,04:00 PM - 04:30 PM,92001,From 2026-09-14 to 2026-12-07,QA Pool B,,,,,,,,,QA Morgan,Booked,555-0100,10,qa@example.invalid,,

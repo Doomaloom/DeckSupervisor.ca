@@ -1,0 +1,6 @@
+ServiceName,MinimumCapacity,MaximumCapacity,Booked,DayOfTheWeek,EventName,EventTime,EventID,EventSchedule,Facility,Staff,CalendarName,Supervisor,EventStatus,textBox4,textBox12,Alert,ServiceRowNumber,AttendeeName,AttendeeStatus,AttendeePhone,Age,E-mail,MedicalCondition,ExtraFee
+Splash 1,1,6,2,Mo,,04:00 PM - 04:30 PM,95001,From 2026-09-14 to 2026-12-07,QA Coverage Future,,,,,,,,,QA Avery,Booked,555-0100,10,qa@example.invalid,,
+Splash 1,1,6,2,Mo,,04:00 PM - 04:30 PM,95001,From 2026-09-14 to 2026-12-07,QA Coverage Future,,,,,,,,,QA Blair,Booked,555-0100,10,qa@example.invalid,,
+Splash 2,1,6,1,Mo,,04:00 PM - 04:30 PM,95002,From 2026-09-14 to 2026-12-07,QA Coverage Future,,,,,,,,,QA Casey,Booked,555-0100,10,qa@example.invalid,,
+Splash Private,1,1,1,Mo,,04:30 PM - 05:00 PM,95003,From 2026-09-14 to 2026-12-07,QA Coverage Future,,,,,,,,,QA Devon,Booked,555-0100,10,qa@example.invalid,,
+Splash Fitness,1,12,1,Mo,,05:00 PM - 05:30 PM,95004,From 2026-09-14 to 2026-12-07,QA Coverage Future,,,,,,,,,QA Ellis,Booked,555-0100,10,qa@example.invalid,,
