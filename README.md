@@ -105,6 +105,14 @@ The helper validates configuration, deploys with Fly high availability disabled,
 APP_NAME=decksupervisor CONFIG_FILE=fly.toml ./scripts/deploy-fly.sh
 ```
 
+To deploy to `decksupervisor-develp` with the same settings:
+
+```bash
+./scripts/deploy-fly-develp.sh
+```
+
+The development helper also accepts deployment arguments and `CONFIG_FILE` overrides.
+
 `auto_stop_machines = "suspend"`, `auto_start_machines = true`, and `min_machines_running = 0` let the API suspend fully when idle. The first API request after an idle period can take longer while Fly resumes the Machine; subsequent requests use the already-running process. Frontend PDF preview, generation, and packet assembly do not wake the API.
 
 ## Key Design Choices
