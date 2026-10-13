@@ -48,6 +48,7 @@ const levels = catalog.levels.map(({ id, name, skills }) => ({
         id: skill.id,
         name: skill.name,
         compactName: compactTitles[skill.id] || skill.name,
+        subskills: skill.subskills.map(({ text, group }) => ({ text, group })),
         defaultWorkoutText: defaultWorkoutText(skill),
     })),
 }));

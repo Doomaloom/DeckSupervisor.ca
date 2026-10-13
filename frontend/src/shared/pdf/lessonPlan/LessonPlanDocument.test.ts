@@ -1,5 +1,13 @@
 import { expect, it } from "vitest";
-import { lessonPlanHeading, textSegments } from "./LessonPlanDocument";
+import { hasActivityDrill, lessonPlanHeading, textSegments } from "./LessonPlanDocument";
+it("only includes the activity column when a plan has activity text", () => {
+    expect(hasActivityDrill([])).toBe(false);
+    expect(hasActivityDrill([{ activity: "  \n  " }])).toBe(false);
+    expect(hasActivityDrill([
+        { activity: "" },
+        { activity: "Practice kicking" },
+    ])).toBe(true);
+});
 it("uses the session week number in the lesson plan heading", () => {
     expect(lessonPlanHeading(
         { weeks: ["2026-10-05", "2026-10-12"] } as any,

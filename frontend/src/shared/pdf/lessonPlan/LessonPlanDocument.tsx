@@ -1,21 +1,18 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import type { InstructorClass, InstructorSession, LessonPlan, } from "../../../lib/serverApi";
+import type { InstructorClass, InstructorSession, LessonPlan, LessonRow, } from "../../../lib/serverApi";
 import { sessionLabel } from "../../session/instructorSessionLabels";
+import { plannedSkillSubskills } from "../../../features/instructor/LessonPlans/lessonSkills";
 const styles = StyleSheet.create({
     page: {
         fontFamily: "Liberation Sans",
         fontSize: 10,
-        paddingTop: 136,
+        paddingTop: 26,
         paddingBottom: 40,
         paddingHorizontal: 32,
     },
-    context: { position: "absolute", top: 26, left: 32, right: 32 },
+    context: { marginBottom: 27 },
     title: { fontSize: 17, fontWeight: 700, marginBottom: 5 },
     header: {
-        position: "absolute",
-        top: 100,
-        left: 32,
-        right: 32,
         flexDirection: "row",
         backgroundColor: "#edf2f7",
         borderWidth: 1,
@@ -24,6 +21,11 @@ const styles = StyleSheet.create({
     row: { flexDirection: "row", borderLeftWidth: 1, borderBottomWidth: 1 },
     cell: { padding: 6, borderRightWidth: 1 },
     text: { fontSize: 10, lineHeight: 1.3 },
+    subskills: { marginTop: 18, flexShrink: 0 },
+    subskillsTitle: { fontSize: 13, fontWeight: 700, marginBottom: 9 },
+    skillTitle: { fontSize: 10, fontWeight: 700, marginBottom: 3 },
+    skillGroup: { marginBottom: 9, flexShrink: 0 },
+    subskill: { fontSize: 9, lineHeight: 1.35, marginLeft: 12, marginBottom: 2 },
     footer: {
         position: "absolute",
         bottom: 20,
@@ -66,6 +68,9 @@ export function lessonPlanHeading(
     const weekNumber = session.weeks.indexOf(plan.week) + 1;
     return `${course.level} · ${course.code} · Week ${weekNumber || plan.week} Plan`;
 }
+export function hasActivityDrill(rows: Pick<LessonRow, "activity">[]) {
+    return rows.some((row) => row.activity.trim().length > 0);
+}
 export function LessonPlanDocument(
     { session, course, plan }: {
         session: InstructorSession;
@@ -103,10 +108,21 @@ function LessonPlanPage(
         plan: LessonPlan;
     },
 ) {
-    const widths = ["22%", "43%", "20%", "15%"];
+    const showActivity = hasActivityDrill(plan.rows);
+    const widths = showActivity
+        ? ["22%", "43%", "20%", "15%"]
+        : ["65%", "20%", "15%"];
+    const labels = showActivity
+        ? ["Skill", "Activity / drill", "Pool location", "Duration (minutes)"]
+        : ["Skill", "Pool location", "Duration (minutes)"];
+    const plannedSkills = plannedSkillSubskills(
+        course.level,
+        plan.curriculum_level,
+        plan.rows,
+    );
     return (
         <Page size="LETTER" style={styles.page}>
-            <View fixed style={styles.context}>
+            <View wrap={false} style={styles.context}>
                 <Text style={styles.title}>
                     {lessonPlanHeading(session, course, plan)}
                 </Text>
@@ -120,19 +136,13 @@ function LessonPlanPage(
                 </Text>
                 <Text>{sessionLabel(session)}</Text>
             </View>
-            <View fixed style={styles.header}>
-                {[
-                    "Skill",
-                    "Activity / drill",
-                    "Pool location",
-                    "Duration (minutes)",
-                ]
-                    .map((label, i) => (
+            <View wrap={false} style={styles.header}>
+                {labels.map((label, i) => (
                         <View
                             key={label}
                             style={{ ...styles.cell, width: widths[i] }}
                         >
-                            {(i === 3 ? ["Duration", "(minutes)"] : [label])
+                            {(label === "Duration (minutes)" ? ["Duration", "(minutes)"] : [label])
                                 .map((line) => (
                                     <Text
                                         key={line}
@@ -148,8 +158,8 @@ function LessonPlanPage(
                     ))}
             </View>
             {plan.rows.flatMap((row, index) => {
-                const skills = textSegments(row.skill, 18),
-                    activities = textSegments(row.activity, 38);
+                const skills = textSegments(row.skill, showActivity ? 18 : 55),
+                    activities = showActivity ? textSegments(row.activity, 38) : [];
                 return Array.from(
                     { length: Math.max(skills.length, activities.length) },
                     (_, part) => (
@@ -160,7 +170,7 @@ function LessonPlanPage(
                         >
                             {[
                                 skills[part] || "",
-                                activities[part] || "",
+                                ...(showActivity ? [activities[part] || ""] : []),
                                 part === 0 ? row.location : "",
                                 part === 0 ? String(row.duration) : "",
                             ].map((text, i) => (
@@ -180,6 +190,27 @@ function LessonPlanPage(
             })}
             {!plan.rows.length && (
                 <Text>No activities in this saved plan.</Text>
+            )}
+            {plannedSkills.length > 0 && (
+                <View style={styles.subskills}>
+                    {plannedSkills.map(({ name, subskills }, index) => (
+                        <View key={name} wrap={false} style={styles.skillGroup}>
+                            {index === 0 && (
+                                <Text style={styles.subskillsTitle}>Subskills</Text>
+                            )}
+                            <Text style={styles.skillTitle}>{name}</Text>
+                            {subskills.length ? subskills.map((subskill, subskillIndex) => (
+                                <Text key={subskillIndex} style={styles.subskill}>
+                                    {`• ${subskill.group.length
+                                        ? `${subskill.group.join(" / ")}: `
+                                        : ""}${subskill.text}`}
+                                </Text>
+                            )) : (
+                                <Text style={styles.subskill}>Subskills unavailable</Text>
+                            )}
+                        </View>
+                    ))}
+                </View>
             )}
             <Text
                 fixed

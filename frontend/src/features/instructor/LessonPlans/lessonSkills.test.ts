@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, it } from "vitest";
-import { curriculumLevels, defaultWorkoutText, findCurriculumLevel, isWorkoutSkill, } from "./lessonSkills";
+import { curriculumLevels, defaultWorkoutText, findCurriculumLevel, isWorkoutSkill, plannedSkillSubskills, } from "./lessonSkills";
 import levels from "./lessonSkills.json";
 
 it.each([
@@ -36,15 +36,16 @@ it.skipIf(!existsSync(sourcePath))(
                 { id, name, skills }: {
                     id: string;
                     name: string;
-                    skills: { id: string; name: string }[];
+                    skills: { id: string; name: string; subskills: { text: string; group: string[] }[] }[];
                 },
             ) => ({
                 id,
                 name,
-                skills: skills.map(({ id, name }) => ({
+                skills: skills.map(({ id, name, subskills }) => ({
                     id,
                     name,
                     compactName: compactTitles[id] || name,
+                    subskills: subskills.map(({ text, group }) => ({ text, group })),
                 })),
             })),
         );
@@ -53,6 +54,22 @@ it.skipIf(!existsSync(sourcePath))(
         );
     },
 );
+
+it("lists each planned skill once in row order, with only its level's subskills", () => {
+    const skill = curriculumLevels.find((level) => level.id === "LittleSplash1")!.skills[0];
+    const entries = plannedSkillSubskills("Little Splash 1", "Splash1", [
+        { skill: skill.name },
+        { skill: " Custom skill " },
+        { skill: skill.name },
+        { skill: "" },
+    ]);
+    expect(entries).toEqual([
+        { name: skill.name, subskills: skill.subskills },
+        { name: "Custom skill", subskills: [] },
+    ]);
+    expect(plannedSkillSubskills("Private", "LittleSplash1", [{ skill: skill.name }])[0].subskills)
+        .toEqual(skill.subskills);
+});
 
 it("recognizes workout and workout-design skills across curricula, excluding ordinary and unknown skills", () => {
     const workouts = curriculumLevels.flatMap((level) => level.skills).filter(

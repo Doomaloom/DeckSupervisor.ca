@@ -9,8 +9,11 @@ const server = await createServer({
     appType: "custom",
 });
 try {
-    const { generateLessonPlanPdf } = await server.ssrLoadModule(
+    const { generateCombinedLessonPlanPdf, generateLessonPlanPdf } = await server.ssrLoadModule(
         "/src/shared/pdf/lessonPlan/generateLessonPlanPdf.tsx",
+    );
+    const { curriculumLevels } = await server.ssrLoadModule(
+        "/src/features/instructor/LessonPlans/lessonSkills.ts",
     );
     const { newWorkout, workoutText } = await server.ssrLoadModule(
         "/src/shared/workouts/workout.ts",
@@ -45,6 +48,11 @@ try {
         start_time: "09:00:00",
         end_time: "09:30:00",
     };
+    const catalogLevel = curriculumLevels.find((level) => level.id === "LittleSplash1");
+    const catalogSkill = catalogLevel.skills[0].name;
+    const groupedSkill = catalogLevel.skills.find((skill) =>
+        skill.subskills.some((subskill) => subskill.group.length)
+    ).name;
     await mkdir(output, { recursive: true });
     for (
         const [name, rows] of [
@@ -93,6 +101,78 @@ try {
         );
         console.log(`Rendered ${name}: ${rows.length} activities`);
     }
+    const catalogPlan = {
+        week: "2026-10-05",
+        curriculum_level: "LittleSplash1",
+        rows: [{
+            skill: catalogSkill,
+            activity: "Practice with feedback.",
+            location: "Shallow end",
+            duration: 10,
+        }, {
+            skill: groupedSkill,
+            activity: "Discuss safe choices near water.",
+            location: "Poolside",
+            duration: 5,
+        }],
+    };
+    const catalogCourse = { ...course, level: "Little Splash 1" };
+    const catalog = await generateLessonPlanPdf(session, catalogCourse, catalogPlan);
+    await writeFile(
+        resolve(output, "catalog.pdf"),
+        Buffer.from(await catalog.blob.arrayBuffer()),
+    );
+    const combined = await generateCombinedLessonPlanPdf(session, [
+        { course: catalogCourse, plan: catalogPlan },
+        { course: { ...catalogCourse, id: "synthetic-class-2", code: "SYNTHETIC-B" }, plan: catalogPlan },
+    ]);
+    await writeFile(
+        resolve(output, "combined.pdf"),
+        Buffer.from(await combined.blob.arrayBuffer()),
+    );
+    const noActivityPlan = {
+        week: "2026-10-05",
+        curriculum_level: "LittleSplash1",
+        rows: catalogLevel.skills.map((skill) => ({
+            skill: skill.name,
+            activity: "",
+            location: "Shallow end",
+            duration: 5,
+        })),
+    };
+    const noActivity = await generateLessonPlanPdf(
+        session,
+        catalogCourse,
+        noActivityPlan,
+    );
+    await writeFile(
+        resolve(output, "no-activity.pdf"),
+        Buffer.from(await noActivity.blob.arrayBuffer()),
+    );
+    const splash7 = curriculumLevels.find((level) => level.id === "Splash7");
+    const splash7Skills = splash7.skills.filter((skill) => skill.id !== "Splash7:11");
+    splash7Skills.splice(
+        splash7Skills.findIndex((skill) => skill.id === "Splash7:14") + 1,
+        0,
+        splash7.skills.find((skill) => skill.id === "Splash7:11"),
+    );
+    const longSubskills = await generateLessonPlanPdf(
+        session,
+        { ...course, level: "Splash 7 Rookie Patrol" },
+        {
+            week: "2026-10-05",
+            rows: splash7Skills.map((skill) => ({
+                skill: skill.name,
+                activity: "",
+                location: "Pool",
+                duration: 5,
+            })),
+        },
+    );
+    await writeFile(
+        resolve(output, "long-subskills.pdf"),
+        Buffer.from(await longSubskills.blob.arrayBuffer()),
+    );
 } finally {
     await server.close();
 }
