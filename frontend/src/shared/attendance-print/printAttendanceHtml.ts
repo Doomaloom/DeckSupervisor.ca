@@ -1,3 +1,4 @@
+import { prepareSkillMarkingLayout } from "./prepareSkillMarkingLayout";
 import { prepareSchematicCoversForPrint } from "./schematicCover";
 import { buildAttendancePrintDocument } from "./buildAttendancePrintDocument";
 import type { AttendancePrintOptions, AttendancePrintRequest, AttendancePrintResult, } from "./types";
@@ -38,22 +39,7 @@ export async function printAttendanceHtml(
         const prepared = await withTimeout(
             buildAttendancePrintDocument(request, options),
         );
-        existingWindow.document.open();
-        existingWindow.document.write(
-            `<!doctype html>${prepared.documentElement.outerHTML}`,
-        );
-        existingWindow.document.close();
-        await withTimeout(waitForLayout(existingWindow));
-        existingWindow.addEventListener(
-            "afterprint",
-            () => existingWindow.close(),
-            { once: true },
-        );
-        existingWindow.addEventListener("beforeprint", () =>
-            prepareSchematicCoversForPrint(existingWindow)
-        );
-        existingWindow.focus();
-        existingWindow.print();
+        await printPreparedAttendanceDocument(prepared, existingWindow);
         return { status: "printed" };
     } catch (cause) {
         const error = cause instanceof Error
@@ -70,4 +56,25 @@ export async function printAttendanceHtml(
         }
         return { status: "failed", error };
     }
+}
+
+export async function printPreparedAttendanceDocument(prepared: Document, existingWindow: Window) {
+    existingWindow.document.open();
+    existingWindow.document.write(
+        `<!doctype html>${prepared.documentElement.outerHTML}`,
+    );
+    existingWindow.document.close();
+    await withTimeout(waitForLayout(existingWindow));
+    prepareSkillMarkingLayout(existingWindow.document);
+    existingWindow.addEventListener(
+        "afterprint",
+        () => existingWindow.close(),
+        { once: true },
+    );
+    existingWindow.addEventListener("beforeprint", () => {
+        prepareSkillMarkingLayout(existingWindow.document);
+        prepareSchematicCoversForPrint(existingWindow);
+    });
+    existingWindow.focus();
+    existingWindow.print();
 }

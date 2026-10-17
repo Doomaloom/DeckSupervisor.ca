@@ -1,3 +1,4 @@
+import type { PrintMode } from "../PrintPlans/PrintPlans.logic";
 import { ActionButton, Card, EmptyState, Notice, PageShell, } from "../../../general-components";
 
 import { type ReactNode } from "react";
@@ -12,8 +13,8 @@ export default function PlanSelection(props: {
         c: InstructorClass,
         w: string,
     ) => ReactNode;
-    printMode?: "separate" | "together";
-    onPrintModeChange?: (mode: "separate" | "together") => void;
+    printMode?: PrintMode;
+    onPrintModeChange?: (mode: PrintMode) => void;
     renderTogether?: (
         s: InstructorSession,
         classes: InstructorClass[],
@@ -135,8 +136,8 @@ export default function PlanSelection(props: {
                                 <legend className="mb-2 text-sm font-semibold">
                                     Print classes
                                 </legend>
-                                <div className="grid grid-cols-2 gap-2" role="group" aria-label="Print classes">
-                                    {(["separate", "together"] as const).map((mode) => (
+                                <div className="grid grid-cols-3 gap-2">
+                                    {(["separate", "together", "marking"] as const).map((mode) => (
                                         <button
                                             key={mode}
                                             type="button"
@@ -147,13 +148,13 @@ export default function PlanSelection(props: {
                                                 }`}
                                             onClick={() => onPrintModeChange(mode)}
                                         >
-                                            {mode === "separate" ? "Separately" : "Together"}
+                                            {mode === "separate" ? "Separately" : mode === "together" ? "Together" : "Marking"}
                                         </button>
                                     ))}
                                 </div>
                             </fieldset>
                         )}
-                        {printMode !== "together" && <fieldset className="min-w-0">
+                        {printMode !== "together" && printMode !== "marking" && <fieldset className="min-w-0">
                             <legend className="mb-2 text-sm font-semibold">
                                 Class
                             </legend>
@@ -203,9 +204,9 @@ export default function PlanSelection(props: {
                             </div>
                         </fieldset>}
                         {state.session && week &&
-                            (printMode === "together" || selected) && (
+                            (printMode === "together" || printMode === "marking" || selected) && (
                                 <div className="min-w-0 border-t border-secondary/20 pt-6">
-                                    {printMode === "together" && renderTogether
+                                    {(printMode === "together" || printMode === "marking") && renderTogether
                                         ? renderTogether(state.session, state.classes, week)
                                         : selected && children(state.session, selected, week)}
                                 </div>

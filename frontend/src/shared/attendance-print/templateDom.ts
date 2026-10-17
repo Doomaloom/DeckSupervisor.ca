@@ -88,6 +88,7 @@ export function fillAttendanceRoster(
     root: HTMLElement,
     roster: AttendancePrintRoster,
     session: string,
+    options: { dailyAttendance?: boolean } = {},
 ) {
     const startDate = roster.schedule.trim().split(/\s+/)[1] ?? "";
     setText(root, "instructor", roster.instructor);
@@ -138,7 +139,7 @@ export function fillAttendanceRoster(
             (_, day) => `[Day ${day + 1}]`,
         ).join(" ");
         font.append(days);
-        nameCell.append(font);
+        if (options.dailyAttendance !== false) nameCell.append(font);
         row.append(nameCell);
         for (let cellIndex = 0; cellIndex < blankCells; cellIndex += 1) {
             const cell = root.ownerDocument.createElement("td");

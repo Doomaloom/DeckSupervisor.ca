@@ -1,3 +1,7 @@
+import { prepareSkillMarkingLayout } from "./prepareSkillMarkingLayout";
+import { buildCombinedSkillMarkingDocument, buildSkillMarkingDocument } from "./buildSkillMarkingDocument";
+import { curriculumLevels } from "../../features/instructor/LessonPlans/lessonSkills";
+import type { InstructorClass, InstructorSession, LessonPlan } from "../../lib/serverApi";
 import { prepareSchematicCoversForPrint } from "./schematicCover";
 import { buildAttendancePrintDocument } from "./buildAttendancePrintDocument";
 import { LEGACY_ATTENDANCE_TEMPLATE_KEYS } from "./templateRegistry";
@@ -114,11 +118,24 @@ function fixture(
 async function mount() {
     const name = new URLSearchParams(window.location.search).get("fixture") ||
         "attendance-Splash1";
-    const selected = fixture(name);
-    const source = await buildAttendancePrintDocument(
-        selected.request,
-        selected.options,
-    );
+    let source: Document;
+    if (name.startsWith("marking")) {
+        const level = curriculumLevels.find((entry) => entry.id === "LittleSplash1")!;
+        const session = { session_day: "Mo", session_season: "Fall", session_year: 2026, weeks: ["2026-10-05"], location: "Main Pool" } as InstructorSession;
+        const course = { level: name === "marking-private" ? "Private" : level.name, code: "00123", instructor: "Alex Instructor", start_time: "09:00", end_time: "09:30" } as InstructorClass;
+        const skills = name === "marking-empty" ? [] : name === "marking-long" ? level.skills : [level.skills[0], level.skills.at(-1)!];
+        const plan = { week: "2026-10-05", curriculum_level: level.id, rows: name === "marking-overflow" ? Array.from({ length: 16 }, (_, index) => ({ skill: `Wide bold skill ${index + 1}: ${"W".repeat(110)}` })) : skills.map((skill) => ({ skill: skill.name })) } as LessonPlan;
+        const names = Array.from({ length: 12 }, (_, index) => ({ name: `${["Avery Adams", "Blair Brown", "Casey Chen", "Alexandra Long-Synthetic-Studentname"][index % 4]} ${index + 1}` }));
+        source = name === "marking-combined"
+            ? buildCombinedSkillMarkingDocument(session, [
+                { course, plan, students: names },
+                { course: { ...course, code: "00456", level: "Private" }, plan },
+            ])
+            : buildSkillMarkingDocument(session, course, plan, name === "marking-names" ? names : []);
+    } else {
+        const selected = fixture(name);
+        source = await buildAttendancePrintDocument(selected.request, selected.options);
+    }
     document.title = source.title;
     document.body.className = source.body.className;
     window.addEventListener("beforeprint", () => prepareSchematicCoversForPrint(window));
@@ -135,6 +152,8 @@ async function mount() {
         ),
     );
     await document.fonts.ready;
+    prepareSkillMarkingLayout(document);
+    window.addEventListener("beforeprint", () => prepareSkillMarkingLayout(document));
     window.__ATTENDANCE_FIXTURE_READY__ = true;
 }
 

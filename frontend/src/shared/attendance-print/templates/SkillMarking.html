@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Weekly skill marking sheet</title>
+    <style>
+        .marking-page { width: 1000px; padding: 8px; }
+        .marking-table { width: 100%; table-layout: fixed; border-collapse: collapse; color: #000; font-size: 10px; }
+        .marking-table td { border: 1px solid #000; }
+        .marking-context { width: 220px; vertical-align: top; padding: 8px; font: 12px Arial, sans-serif; }
+        .marking-context h1 { font-size: 20px; margin: 0 0 16px; }
+        .marking-context p { margin: 0; line-height: 1.2; }
+        .marking-criterion { position: relative; height: 320px; padding: 0; vertical-align: top; }
+        .marking-criterion > span { position: absolute; top: 310px; left: 3px; width: 290px; transform: rotate(-90deg); transform-origin: left top; font: var(--criterion-font-size, 10px)/1.1 Arial, sans-serif; overflow-wrap: anywhere; }
+        .marking-criterion[data-planned="true"] > span { font-weight: bold; }
+        .marking-table tr[data-generated-attendance-row] { height: var(--student-row-height, 30px); line-height: 1; }
+        .marking-table tr[data-generated-attendance-row] > td:first-child { padding: 2px 6px; font: 12px/1.1 Arial, sans-serif; overflow-wrap: anywhere; }
+        .marking-page footer { font: 12px Arial, sans-serif; margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <section class="print-page marking-page">
+        <table class="marking-table" border="1">
+            <tbody id="attendance-rows">
+                <tr id="student-rows">
+                    <td class="marking-context">
+                        <h1 id="level"></h1>
+                        <p><strong>Instructor: </strong><span id="instructor"></span><br>
+                        <strong>Start Day/Time: </strong><span id="start_time"></span><br>
+                        <strong>Session: </strong><span id="session"></span><br>
+                        <strong>Location: </strong><span id="location"></span><br>
+                        <strong>Barcode: </strong><span id="barcode"></span><br>
+                        <strong>Lesson: </strong><span id="lesson"></span></p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <footer>Weekly skill marking sheet · <span id="page-number"></span></footer>
+    </section>
+</body>
+</html>

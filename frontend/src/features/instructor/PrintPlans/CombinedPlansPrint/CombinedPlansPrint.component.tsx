@@ -6,6 +6,7 @@ export function CombinedPlansPrint(props: {
     session: InstructorSession;
     courses: InstructorClass[];
     week: string;
+    marking?: boolean;
 }) {
     const viewModel = useCombinedPlansPrintLogic(props);
     const { session, courses, week } = viewModel;
@@ -15,6 +16,7 @@ export function CombinedPlansPrint(props: {
             courses={courses}
             week={week}
             combined
+            marking={props.marking}
         />
     );
 }

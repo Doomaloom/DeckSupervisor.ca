@@ -19,3 +19,17 @@ npm run test:attendance-html-visual -- Splash1
 ```
 
 Substitute the applicable template key when targeting another sheet.
+
+## Weekly marking template
+
+`SkillMarking.html` is a separate, dynamically filled attendance-style sheet.
+`buildSkillMarkingDocument.ts` fills the class metadata and rotates the saved
+plan's skill and sub-skill headers, retaining student-name rows, black grid borders, and landscape printing. Daily
+attendance fields are omitted; names come from matching local roster data when
+available. It does not change
+the historical templates. Up to 32 criteria fit across one sheet. Denser plans continue on additional
+sheets; classes over fourteen students continue with the remaining names.
+Without roster data, ten blank student rows are provided.
+
+Run `npm run test:attendance-html-visual -- marking-all` to generate the marking,
+continuation, private-curriculum, and empty-plan visual fixtures.

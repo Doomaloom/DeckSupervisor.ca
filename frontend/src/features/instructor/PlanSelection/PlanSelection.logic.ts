@@ -1,3 +1,4 @@
+import type { PrintMode } from "../PrintPlans/PrintPlans.logic";
 import { type ReactNode, useEffect, useState } from "react";
 
 import { useSearchParams } from "react-router-dom";
@@ -36,8 +37,8 @@ export function usePlanSelectionLogic({ title, children, printMode, onPrintModeC
         c: InstructorClass,
         w: string,
     ) => ReactNode;
-    printMode?: "separate" | "together";
-    onPrintModeChange?: (mode: "separate" | "together") => void;
+    printMode?: PrintMode;
+    onPrintModeChange?: (mode: PrintMode) => void;
     renderTogether?: (
         s: InstructorSession,
         classes: InstructorClass[],

@@ -18,6 +18,7 @@ export default function PrintPlans() {
                     key={`${session.id}:${week}`}
                     session={session}
                     courses={classes}
+                    marking={printMode === "marking"}
                     week={week}
                 />
             )}

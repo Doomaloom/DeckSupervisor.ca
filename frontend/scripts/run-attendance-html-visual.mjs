@@ -64,6 +64,8 @@ function requestedFixtures() {
     if (!value || value === "all" || value === "backs") {
         return keys.map((key) => `attendance-${key}`);
     }
+    if (value === "marking-all") return ["marking", "marking-long", "marking-private", "marking-empty", "marking-combined", "marking-names", "marking-overflow"];
+    if (value.startsWith("marking")) return [value];
     if (["paired", "odd", "covers"].includes(value)) return [value];
     return [`attendance-${value.replace(/^attendance-/, "")}`];
 }
@@ -143,6 +145,15 @@ try {
                 window.__ATTENDANCE_FIXTURE_ERROR__
             );
             if (error) throw new Error(`${name}: ${error}`);
+            if (name.startsWith("marking")) {
+                await page.emulateMedia({ media: "print" });
+                const overflow = await page.locator(".marking-criterion > span").evaluateAll((labels) => labels.filter((label) => {
+                    const text = label.getBoundingClientRect();
+                    const cell = label.parentElement.getBoundingClientRect();
+                    return text.left < cell.left + 1 || text.right > cell.right - 1 || text.top < cell.top + 1 || text.bottom > cell.bottom - 1;
+                }).map((label) => label.textContent));
+                if (overflow.length) throw new Error(`${name}: ${overflow.length} marking headers overflow their cells: ${overflow[0]}`);
+            }
             const pdf = await page.pdf({
                 landscape: true,
                 format: "Letter",

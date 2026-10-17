@@ -202,3 +202,23 @@ update. Its transaction recreates `instructor_sessions()` with the session start
 and end times and restores the authenticated-only grants. The instructor view
 uses the same title formatter as the supervisor view; sessions without times
 continue to show their day, season, and year.
+
+### Instructor skill marking sheets
+
+In the instructor Print view, choose **Marking** and a lesson week to
+preview and print an attendance-style marking sheet. The dedicated HTML template
+retains the attendance layout: student-name rows on the left and rotated criteria columns across the top.
+Daily attendance fields are omitted. Names are filled from locally loaded or
+uploaded roster data for the same account, session, and class; otherwise rows
+remain blank. All classes with saved plans print together, each starting a new sheet. Only each saved
+plan's skills are included (once each, in plan order), each immediately followed
+by its sub-skills. Private classes use the curriculum saved with the plan; custom
+skills without reference criteria show “Subskills unavailable”. The compact layout fits up to 32 criteria on one sheet, with continuation sheets
+for denser plans or larger classes. Every sheet repeats the class metadata and
+applicable student names. Missing plans cannot be
+printed and printing never creates a plan. The browser print dialog supports
+printing or saving as PDF, using the same workflow as attendance sheets.
+
+Run the instructor PrintPlans and shared attendance-print Vitest tests, then
+`npm run test:attendance-html-visual -- marking-all` from `frontend` to generate
+synthetic marking fixtures for visual inspection.

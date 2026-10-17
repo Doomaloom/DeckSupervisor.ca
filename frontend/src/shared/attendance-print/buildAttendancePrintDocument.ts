@@ -34,7 +34,7 @@ function requestItems(request: AttendancePrintRequest) {
     throw new Error("No attendance rosters were provided.");
 }
 
-function fontCss() {
+export function attendanceFontCss() {
     return `
 @font-face { font-family: Arial; src: url("${sansRegular}"); font-weight: 400; }
 @font-face { font-family: Arial; src: url("${sansBold}"); font-weight: 700; }
@@ -77,7 +77,7 @@ export async function buildAttendancePrintDocument(
         "default-src 'self' data: blob:; script-src 'none'; style-src 'unsafe-inline'; font-src 'self' data: blob:";
     document.head.append(meta);
     const style = document.createElement("style");
-    style.textContent = `${fontCss()}\n${compatibilityCss}`;
+    style.textContent = `${attendanceFontCss()}\n${compatibilityCss}`;
     document.head.append(style);
     document.body.className = "attendance-print-document";
 

@@ -1,3 +1,4 @@
+import { prepareSkillMarkingLayout } from "../../../../shared/attendance-print/prepareSkillMarkingLayout";
 import { ActionButton, Notice } from "../../../../general-components";
 import { type InstructorClass, type InstructorSession } from "../../../../lib/serverApi";
 import { usePlanPrintPreviewLogic } from "./PlanPrintPreview.logic";
@@ -7,12 +8,14 @@ export function PlanPrintPreview(props: {
     courses: InstructorClass[];
     week: string;
     combined: boolean;
+    marking?: boolean;
 }) {
     const viewModel = usePlanPrintPreviewLogic(props);
     const {
         error,
         setRetry,
-        artifact,
+        canPrint,
+        previewHtml,
         printPdf,
         loading,
         previewUrl,
@@ -28,7 +31,7 @@ export function PlanPrintPreview(props: {
                     </ActionButton>
                 </Notice>
             )}
-            {artifact && !error && (
+            {canPrint && !error && (
                 <ActionButton variant="primary" fullWidth onClick={printPdf}>
                     Print PDF
                 </ActionButton>
@@ -43,12 +46,23 @@ export function PlanPrintPreview(props: {
                     )}
                 </div>
                 <div className="h-[min(70vh,52rem)] min-h-80 overflow-hidden rounded-2xl border border-secondary/20 bg-bg">
-                    {previewUrl && !error
+                    {(previewUrl || previewHtml) && !error
                         ? (
                             <iframe
-                                title="Lesson plan PDF preview"
+                                title={props.marking ? "Skill marking sheet preview" : "Lesson plan PDF preview"}
                                 className="h-full w-full bg-white"
-                                src={previewUrl}
+                                src={previewUrl || undefined}
+                                srcDoc={previewHtml || undefined}
+                                onLoad={async (event) => {
+                                    if (!previewHtml) return;
+                                    const frame = event.currentTarget;
+                                    const document = frame.contentDocument;
+                                    if (!document) return;
+                                    if (document.fonts) await document.fonts.ready;
+                                    prepareSkillMarkingLayout(document);
+                                    const body = document.body;
+                                    if (body) body.style.zoom = String(Math.min(1, frame.clientWidth / 1032));
+                                }}
                             />
                         )
                         : (
