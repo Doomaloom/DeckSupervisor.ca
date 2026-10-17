@@ -79,6 +79,7 @@ For a complete, repeatable RLS update, use [`backend/supabase_rls_reset.sql`](ba
 
 - Frontend deployed separately from API
 - Frontend rewrites `/api/*` to backend service
+- `test.decksupervisor.ca` routes API requests to `decksupervisor-develop.fly.dev`; other frontend hosts use `decksupervisor.fly.dev`. The test-host rule in `frontend/vercel.json` must precede the default API rewrite. Redeploy the develop frontend after changing these rules.
 - Backend containerized as a small Go + CA-certificates image
 - Fly runs one shared-CPU/1 GB Machine that suspends to zero while idle
 
@@ -105,7 +106,7 @@ The helper validates configuration, deploys with Fly high availability disabled,
 APP_NAME=decksupervisor CONFIG_FILE=fly.toml ./scripts/deploy-fly.sh
 ```
 
-To deploy to `decksupervisor-develp` with the same settings:
+To deploy to `decksupervisor-develop` with the same settings:
 
 ```bash
 ./scripts/deploy-fly-develp.sh

@@ -2,6 +2,16 @@
     "rewrites": [
         {
             "source": "/api/(.*)",
+            "has": [
+                {
+                    "type": "host",
+                    "value": "test.decksupervisor.ca"
+                }
+            ],
+            "destination": "https://decksupervisor-develop.fly.dev/api/$1"
+        },
+        {
+            "source": "/api/(.*)",
             "destination": "https://decksupervisor.fly.dev/api/$1"
         },
         {
