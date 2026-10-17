@@ -21,13 +21,15 @@ function textCell(
     const cell = element(document, "div", {
         width: `${width}pt`,
         height: `${height}pt`,
-        border: "1pt solid #000",
+        border: "var(--schematic-border-width, 1pt) solid #000",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         textAlign: "center",
         overflow: "hidden",
-        fontSize: "11pt",
+        boxSizing: "border-box",
+        flexShrink: "0",
+        fontSize: "inherit",
         lineHeight: "1.1",
         ...styles,
     });
@@ -67,10 +69,13 @@ export function buildSchematicCoverElement(
         );
 
     const table = element(document, "div", {
+        flexShrink: "0",
+        fontSize: `${11 * scale}pt`,
         width: `${tableWidth}pt`,
         fontFamily: "Arial, sans-serif",
         color: "#111",
     });
+    table.style.setProperty("--schematic-border-width", `${Math.max(0.35, scale)}pt`);
     const band = (value: string, height: number, fontSize: number) => {
         const node = textCell(document, value, tableWidth, height * scale, {
             backgroundColor: "#000",
@@ -182,13 +187,13 @@ export function buildSchematicCoverElement(
                     borderTopWidth:
                         cell.border === "middle" || cell.border === "bottom"
                             ? "0"
-                            : "1pt",
+                            : "var(--schematic-border-width)",
                     borderBottomWidth:
                         cell.border === "middle" || cell.border === "top"
                             ? "0"
-                            : "1pt",
-                    borderLeftWidth: cell.kind === "empty" ? "0" : "1pt",
-                    borderRightWidth: cell.kind === "empty" ? "0" : "1pt",
+                            : "var(--schematic-border-width)",
+                    borderLeftWidth: cell.kind === "empty" ? "0" : "var(--schematic-border-width)",
+                    borderRightWidth: cell.kind === "empty" ? "0" : "var(--schematic-border-width)",
                 },
             );
             rowNode.append(cellNode);
@@ -198,22 +203,24 @@ export function buildSchematicCoverElement(
     });
 
     const viewport = element(document, "div", {
-        width: "10.6in",
-        height: "8.1in",
+        width: "10.5in",
+        height: "8in",
+        flexShrink: "0",
         display: "flex",
         alignItems: "flex-start",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         overflow: "hidden",
     });
     if (orientation === "portrait") {
         const rotated = element(document, "div", {
             position: "relative",
-            width: "8.1in",
-            height: "10.6in",
-            transform: "translateY(8.1in) rotate(-90deg)",
+            width: "8in",
+            height: "10.5in",
+            flexShrink: "0",
+            transform: "translateY(8in) rotate(-90deg)",
             transformOrigin: "top left",
             display: "flex",
-            justifyContent: "center",
+            justifyContent: "flex-start",
             alignItems: "flex-start",
         });
         rotated.append(table);
@@ -222,4 +229,58 @@ export function buildSchematicCoverElement(
         viewport.append(table);
     }
     return viewport;
+}
+
+// Attendance templates intentionally overflow the printable width. Browsers fit
+// the entire job to that width, which also shrinks the otherwise point-sized
+// schematic. Measure with the print-only template styles in beforeprint and
+// compensate only the cover, leaving the historical attendance layout intact.
+export function prepareSchematicCoversForPrint(printWindow: Window) {
+    const document = printWindow.document;
+    const covers = Array.from(document.querySelectorAll<HTMLElement>(
+        '[data-page-kind="schematic-cover"]',
+    ));
+    if (!covers.length) return;
+    // Chromium fires beforeprint before activating print media. Temporarily
+    // activate our inline print rules and disable screen-only template utilities
+    // so the measurement also works when the dialog starts from screen media.
+    const mediaRules = Array.from(document.styleSheets).flatMap((sheet) =>
+        Array.from(sheet.cssRules).filter((rule) => rule.type === 4)
+            .map((rule) => rule as CSSMediaRule)
+            .filter((rule) => ["screen", "print"].includes(rule.media.mediaText))
+            .map((rule) => ({ rule, media: rule.media.mediaText }))
+    );
+    let contentWidth: number;
+    let leftMargin: number;
+    let topMargin: number;
+    const printableWidth = 10.6 * 96; // Letter landscape with 0.2-inch margins.
+    try {
+        mediaRules.forEach(({ rule, media }) => {
+            rule.media.mediaText = media === "print" ? "all" : "not all";
+        });
+        const bodyStyle = printWindow.getComputedStyle(document.body);
+        leftMargin = parseFloat(bodyStyle.marginLeft) || 0;
+        topMargin = parseFloat(bodyStyle.marginTop) || 0;
+        const bodyLeft = document.body.getBoundingClientRect().left;
+        contentWidth = Math.max(printableWidth, ...Array.from(
+            document.querySelectorAll<HTMLElement>('[data-page-kind^="attendance-"] table'),
+            (table) => {
+                const bounds = table.getBoundingClientRect();
+                return bounds.left - bodyLeft + Math.max(bounds.width, table.scrollWidth)
+                    + leftMargin;
+            },
+        ));
+    } finally {
+        mediaRules.forEach(({ rule, media }) => { rule.media.mediaText = media; });
+    }
+    const compensation = contentWidth / printableWidth;
+    covers.forEach((cover, index) => {
+        const viewport = cover.firstElementChild as HTMLElement;
+        viewport.style.transform = `translateY(${index === 0 ? -topMargin : 0}px) scale(${compensation})`;
+        viewport.style.transformOrigin = "top left";
+        // Match the standalone PDF's quarter-inch inset, within the job's
+        // 0.2-inch page margin, after the browser's fit-to-width reduction.
+        cover.style.marginLeft = `${4.8 * compensation - leftMargin}px`;
+        cover.style.paddingTop = `${4.8 * compensation}px`;
+    });
 }

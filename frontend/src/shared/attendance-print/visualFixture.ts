@@ -1,3 +1,4 @@
+import { prepareSchematicCoversForPrint } from "./schematicCover";
 import { buildAttendancePrintDocument } from "./buildAttendancePrintDocument";
 import { LEGACY_ATTENDANCE_TEMPLATE_KEYS } from "./templateRegistry";
 import type { AttendancePrintItem, AttendancePrintRequest } from "./types";
@@ -119,6 +120,8 @@ async function mount() {
         selected.options,
     );
     document.title = source.title;
+    document.body.className = source.body.className;
+    window.addEventListener("beforeprint", () => prepareSchematicCoversForPrint(window));
     document.head.replaceChildren(
         ...Array.from(
             source.head.childNodes,

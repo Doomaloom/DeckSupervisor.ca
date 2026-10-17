@@ -1,3 +1,4 @@
+import { prepareSchematicCoversForPrint } from "./schematicCover";
 import { buildAttendancePrintDocument } from "./buildAttendancePrintDocument";
 import type { AttendancePrintOptions, AttendancePrintRequest, AttendancePrintResult, } from "./types";
 
@@ -47,6 +48,9 @@ export async function printAttendanceHtml(
             "afterprint",
             () => existingWindow.close(),
             { once: true },
+        );
+        existingWindow.addEventListener("beforeprint", () =>
+            prepareSchematicCoversForPrint(existingWindow)
         );
         existingWindow.focus();
         existingWindow.print();
