@@ -3,6 +3,9 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { AuthProvider } from "./AuthContext";
 import { DayProvider } from "./DayContext";
+import { registerStaleDeploymentRecovery } from "../lib/recoverStaleDeployment";
+
+registerStaleDeploymentRecovery();
 
 const container = document.getElementById("root");
 
