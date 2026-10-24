@@ -50,3 +50,13 @@ it("propagates fetch failures and preserves guest roster-only export", async () 
  expect(await loadExportPlans(session.id, courses, true)).toEqual(courses);
  expect(fetchDeviceLessonPlans).not.toHaveBeenCalled();
 });
+
+it("exports individual new skills and keeps historical grouped plans markable", async () => {
+ const front = curriculumLevels.find(level => level.id === "Splash1")!.skills.find(skill => skill.id === "Splash1:6a")!;
+ vi.mocked(fetchDeviceLessonPlans).mockResolvedValue({ plans: [plan({ rows: [
+  { ...row, skill: front.name },
+  { ...row, skill: "Float on front and back (5 sec. each)" },
+ ] })] });
+ const courses = await loadExportPlans(session.id, buildCourses(session, classes, students), false);
+ expect(courses[0].lessonPlans?.[0].rows.map(row => row.skillId)).toEqual(["Splash1:6a", "Splash1:6"]);
+});

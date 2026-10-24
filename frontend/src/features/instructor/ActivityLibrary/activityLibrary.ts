@@ -1,4 +1,4 @@
-import { curriculumLevels } from "../LessonPlans/lessonSkills";
+import { curriculumLevels, planningSkillIds } from "../LessonPlans/lessonSkills";
 import catalog from "./activities.json";
 
 export const activityCategories = [
@@ -39,7 +39,11 @@ export type LibraryActivity = {
     skillIds: string[];
 };
 
-export const activities = catalog as LibraryActivity[];
+// Expand historical grouped links to the current individual assessment skills.
+export const activities: LibraryActivity[] = catalog.map(activity => ({
+    ...activity,
+    skillIds: [...new Set(activity.skillIds.flatMap(planningSkillIds))],
+})) as LibraryActivity[];
 export const librarySkills = curriculumLevels.flatMap((level) =>
     level.skills.map((skill) => ({ ...skill, level: level.name }))
 );
@@ -65,7 +69,7 @@ export function filterActivities(
         const text = `${activity.title} ${activity.instructions} ${activity.equipment || ""
             } ${activity.suitability || ""}`.toLocaleLowerCase();
         return (category === "All" || activity.category === category) &&
-            (!skillId || activity.skillIds.includes(skillId)) &&
+            (!skillId || planningSkillIds(skillId).some(id => activity.skillIds.includes(id))) &&
             (!drillSkill || (activity.category === "Drills" &&
                 activity.title.startsWith(`${drillSkill}:`))) &&
             (!workoutGroup || (activity.category === "Workouts" &&

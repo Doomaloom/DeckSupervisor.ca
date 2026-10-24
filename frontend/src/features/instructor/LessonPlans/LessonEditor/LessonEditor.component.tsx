@@ -6,7 +6,7 @@ import ActivityLibraryModal from "../../ActivityLibrary/ActivityLibraryModal/Act
 import { activityText } from "../../ActivityLibrary/activityLibrary";
 import DurationPicker from "./DurationPicker/DurationPicker.component";
 import WorkoutBuilderModal from "./WorkoutBuilderModal/WorkoutBuilderModal.component";
-import { curriculumLevels, isWorkoutSkill } from "../lessonSkills";
+import { curriculumLevels, findPlanningSkill, isWorkoutSkill } from "../lessonSkills";
 import { rowActivities, useLessonEditorLogic } from "./LessonEditor.logic";
 export function LessonEditor(props: {
     sessionId: string;
@@ -243,7 +243,7 @@ export function LessonEditor(props: {
                                                         skill.name === row.skill
                                                     ) && (
                                                         <option value={row.skill}>
-                                                            {row.skill}{" "}
+                                                            {findPlanningSkill(selectedLevel, row.skill)?.compactName || row.skill}{" "}
                                                             (saved skill)
                                                         </option>
                                                     )}
@@ -478,9 +478,7 @@ export function LessonEditor(props: {
             </fieldset>
             {libraryRow !== null && rows[libraryRow] && (
                 <ActivityLibraryModal
-                    selectedSkill={skills.find((skill) =>
-                        skill.name === rows[libraryRow].skill
-                    )}
+                    selectedSkill={findPlanningSkill(selectedLevel, rows[libraryRow].skill)}
                     onClose={() => setLibraryRow(null)}
                     onUse={(activity) => {
                         editActivities(libraryRow, [

@@ -937,3 +937,26 @@ it("reloads saved equipment and removes a selected item", async () => {
     await user.click(screen.getByRole("checkbox", { name: "Noodles" }));
     await waitFor(() => expect(api.saveLessonPlan.mock.lastCall?.[3][0].equipment).toEqual(["Custom aid"]));
 });
+
+it("offers separate short-form float choices and preserves historical saved rows until edited", async () => {
+    const oldName = "Float on front and back (5 sec. each)";
+    api.fetchLessonPlan.mockResolvedValue({ plan: { rows: [{
+        skill: oldName, activity: "Existing practice", location: "Shallow end",
+        duration: 10, equipment: ["Noodles"],
+    }] } });
+    const user = userEvent.setup();
+    setup("Splash1");
+    const select = await screen.findByRole("combobox", { name: "Skill 1" });
+    expect(select).toHaveValue(oldName);
+    expect(within(select).getByRole("option", { name: /saved skill/ })).toHaveValue(oldName);
+    const front = curriculumLevels.find(level => level.id === "Splash1")!.skills
+        .find(skill => skill.id === "Splash1:6a")!;
+    expect(within(select).getByRole("option", { name: "Front float 5s" })).toHaveValue(front.name);
+    expect(within(select).getByRole("option", { name: "Back float 5s" })).toBeInTheDocument();
+    expect(api.saveLessonPlan).not.toHaveBeenCalled();
+    await user.selectOptions(select, front.name);
+    await waitFor(() => expect(api.saveLessonPlan.mock.lastCall?.[3][0]).toMatchObject({
+        skill: front.name, activity: "Existing practice", location: "Shallow end",
+        duration: 10, equipment: ["Noodles"],
+    }));
+});

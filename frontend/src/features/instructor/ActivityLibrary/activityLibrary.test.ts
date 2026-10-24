@@ -83,3 +83,10 @@ it("retains cross-page actions and the verified workout intervals", () => {
             .instructions,
     ).toContain("drive the arms forward quickly");
 });
+
+it("keeps historical activity links usable for individual current skills", () => {
+    expect(filterActivities("Torpedo kicking", "Drills", "Splash1:9a").map(a => a.id))
+        .toEqual(filterActivities("Torpedo kicking", "Drills", "Splash1:9").map(a => a.id));
+    expect(filterActivities("Torpedo kicking", "Drills", "Splash1:9a")).toHaveLength(1);
+    expect(activities.some(activity => activity.skillIds.includes("Splash1:9"))).toBe(false);
+});

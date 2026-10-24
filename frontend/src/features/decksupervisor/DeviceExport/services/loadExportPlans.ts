@@ -1,5 +1,5 @@
 import { fetchDeviceLessonPlans } from "../../../../lib/serverApi";
-import { findCurriculumLevel } from "../../../instructor/LessonPlans/lessonSkills";
+import { findCurriculumLevel, findPlanningSkill } from "../../../instructor/LessonPlans/lessonSkills";
 import type { ExportCourse } from "./exportPackage";
 
 // Fetch at publication time so restarting a share publishes the latest saved plans.
@@ -37,9 +37,7 @@ export async function loadExportPlans(
                     date: plan.week,
                     curriculumLevel: level?.id || "",
                     rows: plan.rows.map(row => {
-                        const skill = level?.skills.find(skill =>
-                            skill.name === row.skill.trim()
-                        );
+                        const skill = findPlanningSkill(level, row.skill);
                         return {
                             ...row,
                             ...(skill ? { skillId: skill.id } : {}),

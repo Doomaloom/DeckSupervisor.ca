@@ -3,14 +3,14 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 // Run from any directory; Rectab's extracted catalog is the source of truth.
 const root = new URL("../../", import.meta.url);
 const source = new URL(
-    "../rec-tablet/internal/workflows/swimming/curriculum/catalog.json",
+    "../rec-tablet/src/workflows/swimming/curriculum/catalog.json",
     root,
 );
 const catalog = JSON.parse(await readFile(source, "utf8"));
 const compactTitles = JSON.parse(
     await readFile(
         new URL(
-            "../rec-tablet/internal/workflows/swimming/curriculum/compact_titles.json",
+            "../rec-tablet/src/workflows/swimming/curriculum/compact_titles.json",
             root,
         ),
         "utf8",
@@ -52,6 +52,46 @@ const levels = catalog.levels.map(({ id, name, skills }) => ({
         defaultWorkoutText: defaultWorkoutText(skill),
     })),
 }));
+// Keep historical names readable without putting grouped skills back in new dropdowns.
+const destination = new URL("frontend/src/features/instructor/LessonPlans/", root);
+const previous = JSON.parse(await readFile(new URL("lessonSkills.json", destination), "utf8"));
+let historical = [];
+try {
+    historical = JSON.parse(await readFile(new URL("legacyLessonSkills.json", destination), "utf8"));
+} catch (error) {
+    if (error.code !== "ENOENT") throw error;
+}
+const aliases = JSON.parse(await readFile(
+    new URL("../rec-tablet/src/workflows/swimming/curriculum/planned_skill_ids.json", root), "utf8",
+));
+for (const level of previous) {
+    for (const skill of level.skills) {
+        if (levels.find(entry => entry.id === level.id)?.skills.some(entry =>
+            entry.id === skill.id && entry.name === skill.name
+        )) continue;
+        if (!historical.some(entry => entry.level === level.id && entry.name === skill.name)) {
+            historical.push({ level: level.id, id: skill.id, name: skill.name, compactName: skill.compactName, ...(skill.defaultWorkoutText ? { defaultWorkoutText: skill.defaultWorkoutText } : {}) });
+        }
+    }
+}
+const legacy = historical.map(entry => ({
+    ...entry,
+    skillIds: (aliases[entry.id] || [entry.id]).filter(id =>
+        levels.find(level => level.id === entry.level)?.skills.some(skill => skill.id === id)
+    ),
+}));
+// Assessment criteria can be simplified independently of an existing workout recipe.
+// Retain previously reviewed defaults when the current catalog no longer spells out sets.
+for (const level of levels) {
+    for (const skill of level.skills) {
+        if (/\bworkouts?\b/i.test(skill.name) && !skill.defaultWorkoutText) {
+            skill.defaultWorkoutText = legacy.find(entry =>
+                entry.level === level.id && entry.id === skill.id && entry.defaultWorkoutText
+            )?.defaultWorkoutText;
+        }
+    }
+}
+await writeFile(new URL("legacyLessonSkills.json", destination), JSON.stringify(legacy, null, 4) + "\n");
 await writeFile(
     new URL("frontend/src/features/instructor/LessonPlans/lessonSkills.json", root),
     JSON.stringify(levels, null, 4) + "\n",

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, it } from "vitest";
-import { curriculumLevels, defaultWorkoutText, findCurriculumLevel, isWorkoutSkill, plannedSkillSubskills, } from "./lessonSkills";
+import { curriculumLevels, defaultWorkoutText, findCurriculumLevel, findPlanningSkill, planningSkillIds, isWorkoutSkill, plannedSkillSubskills, } from "./lessonSkills";
 import levels from "./lessonSkills.json";
 
 it.each([
@@ -17,11 +17,10 @@ it.each([
 ])("matches %s without guessing a curriculum", (name, id) => {
     expect(findCurriculumLevel(name)?.id).toBe(id);
 });
-const sourcePath = resolve(
-    process.cwd(),
-    "../../rec-tablet/internal/workflows/swimming/curriculum/catalog.json",
-);
-it.skipIf(!existsSync(sourcePath))(
+const tabletRoot = resolve(process.cwd(), "../../rec-tablet");
+const sourcePath = resolve(tabletRoot, "src/workflows/swimming/curriculum/catalog.json");
+// Standalone website checkouts may omit the tablet; an incorrect path in this workspace must fail.
+it.skipIf(!existsSync(tabletRoot))(
     "keeps generated curriculum aligned with the Rectab extraction",
     () => {
         const source = JSON.parse(readFileSync(sourcePath, "utf8"));
@@ -95,4 +94,29 @@ it("includes prescribed workouts from subskills and skill names, but no invented
         .toContain("5 x 25 m or yd Instructor's choice");
     expect(defaultWorkoutText(skills.find((s) => s.id === "SplashFitness:6")!.name))
         .toBeUndefined();
+});
+
+it("exposes individual tablet components with the tablet short titles", () => {
+    const level = findCurriculumLevel("Splash1")!;
+    expect(level.skills.filter(skill => skill.id.startsWith("Splash1:6"))
+        .map(skill => [skill.id, skill.compactName])).toEqual([
+            ["Splash1:6a", "Front float 5s"],
+            ["Splash1:6b", "Back float 5s"],
+        ]);
+    expect(level.skills.filter(skill => skill.id.startsWith("Splash1:8"))
+        .map(skill => skill.id)).toEqual(["Splash1:8a", "Splash1:8b", "Splash1:8c"]);
+    expect(level.skills.some(skill => skill.id === "Splash1:6" || skill.id === "Splash1:8"))
+        .toBe(false);
+});
+
+it("resolves historical saved names without adding them to the current choices", () => {
+    const level = findCurriculumLevel("Splash1")!;
+    const oldName = "Float on front and back (5 sec. each)";
+    expect(findPlanningSkill(level, oldName)?.id).toBe("Splash1:6");
+    expect(planningSkillIds("Splash1:6")).toEqual(["Splash1:6a", "Splash1:6b"]);
+    expect(level.skills.some(skill => skill.name === oldName)).toBe(false);
+    expect(findPlanningSkill(findCurriculumLevel("Splash2A"), oldName)).toBeUndefined();
+    expect(findPlanningSkill(level, "Invented float")).toBeUndefined();
+    expect(plannedSkillSubskills("Splash1", null, [{ skill: oldName }])[0].subskills.length)
+        .toBeGreaterThan(0);
 });

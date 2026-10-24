@@ -120,3 +120,12 @@ Run the workout tests alongside the checks above:
 `npm run test:run -- src/features/workout-builder`. The browser script also
 checks workout creation, confirmations, native dialog behavior, saved metadata
 reopening, and conversion to text at desktop and mobile sizes.
+
+Lesson-plan skill options and short labels are generated from the current
+`rec-tablet/src/workflows/swimming/curriculum/` catalog and compact titles. Run
+`npm run generate:lesson-skills` from the frontend after tablet curriculum edits.
+The generator retains historical names in `LessonPlans/legacyLessonSkills.json`
+for saved rows and maps older activity-library links to current skill components;
+those historical entries do not appear as new skill choices. The curriculum parity
+test checks every level, skill, short title and criterion whenever the sibling
+tablet checkout is present.
