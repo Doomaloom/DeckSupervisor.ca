@@ -1,3 +1,4 @@
+import { readLessonPlan, writeLessonPlan } from "./lessonPlanCache";
 import type { Workout } from "../shared/workouts/workout";
 import type { RosterClassHash, RosterPrintUpdate } from "./rosterPrintUpdates";
 import type {
@@ -1065,11 +1066,11 @@ export function fetchLessonPlan(
     classId: string,
     week: string,
 ) {
-    return request<{ plan: LessonPlan | null }>(
+    return readLessonPlan(session, classId, week, () => request<{ plan: LessonPlan | null }>(
         `/api/instructor/sessions/${encodeURIComponent(session)}/classes/${
             encodeURIComponent(classId)
         }/plans/${encodeURIComponent(week)}`,
-    );
+    ));
 }
 export function saveLessonPlan(
     session: string,
@@ -1078,7 +1079,7 @@ export function saveLessonPlan(
     rows: LessonRow[],
     curriculumLevel?: string | null,
 ) {
-    return request<{ plan: LessonPlan }>(
+    return writeLessonPlan(session, classId, week, () => request<{ plan: LessonPlan }>(
         `/api/instructor/sessions/${encodeURIComponent(session)}/classes/${
             encodeURIComponent(classId)
         }/plans/${encodeURIComponent(week)}`,
@@ -1091,7 +1092,7 @@ export function saveLessonPlan(
                     : {}),
             },
         },
-    );
+    ));
 }
 
 export type SessionInstructor = {
