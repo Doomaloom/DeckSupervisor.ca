@@ -1,13 +1,5 @@
 import { expect, it } from "vitest";
-import { hasActivityDrill, lessonPlanHeading, textSegments } from "./LessonPlanDocument";
-it("only includes the activity column when a plan has activity text", () => {
-    expect(hasActivityDrill([])).toBe(false);
-    expect(hasActivityDrill([{ activity: "  \n  " }])).toBe(false);
-    expect(hasActivityDrill([
-        { activity: "" },
-        { activity: "Practice kicking" },
-    ])).toBe(true);
-});
+import { lessonPlanHeading, textSegments } from "./LessonPlanDocument";
 it("uses the session week number in the lesson plan heading", () => {
     expect(lessonPlanHeading(
         { weeks: ["2026-10-05", "2026-10-12"] } as any,
@@ -31,7 +23,4 @@ it("preserves all long text and bounds segments, including many newlines", () =>
         expect(Math.max(...parts.map((p) => p.split("\n").length)))
             .toBeLessThanOrEqual(9);
     }
-});
-it("includes the details column for an equipment-only plan", () => {
-    expect(hasActivityDrill([{ activity: "", equipment: ["10 lb weights"] }])).toBe(true);
 });

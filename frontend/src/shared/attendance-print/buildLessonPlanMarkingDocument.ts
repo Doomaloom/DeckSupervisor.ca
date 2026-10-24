@@ -1,6 +1,6 @@
 import type { InstructorClass, InstructorSession, LessonPlan } from "../../lib/serverApi";
 import { plannedSkillSubskills } from "../../features/instructor/LessonPlans/lessonSkills";
-import { hasActivityDrill, lessonPlanHeading, textSegments } from "../pdf/lessonPlan/lessonPlanContent";
+import { lessonPlanHeading, printedPlanRows, textSegments } from "../pdf/lessonPlan/lessonPlanContent";
 import { sessionLabel } from "../session/instructorSessionLabels";
 import { buildSkillMarkingDocument } from "./buildSkillMarkingDocument";
 import type { AttendancePrintStudent } from "./types";
@@ -23,6 +23,9 @@ const planStyles = `
 }
 .lesson-plan-print th { background: #edf2f7; font-size: 9pt; }
 .lesson-plan-print tr { break-inside: avoid; }
+.lesson-plan-print tr.plan-long-activity { break-inside: auto; }
+.lesson-plan-print .plan-activity + .plan-activity { margin-top: 8pt; }
+.lesson-plan-print .plan-row-skill, .lesson-plan-print .plan-activity-title { display: block; margin-bottom: 4pt; }
 .lesson-plan-print .plan-subskills { margin-top: 18pt; }
 .lesson-plan-print h2 { font-size: 13pt; margin: 0 0 9pt; break-after: avoid; }
 .lesson-plan-print h3 { font-size: 10pt; margin: 0 0 3pt; break-after: avoid; }
@@ -49,10 +52,9 @@ function buildPlanSection(document: Document, session: InstructorSession, course
     appendText(document, header, "h1", lessonPlanHeading(session, course, plan));
     appendText(document, header, "p", `${course.instructor} | ${course.level} | ${course.code} | ${course.start_time.slice(0, 5)}-${course.end_time.slice(0, 5)}`);
     appendText(document, header, "p", sessionLabel(session));
-    const activity = hasActivityDrill(plan.rows);
     const table = document.createElement("table");
     const colgroup = document.createElement("colgroup");
-    for (const width of activity ? [22, 43, 20, 15] : [65, 20, 15]) {
+    for (const width of [53, 17, 17, 13]) {
         const col = document.createElement("col");
         col.style.width = `${width}%`;
         colgroup.append(col);
@@ -60,22 +62,34 @@ function buildPlanSection(document: Document, session: InstructorSession, course
     const heading = document.createElement("thead");
     const headingRow = document.createElement("tr");
     heading.append(headingRow);
-    for (const label of ["Skill", ...(activity ? ["Activity / drill"] : []), "Pool location", "Duration (minutes)"]) {
+    for (const label of ["Skill / Activity / drill", "Equipment", "Pool location", "Duration (minutes)"]) {
         appendText(document, headingRow, "th", label);
     }
     const body = document.createElement("tbody");
     table.append(colgroup, heading, body);
     section.append(table);
-    for (const row of plan.rows) {
-        const skills = textSegments(row.skill, activity ? 18 : 55);
-        const activities = activity ? textSegments([row.activity, row.equipment?.length ? `Equipment: ${row.equipment.join(", ")}` : ""].filter(Boolean).join("\n\n"), 38) : [];
-        for (let part = 0; part < Math.max(skills.length, activities.length); part++) {
-            const tr = document.createElement("tr");
-            for (const value of [skills[part] || "", ...(activity ? [activities[part] || ""] : []), part === 0 ? row.location : "", part === 0 ? String(row.duration) : ""]) {
-                appendText(document, tr, "td", value);
-            }
-            body.append(tr);
+    for (const row of printedPlanRows(plan.rows)) {
+        const tr = document.createElement("tr");
+        const contentParts = [
+            textSegments([row.skill, ...row.activities.flatMap(({ title, explanation }) => [title, explanation])].join("\n"), 43),
+            textSegments(row.equipment.join("\n"), 13),
+            textSegments(row.location, 13),
+        ];
+        if (contentParts.some((parts) => parts.length > 4)) tr.className = "plan-long-activity";
+        const detail = document.createElement("td");
+        appendText(document, detail, "strong", row.skill).className = "plan-row-skill";
+        for (const activity of row.activities) {
+            const block = document.createElement("div");
+            block.className = "plan-activity";
+            if (activity.title) appendText(document, block, "em", activity.title).className = "plan-activity-title";
+            if (activity.explanation) appendText(document, block, "p", activity.explanation).className = "plan-activity-explanation";
+            detail.append(block);
         }
+        tr.append(detail);
+        for (const value of [row.equipment.join("\n"), row.location, row.duration]) {
+            appendText(document, tr, "td", value);
+        }
+        body.append(tr);
     }
     if (!plan.rows.length) appendText(document, section, "p", "No activities in this saved plan.");
     const skills = plannedSkillSubskills(course.level, plan.curriculum_level, plan.rows);

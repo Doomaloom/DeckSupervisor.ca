@@ -2,7 +2,7 @@ import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { InstructorClass, InstructorSession, LessonPlan, } from "../../../lib/serverApi";
 import { sessionLabel } from "../../session/instructorSessionLabels";
 import { plannedSkillSubskills } from "../../../features/instructor/LessonPlans/lessonSkills";
-import { textSegments, lessonPlanHeading, hasActivityDrill } from "./lessonPlanContent";
+import { textSegments, lessonPlanHeading, printedPlanRows } from "./lessonPlanContent";
 const styles = StyleSheet.create({
     page: {
         fontFamily: "Liberation Sans",
@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
         fontSize: 8,
     },
 });
-export { textSegments, lessonPlanHeading, hasActivityDrill } from "./lessonPlanContent";
+export { textSegments, lessonPlanHeading } from "./lessonPlanContent";
 export function LessonPlanDocument(
     { session, course, plan }: {
         session: InstructorSession;
@@ -74,13 +74,8 @@ function LessonPlanPage(
         plan: LessonPlan;
     },
 ) {
-    const showActivity = hasActivityDrill(plan.rows);
-    const widths = showActivity
-        ? ["22%", "43%", "20%", "15%"]
-        : ["65%", "20%", "15%"];
-    const labels = showActivity
-        ? ["Skill", "Activity / drill", "Pool location", "Duration (minutes)"]
-        : ["Skill", "Pool location", "Duration (minutes)"];
+    const widths = ["53%", "17%", "17%", "13%"];
+    const labels = ["Skill / Activity / drill", "Equipment", "Pool location", "Duration (minutes)"];
     const plannedSkills = plannedSkillSubskills(
         course.level,
         plan.curriculum_level,
@@ -123,36 +118,44 @@ function LessonPlanPage(
                         </View>
                     ))}
             </View>
-            {plan.rows.flatMap((row, index) => {
-                const skills = textSegments(row.skill, showActivity ? 18 : 55),
-                    activities = showActivity ? textSegments([row.activity, row.equipment?.length ? `Equipment: ${row.equipment.join(", ")}` : ""].filter(Boolean).join("\n\n"), 38) : [];
-                return Array.from(
-                    { length: Math.max(skills.length, activities.length) },
-                    (_, part) => (
-                        <View
-                            key={`${index}:${part}`}
-                            wrap={false}
-                            style={styles.row}
-                        >
-                            {[
-                                skills[part] || "",
-                                ...(showActivity ? [activities[part] || ""] : []),
-                                part === 0 ? row.location : "",
-                                part === 0 ? String(row.duration) : "",
-                            ].map((text, i) => (
-                                <View
-                                    key={i}
-                                    style={{
-                                        ...styles.cell,
-                                        width: widths[i],
-                                    }}
-                                >
-                                    <Text style={styles.text}>{text}</Text>
-                                </View>
+            {printedPlanRows(plan.rows).flatMap((row, index) => {
+                // Continuation fragments keep exceptionally long text printable without
+                // adding borders between fragments of the same planner row.
+                const blocks = [
+                    ...textSegments(row.skill, 43).map((text) => ({ text, bold: true, italic: false })),
+                    ...row.activities.flatMap(({ title, explanation }) => [
+                        ...textSegments(title, 43).map((text) => ({ text, bold: false, italic: true })),
+                        ...textSegments(explanation, 43).map((text) => ({ text, bold: false, italic: false })),
+                    ]),
+                ].filter(({ text }) => text);
+                const details: typeof blocks[] = [[]];
+                let lines = 0;
+                for (const block of blocks) {
+                    const blockLines = block.text.split("\n").reduce((total, line) => total + Math.max(1, Math.ceil(line.length / 43)), 0) + 1;
+                    if (lines && lines + blockLines > 20) {
+                        details.push([]);
+                        lines = 0;
+                    }
+                    details[details.length - 1].push(block);
+                    lines += blockLines;
+                }
+                const equipment = textSegments(row.equipment.join("\n"), 13);
+                const locations = textSegments(row.location, 13);
+                const count = Math.max(details.length, equipment.length, locations.length);
+                return Array.from({ length: count }, (_, part) => (
+                    <View key={`${index}:${part}`} wrap={false} style={{ ...styles.row, borderBottomWidth: part === count - 1 ? 1 : 0 }}>
+                        <View style={{ ...styles.cell, width: widths[0] }}>
+                            {details[part]?.map((block, blockIndex) => (
+                                <Text key={blockIndex} style={{ ...styles.text, fontWeight: block.bold ? 700 : 400, fontStyle: block.italic ? "italic" : "normal", marginBottom: 4 }}>{block.text}</Text>
                             ))}
                         </View>
-                    ),
-                );
+                        {[equipment[part] || "", locations[part] || "", part === 0 ? row.duration : ""].map((text, i) => (
+                            <View key={i} style={{ ...styles.cell, width: widths[i + 1] }}>
+                                <Text style={styles.text}>{text}</Text>
+                            </View>
+                        ))}
+                    </View>
+                ));
             })}
             {!plan.rows.length && (
                 <Text>No activities in this saved plan.</Text>

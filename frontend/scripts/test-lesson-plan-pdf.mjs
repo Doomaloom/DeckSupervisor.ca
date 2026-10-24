@@ -15,6 +15,9 @@ try {
     const { curriculumLevels } = await server.ssrLoadModule(
         "/src/features/instructor/LessonPlans/lessonSkills.ts",
     );
+    const { activities, activityText } = await server.ssrLoadModule(
+        "/src/features/instructor/ActivityLibrary/activityLibrary.ts",
+    );
     const { newWorkout, workoutText } = await server.ssrLoadModule(
         "/src/shared/workouts/workout.ts",
     );
@@ -101,6 +104,25 @@ try {
         );
         console.log(`Rendered ${name}: ${rows.length} activities`);
     }
+    const drills = activities.filter((activity) => activity.title.startsWith("Front crawl:")).slice(0, 2);
+    const activityLayout = await generateLessonPlanPdf(session, course, {
+        week: "2026-10-05",
+        rows: [{
+            skill: "Front crawl",
+            activity: drills.map(activityText).join("\n\n"),
+            activities: drills.map((activity) => ({ kind: "library", text: activityText(activity) })),
+            equipment: ["Noodles"],
+            location: "Lane 2",
+            duration: 15,
+        }, {
+            skill: "Floating",
+            activity: "Partner challenge\n\nTake turns practising while a partner watches.",
+            equipment: [],
+            location: "Shallow end",
+            duration: 5,
+        }],
+    });
+    await writeFile(resolve(output, "activity-layout.pdf"), Buffer.from(await activityLayout.blob.arrayBuffer()));
     const catalogPlan = {
         week: "2026-10-05",
         curriculum_level: "LittleSplash1",

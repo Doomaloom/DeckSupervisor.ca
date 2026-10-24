@@ -129,7 +129,7 @@ async function mount() {
         const names = Array.from({ length: 12 }, (_, index) => ({ name: `${["Avery Adams", "Blair Brown", "Casey Chen", "Alexandra Long-Synthetic-Studentname"][index % 4]} ${index + 1}` }));
         source = name.startsWith("marking-interleaved")
             ? buildLessonPlanMarkingDocument(session, [
-                { course: { ...course, id: "a" }, plan: { ...plan, rows: skills.map((skill, index) => ({ skill: skill.name, activity: name.endsWith("long") ? `Activity ${index + 1}: Practice technique with feedback. `.repeat(130) : "Practice with feedback.", equipment: ["Noodles"], location: "Lane 2", duration: 10 })) }, students: names },
+                { course: { ...course, id: "a" }, plan: { ...plan, rows: skills.map((skill, index) => ({ skill: skill.name, activity: name.endsWith("long") ? `Activity ${index + 1}: Practice technique with feedback. `.repeat(130) : "Practice with feedback.", activities: name.endsWith("long") ? undefined : [{ kind: "library" as const, text: "Front crawl: Torpedo kicking\n\nSuitable for: Swimmer 1-6\n\nEquipment: Kickboard\n\nPractise hip-led kicking face down in a streamlined position." }, { kind: "custom" as const, text: "Partner challenge\n\nTake turns practising the skill while a partner observes." }], equipment: ["Noodles"], location: "Lane 2", duration: 10 })) }, students: names },
                 { course: { ...course, id: "b", code: "00456", level: "Private" }, plan: { ...plan, rows: skills.map((skill) => ({ skill: skill.name, activity: "", location: "Shallow end", duration: 5 })) } },
             ])
             : name === "marking-combined"
