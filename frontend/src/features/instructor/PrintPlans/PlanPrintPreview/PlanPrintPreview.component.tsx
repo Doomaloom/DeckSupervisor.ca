@@ -9,6 +9,7 @@ export function PlanPrintPreview(props: {
     week: string;
     combined: boolean;
     marking?: boolean;
+    interleaved?: boolean;
 }) {
     const viewModel = usePlanPrintPreviewLogic(props);
     const {
@@ -49,7 +50,7 @@ export function PlanPrintPreview(props: {
                     {(previewUrl || previewHtml) && !error
                         ? (
                             <iframe
-                                title={props.marking ? "Skill marking sheet preview" : "Lesson plan PDF preview"}
+                                title={props.interleaved ? "Combined lesson plans and marking sheets preview" : props.marking ? "Skill marking sheet preview" : "Lesson plan PDF preview"}
                                 className="h-full w-full bg-white"
                                 src={previewUrl || undefined}
                                 srcDoc={previewHtml || undefined}

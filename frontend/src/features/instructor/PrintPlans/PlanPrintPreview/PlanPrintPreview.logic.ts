@@ -3,15 +3,16 @@ import { openPdfPrintDialog, openPrintWindow } from "../../../../lib/browserPrin
 import { fetchLessonPlan, type InstructorClass, type InstructorSession } from "../../../../lib/serverApi";
 import type { PdfArtifact } from "../../../../shared/pdf/types";
 import { SavedEntry } from "../PrintPlans.logic";
-export function usePlanPrintPreviewLogic({ session, courses, week, combined, marking = false }: {
+export function usePlanPrintPreviewLogic({ session, courses, week, combined, marking = false, interleaved = false }: {
     session: InstructorSession;
     courses: InstructorClass[];
     week: string;
     combined: boolean;
     marking?: boolean;
+    interleaved?: boolean;
 }) {
     const [artifact, setArtifact] = useState<PdfArtifact | null>(null);
-    const [markingDocument, setMarkingDocument] = useState<Document | null>(null);
+    const [printDocument, setPrintDocument] = useState<Document | null>(null);
     const [previewHtml, setPreviewHtml] = useState<string | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -22,7 +23,7 @@ export function usePlanPrintPreviewLogic({ session, courses, week, combined, mar
         let active = true;
         let objectUrl: string | null = null;
         setArtifact(null);
-        setMarkingDocument(null);
+        setPrintDocument(null);
         setPreviewHtml(null);
         setPreviewUrl(null);
         setLoading(true);
@@ -40,16 +41,19 @@ export function usePlanPrintPreviewLogic({ session, courses, week, combined, mar
                 );
                 if (!saved.length) return;
 
-                if (marking) {
+                if (marking || interleaved) {
                     const { buildCombinedSkillMarkingDocument } = await import(
                         "../../../../shared/attendance-print/buildSkillMarkingDocument"
                     );
                     const { loadMarkingStudents } = await import("../loadMarkingStudents");
-                    const prepared = buildCombinedSkillMarkingDocument(session, saved.map((entry) => ({
+                    const buildDocument = interleaved
+                        ? (await import("../../../../shared/attendance-print/buildLessonPlanMarkingDocument")).buildLessonPlanMarkingDocument
+                        : buildCombinedSkillMarkingDocument;
+                    const prepared = buildDocument(session, saved.map((entry) => ({
                         ...entry, students: loadMarkingStudents(session, entry.course),
                     })));
                     if (!active) return;
-                    setMarkingDocument(prepared);
+                    setPrintDocument(prepared);
                     setPreviewHtml(`<!doctype html>${prepared.documentElement.outerHTML}`);
                     return;
                 }
@@ -77,11 +81,11 @@ export function usePlanPrintPreviewLogic({ session, courses, week, combined, mar
             active = false;
             if (objectUrl) URL.revokeObjectURL(objectUrl);
         };
-    }, [session.id, courses, week, combined, marking, retry]);
+    }, [session.id, courses, week, combined, marking, interleaved, retry]);
 
     async function printPdf() {
-        if (markingDocument) {
-            const target = openPrintWindow(markingDocument.title);
+        if (printDocument) {
+            const target = openPrintWindow(printDocument.title);
             if (!target) {
                 setError("Allow popups to print your PDF.");
                 return;
@@ -90,10 +94,10 @@ export function usePlanPrintPreviewLogic({ session, courses, week, combined, mar
                 const { printPreparedAttendanceDocument } = await import(
                     "../../../../shared/attendance-print/printAttendanceHtml"
                 );
-                await printPreparedAttendanceDocument(markingDocument, target);
+                await printPreparedAttendanceDocument(printDocument, target);
             } catch (cause) {
                 target.close();
-                setError(cause instanceof Error ? cause.message : "Unable to print the marking sheet.");
+                setError(cause instanceof Error ? cause.message : "Unable to print the prepared sheets.");
             }
             return;
         }
@@ -113,7 +117,7 @@ export function usePlanPrintPreviewLogic({ session, courses, week, combined, mar
         view: "ready" as const,
         error,
         setRetry,
-        canPrint: Boolean(artifact || markingDocument),
+        canPrint: Boolean(artifact || printDocument),
         previewHtml,
         printPdf,
         loading,

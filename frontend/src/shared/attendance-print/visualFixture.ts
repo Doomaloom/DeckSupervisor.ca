@@ -1,3 +1,4 @@
+import { buildLessonPlanMarkingDocument } from "./buildLessonPlanMarkingDocument";
 import { prepareSkillMarkingLayout } from "./prepareSkillMarkingLayout";
 import { buildCombinedSkillMarkingDocument, buildSkillMarkingDocument } from "./buildSkillMarkingDocument";
 import { curriculumLevels } from "../../features/instructor/LessonPlans/lessonSkills";
@@ -126,7 +127,12 @@ async function mount() {
         const skills = name === "marking-empty" ? [] : name === "marking-long" ? level.skills : [level.skills[0], level.skills.at(-1)!];
         const plan = { week: "2026-10-05", curriculum_level: level.id, rows: name === "marking-overflow" ? Array.from({ length: 16 }, (_, index) => ({ skill: `Wide bold skill ${index + 1}: ${"W".repeat(110)}` })) : skills.map((skill) => ({ skill: skill.name })) } as LessonPlan;
         const names = Array.from({ length: 12 }, (_, index) => ({ name: `${["Avery Adams", "Blair Brown", "Casey Chen", "Alexandra Long-Synthetic-Studentname"][index % 4]} ${index + 1}` }));
-        source = name === "marking-combined"
+        source = name.startsWith("marking-interleaved")
+            ? buildLessonPlanMarkingDocument(session, [
+                { course: { ...course, id: "a" }, plan: { ...plan, rows: skills.map((skill, index) => ({ skill: skill.name, activity: name.endsWith("long") ? `Activity ${index + 1}: Practice technique with feedback. `.repeat(130) : "Practice with feedback.", equipment: ["Noodles"], location: "Lane 2", duration: 10 })) }, students: names },
+                { course: { ...course, id: "b", code: "00456", level: "Private" }, plan: { ...plan, rows: skills.map((skill) => ({ skill: skill.name, activity: "", location: "Shallow end", duration: 5 })) } },
+            ])
+            : name === "marking-combined"
             ? buildCombinedSkillMarkingDocument(session, [
                 { course, plan, students: names },
                 { course: { ...course, code: "00456", level: "Private" }, plan },

@@ -8,11 +8,12 @@ const fixtures = vi.hoisted(() => {
     const second = { ...course, id: "c2", code: "B" };
     const plan = { week: "2026-10-12", rows: [{ skill: "Floating" }] };
     const artifact = { blob: new Blob(["pdf"]), title: "Marking", filename: "marking.pdf" };
-    return { session, course, second, classes: [course, second], plan, artifact, fetch: vi.fn(), marking: vi.fn(), separate: vi.fn(), together: vi.fn(), print: vi.fn(), open: vi.fn() };
+    return { session, course, second, classes: [course, second], plan, artifact, fetch: vi.fn(), combined: vi.fn(), marking: vi.fn(), separate: vi.fn(), together: vi.fn(), print: vi.fn(), open: vi.fn() };
 });
 vi.mock("./loadMarkingStudents", () => ({ loadMarkingStudents: () => [] }));
 vi.mock("../../../lib/serverApi", () => ({ fetchLessonPlan: fixtures.fetch }));
 vi.mock("../session/useInstructorClasses", () => ({ default: () => ({ session: fixtures.session, sessionId: "s", classes: fixtures.classes, loading: false }) }));
+vi.mock("../../../shared/attendance-print/buildLessonPlanMarkingDocument", () => ({ buildLessonPlanMarkingDocument: fixtures.combined }));
 vi.mock("../../../shared/attendance-print/buildSkillMarkingDocument", () => ({ buildCombinedSkillMarkingDocument: fixtures.marking }));
 vi.mock("../../../shared/pdf/lessonPlan/generateLessonPlanPdf", () => ({ generateLessonPlanPdf: fixtures.separate, generateCombinedLessonPlanPdf: fixtures.together }));
 vi.mock("../../../shared/attendance-print/printAttendanceHtml", () => ({ printPreparedAttendanceDocument: fixtures.print }));
@@ -20,6 +21,7 @@ vi.mock("../../../lib/browserPrint", () => ({ openPrintWindow: fixtures.open, op
 beforeEach(() => {
     vi.clearAllMocks();
     fixtures.fetch.mockResolvedValue({ plan: fixtures.plan });
+    fixtures.combined.mockImplementation(() => new DOMParser().parseFromString("<html><head><title>Combined</title></head><body>Plans and marking sheets</body></html>", "text/html"));
     fixtures.marking.mockImplementation(() => new DOMParser().parseFromString("<html><head><title>Marking</title></head><body>Marking sheet</body></html>", "text/html"));
     fixtures.separate.mockResolvedValue(fixtures.artifact);
     fixtures.together.mockResolvedValue(fixtures.artifact);
@@ -28,11 +30,13 @@ beforeEach(() => {
     URL.createObjectURL = vi.fn(() => "blob:preview");
     URL.revokeObjectURL = vi.fn();
 });
-it("offers Marking third, renders the selected saved plan, and keeps the other modes", async () => {
+it("defaults to Combined for all classes and keeps Together and Marking", async () => {
     render(<MemoryRouter><PrintPlans /></MemoryRouter>);
-    expect(await screen.findByTitle("Lesson plan PDF preview")).toBeVisible();
+    expect(await screen.findByTitle("Combined lesson plans and marking sheets preview")).toBeVisible();
+    expect(fixtures.combined).toHaveBeenCalledWith(fixtures.session, [{ course: fixtures.course, plan: fixtures.plan, students: [] }, { course: fixtures.second, plan: fixtures.plan, students: [] }]);
+    expect(screen.queryByRole("group", { name: "Class" })).not.toBeInTheDocument();
     const group = screen.getByRole("group", { name: "Print classes" });
-    expect(Array.from(group.querySelectorAll("button")).map((button) => button.textContent)).toEqual(["Separately", "Together", "Marking"]);
+    expect(Array.from(group.querySelectorAll("button")).map((button) => button.textContent)).toEqual(["Combined", "Together", "Marking"]);
     fireEvent.click(screen.getByRole("button", { name: "Marking" }));
     await waitFor(() => expect(fixtures.marking).toHaveBeenCalledWith(fixtures.session, [{ course: fixtures.course, plan: fixtures.plan, students: [] }, { course: fixtures.second, plan: fixtures.plan, students: [] }]));
     expect(await screen.findByTitle("Skill marking sheet preview")).toBeVisible();
@@ -72,4 +76,32 @@ it("includes saved classes and skips classes without a plan when marking togethe
     fireEvent.click(screen.getByRole("button", { name: "Marking" }));
     await waitFor(() => expect(fixtures.marking).toHaveBeenCalledWith(fixtures.session, [{ course: fixtures.course, plan: fixtures.plan, students: [] }]));
     expect(screen.queryByRole("group", { name: "Class" })).not.toBeInTheDocument();
+});
+
+
+it("prints the combined document in one print job", async () => {
+    render(<MemoryRouter><PrintPlans /></MemoryRouter>);
+    await screen.findByTitle("Combined lesson plans and marking sheets preview");
+    fireEvent.click(screen.getByRole("button", { name: "Print PDF" }));
+    await waitFor(() => expect(fixtures.print).toHaveBeenCalledTimes(1));
+    expect(fixtures.print.mock.calls[0][0].title).toBe("Combined");
+});
+
+it("skips missing plans in Combined and allows retry after rendering fails", async () => {
+    fixtures.fetch.mockImplementation((_session, classId) => Promise.resolve({ plan: classId === "c" ? fixtures.plan : null }));
+    fixtures.combined.mockImplementationOnce(() => { throw new Error("Combined render failed"); });
+    render(<MemoryRouter><PrintPlans /></MemoryRouter>);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Combined render failed");
+    expect(screen.queryByRole("button", { name: "Print PDF" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await screen.findByTitle("Combined lesson plans and marking sheets preview");
+    expect(fixtures.combined).toHaveBeenLastCalledWith(fixtures.session, [{ course: fixtures.course, plan: fixtures.plan, students: [] }]);
+});
+
+it("offers no Combined print job when every plan is missing", async () => {
+    fixtures.fetch.mockResolvedValue({ plan: null });
+    render(<MemoryRouter><PrintPlans /></MemoryRouter>);
+    expect(await screen.findByText(/No saved lesson plans for this week/)).toBeVisible();
+    expect(fixtures.combined).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Print PDF" })).not.toBeInTheDocument();
 });

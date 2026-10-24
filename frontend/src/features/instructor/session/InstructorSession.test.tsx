@@ -109,17 +109,12 @@ it("prints classes together without individual class selectors", async () => {
     setup();
     await user.click(await screen.findByRole("button", { name: /Pool a/ }));
     await user.click(screen.getByRole("link", { name: "Print" }));
-    expect(await screen.findByRole("button", {
-        name: "Splash 1 · a · 09:00 · Alex",
-    })).toBeInTheDocument();
-    expect(await screen.findByTitle("Lesson plan PDF preview"))
-        .toHaveAttribute("src", "blob:lesson-plan-preview");
+    expect(screen.queryByRole("button", { name: "Splash 1 · a · 09:00 · Alex" })).not.toBeInTheDocument();
+    const preview = await screen.findByTitle("Combined lesson plans and marking sheets preview");
+    expect(preview).toHaveAttribute("srcdoc", expect.stringContaining("lesson-plan-print"));
     const printButton = screen.getByRole("button", { name: "Print PDF" });
     expect(printButton).toHaveClass("w-full");
-    expect(printButton.compareDocumentPosition(
-        screen.getByTitle("Lesson plan PDF preview"),
-    ) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(pdf.generateLessonPlanPdf).toHaveBeenCalled();
+    expect(printButton.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Together" }));
     expect(screen.getByRole("button", { name: "Together" }))
         .toHaveAttribute("aria-pressed", "true");
@@ -129,10 +124,9 @@ it("prints classes together without individual class selectors", async () => {
     expect(await screen.findByTitle("Lesson plan PDF preview"))
         .toHaveAttribute("src", "blob:lesson-plan-preview");
     expect(pdf.generateCombinedLessonPlanPdf).toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: "Separately" }));
-    expect(await screen.findByRole("button", {
-        name: "Splash 1 · a · 09:00 · Alex",
-    })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Combined" }));
+    expect(await screen.findByTitle("Combined lesson plans and marking sheets preview")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Splash 1 · a · 09:00 · Alex" })).not.toBeInTheDocument();
 });
 it("selects on Home and shares the session across tabs without reloading metadata", async () => {
     const user = userEvent.setup();

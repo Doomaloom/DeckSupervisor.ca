@@ -137,7 +137,7 @@ export default function PlanSelection(props: {
                                     Print classes
                                 </legend>
                                 <div className="grid grid-cols-3 gap-2">
-                                    {(["separate", "together", "marking"] as const).map((mode) => (
+                                    {(["combined", "together", "marking"] as const).map((mode) => (
                                         <button
                                             key={mode}
                                             type="button"
@@ -148,13 +148,13 @@ export default function PlanSelection(props: {
                                                 }`}
                                             onClick={() => onPrintModeChange(mode)}
                                         >
-                                            {mode === "separate" ? "Separately" : mode === "together" ? "Together" : "Marking"}
+                                            {mode === "combined" ? "Combined" : mode === "together" ? "Together" : "Marking"}
                                         </button>
                                     ))}
                                 </div>
                             </fieldset>
                         )}
-                        {printMode !== "together" && printMode !== "marking" && <fieldset className="min-w-0">
+                        {!printMode && <fieldset className="min-w-0">
                             <legend className="mb-2 text-sm font-semibold">
                                 Class
                             </legend>
@@ -204,9 +204,9 @@ export default function PlanSelection(props: {
                             </div>
                         </fieldset>}
                         {state.session && week &&
-                            (printMode === "together" || printMode === "marking" || selected) && (
+                            (printMode || selected) && (
                                 <div className="min-w-0 border-t border-secondary/20 pt-6">
-                                    {(printMode === "together" || printMode === "marking") && renderTogether
+                                    {printMode && renderTogether
                                         ? renderTogether(state.session, state.classes, week)
                                         : selected && children(state.session, selected, week)}
                                 </div>

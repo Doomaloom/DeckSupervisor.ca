@@ -19,6 +19,7 @@ export default function PrintPlans() {
                     session={session}
                     courses={classes}
                     marking={printMode === "marking"}
+                    interleaved={printMode === "combined"}
                     week={week}
                 />
             )}
