@@ -1,3 +1,4 @@
+import { loadExportPlans } from "../services/loadExportPlans";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type SessionRecord } from "../../../../app/useCurrentSession";
 import { onExtractedClassesBySessionUpdated } from "../../../../lib/extractedClassesStorage";
@@ -101,7 +102,7 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
         setNotice("");
         const current = generation.current;
         try {
-            const reviewed = selected.map((course) => ({
+            const reviewed = (await loadExportPlans(session.id, selected, isGuest)).map((course) => ({
                 ...course,
                 lessonDates: parseDates(dateText(course)),
             }));
@@ -147,8 +148,9 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
             let registry = loadRegistry(session.id) ?? newRegistry(session.id);
             const packages: Array<{ instructor: string; package: unknown }> =
                 [];
+            const plannedCourses = await loadExportPlans(session.id, courses, isGuest);
             for (const name of instructors) {
-                const reviewed = courses.filter((course) =>
+                const reviewed = plannedCourses.filter((course) =>
                     course.instructor === name
                 )
                     .map((course) => ({
@@ -179,7 +181,7 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
             }
             setShareSession(started);
             setNotice(
-                "Session sharing is active. Give each instructor their code; end and restart sharing to publish roster changes.",
+                "Session sharing is active. Give each instructor their code; end and restart sharing to publish roster or lesson plan changes.",
             );
         } catch (cause) {
             if (currentSession()) setError(message(cause));

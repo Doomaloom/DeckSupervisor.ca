@@ -7,6 +7,8 @@
 \ir ../supabase_lesson_plan_workouts.sql
 \ir ../supabase_lesson_plan_activities.sql
 \ir ../supabase_lesson_plan_activities.sql
+\ir ../supabase_lesson_plan_equipment.sql
+\ir ../supabase_lesson_plan_equipment.sql
 begin;
 update sessions set session_day='Mo',start_date='2026-10-05',end_date='2026-10-26' where id='20000000-0000-0000-0000-000000000004';
 insert into instructor_assignments(session_id,id,name,account_id) values('20000000-0000-0000-0000-000000000004','50000000-0000-0000-0000-000000000001','Alex','00000000-0000-0000-0000-000000000007');
@@ -25,6 +27,26 @@ insert into instructor_plans(session_id,class_id,week,rows,updated_by) values
 ('20000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000001','2026-10-12','[]',auth.uid()),
 ('20000000-0000-0000-0000-000000000004','60000000-0000-0000-0000-000000000002','2026-10-05','[]',auth.uid());
 select pg_temp.assert_true((select count(*)=3 from instructor_plans),'independent two-class multiple-week plans');
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}',true);
+select pg_temp.assert_true((select count(*)=3 from instructor_plans),'session editor can read plans for device export');
+select pg_temp.affects('update instructor_plans set rows=''[]''',0,'session editor without instructor link cannot edit plans');
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000007","role":"authenticated"}',true);
+-- Equipment validates identically for direct storage and API requests.
+update instructor_plans set rows=jsonb_set(rows,'{0,equipment}','["Kickboards","5 lb weights","10 lb weights","20 lb weights","Custom aid"]')
+ where class_id='60000000-0000-0000-0000-000000000001' and week='2026-10-05';
+select pg_temp.assert_true((select rows->0->'equipment'->>2='10 lb weights' from instructor_plans
+ where class_id='60000000-0000-0000-0000-000000000001' and week='2026-10-05'),'equipment persists');
+do $$
+declare invalid jsonb;
+begin
+ foreach invalid in array array['null'::jsonb,'"Fins"'::jsonb,'[42]'::jsonb,'[" "]'::jsonb,'["Fins","fins"]'::jsonb] loop
+  begin
+   update instructor_plans set rows=jsonb_set(rows,'{0,equipment}',invalid)
+    where class_id='60000000-0000-0000-0000-000000000001' and week='2026-10-05';
+   raise exception 'FAIL: accepted invalid equipment %',invalid;
+  exception when check_violation then raise notice 'PASS: invalid equipment denied'; end;
+ end loop;
+end $$;
 update instructor_plans set curriculum_level='Splash2A' where class_id='60000000-0000-0000-0000-000000000001' and week='2026-10-05';
 select pg_temp.assert_true((select curriculum_level='Splash2A' from instructor_plans where class_id='60000000-0000-0000-0000-000000000001' and week='2026-10-05'),'curriculum level persists');
 do $$

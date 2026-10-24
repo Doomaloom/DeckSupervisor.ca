@@ -1,8 +1,12 @@
+import type { LessonRow } from "../../../../lib/serverApi";
 import type { SessionRecord } from "../../../../app/useCurrentSession";
 import type { ExtractedClass, Student } from "../../../../types/app";
 import { sanitizeLevel } from "../../Rosters/utils";
 
+export type ExportLessonPlan = { date: string; curriculumLevel: string; rows: (LessonRow & { skillId?: string })[] };
+
 export type ExportCourse = {
+    lessonPlans?: ExportLessonPlan[];
     code: string;
     name: string;
     level: string;
@@ -19,6 +23,7 @@ export type ClassPackage = {
     instructor: string;
     courses: Array<
         {
+            lessonPlans?: ExportLessonPlan[];
             sourceId: string;
             name: string;
             level: string;
@@ -349,6 +354,7 @@ export async function buildPackage(
             [course.code]: parseDates(course.lessonDates.join("\n")),
         };
         output.courses.push({
+            ...(course.lessonPlans !== undefined ? { lessonPlans: course.lessonPlans.filter(plan => course.lessonDates.includes(plan.date)) } : {}),
             sourceId,
             name: required(course.name, "Class name"),
             level: required(course.level, "Class level"),

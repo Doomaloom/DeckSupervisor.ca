@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -367,5 +368,156 @@ func TestInstructorWorkoutRoundTripAndValidation(t *testing.T) {
 		if w.Code != 400 {
 			t.Fatalf("accepted invalid workout: %d %s", w.Code, w.Body)
 		}
+	}
+}
+
+func TestLessonEquipmentRoundTripAndValidation(t *testing.T) {
+	var saved map[string]any
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/rest/v1/rpc/can_plan_class":
+			io.WriteString(w, "true")
+		case "/rest/v1/instructor_plans":
+			if r.Method == "POST" {
+				if err := json.NewDecoder(r.Body).Decode(&saved); err != nil {
+					t.Fatal(err)
+				}
+			}
+			json.NewEncoder(w).Encode([]map[string]any{saved})
+		default:
+			t.Fatalf("unexpected upstream %s", r.URL.Path)
+		}
+	})
+	path := "/api/instructor/sessions/session-a/classes/class-a/plans/2026-10-05"
+	for _, equipment := range []string{`["Kickboards","5 lb weights","Custom aid"]`, `[]`} {
+		body := `{"rows":[{"skill":"Float","activity":"Practice","location":"Lane","duration":5,"equipment":` + equipment + `}]}`
+		response := staffRequest("PUT", path, body, true)
+		if response.Code != 200 {
+			t.Fatalf("save: %d %s", response.Code, response.Body)
+		}
+		response = staffRequest("GET", path, "", true)
+		if response.Code != 200 {
+			t.Fatalf("load: %d", response.Code)
+		}
+		if equipment != `[]` && !strings.Contains(response.Body.String(), `"5 lb weights"`) {
+			t.Fatal("equipment lost")
+		}
+	}
+	for _, equipment := range []string{`[" "]`, `["Fins","fins"]`, `["` + strings.Repeat("x", 101) + `"]`, `[42]`, `"Fins"`} {
+		response := staffRequest("PUT", path, `{"rows":[{"skill":"Float","activity":"Practice","location":"Lane","duration":5,"equipment":`+equipment+`}]}`, true)
+		if response.Code != 400 {
+			t.Fatalf("accepted invalid equipment %s: %d", equipment, response.Code)
+		}
+	}
+}
+
+func TestDeviceLessonPlansRequireSupervisorSessionAccess(t *testing.T) {
+	path := "/api/sessions/session-a/device-lesson-plans"
+	if response := staffRequest("GET", path, "", false); response.Code != 401 {
+		t.Fatalf("guest: %d", response.Code)
+	}
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/rest/v1/rpc/can_edit_session" {
+			t.Fatalf("denied caller touched storage %s", r.URL.Path)
+		}
+		io.WriteString(w, "false")
+	})
+	if response := staffRequest("GET", path, "", true); response.Code != 403 {
+		t.Fatalf("instructor: %d", response.Code)
+	}
+}
+
+func TestDeviceLessonPlansExportActiveClassesWithExactDates(t *testing.T) {
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/rest/v1/rpc/can_edit_session" {
+			io.WriteString(w, "true")
+			return
+		}
+		if r.URL.Query().Get("session_id") != "eq.session-a" {
+			t.Fatalf("unscoped query: %s", r.URL)
+		}
+		switch r.URL.Path {
+		case "/rest/v1/instructor_assignments":
+			if r.URL.Query().Get("active") != "eq.true" {
+				t.Fatal("inactive assignments included")
+			}
+			io.WriteString(w, `[{"id":"a","name":"Alex"}]`)
+		case "/rest/v1/instructor_classes":
+			if r.URL.Query().Get("active") != "eq.true" {
+				t.Fatal("inactive classes included")
+			}
+			io.WriteString(w, `[{"id":"c","code":"004201","level":"Splash1","assignment_id":"a"},{"id":"inactive-assignment","code":"bad","assignment_id":"other"}]`)
+		case "/rest/v1/instructor_plans":
+			io.WriteString(w, `[{"session_id":"session-a","class_id":"c","week":"2026-09-04","rows":[{"equipment":["10 lb weights"]}]},{"class_id":"inactive","week":"2026-09-04"},{"class_id":"inactive-assignment","week":"2026-09-04"}]`)
+		default:
+			t.Fatalf("unexpected upstream: %s", r.URL.Path)
+		}
+	})
+	response := staffRequest("GET", "/api/sessions/session-a/device-lesson-plans", "", true)
+	var body struct {
+		Plans []map[string]any `json:"plans"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if response.Code != 200 || len(body.Plans) != 1 || body.Plans[0]["week"] != "2026-09-04" || body.Plans[0]["code"] != "004201" || body.Plans[0]["instructor"] != "Alex" {
+		t.Fatalf("export: %d %s", response.Code, response.Body)
+	}
+}
+
+func TestDeviceLessonPlanPaginationDoesNotPublishPartialSnapshots(t *testing.T) {
+	for _, failSecondPage := range []bool{false, true} {
+		t.Run(fmt.Sprint(failSecondPage), func(t *testing.T) {
+			pages := 0
+			staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+				switch r.URL.Path {
+				case "/rest/v1/rpc/can_edit_session":
+					io.WriteString(w, "true")
+				case "/rest/v1/instructor_assignments":
+					io.WriteString(w, `[{"id":"a","name":"Alex"}]`)
+				case "/rest/v1/instructor_classes":
+					io.WriteString(w, `[{"id":"c","code":"004201","assignment_id":"a"}]`)
+				case "/rest/v1/instructor_plans":
+					pages++
+					if pages == 1 {
+						if r.URL.Query().Get("offset") != "0" {
+							t.Fatal("first page offset")
+						}
+						plans := make([]map[string]any, 1000)
+						for i := range plans {
+							plans[i] = map[string]any{"class_id": "c"}
+						}
+						json.NewEncoder(w).Encode(plans)
+					} else {
+						if r.URL.Query().Get("offset") != "1000" {
+							t.Fatal("second page offset")
+						}
+						if failSecondPage {
+							http.Error(w, "unavailable", 500)
+						} else {
+							io.WriteString(w, `[{"class_id":"c"}]`)
+						}
+					}
+				default:
+					t.Fatalf("unexpected %s", r.URL.Path)
+				}
+			})
+			response := staffRequest("GET", "/api/sessions/session-a/device-lesson-plans", "", true)
+			if failSecondPage {
+				if response.Code != 500 || strings.Contains(response.Body.String(), `"plans"`) {
+					t.Fatalf("published partial data: %d %s", response.Code, response.Body)
+				}
+				return
+			}
+			var body struct {
+				Plans []map[string]any `json:"plans"`
+			}
+			if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+				t.Fatal(err)
+			}
+			if response.Code != 200 || len(body.Plans) != 1001 || pages != 2 {
+				t.Fatalf("pagination: %d, %d plans, %d pages", response.Code, len(body.Plans), pages)
+			}
+		})
 	}
 }

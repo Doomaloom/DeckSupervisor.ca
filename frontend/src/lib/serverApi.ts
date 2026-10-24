@@ -1044,6 +1044,7 @@ export function fetchInstructorClasses(sessionId: string) {
 }
 
 export type LessonRow = {
+    equipment?: string[];
     skill: string;
     activity: string;
     activities?: { kind: "library" | "custom"; text: string }[];
@@ -1104,4 +1105,9 @@ export function fetchSessionInstructors(sessionId: string) {
     return request<{ instructors: SessionInstructor[] }>(
         `/api/sessions/${encodeURIComponent(sessionId)}/instructors`,
     );
+}
+
+export type DeviceLessonPlan = LessonPlan & { code: string; instructor: string; level: string };
+export function fetchDeviceLessonPlans(sessionId: string) {
+    return request<{ plans: DeviceLessonPlan[] }>(`/api/sessions/${encodeURIComponent(sessionId)}/device-lesson-plans`);
 }

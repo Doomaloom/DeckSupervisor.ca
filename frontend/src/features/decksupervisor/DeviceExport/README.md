@@ -115,3 +115,11 @@ That test imports the browser downloads into SQLite, saves attendance and an
 assessed skill, applies roster and level changes, and verifies identities and
 progress survive. The TypeScript feature tests can also emit those contract
 files when given the same environment variable.
+
+Lesson plans are fetched from the saved session plans when downloading or starting
+sharing, scoped to active instructor classes and matched by instructor, course
+code, and exact date. Packages include optional `lessonPlans` snapshots per
+course. Restart sharing and log in again after editing a plan. Missing snapshots
+in older packages preserve tablet plans; an explicit empty array clears them.
+Guest exports remain roster-only. Apply the equipment migration documented in
+`docs/database-rls.md` before deploying this exporter.

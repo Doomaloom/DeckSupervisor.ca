@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"cob-aquatics/internal/curriculum"
@@ -125,6 +126,7 @@ func SearchLinkableProfiles(w http.ResponseWriter, r *http.Request) {
 var poolLocationPattern = regexp.MustCompile(`^(Lane( [1-9][0-9]?)?|Shallow end|Deep end)$`)
 
 type lessonRow struct {
+	Equipment  []string         `json:"equipment,omitempty"`
 	Skill      string           `json:"skill"`
 	Activity   string           `json:"activity"`
 	Activities []lessonActivity `json:"activities,omitempty"`
@@ -169,6 +171,10 @@ func InstructorPlan(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		for _, row := range body.Rows {
+			if !validLessonEquipment(row.Equipment) {
+				http.Error(w, "Invalid equipment", 400)
+				return
+			}
 			if len(row.Skill) > 2000 || len(row.Activity) > 10000 || row.Duration < 1 || row.Duration > 240 || !poolLocationPattern.MatchString(row.Location) || !validLessonWorkout(row.Workout) {
 				http.Error(w, "Invalid activity row", 400)
 				return
@@ -227,4 +233,87 @@ func SessionInstructorRoster(w http.ResponseWriter, r *http.Request) {
 		rows = []map[string]any{}
 	}
 	writeJSON(w, map[string]any{"instructors": rows})
+}
+
+func validLessonEquipment(items []string) bool {
+	if len(items) > 50 {
+		return false
+	}
+	seen := map[string]bool{}
+	for _, item := range items {
+		key := strings.ToLower(strings.TrimSpace(item))
+		if key == "" || len([]rune(item)) > 100 || seen[key] {
+			return false
+		}
+		seen[key] = true
+	}
+	return true
+}
+
+// DeviceLessonPlans returns a supervisor-authorized session snapshot, using caller RLS.
+func DeviceLessonPlans(w http.ResponseWriter, r *http.Request) {
+	c, err := supabasesvc.NewClientFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", 401)
+		return
+	}
+	sid := mux.Vars(r)["sessionId"]
+	var allowed bool
+	if err = c.RPC(r.Context(), "can_edit_session", map[string]any{"p_session_id": sid, "p_uid": c.User.ID}, &allowed); err != nil || !allowed {
+		http.Error(w, "Forbidden", 403)
+		return
+	}
+	var assignments []struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+	q := url.Values{"session_id": {"eq." + sid}, "active": {"eq.true"}, "select": {"id,name"}}
+	if err = c.Get(r.Context(), "/rest/v1/instructor_assignments", q, &assignments); err != nil {
+		http.Error(w, "Unable to load assignments", 500)
+		return
+	}
+	var classes []struct {
+		ID         string `json:"id"`
+		Code       string `json:"code"`
+		Level      string `json:"level"`
+		Assignment string `json:"assignment_id"`
+	}
+	q.Set("select", "id,code,level,assignment_id")
+	if err = c.Get(r.Context(), "/rest/v1/instructor_classes", q, &classes); err != nil {
+		http.Error(w, "Unable to load classes", 500)
+		return
+	}
+	var plans []map[string]any
+	q = url.Values{"session_id": {"eq." + sid}, "select": {"session_id,class_id,week,rows,curriculum_level,updated_at"}, "order": {"class_id,week"}}
+	// Fetch every PostgREST page before publishing the snapshot.
+	q.Set("limit", "1000")
+	for offset := 0; ; offset += 1000 {
+		var page []map[string]any
+		q.Set("offset", strconv.Itoa(offset))
+		if err = c.Get(r.Context(), "/rest/v1/instructor_plans", q, &page); err != nil {
+			http.Error(w, "Unable to load lesson plans", 500)
+			return
+		}
+		plans = append(plans, page...)
+		if len(page) < 1000 {
+			break
+		}
+	}
+	names := map[string]string{}
+	for _, a := range assignments {
+		names[a.ID] = a.Name
+	}
+	out := []map[string]any{}
+	for _, p := range plans {
+		for _, cl := range classes {
+			if cl.ID == p["class_id"] && names[cl.Assignment] != "" {
+				p["code"] = cl.Code
+				p["level"] = cl.Level
+				p["instructor"] = names[cl.Assignment]
+				out = append(out, p)
+				break
+			}
+		}
+	}
+	writeJSON(w, map[string]any{"plans": out})
 }

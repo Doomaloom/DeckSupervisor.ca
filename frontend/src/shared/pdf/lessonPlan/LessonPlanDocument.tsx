@@ -68,8 +68,8 @@ export function lessonPlanHeading(
     const weekNumber = session.weeks.indexOf(plan.week) + 1;
     return `${course.level} · ${course.code} · Week ${weekNumber || plan.week} Plan`;
 }
-export function hasActivityDrill(rows: Pick<LessonRow, "activity">[]) {
-    return rows.some((row) => row.activity.trim().length > 0);
+export function hasActivityDrill(rows: Pick<LessonRow, "activity" | "equipment">[]) {
+    return rows.some((row) => row.activity.trim().length > 0 || (row.equipment?.length ?? 0) > 0);
 }
 export function LessonPlanDocument(
     { session, course, plan }: {
@@ -159,7 +159,7 @@ function LessonPlanPage(
             </View>
             {plan.rows.flatMap((row, index) => {
                 const skills = textSegments(row.skill, showActivity ? 18 : 55),
-                    activities = showActivity ? textSegments(row.activity, 38) : [];
+                    activities = showActivity ? textSegments([row.activity, row.equipment?.length ? `Equipment: ${row.equipment.join(", ")}` : ""].filter(Boolean).join("\n\n"), 38) : [];
                 return Array.from(
                     { length: Math.max(skills.length, activities.length) },
                     (_, part) => (

@@ -95,7 +95,7 @@ it("skips untouched rows and retries autosave after a new edit", async () => {
     setup();
     const emptyPlan = await screen.findByText(/No lesson plan saved/);
     expect(emptyPlan.closest("tbody")).toBeInTheDocument();
-    expect(emptyPlan.closest("td")).toHaveAttribute("colspan", "6");
+    expect(emptyPlan.closest("td")).toHaveAttribute("colspan", "7");
     expect(emptyPlan.tagName).toBe("TD");
     expect(api.saveLessonPlan).not.toHaveBeenCalled();
     const addActivity = screen.getByRole("button", { name: "Add activity" });
@@ -640,7 +640,7 @@ it("closes the library with the close button or Escape without dirtying the plan
             name: "Browse library for row 1",
         });
         await user.click(trigger);
-        expect(screen.getByRole("checkbox")).toBeDisabled();
+        expect(within(screen.getByRole("dialog")).getByRole("checkbox")).toBeDisabled();
         await user.click(
             screen.getByRole("button", { name: "Close activity library" }),
         );
@@ -908,4 +908,32 @@ it("fills a saved workout skill with its default without saving until the plan i
         skill: workoutSkill, activity: defaultWorkoutText(workoutSkill),
         location: "Deep end", duration: 13,
     });
+});
+
+it("autosaves equipment-only rows, weight sizes and deduplicated custom equipment", async () => {
+    const user = userEvent.setup();
+    setup();
+    await user.click(await screen.findByRole("button", { name: "Add activity" }));
+    await user.click(screen.getByText("Select equipment"));
+    const equipment = screen.getByRole("group", { name: "Equipment required 1" });
+    for (const name of ["5 lb weights", "10 lb weights", "20 lb weights"]) {
+        await user.click(within(equipment).getByRole("checkbox", { name }));
+    }
+    await user.type(screen.getByLabelText("Custom equipment 1"), "Rescue tube");
+    await user.click(within(equipment).getByRole("button", { name: "Add equipment" }));
+    await waitFor(() => expect(api.saveLessonPlan.mock.lastCall?.[3][0].equipment).toEqual(["5 lb weights", "10 lb weights", "20 lb weights", "Rescue tube"]));
+    await user.type(screen.getByLabelText("Custom equipment 1"), " rescue TUBE ");
+    await user.click(within(equipment).getByRole("button", { name: "Add equipment" }));
+    expect(within(equipment).getAllByRole("checkbox", { name: /rescue tube/i })).toHaveLength(1);
+    expect(api.saveLessonPlan.mock.lastCall?.[3]).toHaveLength(1);
+});
+
+it("reloads saved equipment and removes a selected item", async () => {
+    api.fetchLessonPlan.mockResolvedValue({ plan: { rows: [{ skill: "", activity: "Practice", location: "Lane", duration: 5, equipment: ["Noodles", "Custom aid"] }] } });
+    const user = userEvent.setup();
+    setup();
+    await user.click(await screen.findByText("Noodles, Custom aid"));
+    expect(screen.getByRole("checkbox", { name: "Custom aid" })).toBeChecked();
+    await user.click(screen.getByRole("checkbox", { name: "Noodles" }));
+    await waitFor(() => expect(api.saveLessonPlan.mock.lastCall?.[3][0].equipment).toEqual(["Custom aid"]));
 });

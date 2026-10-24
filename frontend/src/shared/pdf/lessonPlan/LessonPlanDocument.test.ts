@@ -32,3 +32,6 @@ it("preserves all long text and bounds segments, including many newlines", () =>
             .toBeLessThanOrEqual(9);
     }
 });
+it("includes the details column for an equipment-only plan", () => {
+    expect(hasActivityDrill([{ activity: "", equipment: ["10 lb weights"] }])).toBe(true);
+});

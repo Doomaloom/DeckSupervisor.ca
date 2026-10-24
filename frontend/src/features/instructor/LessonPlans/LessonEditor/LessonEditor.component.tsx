@@ -1,3 +1,4 @@
+import EquipmentPicker from "./EquipmentPicker/EquipmentPicker.component";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ActionButton, Notice, Select, Textarea, } from "../../../../general-components";
 import { workoutText } from "../../../../shared/workouts/workout";
@@ -106,7 +107,7 @@ export function LessonEditor(props: {
                 >
                     <table
                         ref={tableRef}
-                        className="w-full min-w-[960px] border-collapse text-center"
+                        className="w-full min-w-[1160px] border-collapse text-center"
                     >
                         <thead className="bg-primary text-accent">
                             <tr>
@@ -117,6 +118,7 @@ export function LessonEditor(props: {
                                     "Skill",
                                     "Activity / drill",
                                     "Pool location",
+                                    "Equipment required",
                                 ].map((h) => (
                                     <th
                                         key={h}
@@ -140,7 +142,7 @@ export function LessonEditor(props: {
                             {missing && rows.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={7}
                                         className="border-b border-secondary/20 bg-bg px-4 py-8 text-center text-sm text-secondary/70"
                                     >
                                         No lesson plan saved for this week.
@@ -416,6 +418,9 @@ export function LessonEditor(props: {
                                             </fieldset>
                                         </td>
                                         <td className="border-b border-secondary/20 p-3 align-middle">
+                                            <EquipmentPicker value={row.equipment} rowNumber={i + 1} onChange={equipment => edit(i, { equipment })} />
+                                        </td>
+                                        <td className="border-b border-secondary/20 p-3 align-middle">
                                             <DurationPicker
                                                 value={row.duration}
                                                 rowNumber={i + 1}
@@ -446,7 +451,7 @@ export function LessonEditor(props: {
                                 );
                             })}
                             <tr className="border-t border-secondary/20">
-                                <td colSpan={6} className="p-0">
+                                <td colSpan={7} className="p-0">
                                     <button
                                         type="button"
                                         disabled={rows.length >= 200}
@@ -468,7 +473,7 @@ export function LessonEditor(props: {
                             </tr>
                         </tbody>
                     </table>
-                    <div className="h-3 w-full min-w-[960px] bg-primary" aria-hidden="true" />
+                    <div className="h-3 w-full min-w-[1160px] bg-primary" aria-hidden="true" />
                 </div>
             </fieldset>
             {libraryRow !== null && rows[libraryRow] && (

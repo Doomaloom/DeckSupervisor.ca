@@ -158,3 +158,11 @@ Multiple activity entries per lesson-plan row require
 before deploying the updated API and frontend. It permits optional custom and
 library entries while keeping the combined activity text for existing plans and
 PDFs. The migration is safe to reapply.
+
+Equipment and tablet lesson-plan export require
+`backend/supabase_lesson_plan_equipment.sql` after the activities migration,
+before deploying the updated API/frontend. The migration accepts optional
+per-row equipment arrays (up to 50 distinct items, 100 characters each), retains
+older plans, and grants session editors read access for device exports without
+changing instructor write policies. It is transactional and safe to reapply.
+The tablet creates its local lesson-plan table automatically at startup.

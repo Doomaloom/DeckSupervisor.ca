@@ -24,7 +24,7 @@ export function rowsForSave(rows: LessonRow[]) {
         };
     }).filter((row) =>
         row.skill.trim() || row.activity.trim() || row.workout ||
-        row.location !== "Lane" || row.duration !== 5
+        row.location !== "Lane" || row.duration !== 5 || (row.equipment?.length ?? 0) > 0
     );
 }
 
