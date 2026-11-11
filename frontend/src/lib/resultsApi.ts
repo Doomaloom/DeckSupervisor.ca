@@ -1,4 +1,4 @@
-export type ResultIdentity = {sourceId:string;enrollmentId:string;matchKey:string;matchKeys?:string[]};
+export type ResultIdentity = {sourceId:string;enrollmentId:string;matchKey:string;matchKeys?:string[];active?:boolean};
 export type ResultCourse = {sourceId:string;classId:string;instructorId:string;lessonDates:string[];swimmers:ResultIdentity[]};
 export type ResultRegistry = {schemaVersion:1;sessionId:string;datasetId:string;courses:ResultCourse[]};
 export type ResultPayload = {status?:'present'|'absent'|'unmarked';skillId?:string;createdAt?:string;submittedAt?:string;results?:{subskillId:string;status:'successful'|'not_yet'}[];timed?:{lapsRequired:number;lapsCompleted:number;elapsedMs:number}};

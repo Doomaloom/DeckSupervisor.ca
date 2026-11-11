@@ -22,3 +22,10 @@ it('requires matching dataset and registered source IDs for local display packag
  expect(localNamesFromPackage(pkg,registry)[0].enrollmentId).toBe('enrollment');expect(()=>localNamesFromPackage({...pkg,datasetId:'other'},registry)).toThrow();
  expect(()=>localNamesFromPackage({...pkg,courses:[{...pkg.courses[0],swimmers:[{sourceId:'unknown',name:'Wrong person'}]}]},registry)).toThrow();
 });
+it('resolves historical inactive names from their own class package without matching same names across instructors',()=>{
+ const registry:ResultRegistry={schemaVersion:1,sessionId:'session',datasetId:'durable',courses:[{sourceId:'original-class',classId:'old-class',instructorId:'teacher-one',lessonDates:[],swimmers:[{sourceId:'old-student',enrollmentId:'old-enrollment',matchKey:'old-key',active:false}]},{sourceId:'destination-class',classId:'new-class',instructorId:'teacher-two',lessonDates:[],swimmers:[{sourceId:'new-student',enrollmentId:'new-enrollment',matchKey:'new-key',active:true}]}]};
+ const packageFor=(course:string,student:string)=>({schemaVersion:1,kind:'rec-tablet-classes',datasetId:'durable',instructor:'Synthetic instructor',courses:[{sourceId:course,name:'Class',level:'Splash1',startTime:'10:00',location:'Pool',lessonDates:[],swimmers:[{sourceId:student,name:'Same synthetic name'}]}]});
+ expect(localNamesFromPackage(packageFor('original-class','old-student'),registry)[0].enrollmentId).toBe('old-enrollment');
+ expect(localNamesFromPackage(packageFor('destination-class','new-student'),registry)[0].enrollmentId).toBe('new-enrollment');
+ expect(()=>localNamesFromPackage(packageFor('destination-class','old-student'),registry)).toThrow('unregistered');
+});

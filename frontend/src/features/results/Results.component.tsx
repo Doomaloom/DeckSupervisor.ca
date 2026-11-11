@@ -53,7 +53,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
  }
  useEffect(()=>{mounted.current=true;void refresh().catch(e=>{if(mounted.current)setError(errorMessage(e))}).finally(()=>{if(mounted.current)setBusy(false)});return()=>{mounted.current=false}},[session.id]);
  async function run(action:()=>Promise<void>){if(working.current)return;working.current=true;setBusy(true);setError('');setNotice('');try{await action();await refresh()}catch(e){if(mounted.current)setError(errorMessage(e))}finally{working.current=false;if(mounted.current)setBusy(false)}}
- const course=registry?.courses.find(c=>c.classId===classId),students=course?.swimmers??[];
+ const course=registry?.courses.find(c=>c.classId===classId),students=course?.swimmers??[],activeStudents=students.filter(s=>s.active!==false);
  const localFor=(id:string)=>{const matches=identities.filter(i=>i.enrollmentId===id);return matches.length===1?matches[0]:undefined};
  const nameFor=(id:string)=>localFor(id)?.name??`Unresolved student (${id.slice(0,8)})`;
  const className=(c:api.ResultCourse)=>identities.find(i=>courseSourceId(session.id,i.course.code)===c.sourceId)?.course.code??c.sourceId;
@@ -83,7 +83,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
  async function printCompleted(){
   if(!course||!registry||!data)throw new Error('Choose a registered class.');
   if(data.conflicts.some(c=>!c.resolved&&c.operation.classId===classId))throw new Error('Resolve this class’s conflicts before printing.');
-  const resolved=students.map(s=>({...s,local:localFor(s.enrollmentId)}));if(!resolved.length||resolved.some(s=>!s.local))throw new Error('Load and reconcile every student name before printing.');
+  const resolved=activeStudents.map(s=>({...s,local:localFor(s.enrollmentId)}));if(!resolved.length||resolved.some(s=>!s.local))throw new Error('Load and reconcile every student name before printing.');
   const accepted=data.records.filter(r=>r.classId===classId&&!r.deleted),versions=[...new Set(accepted.map(r=>r.curriculumVersion))];
   if(versions.length!==1)throw new Error('Completed printing needs submitted results from one curriculum version.');
   const groups=new Map<string,typeof resolved>();for(const s of resolved){const level=findCurriculumLevel(s.local!.level);if(!level)throw new Error(`Choose a supported curriculum level for ${s.local!.name}.`);groups.set(level.id,[...(groups.get(level.id)??[]),s]);}
@@ -102,7 +102,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
     <label>Student<Select value={student} onChange={e=>setStudent(e.target.value)}><option value="">All students</option>{students.map(s=><option key={s.enrollmentId} value={s.enrollmentId}>{nameFor(s.enrollmentId)}</option>)}</Select></label>
    </div>
    <ActionButton disabled={busy||!course} onClick={()=>void run(printCompleted)}>Print completed sheets</ActionButton>
-   {course&&date&&students.filter(s=>!student||s.enrollmentId===student).map(s=><div key={s.enrollmentId} className="flex gap-3 items-center"><span>{nameFor(s.enrollmentId)}</span><Select aria-label={`Attendance for ${nameFor(s.enrollmentId)}`} disabled={busy} value={data?.records.find(r=>!r.deleted&&r.recordId===`attendance:${s.enrollmentId}:${date}`)?.payload.status??'unmarked'} onChange={e=>void run(()=>attendance(s.enrollmentId,e.target.value as 'present'|'absent'|'unmarked'))}><option value="unmarked">Unmarked</option><option value="present">Present</option><option value="absent">Absent</option></Select></div>)}
+   {course&&date&&activeStudents.filter(s=>!student||s.enrollmentId===student).map(s=><div key={s.enrollmentId} className="flex gap-3 items-center"><span>{nameFor(s.enrollmentId)}</span><Select aria-label={`Attendance for ${nameFor(s.enrollmentId)}`} disabled={busy} value={data?.records.find(r=>!r.deleted&&r.recordId===`attendance:${s.enrollmentId}:${date}`)?.payload.status??'unmarked'} onChange={e=>void run(()=>attendance(s.enrollmentId,e.target.value as 'present'|'absent'|'unmarked'))}><option value="unmarked">Unmarked</option><option value="present">Present</option><option value="absent">Absent</option></Select></div>)}
    {!supervisor&&!!data?.conflicts.filter(c=>!c.resolved).length&&<Notice>Some submissions need supervisor review. Accepted results remain displayed until those conflicts are resolved.</Notice>}
    <h3 className="text-xl font-semibold">Submitted records and revision history</h3>
    {records.length===0&&<p>No submissions for these filters.</p>}
