@@ -90,7 +90,9 @@ export function fillAttendanceRoster(
     session: string,
     options: { dailyAttendance?: boolean } = {},
 ) {
-    const startDate = roster.schedule.trim().split(/\s+/)[1] ?? "";
+    const startDate = roster.completed
+        ? [...roster.completed.lessonDates].sort()[0] ?? ""
+        : roster.schedule.trim().split(/\s+/)[1] ?? "";
     setText(root, "instructor", roster.instructor);
     setText(
         root,

@@ -22,6 +22,7 @@ describe('completed historical attendance sheets', () => {
         expect(row.querySelector('test')).toBeNull();
         expect(row.textContent).toContain('[09/07 ✓] [09/14 ×] [09/21  ]');
         expect(row.children[1].textContent?.trim()).toBe('');
+        expect(document.querySelector('#start_time')?.textContent).toBe('2026-09-07 09:00');
         expect(document.querySelector('[data-page-kind="attendance-back"]')?.textContent).toContain('Foot-first entry');
     });
     it('blocks unresolved names, conflicts, unknown curriculum, or wrong lesson attendance', async () => {
