@@ -103,42 +103,30 @@ try {
                     "Splash1",
                 );
         }
-        await page.getByLabel("Skill 1", { exact: true }).selectOption(
-            "Float on front and back (5 sec. each)",
-        );
-        await page.getByLabel("Activity / drill 1", { exact: true }).fill(
-            `Practice supported floats with clear cues and feedback. ${name} ${Date.now()}`,
-        );
-        await page.route("**/plans/*", async (route) => {
-            if (route.request().method() === "PUT") {
-                await route.abort();
-                await page.unroute("**/plans/*");
-            } else await route.continue();
+        await page.route("**/plans/*", async route => {
+            if (route.request().method() === "PUT") await route.abort();
+            else await route.continue();
         });
-        await page.getByRole("button", { name: "Save", exact: true }).click();
-        await page.getByRole("alert").filter({
-            hasText: "Your draft is retained",
-        })
-            .waitFor();
-        assert.equal(
-            await page.getByLabel("Skill 1", { exact: true }).inputValue(),
-            "Float on front and back (5 sec. each)",
-        );
-        page.once("dialog", (d) => d.dismiss());
-        await page.getByRole("link", { name: "Attendance", exact: true })
-            .click();
-        assert.equal(
-            await page.getByLabel("Skill 1", { exact: true }).inputValue(),
-            "Float on front and back (5 sec. each)",
-        );
-        await page.getByRole("button", { name: "Save", exact: true }).click();
-        await page.getByText("Lesson plan saved.", { exact: true }).waitFor();
+        await page.getByLabel("Skill 1", { exact: true }).selectOption("Float on front 5 sec.");
+        if (!await page.getByLabel("Activity / drill 1", { exact: true }).count()) {
+            await page.getByLabel("Custom activity for row 1", { exact: true }).click();
+        }
+        const drill = `Practice supported floats with clear cues. ${name} ${Date.now()}`;
+        await page.getByLabel("Activity / drill 1", { exact: true }).fill(drill);
+        await page.getByRole("alert").filter({ hasText: "Your draft is retained" }).waitFor();
+        assert.equal(await page.getByLabel("Activity / drill 1", { exact: true }).inputValue(), drill);
+        page.once("dialog", d => d.dismiss());
+        await page.getByRole("link", {name:"Attendance", exact:true}).click();
+        assert.equal(await page.getByLabel("Activity / drill 1", { exact: true }).inputValue(), drill);
+        await page.unroute("**/plans/*");
+        await Promise.all([
+            page.waitForResponse(r => r.url().includes('/plans/') && r.request().method() === 'PUT' && r.status() === 200),
+            page.getByLabel("Activity / drill 1", { exact: true }).fill(drill + " Retry."),
+        ]);
         await page.reload();
         await page.getByLabel("Skill 1", { exact: true }).waitFor();
-        assert.equal(
-            await page.getByLabel("Skill 1", { exact: true }).inputValue(),
-            "Float on front and back (5 sec. each)",
-        );
+        assert.equal(await page.getByLabel("Skill 1", {exact:true}).inputValue(), "Float on front 5 sec.");
+        assert.equal(await page.getByLabel("Activity / drill 1", {exact:true}).inputValue(), drill + " Retry.");
         await page.screenshot({
             path: resolve(output, `${name}-saved-plan.png`),
             fullPage: true,
@@ -151,31 +139,13 @@ try {
             await page.getByLabel("Skill 1", { exact: true }).count(),
             0,
         );
+        await page.getByLabel("Week", {exact:true}).selectOption("2026-10-05");
         await page.getByRole("link", { name: "Print", exact: true }).click();
-        await page.getByRole("button", { name: "Preview PDF", exact: true })
-            .waitFor();
-        await page.screenshot({
-            path: resolve(output, `${name}-print.png`),
-            fullPage: true,
-        });
-        if (name === "desktop") {
-            const newPage = context.waitForEvent("page");
-            await page.getByRole("button", { name: "Preview PDF", exact: true })
-                .click();
-            const preview = await newPage;
-            await preview.getByText("Weekly lesson plan", { exact: true })
-                .waitFor({
-                    timeout: 20000,
-                });
-            await preview.screenshot({
-                path: resolve(output, "desktop-pdf-preview.png"),
-                fullPage: true,
-            });
-            await preview.close();
-        }
-        await page.getByRole("link", { name: "Attendance", exact: true })
-            .click();
-        await page.getByText(/Attendance is coming later/).waitFor();
+        await page.getByRole("button", {name:"Print PDF",exact:true}).waitFor();
+        await page.locator('iframe[title$="preview"]').first().waitFor();
+        await page.screenshot({path:resolve(output,`${name}-print.png`),fullPage:true});
+        await page.getByRole("link", {name:"Attendance",exact:true}).click();
+        await page.getByRole("heading", {name:"Attendance",exact:true}).waitFor();
         await page.getByRole("button", { name: "Logout", exact: true }).click();
         await page.waitForURL(base + "/sign-in");
         await page.goto(base + "/instructor");
