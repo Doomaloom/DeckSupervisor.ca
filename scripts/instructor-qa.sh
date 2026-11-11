@@ -17,6 +17,11 @@ psql -X -h "$qa_root" -p 55440 -U postgres -d postgres -v ON_ERROR_STOP=1 -q \
  -f "$qa_repo/backend/tests/rls_bootstrap.sql" -f "$qa_repo/backend/tests/rls.sql" \
  -f "$qa_repo/backend/supabase_instructor.sql" -f "$qa_repo/backend/supabase_lesson_plans.sql" -f "$qa_repo/backend/supabase_lesson_plan_curriculum.sql" -f "$qa_repo/backend/supabase_lesson_plan_workouts.sql" \
  -f "$qa_repo/backend/tests/instructor-qa/fixtures.sql" -f "$qa_repo/backend/supabase_session_instructors.sql" >"$qa_root/fixture.log" 2>&1
+for qa_migration in supabase_lesson_plan_activities.sql supabase_lesson_plan_equipment.sql supabase_results_sync.sql; do
+ if [[ -f "$qa_repo/backend/$qa_migration" ]]; then
+  psql -X -h "$qa_root" -p 55440 -U postgres -d postgres -v ON_ERROR_STOP=1 -q -f "$qa_repo/backend/$qa_migration" >>"$qa_root/fixture.log" 2>&1
+ fi
+done
 (cd "$qa_repo/backend"; GOCACHE=/tmp/cob-go-cache go build -o "$qa_root/api" ./cmd/instructor-qa)
 python3 "$qa_repo/backend/tests/instructor-qa/provider.py" "$qa_root" >"$qa_root/provider.log" 2>&1 & qa_children+=("$!")
 "$qa_root/api" >"$qa_root/api.log" 2>&1 & qa_children+=("$!")

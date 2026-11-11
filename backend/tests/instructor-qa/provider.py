@@ -13,9 +13,10 @@ def quote(v):return "'"+str(v).replace("'","''")+"'"
 def ident(v):
  if not re.fullmatch('[a-z_]+',v):raise ValueError('Invalid identifier')
  return '"'+v+'"'
-def db(sql,user=None):
+def db(sql,user=None,service=False):
  pre="begin;"
- if user:pre+="set local role authenticated;set local request.jwt.claims="+quote(json.dumps({'sub':user,'role':'authenticated'}))+";"
+ if service:pre+="set local role service_role;set local request.jwt.claims="+quote(json.dumps({'role':'service_role'}))+";"
+ elif user:pre+="set local role authenticated;set local request.jwt.claims="+quote(json.dumps({'sub':user,'role':'authenticated'}))+";"
  run=subprocess.run(['psql','-X','-h',str(root),'-p','55440','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-qAt','-c',pre+sql+';commit;'],text=True,capture_output=True)
  if run.returncode:raise ValueError(run.stderr.strip())
  lines=run.stdout.strip().splitlines();return json.loads(lines[-1]) if lines and lines[-1] else None
@@ -24,21 +25,30 @@ class Handler(BaseHTTPRequestHandler):
  def do_POST(self):self.handle_request()
  def do_PATCH(self):self.handle_request()
  def do_PUT(self):self.handle_request()
+ def do_DELETE(self):self.handle_request()
  def send(self,value,status=200):
   self.send_response(status);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(json.dumps(value).encode())
  def handle_request(self):
   try:
    u=urlparse(self.path);q={k:v[0] for k,v in parse_qs(u.query).items()};body=json.loads(self.rfile.read(int(self.headers.get('Content-Length','0'))) or b'{}')
    token=self.headers.get('Authorization','').removeprefix('Bearer ');number=token.removeprefix('qa-token-');user=uid(number) if token.startswith('qa-token-') and number in accounts.values() else None
+   service=self.headers.get('apikey')=='sb_secret_disposable_results_qa'
    if u.path=='/auth/v1/token':
     n=accounts.get(body.get('email'))
     if not n or body.get('password')!='Synthetic-test-only-42!':return self.send({'message':'Invalid credentials'},401)
     return self.send({'access_token':'qa-token-'+n,'refresh_token':'qa-refresh-'+n,'expires_in':3600,'token_type':'bearer','user':{'id':uid(n),'email':body['email']}})
-   if not user:return self.send({'message':'Unauthorized'},401)
+   if not user and not service:return self.send({'message':'Unauthorized'},401)
    if u.path=='/auth/v1/user':return self.send({'id':user,'email':next(e for e,n in accounts.items() if uid(n)==user)})
    if u.path=='/auth/v1/logout':return self.send({})
    if u.path.startswith('/rest/v1/rpc/'):
     name=u.path.rsplit('/',1)[1]
+    if name in {'result_registry','result_apply','result_snapshot','result_admin','result_mint'}:
+     def literal(value):
+      if value is None:return 'null'
+      if isinstance(value,(dict,list,bool)):return quote(json.dumps(value))
+      return quote(value)
+     args=','.join(ident(key)+'=>'+literal(value) for key,value in body.items())
+     return self.send(db('select to_jsonb('+ident(name)+'('+args+'))',user,service))
     if name=='instructor_sessions':return self.send(db("select coalesce(jsonb_agg(to_jsonb(r)),'[]') from instructor_sessions() r",user))
     if name in {'instructor_assignment_accounts','search_linkable_part_time_profiles','session_instructor_roster','link_session_instructor_assignment'}:
      args=quote(body['p_session'])
