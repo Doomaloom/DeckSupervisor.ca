@@ -95,6 +95,15 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/device-shares/{id}/heartbeat", handlers.HeartbeatDeviceShare).Methods("POST")
 	r.HandleFunc("/api/device-shares/{id}/close", handlers.CloseDeviceShare).Methods("POST")
 
+	r.HandleFunc("/api/device-results/upload", handlers.Results).Methods("POST")
+	r.HandleFunc("/api/device-results", handlers.Results).Methods("GET")
+	r.HandleFunc("/api/sessions/{sessionId}/result-identities", handlers.ResultsRegistry).Methods("GET", "PUT")
+	r.HandleFunc("/api/sessions/{sessionId}/result-identities/reconcile", handlers.ResultsRegistry).Methods("POST")
+	r.HandleFunc("/api/sessions/{sessionId}/result-classes", handlers.ResultsAdmin).Methods("GET")
+	r.HandleFunc("/api/sessions/{sessionId}/results", handlers.Results).Methods("GET", "POST")
+	r.HandleFunc("/api/sessions/{sessionId}/results/conflicts/{conflictId}/resolve", handlers.ResultsAdmin).Methods("POST")
+	r.HandleFunc("/api/sessions/{sessionId}/result-grants", handlers.ResultsAdmin).Methods("GET")
+	r.HandleFunc("/api/sessions/{sessionId}/result-grants/{grantId}", handlers.ResultsAdmin).Methods("DELETE")
 	// Planner sharing
 	r.HandleFunc("/api/planner-shares", handlers.CreatePlannerShare).Methods("POST")
 	r.HandleFunc("/api/planner-shares/{code}", handlers.GetPlannerShare).Methods("GET")

@@ -15,7 +15,8 @@ import (
 var deviceShareService = deviceshare.New()
 
 type createDeviceShareRequest struct {
-	Packages []struct {
+	SessionID string `json:"sessionId"`
+	Packages  []struct {
 		Instructor string          `json:"instructor"`
 		Package    json.RawMessage `json:"package"`
 	} `json:"packages"`
@@ -52,7 +53,14 @@ func CreateDeviceShare(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid instructor package", http.StatusBadRequest)
 			return
 		}
-		packages = append(packages, deviceshare.InstructorPackage{Instructor: item.Instructor, Package: item.Package})
+		bound, err := bindResultPackage(r, request.SessionID, item.Package)
+		if err != nil {
+			http.Error(w, "Package binding unauthorized or invalid", http.StatusForbidden)
+			return
+		}
+		var envelope boundResultEnvelope
+		_ = json.Unmarshal(bound, &envelope)
+		packages = append(packages, deviceshare.InstructorPackage{Instructor: item.Instructor, Package: bound, Identity: envelope.Sync.InstructorID})
 	}
 	client, _, splitErr := net.SplitHostPort(r.RemoteAddr)
 	if splitErr != nil {
@@ -112,8 +120,12 @@ func RedeemDeviceShare(w http.ResponseWriter, r *http.Request) {
 		writeDeviceShareError(w, err)
 		return
 	}
-	var packageJSON json.RawMessage = data
-	writeDeviceShareJSON(w, http.StatusOK, map[string]json.RawMessage{"package": packageJSON})
+	response, err := redeemResultPackage(r, data)
+	if err != nil {
+		http.Error(w, "Binding no longer authorized", http.StatusForbidden)
+		return
+	}
+	writeDeviceShareJSON(w, http.StatusOK, response)
 }
 
 func decodeDeviceShareBody(w http.ResponseWriter, r *http.Request, target any) error {

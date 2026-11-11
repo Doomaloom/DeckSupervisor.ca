@@ -7,10 +7,13 @@ create table if not exists public.result_aliases(session_id uuid not null,enroll
 create table if not exists public.result_grants(id uuid primary key default gen_random_uuid(),session_id uuid not null references public.sessions(id) on delete cascade,creator_id uuid not null,instructor_id uuid not null,class_ids uuid[] not null,enrollment_ids uuid[] not null,upload_hash text not null unique,read_hash text not null unique,expires_at timestamptz not null default now()+interval '30 days',read_expires_at timestamptz not null default now()+interval '12 hours',revoked boolean not null default false);
 create table if not exists public.result_records(session_id uuid not null references public.sessions(id) on delete cascade,record_id text not null,class_id uuid not null,enrollment_id uuid not null,revision integer not null,record jsonb not null,primary key(session_id,record_id));
 create table if not exists public.result_history(session_id uuid not null references public.sessions(id) on delete cascade,record_id text not null,revision integer not null,record jsonb not null,primary key(session_id,record_id,revision));
-create table if not exists public.result_operations(session_id uuid not null references public.sessions(id) on delete cascade,operation_id uuid not null,operation jsonb not null,receipt jsonb not null,primary key(session_id,operation_id));
+create table if not exists public.result_operations(session_id uuid not null references public.sessions(id) on delete cascade,operation_id uuid not null,operation_hash text not null,operation jsonb,receipt jsonb not null,primary key(session_id,operation_id));
 create table if not exists public.result_conflicts(id uuid primary key default gen_random_uuid(),session_id uuid not null references public.sessions(id) on delete cascade,class_id uuid not null,operation jsonb not null,current_record jsonb,success boolean not null,resolved boolean not null default false,resolution text,resolved_by uuid,resolved_at timestamptz);
 create table if not exists public.result_curriculum(version text not null,level text not null,skill_id text not null,criteria jsonb not null,primary key(version,skill_id));
 
+-- Service calls cannot use can_edit_session(s, creator): that RPC deliberately
+-- binds its user argument to auth.uid(). Match its current owner-only rule here.
+create or replace function public.result_creator_access(s uuid,u uuid) returns boolean language sql stable security definer set search_path='' as $$ select exists(select 1 from public.sessions where id=s and created_by=u) $$;
 -- Private helpers are never callable by API roles.
 create or replace function public.result_class_access(s uuid,c uuid,u uuid) returns boolean language sql stable security definer set search_path='' as $$
 select exists(select 1 from public.instructor_classes ic where ic.session_id=s and ic.id=c and ic.active) and (public.can_edit_session(s,u) or exists(select 1 from public.instructor_classes ic join public.instructor_assignments a on a.session_id=ic.session_id and a.id=ic.assignment_id join public.session_instructors i on i.session_id=a.session_id and i.id=a.instructor_id where ic.id=c and ic.session_id=s and ic.active and a.active and i.active and a.account_id=u and i.account_id=u))
@@ -19,7 +22,7 @@ create or replace function public.result_check_grant(token text,reading boolean)
 declare g public.result_grants;
 begin
  select * into g from public.result_grants where (case when reading then read_hash else upload_hash end)=encode(sha256(convert_to(token,'UTF8')),'hex') for share;
- if not found or g.revoked or g.expires_at<=now() or (reading and g.read_expires_at<=now()) or not public.can_edit_session(g.session_id,g.creator_id) then raise insufficient_privilege; end if;
+ if not found or g.revoked or g.expires_at<=now() or (reading and g.read_expires_at<=now()) or not public.result_creator_access(g.session_id,g.creator_id) then raise insufficient_privilege; end if;
  if exists(select 1 from unnest(g.class_ids) c where not exists(select 1 from public.instructor_classes ic join public.instructor_assignments a on a.session_id=ic.session_id and a.id=ic.assignment_id join public.session_instructors i on i.session_id=a.session_id and i.id=a.instructor_id where ic.id=c and ic.session_id=g.session_id and ic.active and a.active and i.active and a.instructor_id=g.instructor_id)) then raise insufficient_privilege; end if;
  return g;
 end $$;
@@ -47,16 +50,16 @@ begin
  insert into public.result_courses values(p_session,c->>'sourceId',(c->>'classId')::uuid,(c->>'instructorId')::uuid,c->'lessonDates') on conflict(session_id,source_id) do update set instructor_id=excluded.instructor_id,lesson_dates=excluded.lesson_dates;
  if jsonb_typeof(c->'swimmers') is distinct from 'array' then raise exception 'Invalid swimmers'; end if;
  for e in select value from jsonb_array_elements(c->'swimmers') loop
- if e-array['sourceId','enrollmentId','matchKey','matchKeys']<>'{}'::jsonb or length(e->>'sourceId') not between 1 and 200 or e->>'sourceId' is null then raise exception 'Invalid swimmer identity'; end if;
+ if e-array['sourceId','enrollmentId','matchKey','matchKeys','active']<>'{}'::jsonb or length(e->>'sourceId') not between 1 and 200 or e->>'sourceId' is null then raise exception 'Invalid swimmer identity'; end if;
  if exists(select 1 from public.result_enrollments where session_id=p_session and course_id=c->>'sourceId' and source_id=e->>'sourceId' and enrollment_id<>(e->>'enrollmentId')::uuid) then raise exception 'Enrollment identity immutable'; end if;
- insert into public.result_enrollments values(p_session,c->>'sourceId',e->>'sourceId',(e->>'enrollmentId')::uuid,true) on conflict(session_id,course_id,source_id) do update set active=true;
+ insert into public.result_enrollments values(p_session,c->>'sourceId',e->>'sourceId',(e->>'enrollmentId')::uuid,coalesce((e->>'active')::boolean,true)) on conflict(session_id,course_id,source_id) do update set active=excluded.active;
  if exists(select 1 from public.result_aliases where session_id=p_session and enrollment_id=(e->>'enrollmentId')::uuid) and not exists(select 1 from public.result_aliases where session_id=p_session and enrollment_id=(e->>'enrollmentId')::uuid and match_key=e->>'matchKey') then raise exception 'Explicit alias reconciliation required'; end if;
  insert into public.result_aliases values(p_session,(e->>'enrollmentId')::uuid,e->>'matchKey') on conflict do nothing;
  end loop; end loop; end if; end if;
  select dataset_id into ds from public.result_datasets where session_id=p_session;
  if not public.can_edit_session(p_session,auth.uid()) and not exists(select 1 from public.result_courses where session_id=p_session and public.result_class_access(p_session,class_id,auth.uid())) then raise insufficient_privilege; end if;
  if ds is null then return null; end if;
- select coalesce(jsonb_agg(jsonb_build_object('sourceId',rc.source_id,'classId',rc.class_id,'instructorId',rc.instructor_id,'lessonDates',rc.lesson_dates,'swimmers',(select coalesce(jsonb_agg(jsonb_build_object('sourceId',re.source_id,'enrollmentId',re.enrollment_id,'matchKey',(select min(match_key) from public.result_aliases where session_id=p_session and enrollment_id=re.enrollment_id),'matchKeys',(select jsonb_agg(match_key) from public.result_aliases where session_id=p_session and enrollment_id=re.enrollment_id))),'[]'::jsonb) from public.result_enrollments re where re.session_id=p_session and re.course_id=rc.source_id and re.active))),'[]'::jsonb) into result from public.result_courses rc where rc.session_id=p_session and public.result_class_access(p_session,rc.class_id,auth.uid());
+ select coalesce(jsonb_agg(jsonb_build_object('sourceId',rc.source_id,'classId',rc.class_id,'instructorId',rc.instructor_id,'lessonDates',rc.lesson_dates,'swimmers',(select coalesce(jsonb_agg(jsonb_build_object('sourceId',re.source_id,'enrollmentId',re.enrollment_id,'active',re.active,'matchKey',(select min(match_key) from public.result_aliases where session_id=p_session and enrollment_id=re.enrollment_id),'matchKeys',(select jsonb_agg(match_key) from public.result_aliases where session_id=p_session and enrollment_id=re.enrollment_id))),'[]'::jsonb) from public.result_enrollments re where re.session_id=p_session and re.course_id=rc.source_id))),'[]'::jsonb) into result from public.result_courses rc where rc.session_id=p_session and public.result_class_access(p_session,rc.class_id,auth.uid());
  return jsonb_build_object('schemaVersion',1,'sessionId',p_session,'datasetId',ds,'courses',result);
 end $$;
 -- Returns only a derived boolean; malformed/full-text input never reaches stored records.
@@ -67,7 +70,7 @@ begin
  perform (op->>'operationId')::uuid;
  if op->>'operationId' is null or op->>'lessonDate' is null or op->>'lessonDate' !~ '^\d{4}-\d{2}-\d{2}$' or (op->>'lessonDate')::date::text<>op->>'lessonDate' then raise exception 'Invalid identity'; end if;
  select * into rc from public.result_courses where session_id=p_session and class_id=(op->>'classId')::uuid;
- select * into en from public.result_enrollments where session_id=p_session and enrollment_id=(op->>'enrollmentId')::uuid and course_id=rc.source_id and active;
+ select * into en from public.result_enrollments where session_id=p_session and enrollment_id=(op->>'enrollmentId')::uuid and course_id=rc.source_id and (active or exists(select 1 from public.result_records rr where rr.session_id=p_session and rr.record_id=op->>'recordId' and rr.enrollment_id=result_enrollments.enrollment_id));
  if en.enrollment_id is null or not (rc.lesson_dates ? (op->>'lessonDate')) or not exists(select 1 from public.result_datasets where session_id=p_session and dataset_id=op->>'datasetId') then raise exception 'Invalid scope'; end if;
  if op->>'kind'='attendance' then
  if op->>'recordId'<>'attendance:'||(op->>'enrollmentId')||':'||(op->>'lessonDate') then raise exception 'Invalid attendance identity'; end if;
@@ -77,7 +80,7 @@ begin
  else
  perform (op->>'recordId')::uuid;
  if op->>'action'='upsert' then
- select cr.criteria into criteria from public.result_curriculum cr join public.instructor_classes ic on ic.id=rc.class_id where cr.version=op->>'curriculumVersion' and cr.skill_id=payload->>'skillId' and regexp_replace(lower(cr.level),'[^a-z0-9]','','g')=regexp_replace(lower(ic.level),'[^a-z0-9]','','g');
+ select cr.criteria into criteria from public.result_curriculum cr join public.instructor_classes ic on ic.id=rc.class_id where cr.version=op->>'curriculumVersion' and cr.skill_id=payload->>'skillId';
  if criteria is null or jsonb_typeof(payload->'results') is distinct from 'array' or jsonb_array_length(payload->'results')<>jsonb_array_length(criteria) or payload-array['skillId','createdAt','submittedAt','results','timed']<>'{}'::jsonb then raise exception 'Invalid curriculum'; end if;
  if payload->>'createdAt' is null or payload->>'submittedAt' is null or payload->>'createdAt' !~ '^\d{4}-\d{2}-\d{2}T' or payload->>'submittedAt' !~ '^\d{4}-\d{2}-\d{2}T' or (payload->>'createdAt')::timestamptz>(payload->>'submittedAt')::timestamptz then raise exception 'Invalid assessment times'; end if;
  if exists(select 1 from jsonb_array_elements_text(criteria) c where (select count(*) from jsonb_array_elements(payload->'results') r where r->>'subskillId'=c)<>1) then raise exception 'Incomplete criteria'; end if;
@@ -94,7 +97,7 @@ begin
  return success;
 end $$;
 create or replace function public.result_apply(p_session uuid,op jsonb,p_token text default null) returns jsonb language plpgsql security definer set search_path='' as $$
-declare g public.result_grants; prior public.result_operations; cur public.result_records; rev integer; rec jsonb; receipt jsonb; success boolean;
+declare g public.result_grants; prior public.result_operations; cur public.result_records; rev integer; rec jsonb; receipt jsonb; success boolean; original jsonb;
 begin
  -- Serialize against registry, revoke, resolve and other edits in this session.
  perform pg_advisory_xact_lock(hashtextextended(p_session::text,0));
@@ -106,13 +109,16 @@ begin
  -- Recheck authorization before even returning an old receipt.
  select * into prior from public.result_operations where session_id=p_session and operation_id=(op->>'operationId')::uuid;
  if found then
- if prior.operation<>op then return jsonb_build_object('operationId',op->>'operationId','status','rejected','revision',0,'reason','operation_id_reused'); end if;
+ if prior.operation_hash<>encode(sha256(convert_to(op::text,'UTF8')),'hex') then return jsonb_build_object('operationId',op->>'operationId','status','rejected','revision',0,'reason','operation_id_reused'); end if;
  return prior.receipt || case when prior.receipt->>'status'='accepted' then '{"status":"already_accepted"}'::jsonb else '{}'::jsonb end;
  end if;
  begin
  success:=public.result_validate(op,p_session);
  select * into cur from public.result_records where session_id=p_session and record_id=op->>'recordId' for update;
  if cur.record_id is not null and (cur.class_id<>(op->>'classId')::uuid or cur.enrollment_id<>(op->>'enrollmentId')::uuid or cur.record->>'kind'<>op->>'kind' or cur.record->>'lessonDate'<>op->>'lessonDate') then raise exception 'Record identity immutable'; end if;
+ select h.record into original from public.result_history h where h.session_id=p_session and h.record_id=op->>'recordId' and not (h.record->>'deleted')::boolean order by h.revision limit 1;
+ if op->>'action'='delete' and cur.record_id is null then raise exception 'Cannot delete unknown record'; end if;
+ if original is not null and op->>'kind'='attempt' and (original->>'curriculumVersion' is distinct from op->>'curriculumVersion' or (op->>'action'='upsert' and (original->'payload'->>'skillId' is distinct from op->'payload'->>'skillId' or original->'payload'->>'createdAt' is distinct from op->'payload'->>'createdAt'))) then raise exception 'Attempt identity immutable'; end if;
  rev:=coalesce(cur.revision,0);
  if rev<>(op->>'baseRevision')::integer then
  insert into public.result_conflicts(session_id,class_id,operation,current_record,success) values(p_session,(op->>'classId')::uuid,op,cur.record,success);
@@ -123,11 +129,16 @@ begin
  insert into public.result_history values(p_session,op->>'recordId',rev,rec);
  receipt:=jsonb_build_object('operationId',op->>'operationId','status','accepted','revision',rev);
  end if;
- insert into public.result_operations values(p_session,(op->>'operationId')::uuid,op,receipt);
+ 
  exception when others then
  -- Reject without retaining unvalidated input or exception details (which can contain PII).
  receipt:=jsonb_build_object('operationId',op->>'operationId','status','rejected','revision',0,'reason','invalid_operation');
  end;
+ -- Only validated operations retain payload. Rejected inputs retain a canonical
+ -- hash plus receipt, allowing immutable retries without persisting PII.
+ if coalesce(op->>'operationId','') ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' then
+ insert into public.result_operations values(p_session,(op->>'operationId')::uuid,encode(sha256(convert_to(op::text,'UTF8')),'hex'),case when receipt->>'status'='rejected' then null else op end,receipt);
+ end if;
  return receipt;
 end $$;
 create or replace function public.result_snapshot(p_session uuid default null,p_class uuid default null,p_token text default null) returns jsonb language plpgsql security definer set search_path='' as $$
@@ -139,11 +150,11 @@ begin
  else select array_agg(class_id) into scope from public.result_courses where session_id=p_session and public.result_class_access(p_session,class_id,auth.uid());
  if scope is null and not public.can_edit_session(p_session,auth.uid()) then raise insufficient_privilege; end if; end if;
  return jsonb_build_object('schemaVersion',1,'records',(select coalesce(jsonb_agg(record order by record_id),'[]'::jsonb) from public.result_records where session_id=p_session and class_id=any(scope) and (enrollments is null or enrollment_id=any(enrollments)) and (p_class is null or class_id=p_class)),
- 'conflicts',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'operation',operation,'current',current_record,'resolved',resolved) order by id),'[]'::jsonb) from public.result_conflicts where session_id=p_session and class_id=any(scope) and (enrollments is null or (operation->>'enrollmentId')::uuid=any(enrollments)) and (p_class is null or class_id=p_class)),
+ 'conflicts',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'operation',operation,'current',(select rr.record from public.result_records rr where rr.session_id=p_session and rr.record_id=result_conflicts.operation->>'recordId'),'resolved',resolved) order by id),'[]'::jsonb) from public.result_conflicts where session_id=p_session and class_id=any(scope) and (enrollments is null or (operation->>'enrollmentId')::uuid=any(enrollments)) and (p_class is null or class_id=p_class)),
  'history',(select coalesce(jsonb_agg(jsonb_build_object('recordId',record_id,'revision',revision,'record',record) order by record_id,revision),'[]'::jsonb) from public.result_history where session_id=p_session and (record->>'classId')::uuid=any(scope) and (enrollments is null or (record->>'enrollmentId')::uuid=any(enrollments)) and (p_class is null or (record->>'classId')::uuid=p_class)));
 end $$;
 create or replace function public.result_admin(p_session uuid,p_action text,p_body jsonb default '{}'::jsonb) returns jsonb language plpgsql security definer set search_path='' as $$
-declare c public.result_conflicts; rec jsonb; rev integer; success boolean;
+declare c public.result_conflicts; rec jsonb; rev integer; success boolean; original jsonb;
 begin
  perform pg_advisory_xact_lock(hashtextextended(p_session::text,0));
  if not public.can_edit_session(p_session,auth.uid()) then raise insufficient_privilege; end if;
@@ -154,11 +165,15 @@ begin
  select * into c from public.result_conflicts where session_id=p_session and id=(p_body->>'id')::uuid for update;
  if not found or p_body->>'choice' is null or p_body->>'choice' not in ('current','incoming') then raise exception 'Invalid conflict'; end if;
  if c.resolved then return '{"resolved":true}'::jsonb; end if;
+ select rr.revision into rev from public.result_records rr where rr.session_id=p_session and rr.record_id=c.operation->>'recordId' for update;
+ if coalesce(rev,0)<>coalesce((p_body->>'expectedRevision')::integer,(c.current_record->>'revision')::integer,0) then raise exception 'Conflict changed; refresh review'; end if;
  if p_body->>'choice'='incoming' then
  -- Revalidate current roster, lesson date, catalog and immutable record identity.
  success:=public.result_validate(c.operation,p_session);
  select revision,record into rev,rec from public.result_records where session_id=p_session and record_id=c.operation->>'recordId' for update;
  if rec is not null and (rec->>'classId'<>c.operation->>'classId' or rec->>'enrollmentId'<>c.operation->>'enrollmentId' or rec->>'kind'<>c.operation->>'kind' or rec->>'lessonDate'<>c.operation->>'lessonDate') then raise exception 'Record identity immutable'; end if;
+ select h.record into original from public.result_history h where h.session_id=p_session and h.record_id=c.operation->>'recordId' and not (h.record->>'deleted')::boolean order by h.revision limit 1;
+ if original is not null and c.operation->>'kind'='attempt' and (original->>'curriculumVersion' is distinct from c.operation->>'curriculumVersion' or (c.operation->>'action'='upsert' and (original->'payload'->>'skillId' is distinct from c.operation->'payload'->>'skillId' or original->'payload'->>'createdAt' is distinct from c.operation->'payload'->>'createdAt'))) then raise exception 'Attempt identity immutable'; end if;
  rev:=coalesce(rev,0)+1;
  rec:=c.operation||jsonb_build_object('revision',rev,'deleted',c.operation->>'action'='delete','success',success,'updatedAt',now());
  insert into public.result_records values(p_session,c.operation->>'recordId',c.class_id,(c.operation->>'enrollmentId')::uuid,rev,rec) on conflict(session_id,record_id) do update set revision=excluded.revision,record=excluded.record;
@@ -173,7 +188,7 @@ create or replace function public.result_mint(p_session uuid,p_creator uuid,p_bo
 declare classes uuid[]:=array[]::uuid[]; enrollments uuid[]:=array[]::uuid[]; c jsonb; e jsonb; g public.result_grants; instructor uuid:=(p_body->>'instructorId')::uuid;
 begin
  perform pg_advisory_xact_lock(hashtextextended(p_session::text,0));
- if not public.can_edit_session(p_session,p_creator) then raise insufficient_privilege; end if;
+ if not public.result_creator_access(p_session,p_creator) then raise insufficient_privilege; end if;
  if not exists(select 1 from public.result_datasets where session_id=p_session and dataset_id=p_body->>'datasetId') or coalesce(p_body->>'uploadHash','') !~ '^[a-f0-9]{64}$' or coalesce(p_body->>'readHash','') !~ '^[a-f0-9]{64}$' or p_body->>'uploadHash'=p_body->>'readHash' or jsonb_typeof(p_body->'courses') is distinct from 'array' or jsonb_array_length(p_body->'courses')=0 then raise exception 'Invalid binding'; end if;
  for c in select value from jsonb_array_elements(p_body->'courses') loop
  if not exists(select 1 from public.result_courses rc join public.instructor_classes ic on ic.id=rc.class_id join public.instructor_assignments a on a.session_id=ic.session_id and a.id=ic.assignment_id join public.session_instructors i on i.session_id=a.session_id and i.id=a.instructor_id where rc.session_id=p_session and rc.source_id=c->>'sourceId' and rc.class_id=(c->>'classId')::uuid and rc.instructor_id=instructor and a.instructor_id=instructor and ic.active and a.active and i.active) then raise exception 'Invalid class binding'; end if;
@@ -189,7 +204,7 @@ end $$;
 
 -- No direct client table access. Security-definer RPCs are the sole storage boundary.
 do $$ declare t text; begin foreach t in array array['result_datasets','result_courses','result_enrollments','result_aliases','result_grants','result_records','result_history','result_operations','result_conflicts','result_curriculum'] loop execute format('alter table public.%I enable row level security',t); execute format('revoke all on public.%I from public,anon,authenticated',t); end loop; end $$;
-revoke all on function public.result_check_grant(text,boolean),public.result_class_access(uuid,uuid,uuid),public.result_validate(jsonb,uuid),public.result_registry(uuid,jsonb,boolean),public.result_apply(uuid,jsonb,text),public.result_snapshot(uuid,uuid,text),public.result_admin(uuid,text,jsonb),public.result_mint(uuid,uuid,jsonb) from public,anon,authenticated,service_role;
+revoke all on function public.result_creator_access(uuid,uuid),public.result_check_grant(text,boolean),public.result_class_access(uuid,uuid,uuid),public.result_validate(jsonb,uuid),public.result_registry(uuid,jsonb,boolean),public.result_apply(uuid,jsonb,text),public.result_snapshot(uuid,uuid,text),public.result_admin(uuid,text,jsonb),public.result_mint(uuid,uuid,jsonb) from public,anon,authenticated,service_role;
 grant execute on function public.result_registry(uuid,jsonb,boolean),public.result_admin(uuid,text,jsonb) to authenticated;
 grant execute on function public.result_apply(uuid,jsonb,text),public.result_snapshot(uuid,uuid,text) to authenticated,service_role;
 grant execute on function public.result_mint(uuid,uuid,jsonb) to service_role;

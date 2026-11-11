@@ -27,12 +27,14 @@ var (
 )
 
 type InstructorPackage struct {
+	Identity   string `json:"-"`
 	Instructor string `json:"instructor"`
 	Package    []byte `json:"package"`
 }
 type Code struct {
-	Instructor string `json:"instructor"`
-	Code       string `json:"code"`
+	InstructorID string `json:"instructorId,omitempty"`
+	Instructor   string `json:"instructor"`
+	Code         string `json:"code"`
 }
 type Started struct {
 	ID        string    `json:"id"`
@@ -99,12 +101,20 @@ func (s *Service) Create(packages []InstructorPackage, client string) (Started, 
 		}
 	}
 	total := s.usedBytes()
+	labels := map[string]string{}
+	identities := map[string]string{}
 	for _, item := range packages {
 		instructor := strings.TrimSpace(item.Instructor)
 		if instructor == "" || len(instructor) > 200 || len(item.Package) == 0 || len(item.Package) > MaxPackageBytes {
 			return Started{}, errors.New("invalid instructor package")
 		}
-		if _, ok := r.packages[instructor]; ok {
+		key := instructor
+		if item.Identity != "" {
+			key = item.Identity
+		}
+		labels[key] = instructor
+		identities[key] = item.Identity
+		if _, ok := r.packages[key]; ok {
 			return Started{}, errors.New("duplicate instructor package")
 		}
 		total += len(item.Package)
@@ -126,14 +136,14 @@ func (s *Service) Create(packages []InstructorPackage, client string) (Started, 
 		if code == "" {
 			return Started{}, errors.New("could not allocate instructor codes")
 		}
-		r.packages[instructor] = append([]byte(nil), item.Package...)
-		r.codes[code] = instructor
+		r.packages[key] = append([]byte(nil), item.Package...)
+		r.codes[code] = key
 	}
 	s.rooms[r.id] = r
 	r.timer = time.AfterFunc(IdleLifetime, func() { s.expire(r.id) })
 	codes := make([]Code, 0, len(r.codes))
 	for code, instructor := range r.codes {
-		codes = append(codes, Code{Instructor: instructor, Code: code})
+		codes = append(codes, Code{Instructor: labels[instructor], InstructorID: identities[instructor], Code: code})
 	}
 	sort.Slice(codes, func(i, j int) bool { return codes[i].Instructor < codes[j].Instructor })
 	return Started{ID: r.id, HostToken: token, Codes: codes, ExpiresAt: r.expires}, nil
