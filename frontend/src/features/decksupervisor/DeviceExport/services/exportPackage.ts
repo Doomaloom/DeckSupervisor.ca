@@ -238,8 +238,8 @@ export function readRegistry(text: string, sessionId: string): ExportRegistry {
         required(person.sourceId, "Swimmer ID");
         required(person.courseId, "Course ID");
         required(person.name, "Swimmer name");
-        if (ids.has(person.sourceId)) {
-            throw new Error("Duplicate swimmer ID in backup.");
+        if (ids.has(person.sourceId) && Object.values(value.people).some(other => other.sourceId === person.sourceId && other.courseId !== person.courseId)) {
+            throw new Error("Duplicate swimmer ID across courses in backup.");
         }
         ids.add(person.sourceId);
     }
@@ -252,7 +252,7 @@ export function readRegistry(text: string, sessionId: string): ExportRegistry {
     }
     return value;
 }
-async function fingerprint(parts: string[]): Promise<string> {
+export async function fingerprint(parts: string[]): Promise<string> {
     const bytes = new TextEncoder().encode(JSON.stringify(parts));
     const digest = await crypto.subtle.digest("SHA-256", bytes);
     return Array.from(

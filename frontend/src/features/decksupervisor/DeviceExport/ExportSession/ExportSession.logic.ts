@@ -1,3 +1,4 @@
+import { recoverRegistry, registerResults, assertRegisteredRoster } from "../services/resultRegistry";
 import { loadExportPlans } from "../services/loadExportPlans";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { type SessionRecord } from "../../../../app/useCurrentSession";
@@ -50,9 +51,10 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
         setLoading(true);
         setError("");
         setNotice("");
-        void loadExportCourses(session, isGuest).then((result) => {
+        void loadExportCourses(session, isGuest).then(async (result) => {
             if (current !== generation.current) return;
-            const registry = loadRegistry(session.id);
+            const registry = isGuest ? loadRegistry(session.id) : await recoverRegistry(session.id, result);
+            if (current !== generation.current) return;
             setCourses(result);
             setDates(
                 Object.fromEntries(
@@ -102,12 +104,12 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
         setNotice("");
         const current = generation.current;
         try {
+            if (!isGuest) await assertRegisteredRoster(session.id, selected);
             const reviewed = (await loadExportPlans(session.id, selected, isGuest)).map((course) => ({
                 ...course,
                 lessonDates: parseDates(dateText(course)),
             }));
-            const registry = loadRegistry(session.id) ??
-                newRegistry(session.id);
+            const registry = isGuest ? (loadRegistry(session.id) ?? newRegistry(session.id)) : await recoverRegistry(session.id, courses);
             const result = await buildPackage(
                 session.id,
                 instructor,
@@ -145,9 +147,10 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
         setNotice("");
         const current = generation.current;
         try {
-            let registry = loadRegistry(session.id) ?? newRegistry(session.id);
+            let registry = isGuest ? (loadRegistry(session.id) ?? newRegistry(session.id)) : await recoverRegistry(session.id, courses);
             const packages: Array<{ instructor: string; package: unknown }> =
                 [];
+            if (!isGuest) await assertRegisteredRoster(session.id, courses);
             const plannedCourses = await loadExportPlans(session.id, courses, isGuest);
             for (const name of instructors) {
                 const reviewed = plannedCourses.filter((course) =>
@@ -171,8 +174,9 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
                     "The session or roster changed. Review the current classes before sharing.",
                 );
             }
+            if (!isGuest) await registerResults(session.id, plannedCourses, registry);
             saveRegistry(registry);
-            const started = await createDeviceShare(packages);
+            const started = await createDeviceShare(packages, isGuest ? undefined : session.id);
             if (!currentSession() || current !== generation.current) {
                 void closeDeviceShare(started.id, started.hostToken);
                 throw new Error(

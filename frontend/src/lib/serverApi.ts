@@ -957,10 +957,11 @@ export type DeviceShareStarted = {
 
 export function createDeviceShare(
     packages: Array<{ instructor: string; package: unknown }>,
+    sessionId?: string,
 ) {
     return request<DeviceShareStarted>("/api/device-shares", {
         method: "POST",
-        body: { packages },
+        body: { packages, ...(sessionId ? { sessionId } : {}) },
     });
 }
 
