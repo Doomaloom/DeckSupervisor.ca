@@ -16,7 +16,7 @@ create table if not exists public.result_curriculum(version text not null,level 
 create or replace function public.result_creator_access(s uuid,u uuid) returns boolean language sql stable security definer set search_path='' as $$ select exists(select 1 from public.sessions where id=s and created_by=u) $$;
 -- Private helpers are never callable by API roles.
 create or replace function public.result_class_access(s uuid,c uuid,u uuid) returns boolean language sql stable security definer set search_path='' as $$
-select exists(select 1 from public.instructor_classes ic where ic.session_id=s and ic.id=c and ic.active) and (public.can_edit_session(s,u) or exists(select 1 from public.instructor_classes ic join public.instructor_assignments a on a.session_id=ic.session_id and a.id=ic.assignment_id join public.session_instructors i on i.session_id=a.session_id and i.id=a.instructor_id where ic.id=c and ic.session_id=s and ic.active and a.active and i.active and a.account_id=u and i.account_id=u))
+select public.can_edit_session(s,u) or exists(select 1 from public.instructor_classes ic join public.instructor_assignments a on a.session_id=ic.session_id and a.id=ic.assignment_id join public.session_instructors i on i.session_id=a.session_id and i.id=a.instructor_id where ic.id=c and ic.session_id=s and ic.active and a.active and i.active and a.account_id=u and i.account_id=u)
 $$;
 create or replace function public.result_check_grant(token text,reading boolean) returns public.result_grants language plpgsql security definer set search_path='' as $$
 declare g public.result_grants;
@@ -34,7 +34,7 @@ begin
  if not public.can_edit_session(p_session,auth.uid()) then raise insufficient_privilege; end if;
  if p_reconcile then
  if p_body-array['courseId','swimmerId','enrollmentId','matchKey']<>'{}'::jsonb or not exists(select 1 from public.result_enrollments where session_id=p_session and course_id=p_body->>'courseId' and source_id=p_body->>'swimmerId' and enrollment_id=(p_body->>'enrollmentId')::uuid) then raise exception 'Invalid alias'; end if;
- insert into public.result_aliases values(p_session,(p_body->>'enrollmentId')::uuid,p_body->>'matchKey') on conflict do nothing;
+ insert into public.result_aliases values(p_session,(p_body->>'enrollmentId')::uuid,p_body->>'matchKey') on conflict(session_id,enrollment_id,match_key) do nothing;
  else
  if p_body-array['schemaVersion','sessionId','datasetId','courses']<>'{}'::jsonb or (p_body->>'sessionId')::uuid is distinct from p_session or coalesce(p_body->>'datasetId','') !~ '^decksupervisor:[a-fA-F0-9-]{36}$' or p_body->>'schemaVersion' is distinct from '1' or jsonb_typeof(p_body->'courses') is distinct from 'array' then raise exception 'Invalid registry'; end if;
  insert into public.result_datasets values(p_session,p_body->>'datasetId') on conflict do nothing;
@@ -54,7 +54,7 @@ begin
  if exists(select 1 from public.result_enrollments where session_id=p_session and course_id=c->>'sourceId' and source_id=e->>'sourceId' and enrollment_id<>(e->>'enrollmentId')::uuid) then raise exception 'Enrollment identity immutable'; end if;
  insert into public.result_enrollments values(p_session,c->>'sourceId',e->>'sourceId',(e->>'enrollmentId')::uuid,coalesce((e->>'active')::boolean,true)) on conflict(session_id,course_id,source_id) do update set active=excluded.active;
  if exists(select 1 from public.result_aliases where session_id=p_session and enrollment_id=(e->>'enrollmentId')::uuid) and not exists(select 1 from public.result_aliases where session_id=p_session and enrollment_id=(e->>'enrollmentId')::uuid and match_key=e->>'matchKey') then raise exception 'Explicit alias reconciliation required'; end if;
- insert into public.result_aliases values(p_session,(e->>'enrollmentId')::uuid,e->>'matchKey') on conflict do nothing;
+ insert into public.result_aliases values(p_session,(e->>'enrollmentId')::uuid,e->>'matchKey') on conflict(session_id,enrollment_id,match_key) do nothing;
  end loop; end loop; end if; end if;
  select dataset_id into ds from public.result_datasets where session_id=p_session;
  if not public.can_edit_session(p_session,auth.uid()) and not exists(select 1 from public.result_courses where session_id=p_session and public.result_class_access(p_session,class_id,auth.uid())) then raise insufficient_privilege; end if;
@@ -64,14 +64,14 @@ begin
 end $$;
 -- Returns only a derived boolean; malformed/full-text input never reaches stored records.
 create or replace function public.result_validate(op jsonb,p_session uuid) returns boolean language plpgsql security definer set search_path='' as $$
-declare rc public.result_courses; en public.result_enrollments; criteria jsonb; item jsonb; payload jsonb:=op->'payload'; success boolean:=false;
+declare rc public.result_courses; en public.result_enrollments; criteria jsonb; item jsonb; payload jsonb:=op->'payload'; success boolean:=false; limit_ms bigint;
 begin
  if jsonb_typeof(op) is distinct from 'object' or op-array['operationId','sessionId','datasetId','classId','enrollmentId','recordId','kind','action','baseRevision','lessonDate','curriculumVersion','payload']<>'{}'::jsonb or op->>'kind' is null or op->>'kind' not in ('attendance','attempt') or op->>'action' is null or op->>'action' not in ('upsert','delete') or (op->>'sessionId')::uuid is distinct from p_session or coalesce(op->>'baseRevision','') !~ '^\d{1,9}$' or op->>'recordId' is null or jsonb_typeof(payload) is distinct from 'object' then raise exception 'Invalid operation'; end if;
  perform (op->>'operationId')::uuid;
  if op->>'operationId' is null or op->>'lessonDate' is null or op->>'lessonDate' !~ '^\d{4}-\d{2}-\d{2}$' or (op->>'lessonDate')::date::text<>op->>'lessonDate' then raise exception 'Invalid identity'; end if;
  select * into rc from public.result_courses where session_id=p_session and class_id=(op->>'classId')::uuid;
  select * into en from public.result_enrollments where session_id=p_session and enrollment_id=(op->>'enrollmentId')::uuid and course_id=rc.source_id and (active or exists(select 1 from public.result_records rr where rr.session_id=p_session and rr.record_id=op->>'recordId' and rr.enrollment_id=result_enrollments.enrollment_id));
- if en.enrollment_id is null or not (rc.lesson_dates ? (op->>'lessonDate')) or not exists(select 1 from public.result_datasets where session_id=p_session and dataset_id=op->>'datasetId') then raise exception 'Invalid scope'; end if;
+ if en.enrollment_id is null or (not (rc.lesson_dates ? (op->>'lessonDate')) and not exists(select 1 from public.result_records rr where rr.session_id=p_session and rr.record_id=op->>'recordId' and rr.record->>'lessonDate'=op->>'lessonDate')) or not exists(select 1 from public.result_datasets where session_id=p_session and dataset_id=op->>'datasetId') then raise exception 'Invalid scope'; end if;
  if op->>'kind'='attendance' then
  if op->>'recordId'<>'attendance:'||(op->>'enrollmentId')||':'||(op->>'lessonDate') then raise exception 'Invalid attendance identity'; end if;
  if op->>'action'='upsert' and (payload->>'status' is null or payload->>'status' not in ('present','absent','unmarked') or payload-'status'<>'{}'::jsonb) then raise exception 'Invalid attendance'; end if;
@@ -87,10 +87,14 @@ begin
  for item in select value from jsonb_array_elements(payload->'results') loop
  if item->>'status' is null or item->>'status' not in ('successful','not_yet') or item-array['subskillId','status']<>'{}'::jsonb then raise exception 'Invalid criterion'; end if; end loop;
  success:=not exists(select 1 from jsonb_array_elements(payload->'results') r where r->>'status'<>'successful');
+ limit_ms:=case payload->>'skillId' when 'Splash7:10' then 180000 when 'Splash8:9' then 360000 when 'Splash9:11' then 540000 end;
+ if limit_ms is not null and not (payload ? 'timed') then raise exception 'Missing benchmark timing'; end if;
  if payload ? 'timed' then
+ if limit_ms is null then raise exception 'Skill is not timed'; end if;
  item:=payload->'timed';
  if jsonb_typeof(item) is distinct from 'object' or item-array['lapsRequired','lapsCompleted','elapsedMs']<>'{}'::jsonb or coalesce(item->>'lapsRequired','') !~ '^\d{1,6}$' or (item->>'lapsRequired')::integer<1 or coalesce(item->>'lapsCompleted','') !~ '^\d{1,6}$' or coalesce(item->>'elapsedMs','') !~ '^\d{1,12}$' then raise exception 'Invalid timing'; end if;
- success:=success and (item->>'lapsCompleted')::integer >= (item->>'lapsRequired')::integer;
+ if (item->>'lapsCompleted')::integer > (item->>'lapsRequired')::integer then raise exception 'Invalid completed laps'; end if;
+ success:=success and (item->>'lapsCompleted')::integer = (item->>'lapsRequired')::integer and (item->>'elapsedMs')::bigint<=limit_ms;
  end if;
  end if; end if;
  if op->>'action'='delete' and payload<>'{}'::jsonb then raise exception 'Invalid deletion'; end if;
@@ -106,6 +110,7 @@ begin
  g:=public.result_check_grant(p_token,false);
  if g.session_id<>p_session or not ((op->>'classId')::uuid=any(g.class_ids)) or not ((op->>'enrollmentId')::uuid=any(g.enrollment_ids)) then raise insufficient_privilege; end if;
  elsif not public.result_class_access(p_session,(op->>'classId')::uuid,auth.uid()) then raise insufficient_privilege; end if;
+ if not exists(select 1 from public.result_enrollments where session_id=p_session and enrollment_id=(op->>'enrollmentId')::uuid and active) and (p_token is not null or not public.can_edit_session(p_session,auth.uid())) then raise insufficient_privilege; end if;
  -- Recheck authorization before even returning an old receipt.
  select * into prior from public.result_operations where session_id=p_session and operation_id=(op->>'operationId')::uuid;
  if found then

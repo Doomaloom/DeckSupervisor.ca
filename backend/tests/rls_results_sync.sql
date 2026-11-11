@@ -63,4 +63,58 @@ alter table instructor_assignments enable trigger assignment_roster_guard;
 set role service_role;
 select pg_temp.denied($q$select result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(7,3),'upload-secret')$q$,'revocation checked on retry');
 reset role;
+
+-- A fingerprint cannot silently rebind to a different swimmer.
+insert into public.result_enrollments values('20000000-0000-0000-0000-000000000004','course-stable-id','second-source','90000000-0000-0000-0000-000000000002',true);
+set role authenticated;
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}',true);
+do $$ declare rejected boolean:=false; begin
+ begin perform result_registry('20000000-0000-0000-0000-000000000004',jsonb_build_object('courseId','course-stable-id','swimmerId','second-source','enrollmentId','90000000-0000-0000-0000-000000000002','matchKey',repeat('a',64)),true); exception when unique_violation then rejected:=true; end;
+ perform pg_temp.assert_true(rejected,'alias collision never silently accepted');
+end $$;
+reset role;
+-- Benchmark timing is validated independently of client-computed criterion success.
+create function pg_temp.timed_op(skill text,elapsed bigint,laps int default 4) returns jsonb language sql as $$
+ select pg_temp.result_op(20,0)||jsonb_build_object('recordId','a0000000-0000-0000-0000-000000000002','kind','attempt','payload',jsonb_build_object('skillId',skill,'createdAt','2026-10-05T09:00:00Z','submittedAt','2026-10-05T09:01:00Z','results',(select jsonb_agg(jsonb_build_object('subskillId',value,'status','successful')) from result_curriculum,jsonb_array_elements_text(criteria) where skill_id=skill and version='templates-b50c7f987e101b7e'),'timed',jsonb_build_object('lapsRequired',4,'lapsCompleted',laps,'elapsedMs',elapsed)))
+$$;
+select pg_temp.assert_true(result_validate(pg_temp.timed_op('Splash7:10',180000),'20000000-0000-0000-0000-000000000004'),'benchmark exact time limit succeeds');
+select pg_temp.assert_true(not result_validate(pg_temp.timed_op('Splash7:10',180001),'20000000-0000-0000-0000-000000000004'),'over-limit benchmark cannot succeed');
+select pg_temp.assert_true(not result_validate(pg_temp.timed_op('Splash8:9',360001),'20000000-0000-0000-0000-000000000004'),'second benchmark time enforced');
+select pg_temp.assert_true(not result_validate(pg_temp.timed_op('Splash9:11',540001),'20000000-0000-0000-0000-000000000004'),'third benchmark time enforced');
+select pg_temp.assert_true(not result_validate(pg_temp.timed_op('Splash7:10',100000,3),'20000000-0000-0000-0000-000000000004'),'incomplete laps cannot succeed');
+do $$ declare rejected boolean:=false; begin
+ begin perform result_validate(pg_temp.timed_op('Splash7:10',100000,5),'20000000-0000-0000-0000-000000000004'); exception when others then rejected:=true; end;
+ perform pg_temp.assert_true(rejected,'excess laps rejected');
+ rejected:=false;
+ begin perform result_validate(pg_temp.timed_op('LittleSplash1:1',100000),'20000000-0000-0000-0000-000000000004'); exception when others then rejected:=true; end;
+ perform pg_temp.assert_true(rejected,'nonbenchmark timing rejected');
+end $$;
+-- The accepted attendance is now revision 4. A third edit requires fresh conflict review.
+set role authenticated;
+select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000002","role":"authenticated"}',true);
+select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(8,0))->>'status'='pending_review','second stale edit pending');
+select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(9,4))->>'status'='accepted','third concurrent edit accepted');
+do $$ declare rejected boolean:=false; cid uuid; begin
+ select (value->>'id')::uuid into cid from jsonb_array_elements(result_snapshot('20000000-0000-0000-0000-000000000004')->'conflicts') where value->'operation'->>'operationId'='70000000-0000-0000-0000-000000000008';
+ begin perform result_admin('20000000-0000-0000-0000-000000000004','resolve',jsonb_build_object('id',cid,'choice','incoming','expectedRevision',4)); exception when others then rejected:=true; end;
+ perform pg_temp.assert_true(rejected,'stale reviewer cannot overwrite third edit');
+ perform result_admin('20000000-0000-0000-0000-000000000004','resolve',jsonb_build_object('id',cid,'choice','incoming','expectedRevision',5));
+end $$;
+reset role;
+update result_enrollments set active=false;
+set role authenticated;
+select pg_temp.assert_true(not (result_registry('20000000-0000-0000-0000-000000000004')->'courses'->0->'swimmers'->0->>'active')::boolean,'inactive enrollment remains inspectable');
+select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(10,6))->>'status'='accepted','historical existing record correctable');
+select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(11)||'{"kind":"attempt","recordId":"a0000000-0000-0000-0000-000000000003","payload":{"skillId":"LittleSplash1:1","createdAt":"2026-10-05T09:00:00Z","submittedAt":"2026-10-05T09:01:00Z","results":[{"subskillId":"LittleSplash1:1:1","status":"successful"},{"subskillId":"LittleSplash1:1:2","status":"successful"}]}}')->>'status'='rejected','inactive enrollment rejects new records');
+select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(12,1)||'{"kind":"attempt","recordId":"a0000000-0000-0000-0000-000000000001","payload":{"skillId":"LittleSplash1:1","createdAt":"2026-10-05T08:00:00Z","submittedAt":"2026-10-05T09:01:00Z","results":[{"subskillId":"LittleSplash1:1:1","status":"successful"},{"subskillId":"LittleSplash1:1:2","status":"successful"}]}}')->>'status'='rejected','attempt creation identity immutable');
+reset role;
+-- Owner privilege loss invalidates grants even if its source assignment stays active.
+update result_grants set revoked=false;
+alter table sessions disable trigger all;
+update sessions set created_by='00000000-0000-0000-0000-000000000003' where id='20000000-0000-0000-0000-000000000004';
+alter table sessions enable trigger all;
+set role service_role;
+select set_config('request.jwt.claims','{"role":"service_role"}',true);
+select pg_temp.denied($q$select result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(7,3),'upload-secret')$q$,'creator permission loss revokes old capability');
+reset role;
 rollback;
