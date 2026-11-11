@@ -9,10 +9,13 @@ import { installLocalStorage } from "../../../test/storage";
 import DeviceExportPage from "./DeviceExport.component";
 import { classes, session, students } from "./fixtures";
 import type { ExportCourse } from "./services/exportPackage";
-import { buildCourses } from "./services/exportPackage";
+import { buildCourses, newRegistry } from "./services/exportPackage";
 import { loadRegistry } from "./services/exportStorage";
 import { loadExportCourses } from "./services/loadExportCourses";
 const mocks = vi.hoisted(() => ({
+    isGuest: true,
+    recover: vi.fn(),
+    register: vi.fn(),
     current: vi.fn(),
     download: vi.fn(),
     createShare: vi.fn(),
@@ -25,7 +28,7 @@ vi.mock(
 );
 vi.mock(
     "../../../app/AuthContext",
-    () => ({ useAuth: () => ({ isGuest: true }) }),
+    () => ({ useAuth: () => ({ isGuest: mocks.isGuest }) }),
 );
 vi.mock("./services/loadExportCourses", () => ({ loadExportCourses: vi.fn() }));
 vi.mock(
@@ -38,9 +41,11 @@ vi.mock(
 vi.mock("../../../lib/serverApi", async (original) => ({
     ...await original<typeof import("../../../lib/serverApi")>(),
     createDeviceShare: mocks.createShare,
+    fetchDeviceLessonPlans: vi.fn().mockResolvedValue({ plans: [] }),
     heartbeatDeviceShare: mocks.heartbeatShare,
     closeDeviceShare: mocks.closeShare,
 }));
+vi.mock("./services/resultRegistry", () => ({ recoverRegistry: mocks.recover, registerResults: mocks.register, assertRegisteredRoster: vi.fn().mockResolvedValue(undefined) }));
 const show = () =>
     render(
         <MemoryRouter>
@@ -48,6 +53,9 @@ const show = () =>
         </MemoryRouter>,
     );
 beforeEach(() => {
+    mocks.isGuest = true;
+    mocks.recover.mockReset().mockResolvedValue(newRegistry(session.id));
+    mocks.register.mockReset().mockResolvedValue({});
     vi.stubGlobal("crypto", webcrypto);
     installLocalStorage();
     window.localStorage.clear();
@@ -216,4 +224,17 @@ it("starts temporary sharing without requiring every instructor to be reviewed",
     await waitFor(() =>
         expect(mocks.closeShare).toHaveBeenCalledWith("share-1", "host-token")
     );
+});
+
+it("binds authenticated shares only after registering canonical identities", async () => {
+    mocks.isGuest = false;
+    const user = userEvent.setup();
+    show();
+    const start = await screen.findByRole("button", {name: "Start Session and Create Codes"});
+    await waitFor(() => expect(start).toBeEnabled());
+    await user.click(start);
+    await waitFor(() => expect(mocks.createShare).toHaveBeenCalledTimes(1));
+    expect(mocks.register).toHaveBeenCalled();
+    expect(mocks.register.mock.invocationCallOrder[0]).toBeLessThan(mocks.createShare.mock.invocationCallOrder[0]);
+    expect(mocks.createShare.mock.calls[0][1]).toBe(session.id);
 });

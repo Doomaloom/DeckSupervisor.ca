@@ -1,3 +1,4 @@
+import curriculum from './curriculum.json';
 import {useEffect,useRef,useState} from 'react';
 import {Card,PageShell,ActionButton,Notice,Select,TextInput} from '../../general-components';
 import {useCurrentSession,type SessionRecord} from '../../app/useCurrentSession';
@@ -10,21 +11,21 @@ import {loadRegistry,saveRegistry} from '../decksupervisor/DeviceExport/services
 import {newRegistry} from '../decksupervisor/DeviceExport/services/exportPackage';
 import {recoverRegistry,courseSourceId} from '../decksupervisor/DeviceExport/services/resultRegistry';
 import {resolveLocalIdentities,bindLocalAlias,localNamesFromPackage,type LocalIdentity} from './identity';
-import {curriculumLevels,findCurriculumLevel} from '../instructor/LessonPlans/lessonSkills';
+import {findCurriculumLevel} from '../instructor/LessonPlans/lessonSkills';
 import {openAttendancePrintWindow} from '../../shared/attendance-print/openAttendancePrintWindow';
 import {COMPLETED_PRINT_CURRICULUM_VERSION} from '../../shared/attendance-print/completedAttendance';
 import type {AttendancePrintItem} from '../../shared/attendance-print/types';
 const errorMessage=(e:unknown)=>e instanceof Error?e.message:String(e);
-const skills=curriculumLevels.flatMap(l=>l.skills);
-const skillName=(id?:string)=>skills.find(s=>s.id===id)?.name??id??'Unknown skill';
-const criterionName=(id:string)=>id;
+const skillNames=curriculum.skills as Record<string,string>,criterionNames=curriculum.criteria as Record<string,string>;
+const skillName=(id?:string)=>id?(skillNames[id]??id):'Unknown skill';
+const criterionName=(id:string)=>criterionNames[id]??id;
 export function SupervisorResults(){
- const {session,loading}=useCurrentSession();const {isGuest}=useAuth();
- return <PageShell>{isGuest?<Notice>Guest packages are import-only. Sign in to review submitted results.</Notice>:loading?<p>Loading session…</p>:session?<ResultsView key={session.id} session={session} supervisor/>:<p>Select a session to view results.</p>}</PageShell>;
+ const {session,loading}=useCurrentSession();const {isGuest,user}=useAuth();
+ return <PageShell>{isGuest?<Notice>Guest packages are import-only. Sign in to review submitted results.</Notice>:loading?<p>Loading session…</p>:session?<ResultsView key={`${user?.id}:${session.id}`} session={session} supervisor/>:<p>Select a session to view results.</p>}</PageShell>;
 }
 export function InstructorResults(){
- const {session,sessionId,loading}=useInstructorSession();
- return <PageShell>{loading?<p>Loading session…</p>:session?<ResultsView key={sessionId} session={{...session,team_id:null,created_by:'',source_locations:[],instructors:[],session_start_time24:session.session_start_time24??null,session_end_time24:session.session_end_time24??null}}/>:<p>Select an instructor session to view attendance and results.</p>}</PageShell>;
+ const {session,sessionId,loading}=useInstructorSession();const {user}=useAuth();
+ return <PageShell>{loading?<p>Loading session…</p>:session?<ResultsView key={`${user?.id}:${sessionId}`} session={{...session,team_id:null,created_by:'',source_locations:[],instructors:[],session_start_time24:session.session_start_time24??null,session_end_time24:session.session_end_time24??null}}/>:<p>Select an instructor session to view attendance and results.</p>}</PageShell>;
 }
 function RecordValue({value}:{value:api.ResultOperation|null}){
  if(!value)return <p>No accepted record</p>;
@@ -102,6 +103,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
    </div>
    <ActionButton disabled={busy||!course} onClick={()=>void run(printCompleted)}>Print completed sheets</ActionButton>
    {course&&date&&students.filter(s=>!student||s.enrollmentId===student).map(s=><div key={s.enrollmentId} className="flex gap-3 items-center"><span>{nameFor(s.enrollmentId)}</span><Select aria-label={`Attendance for ${nameFor(s.enrollmentId)}`} disabled={busy} value={data?.records.find(r=>!r.deleted&&r.recordId===`attendance:${s.enrollmentId}:${date}`)?.payload.status??'unmarked'} onChange={e=>void run(()=>attendance(s.enrollmentId,e.target.value as 'present'|'absent'|'unmarked'))}><option value="unmarked">Unmarked</option><option value="present">Present</option><option value="absent">Absent</option></Select></div>)}
+   {!supervisor&&!!data?.conflicts.filter(c=>!c.resolved).length&&<Notice>Some submissions need supervisor review. Accepted results remain displayed until those conflicts are resolved.</Notice>}
    <h3 className="text-xl font-semibold">Submitted records and revision history</h3>
    {records.length===0&&<p>No submissions for these filters.</p>}
    {records.map(r=><article key={r.recordId} className="border border-secondary/20 rounded p-3"><p><strong>{nameFor(r.enrollmentId)}</strong> · {r.lessonDate} · revision {r.revision}{r.deleted?' · deleted':''}</p><RecordValue value={r}/>{r.kind==='attempt'&&!r.deleted&&<AttemptEditor record={r} busy={busy} onSave={payload=>void run(()=>correction(r,payload))}/>}<ActionButton disabled={busy||r.deleted} onClick={()=>void run(()=>correction(r,{},'delete'))}>Delete record with audit history</ActionButton><details><summary>Revision history</summary>{data?.history.filter(h=>h.recordId===r.recordId).map(h=><div key={h.revision}><p>Revision {h.revision} · {h.record.lessonDate}</p><RecordValue value={h.record}/></div>)}</details></article>)}

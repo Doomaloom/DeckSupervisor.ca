@@ -340,6 +340,7 @@ export async function buildPackage(
             if (person.name !== name || person.courseId !== sourceId) {
                 throw new Error("The ID backup does not match this roster.");
             }
+            if (swimmers.some(swimmer => swimmer.sourceId === person.sourceId)) throw new Error(`Two roster entries resolve to the same swimmer in ${course.code}. Reconcile the duplicate before exporting.`);
             swimmers.push({
                 sourceId: person.sourceId,
                 name,

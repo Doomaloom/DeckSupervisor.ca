@@ -278,6 +278,11 @@ function Layout({ children }: LayoutProps) {
             icon: <ArrowDownTrayIcon className="h-5 w-5" />,
         },
         {
+            to: "/results",
+            label: "Attendance and Results",
+            icon: <CalendarDaysIcon className="h-5 w-5" />,
+        },
+        {
             to: "/rosters",
             label: "Rosters",
             icon: <UsersIcon className="h-5 w-5" />,
@@ -329,6 +334,11 @@ function Layout({ children }: LayoutProps) {
             to: "/device-exports",
             label: "Device Exports",
             icon: <ArrowDownTrayIcon className="h-5 w-5" />,
+        },
+        {
+            to: "/results",
+            label: "Attendance and Results",
+            icon: <CalendarDaysIcon className="h-5 w-5" />,
         },
         {
             to: "/rosters",
@@ -736,6 +746,8 @@ function getPageTitle(pathname: string) {
             return "Requests";
         case "/manage-sessions":
             return "Manage Sessions";
+        case "/results":
+            return "Attendance and Results";
         case "/device-exports":
             return "Device Exports";
         case "/rosters":

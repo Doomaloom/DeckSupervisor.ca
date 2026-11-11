@@ -19,14 +19,15 @@ export async function assertRegisteredRoster(sessionId:string,courses:ExportCour
  const remote=await fetchResultRegistry(sessionId);if(!remote)return;
  for(const course of courses){const saved=remote.courses.find(c=>c.sourceId===courseSourceId(sessionId,course.code));if(!saved)continue;for(const student of course.students.filter(s=>!s.waitlist)){const key=await studentMatchKey(saved.sourceId,student);if(!saved.swimmers.some(s=>matchesKey(s,key)))throw new Error(`Review ${student.name} in Results: changed details, new students and transfers require explicit reconciliation.`);}}
 }
-export async function registerResults(sessionId:string,courses:ExportCourse[],registry:ExportRegistry){
+export async function registerResults(sessionId:string,courses:ExportCourse[],registry:ExportRegistry,replaceSnapshot=false){
  const previous=await fetchResultRegistry(sessionId),mapping=await fetchResultClasses(sessionId);
  const result:ResultRegistry={schemaVersion:1,sessionId,datasetId:registry.datasetId,courses:[]};
  for(const course of courses.filter(c=>c.instructor)){
  const sourceId=courseSourceId(sessionId,course.code),matches=mapping.classes.filter(c=>c.code===course.code);
  if(matches.length!==1)throw new Error(`Class ${course.code} needs one saved instructor assignment before sharing.`);
  const old=previous?.courses.find(c=>c.sourceId===sourceId),swimmers:ResultIdentity[]=[];
- for(const student of course.students.filter(s=>!s.waitlist)){const key=await studentMatchKey(sourceId,student),person=registry.people[key];if(!person)throw new Error(`Resolve ${student.name} before sharing.`);const prior=old?.swimmers.find(s=>s.sourceId===person.sourceId);if(old&&!prior)throw new Error(`Reconcile ${student.name} in Results before sharing.`);swimmers.push({sourceId:person.sourceId,enrollmentId:prior?.enrollmentId??crypto.randomUUID(),matchKey:key});}
+ for(const student of course.students.filter(s=>!s.waitlist)){const key=await studentMatchKey(sourceId,student),person=registry.people[key];if(!person)throw new Error(`Resolve ${student.name} before sharing.`);const prior=old?.swimmers.find(s=>s.sourceId===person.sourceId);if(old&&!prior)throw new Error(`Reconcile ${student.name} in Results before sharing.`);swimmers.push({sourceId:person.sourceId,enrollmentId:prior?.enrollmentId??crypto.randomUUID(),matchKey:prior?.matchKey??key});}
  result.courses.push({sourceId,classId:matches[0].id,instructorId:matches[0].instructorId,lessonDates:registry.dates?.[course.code]??course.lessonDates,swimmers});}
+ if(!replaceSnapshot)result.courses.push(...(previous?.courses??[]).filter(old=>!result.courses.some(next=>next.sourceId===old.sourceId)));
  await putResultRegistry(result);return result;
 }

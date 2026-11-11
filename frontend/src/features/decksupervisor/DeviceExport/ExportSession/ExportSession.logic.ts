@@ -121,13 +121,14 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
                     "The session or roster changed. Review the current classes before exporting.",
                 );
             }
+            if (!isGuest) await registerResults(session.id, reviewed, result.registry);
             saveRegistry(result.registry);
             downloadJSON(
                 result.package,
                 exportFilename(instructor, session.id),
             );
             setNotice(
-                `Downloaded ${result.package.courses.length} classes for ${instructor}. Save an ID backup before moving to another browser.`,
+                `Downloaded ${result.package.courses.length} classes for ${instructor}. ${isGuest ? "Save an ID backup before moving to another browser." : "Registered IDs will recover in another browser with the same roster."}`,
             );
         } catch (cause) {
             if (currentSession()) setError(message(cause));
@@ -174,7 +175,7 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
                     "The session or roster changed. Review the current classes before sharing.",
                 );
             }
-            if (!isGuest) await registerResults(session.id, plannedCourses, registry);
+            if (!isGuest) await registerResults(session.id, plannedCourses, registry, true);
             saveRegistry(registry);
             const started = await createDeviceShare(packages, isGuest ? undefined : session.id);
             if (!currentSession() || current !== generation.current) {
