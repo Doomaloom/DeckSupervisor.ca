@@ -1,0 +1,2874 @@
+{
+  "curriculumVersion": "templates-b50c7f987e101b7e",
+  "levels": {
+    "LittleSplash1": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Enter and Exit Shallow Water (Assisted)",
+        "skillIds": [
+          "LittleSplash1:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Jump into Chest-deep water (Assisted)",
+        "skillIds": [
+          "LittleSplash1:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Face in Water",
+        "skillIds": [
+          "LittleSplash1:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Blow Bubbles in Water",
+        "skillIds": [
+          "LittleSplash1:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5a. Float on Front Assisted (3 Seconds)",
+        "skillIds": [
+          "LittleSplash1:5a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "5b. Float on Back Assisted (3 Seconds)",
+        "skillIds": [
+          "LittleSplash1:5b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "6. Safe Movement in Shallow Water Wearing PFD",
+        "skillIds": [
+          "LittleSplash1:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "7a. Glide on Front (3 m) assisted",
+        "skillIds": [
+          "LittleSplash1:7a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "7b. Glide on Back (3 m ) assisted",
+        "skillIds": [
+          "LittleSplash1:7b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "8a. Water Smart Messages - within Arms' Reach",
+        "skillIds": [
+          "LittleSplash1:8a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "8b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "LittleSplash1:8b"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "LittleSplash2": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Enter and Exit Shallow Water Wearing PFD",
+        "skillIds": [
+          "LittleSplash2:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Jump into Chest-deep water",
+        "skillIds": [
+          "LittleSplash2:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Submerge",
+        "skillIds": [
+          "LittleSplash2:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Submerge and Exhale 3 times",
+        "skillIds": [
+          "LittleSplash2:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5a. Float on Front (3 Seconds each) Wearing PFD or other Buoyant Aid",
+        "skillIds": [
+          "LittleSplash2:5a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "5b. Float on Back (3 Seconds each) Wearing PFD or other Buoyant Aid",
+        "skillIds": [
+          "LittleSplash2:5b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "6. Roll Laterally Front to Back and Back to Front Wearing PFD",
+        "skillIds": [
+          "LittleSplash2:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "7a. Glide on Front (3 m each) Wearing PFD or with Other Buoyant Aid",
+        "skillIds": [
+          "LittleSplash2:7a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "7b. Glide on Back (3 m each) Wearing PFD or with Other Buoyant Aid",
+        "skillIds": [
+          "LittleSplash2:7b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "8. Flutter Kick on back 5 m with Buoyant Aid",
+        "skillIds": [
+          "LittleSplash2:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "9a. Water Smart Messages - within Arms' Reach",
+        "skillIds": [
+          "LittleSplash2:9a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "9b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "LittleSplash2:9b"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "LittleSplash3": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Jump Into Deep Water Wearing PFD, Return and Exit",
+        "skillIds": [
+          "LittleSplash3:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Sideways Entry Wearing PFD",
+        "skillIds": [
+          "LittleSplash3:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Hold Breath Underwater 3 seconds",
+        "skillIds": [
+          "LittleSplash3:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Submerge and Exhale 5 Times",
+        "skillIds": [
+          "LittleSplash3:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Recover Object from Bottom in Waist-Deep Water",
+        "skillIds": [
+          "LittleSplash3:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Back Float; Roll to Front; Swim 3 m",
+        "skillIds": [
+          "LittleSplash3:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7a. Float on Front (5 Seconds)",
+        "skillIds": [
+          "LittleSplash3:7a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "7b. Float on Back (5 Seconds)",
+        "skillIds": [
+          "LittleSplash3:7b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "8. Roll Laterally Front to Back and Back to Front",
+        "skillIds": [
+          "LittleSplash3:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "9a. Glide on Front (3 m)",
+        "skillIds": [
+          "LittleSplash3:9a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "9b. Glide on Back (3 m)",
+        "skillIds": [
+          "LittleSplash3:9b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "10. Flutter Kick on Back 5 m",
+        "skillIds": [
+          "LittleSplash3:10"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "11. Flutter Kick on Front 5 m",
+        "skillIds": [
+          "LittleSplash3:11"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "12a. Water Smart Messages - Within Arms' Reach",
+        "skillIds": [
+          "LittleSplash3:12a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "12b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "LittleSplash3:12b"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "LittleSplash4": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Jump Into Deep Water, Return and Exit",
+        "skillIds": [
+          "LittleSplash4:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Sideways Entry",
+        "skillIds": [
+          "LittleSplash4:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Tread Water 10 Seconds Wearing PFD",
+        "skillIds": [
+          "LittleSplash4:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Open Eyes Underwater",
+        "skillIds": [
+          "LittleSplash4:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Recover Object from Bottom in Chest-Deep Water",
+        "skillIds": [
+          "LittleSplash4:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Wearing a PFD, Sideways Entry Into Deep Water; Tread 15 seconds; Swim/Kick 5 m",
+        "skillIds": [
+          "LittleSplash4:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Front Float; Roll to Back; Swim 5 m",
+        "skillIds": [
+          "LittleSplash4:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8. Glide on side 3 m",
+        "skillIds": [
+          "LittleSplash4:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "9a. Flutter Kick; On Front 7 m",
+        "skillIds": [
+          "LittleSplash4:9a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "9b. Flutter Kick; On Back 7 m",
+        "skillIds": [
+          "LittleSplash4:9b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "9c. Flutter Kick; On Side 5 m",
+        "skillIds": [
+          "LittleSplash4:9c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "10. Front Crawl 5 m Wearing PFD",
+        "skillIds": [
+          "LittleSplash4:10"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "11a. Water Smart Messages - Within Arms' Reach",
+        "skillIds": [
+          "LittleSplash4:11a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "11b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "LittleSplash4:11b"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "LittleSplash5": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Forward Roll Entry Wearing PFD",
+        "skillIds": [
+          "LittleSplash5:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Tread Water 10 Seconds",
+        "skillIds": [
+          "LittleSplash5:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Submerge and Hold Breath 5 Seconds",
+        "skillIds": [
+          "LittleSplash5:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Recover Object from Bottom in Chest-deep Water",
+        "skillIds": [
+          "LittleSplash5:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Wearing a PFD, sideways entry into deep Water; Tread 20 Seconds; Swim/Kick 10m",
+        "skillIds": [
+          "LittleSplash5:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Whip Kick in vertical position (20 Seconds) with a PFD or Buoyant aid",
+        "skillIds": [
+          "LittleSplash5:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Front Crawl 5 m",
+        "skillIds": [
+          "LittleSplash5:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8. Back Crawl 5 m",
+        "skillIds": [
+          "LittleSplash5:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "9. Interval training: 4x5 m Flutter Kick on Back with 30 Second rests",
+        "skillIds": [
+          "LittleSplash5:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "10a. Water Smart Messages - Within Arms' Reach",
+        "skillIds": [
+          "LittleSplash5:10a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "10b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "LittleSplash5:10b"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "ParentandTot1": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Enter and Exit the Water Safely with Tot",
+        "skillIds": [
+          "ParentandTot1:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Readiness for Submersion",
+        "skillIds": [
+          "ParentandTot1:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Hold Tot on Front, Eye Contact",
+        "skillIds": [
+          "ParentandTot1:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Hold Tot on Back, Head and Back Support",
+        "skillIds": [
+          "ParentandTot1:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Front Float (Face Out) - Assisted",
+        "skillIds": [
+          "ParentandTot1:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Back Float (Assisted)",
+        "skillIds": [
+          "ParentandTot1:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Float Wearing PFD (Assisted)",
+        "skillIds": [
+          "ParentandTot1:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8. Arms: Splashing, Reaching, Paddling, On Front and Back",
+        "skillIds": [
+          "ParentandTot1:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "9. Legs: Tickling, Splashing, Kicking, on Front and Back",
+        "skillIds": [
+          "ParentandTot1:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "10a. Water Smart Messages - Within Arms' Reach",
+        "skillIds": [
+          "ParentandTot1:10a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "10b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "ParentandTot1:10b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "10c. Water Smart Messages - Swim to Survive",
+        "skillIds": [
+          "ParentandTot1:10c"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "ParentandTot2": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Entry from Sitting Position (Assisted)",
+        "skillIds": [
+          "ParentandTot2:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Exit the Water (Assisted)",
+        "skillIds": [
+          "ParentandTot2:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Blow Bubbles On and In Water",
+        "skillIds": [
+          "ParentandTot2:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Face Wet and in Water",
+        "skillIds": [
+          "ParentandTot2:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Attempt to Recover Object Below Surface",
+        "skillIds": [
+          "ParentandTot2:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Entry from Sitting Position Wearing PFD and Return (Assisted)",
+        "skillIds": [
+          "ParentandTot2:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Front Float (Face In) - Assisted",
+        "skillIds": [
+          "ParentandTot2:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8. Back Float (Assisted)",
+        "skillIds": [
+          "ParentandTot2:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "9a. Kicking on Front (Assisted)",
+        "skillIds": [
+          "ParentandTot2:9a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "9b. Kicking on Back (Assisted)",
+        "skillIds": [
+          "ParentandTot2:9b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "10. Surface Passes with Continuous Contact",
+        "skillIds": [
+          "ParentandTot2:10"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "11a. Water Smart Messages - Within Arms' Reach",
+        "skillIds": [
+          "ParentandTot2:11a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "11b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "ParentandTot2:11b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "11c. Water Smart Messages - Swim to Survive",
+        "skillIds": [
+          "ParentandTot2:11c"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "ParentandTot3": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Jump Entry (Assisted)",
+        "skillIds": [
+          "ParentandTot3:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Entry and Submerge from Sitting Position (Assisted)",
+        "skillIds": [
+          "ParentandTot3:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Exit the Water (Unassisted)",
+        "skillIds": [
+          "ParentandTot3:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Hold Breath Underwater (Assisted)",
+        "skillIds": [
+          "ParentandTot3:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Attempt to Open Eyes Underwater",
+        "skillIds": [
+          "ParentandTot3:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Attempt to Recover Object From Bottom",
+        "skillIds": [
+          "ParentandTot3:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Standing Jump Entry, return to Edge (Assisted)",
+        "skillIds": [
+          "ParentandTot3:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8. Jump Entry and Float Wearing PFD (Assisted)",
+        "skillIds": [
+          "ParentandTot3:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "9a. Front \"Starfish\" Floats (Assisted)",
+        "skillIds": [
+          "ParentandTot3:9a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "9b. Back \"Starfish\" Floats (Assisted)",
+        "skillIds": [
+          "ParentandTot3:9b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "10a. Front \"Pencil\" Floats (Assisted)",
+        "skillIds": [
+          "ParentandTot3:10a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "10b. Back \"Pencil\" Floats (Assisted)",
+        "skillIds": [
+          "ParentandTot3:10b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "11a. Kicking on Front (Assisted)",
+        "skillIds": [
+          "ParentandTot3:11a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "11b. Kicking on Back (Assisted)",
+        "skillIds": [
+          "ParentandTot3:11b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "12. Underwater Passes",
+        "skillIds": [
+          "ParentandTot3:12"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "13a. Water Smart Messages - Within Arms' Reach",
+        "skillIds": [
+          "ParentandTot3:13a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "13b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "ParentandTot3:13b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 19,
+        "heading": "13c. Water Smart Messages- Swim to Survive",
+        "skillIds": [
+          "ParentandTot3:13c"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "Splash1": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Enter and Exit Shallow Water",
+        "skillIds": [
+          "Splash1:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Jump into Chest-deep water",
+        "skillIds": [
+          "Splash1:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Tread water (30 sec) wearing PFD",
+        "skillIds": [
+          "Splash1:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Hold breath underwater 5 sec.",
+        "skillIds": [
+          "Splash1:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Submerge and exhale 5 times",
+        "skillIds": [
+          "Splash1:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6a. Float on front 5 sec.",
+        "skillIds": [
+          "Splash1:6a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "6b. Float on back 5 sec.",
+        "skillIds": [
+          "Splash1:6b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "7. Roll laterally front to back and back to front",
+        "skillIds": [
+          "Splash1:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "8a. Glide on front 3 m",
+        "skillIds": [
+          "Splash1:8a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "8b. Glide on back 3 m",
+        "skillIds": [
+          "Splash1:8b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "8c. Glide on side 3 m",
+        "skillIds": [
+          "Splash1:8c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "9a. Flutter kick on front 5 m",
+        "skillIds": [
+          "Splash1:9a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "9b. Flutter kick on back 5 m",
+        "skillIds": [
+          "Splash1:9b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "10a. Front crawl 5 m wearing PFD",
+        "skillIds": [
+          "Splash1:10-front-crawl-wearing-pfd-5-m"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "10b. Back crawl 5 m wearing PFD",
+        "skillIds": [
+          "Splash1:10-back-crawl-wearing-pfd-5-m"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "11a. Water Smart Messages: Swim with a Buddy",
+        "skillIds": [
+          "Splash1:11a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "11b. Water Smart Messages: Wear a Lifejacket",
+        "skillIds": [
+          "Splash1:11b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 19,
+        "heading": "11c. Water Smart Messages: Check the Ice",
+        "skillIds": [
+          "Splash1:11c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 20,
+        "heading": "11d. Water Smart Messages: Swim to Survive",
+        "skillIds": [
+          "Splash1:11d"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "Splash2A": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Jump into deep water wearing PFD",
+        "skillIds": [
+          "Splash2A:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Tread water 10 sec",
+        "skillIds": [
+          "Splash2A:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Open eyes underwater",
+        "skillIds": [
+          "Splash2A:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Recover object from bottom in chest-deep water",
+        "skillIds": [
+          "Splash2A:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Wearing PFD, jump into deep water, tread 20 sec. and swim/ kick 10 m",
+        "skillIds": [
+          "Splash2A:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6a. Flutter kick on front 7 m",
+        "skillIds": [
+          "Splash2A:6a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "6b. Flutter kick on back 7 m",
+        "skillIds": [
+          "Splash2A:6b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "6c. Flutter kick on side 7 m",
+        "skillIds": [
+          "Splash2A:6c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "7. Front kick 3 sec. to side kick 3 sec. to front kick 3 sec. – assisted",
+        "skillIds": [
+          "Splash2A:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "8a.Front crawl 5 m",
+        "skillIds": [
+          "Splash2A:8-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "8b.Back crawl 5 m",
+        "skillIds": [
+          "Splash2A:8-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "9.Interval training: 4 x 5 m utter kick with 20 sec. rests",
+        "skillIds": [
+          "Splash2A:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "10a.Water Smart Messages: Swim with a Buddy",
+        "skillIds": [
+          "Splash2A:10a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "10b.Water Smart Messages: Wear a Lifejacket",
+        "skillIds": [
+          "Splash2A:10b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "10c.Water Smart Messages: Check the Ice",
+        "skillIds": [
+          "Splash2A:10c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "10d.Water Smart Messages: Swim to Survive",
+        "skillIds": [
+          "Splash2A:10d"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "Splash2B": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Jump into deep water, return and exit",
+        "skillIds": [
+          "Splash2B:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2a. Sideways entry wearing PFD",
+        "skillIds": [
+          "Splash2B:2a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "2b. Forward roll entry wearing PFD",
+        "skillIds": [
+          "Splash2B:2b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "3. Tread water 30 sec",
+        "skillIds": [
+          "Splash2B:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "4. Recover object from bottom in water just over swimmer’s head",
+        "skillIds": [
+          "Splash2B:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "5. Wearing PFD, jump into deep water, tread 30 sec. and swim/ kick 15 m",
+        "skillIds": [
+          "Splash2B:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "6a. Flutter kick on Front 10 m",
+        "skillIds": [
+          "Splash2B:6a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "6b. Flutter kick on Back 10 m",
+        "skillIds": [
+          "Splash2B:6b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "6c. Flutter kick on side 10 m",
+        "skillIds": [
+          "Splash2B:6c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "7. Whip kick in vertical position 30 sec. with aid",
+        "skillIds": [
+          "Splash2B:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "8a. Front crawl 10 m",
+        "skillIds": [
+          "Splash2B:8-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "8b. Back crawl 10 m",
+        "skillIds": [
+          "Splash2B:8-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "8c. Alternating front kick to side kick 10m",
+        "skillIds": [
+          "Splash2B:8c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "9. Interval training: 4 x 10 m flutter kick with 20 sec. rests",
+        "skillIds": [
+          "Splash2B:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "10a. Water Smart Messages: Swim with a Buddy",
+        "skillIds": [
+          "Splash2B:10a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "10b. Water Smart Messages: Wear a Lifejacket",
+        "skillIds": [
+          "Splash2B:10b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "10c. Water Smart Messages: Check the Ice",
+        "skillIds": [
+          "Splash2B:10c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 19,
+        "heading": "10d. Water Smart Messages: Swim to Survive",
+        "skillIds": [
+          "Splash2B:10d"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "Splash3": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Kneeling Dive into Deep Water",
+        "skillIds": [
+          "Splash3:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Forward Roll Entry into Deep Water",
+        "skillIds": [
+          "Splash3:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Tread Water 30 Seconds",
+        "skillIds": [
+          "Splash3:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Handstand in Shallow Water",
+        "skillIds": [
+          "Splash3:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Front Somersault (in Water)",
+        "skillIds": [
+          "Splash3:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Jump into deep water, tread 30 sec., and swim/kick 25 m",
+        "skillIds": [
+          "Splash3:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Flutter Kick on Back 5 m, Reverse Direction and Flutter Kick on Front 5 m",
+        "skillIds": [
+          "Splash3:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8. Flutter Kick on Front 5 m, Reverse Direction and Flutter Kick on Back 5 m",
+        "skillIds": [
+          "Splash3:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "9. Whip Kick on Back 10 m",
+        "skillIds": [
+          "Splash3:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "10a. Front Crawl 15 m",
+        "skillIds": [
+          "Splash3:10-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "10b. Back Crawl 15 m",
+        "skillIds": [
+          "Splash3:10-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "11. Interval Training: 4x15 m Flutter Kick with 20 Second Rests",
+        "skillIds": [
+          "Splash3:11"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "12a. Water Smart Messages - Swim with a Buddy",
+        "skillIds": [
+          "Splash3:12a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "12b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "Splash3:12b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "12c. Water Smart Messages - Check the Ice",
+        "skillIds": [
+          "Splash3:12c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "12d. Water Smart Messages - Swim to Survive",
+        "skillIds": [
+          "Splash3:12d"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "Splash4": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Standing Dive into Deep Water",
+        "skillIds": [
+          "Splash4:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Tread Water 1 minute",
+        "skillIds": [
+          "Splash4:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Swim Underwater 5 m",
+        "skillIds": [
+          "Splash4:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Canadian Swim to Survive Standard: Roll Entry into Deep Water, Tread 1 minute and Swim 50 m",
+        "skillIds": [
+          "Splash4:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Whip Kick on Front 15 m",
+        "skillIds": [
+          "Splash4:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Breaststroke Arms Drill 15 m",
+        "skillIds": [
+          "Splash4:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7a. Front Crawl 25 m",
+        "skillIds": [
+          "Splash4:7-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "7b. Back Crawl 25 m",
+        "skillIds": [
+          "Splash4:7-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "8. Interval Training: 4x25 m Front or Back Crawl with 20 Second Rests",
+        "skillIds": [
+          "Splash4:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "9. Sprint Front Crawl 25 m",
+        "skillIds": [
+          "Splash4:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "10a. Water Smart Messages - Swim with a Buddy",
+        "skillIds": [
+          "Splash4:10a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "10b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "Splash4:10b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "10c. Water Smart Messages - Check the Ice",
+        "skillIds": [
+          "Splash4:10c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "10d. Water Smart Messages - Swim to Survive",
+        "skillIds": [
+          "Splash4:10d"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "Splash5": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Shallow Dive into Deep Water",
+        "skillIds": [
+          "Splash5:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Tuck Jump (Cannonball) into Deep Water",
+        "skillIds": [
+          "Splash5:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Jump Entry into Deep Water and Tread 2 minutes",
+        "skillIds": [
+          "Splash5:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Stationary Eggbeater Kick 30 Seconds",
+        "skillIds": [
+          "Splash5:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Back Somersault (in Water)",
+        "skillIds": [
+          "Splash5:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Roll Entry into Deep Water, Tread 90 Seconds and Swim 75 m",
+        "skillIds": [
+          "Splash5:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Breaststroke 25 m",
+        "skillIds": [
+          "Splash5:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8a. Front Crawl 50 m",
+        "skillIds": [
+          "Splash5:8-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "8b. Back Crawl 50 m",
+        "skillIds": [
+          "Splash5:8-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "9. Head-Up Front Crawl 10 m",
+        "skillIds": [
+          "Splash5:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "10. Interval Training: 4x50 m Front or Back Crawl with 30 sec. Rests",
+        "skillIds": [
+          "Splash5:10"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "11. Interval Training: 4x15 m Breaststroke with 30 second Rests",
+        "skillIds": [
+          "Splash5:11"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "12a. Sprint Front Crawl 25 m each",
+        "skillIds": [
+          "Splash5:12a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "12b. Sprint Back Crawl 25 m each",
+        "skillIds": [
+          "Splash5:12b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "13a. Water Smart Messages - Swim with a Buddy",
+        "skillIds": [
+          "Splash5:13a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "13b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "Splash5:13b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "13c. Water Smart Messages - Check the Ice",
+        "skillIds": [
+          "Splash5:13c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 19,
+        "heading": "13d. Water Smart Messages - Swim to Survive",
+        "skillIds": [
+          "Splash5:13d"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "Splash6": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Stride Entry into Deep Water",
+        "skillIds": [
+          "Splash6:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Compact Jump into Deep Water",
+        "skillIds": [
+          "Splash6:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Legs-Only Surface Support 45 Seconds",
+        "skillIds": [
+          "Splash6:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Swim Underwater 10 m to recover object",
+        "skillIds": [
+          "Splash6:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Eggbeater Kick on Back 15 m",
+        "skillIds": [
+          "Splash6:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Scissor Kick 15 m",
+        "skillIds": [
+          "Splash6:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Breaststroke 50 m",
+        "skillIds": [
+          "Splash6:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8a. Front Crawl 100 m",
+        "skillIds": [
+          "Splash6:8-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "8b. Back Crawl 100 m",
+        "skillIds": [
+          "Splash6:8-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "9. Head-up Swim 25 m",
+        "skillIds": [
+          "Splash6:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "10. Interval Training: 4x25 m Breaststroke with 30 sec. Rests",
+        "skillIds": [
+          "Splash6:10"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "11. Sprint Breaststroke 25 m",
+        "skillIds": [
+          "Splash6:11"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "12. Workout 300 m 15 sec. rests; 4 x 25m back crawl with 15 sec. rests;",
+        "skillIds": [
+          "Splash6:12"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "13a. Water Smart Messages - Swim with a Buddy",
+        "skillIds": [
+          "Splash6:13a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "13b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "Splash6:13b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "13c. Water Smart Messages - Check the ice",
+        "skillIds": [
+          "Splash6:13c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "13d. Water Smart Messages - Swim to Survive",
+        "skillIds": [
+          "Splash6:13d"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "Splash7": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Head-up Front Crawl or Breaststroke 25 m. or yd.",
+        "skillIds": [
+          "Splash7:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Scull in ready position - 30 Sec.",
+        "skillIds": [
+          "Splash7:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Carry object 2.3 Kg (5 lb) 15 m or yd.",
+        "skillIds": [
+          "Splash7:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4a. Foot-first Surface Dive",
+        "skillIds": [
+          "Splash7:4a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "4b. Head-first Surface Dive",
+        "skillIds": [
+          "Splash7:4b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "5. Lifesaving Kick - 25 m. or yd.",
+        "skillIds": [
+          "Splash7:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "6. Inflate Clothing /Use as a Buoyant Assist",
+        "skillIds": [
+          "Splash7:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "7. Obstacle Swim - 25 m. or yd.",
+        "skillIds": [
+          "Splash7:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "8a. Front Crawl - 50 m or yd",
+        "skillIds": [
+          "Splash7:8-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "8b. Back Crawl - 50 m or yd",
+        "skillIds": [
+          "Splash7:8-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "8c. Breaststroke - 50 m or yd",
+        "skillIds": [
+          "Splash7:8-breaststroke"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "9. Fitness training - 350 m. or yd. workout (3 times)",
+        "skillIds": [
+          "Splash7:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "10. Swim 100 m in 3 min (100 yd in 2:40 min) or better",
+        "skillIds": [
+          "Splash7:10"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "11. Assist conscious victim",
+        "skillIds": [
+          "Splash7:11"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "12. Contacting EMS",
+        "skillIds": [
+          "Splash7:12"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "13. Care for External Bleeding",
+        "skillIds": [
+          "Splash7:13"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "14. Look and See",
+        "skillIds": [
+          "Splash7:14"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 19,
+        "heading": "15a. Victim simulate: a Weak Swimmer and a Non-Swimmer",
+        "skillIds": [
+          "Splash7:15a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 20,
+        "heading": "15b. Victim recognition: a Weak Swimmer and Non-Swimmer",
+        "skillIds": [
+          "Splash7:15b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 21,
+        "heading": "16. Rescue drill: throw aid to target - 30 Sec.",
+        "skillIds": [
+          "Splash7:16"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "Splash8": [
+      {
+        "cellIndex": 2,
+        "heading": "1.Somersault sequence - forward & backward",
+        "skillIds": [
+          "Splash8:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2.Stride entry & swim head-up - 25 m. or yr. Ready position",
+        "skillIds": [
+          "Splash8:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3.Eggbeater kick on back - 25 m. or yd.",
+        "skillIds": [
+          "Splash8:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4.Support object (2.3 kg.) - 1 min.",
+        "skillIds": [
+          "Splash8:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5.Search and recover object",
+        "skillIds": [
+          "Splash8:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6.Demonstrate an Assisted Removal of a Conscious Victim",
+        "skillIds": [
+          "Splash8:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7a.Front Crawl - 75 m. or yd.",
+        "skillIds": [
+          "Splash8:7-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "7b.Back Crawl - 75 m. or yd.",
+        "skillIds": [
+          "Splash8:7-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "7c.Breaststroke - 75 m. or yd.",
+        "skillIds": [
+          "Splash8:7-breaststroke"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "8.Lifesaving medley - 100 M. or yd. (3 min)",
+        "skillIds": [
+          "Splash8:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "9.Swim 200 m in 6 min (200 yd in 5:20 min) or better",
+        "skillIds": [
+          "Splash8:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "10.Assess unconscious, breathing Victim",
+        "skillIds": [
+          "Splash8:10"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "11.Care for a Victim in Shock",
+        "skillIds": [
+          "Splash8:11"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "12a.Obstructed Airway - conscious victim",
+        "skillIds": [
+          "Splash8:12a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "12b.Obstructed Airway - Mild obstruction victim",
+        "skillIds": [
+          "Splash8:12b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "12c.Obstructed Airway - Severe obstruction victim",
+        "skillIds": [
+          "Splash8:12c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "13a.Victim Simulation: weak Swimmer, a non-Swimmer and unconscious",
+        "skillIds": [
+          "Splash8:13a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 19,
+        "heading": "13b.Victim Recognition: weak swimmer and non-swimmer, unconscious Victim",
+        "skillIds": [
+          "Splash8:13b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 20,
+        "heading": "13c.Victim Avoidance",
+        "skillIds": [
+          "Splash8:13c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 21,
+        "heading": "14.Rescue with buoyant aid - 20 m. or yd.",
+        "skillIds": [
+          "Splash8:14"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "Splash9": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Entries with aids - at least 2",
+        "skillIds": [
+          "Splash9:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Head-up swim (25 m. or yd.) & scull in ready position.",
+        "skillIds": [
+          "Splash9:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Defence Methods - Front, Side and Rear",
+        "skillIds": [
+          "Splash9:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Eggbeater Kick - travel, change direction & height",
+        "skillIds": [
+          "Splash9:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Carry object 4.5 kg (10 lb) Object - 25 m. or yd.",
+        "skillIds": [
+          "Splash9:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Remove unconscious victim",
+        "skillIds": [
+          "Splash9:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Search to recover object",
+        "skillIds": [
+          "Splash9:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8. Turn & support victim face-up - shallow water",
+        "skillIds": [
+          "Splash9:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "9. Front Crawl, 100 m or y.",
+        "skillIds": [
+          "Splash9:9-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "9. Back Crawl, 100 m or y.",
+        "skillIds": [
+          "Splash9:9-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "9. Breaststroke, 100 m or y.",
+        "skillIds": [
+          "Splash9:9-breaststroke"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "10. Fitness training - 600 m. or yd. workout (3 times)",
+        "skillIds": [
+          "Splash9:10"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "11. Swim 300 m in 9 min (300 yd in 8:00 min) or better",
+        "skillIds": [
+          "Splash9:11"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "12. Care of a Bone or Joint Injury",
+        "skillIds": [
+          "Splash9:12"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "13. Care for respiratory emergency - asthma or allergic reaction",
+        "skillIds": [
+          "Splash9:13"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "14. Locate and describe submerged object",
+        "skillIds": [
+          "Splash9:14"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "15. Rescue with towing aid - 20 m. or yd.",
+        "skillIds": [
+          "Splash9:15"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "SplashFitness": [
+      {
+        "cellIndex": 1,
+        "heading": "1. Pace Clocks and Timers",
+        "skillIds": [
+          "SplashFitness:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 2,
+        "heading": "2. Stretches for Swimmers",
+        "skillIds": [
+          "SplashFitness:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "3. Kicking Interval Training: 4 x 25 m Flutter Kick and/or Whip Kick with 15-20 sec Rests",
+        "skillIds": [
+          "SplashFitness:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "4. Swimming Interval Training: Swim Interval Sets Selected by the Swimmer",
+        "skillIds": [
+          "SplashFitness:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "5. Workout 300 m.",
+        "skillIds": [
+          "SplashFitness:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "6. Workout design: Design and Demonstrate 2 Sample Workouts",
+        "skillIds": [
+          "SplashFitness:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "7. Distance Swim: Endurance Challenge",
+        "skillIds": [
+          "SplashFitness:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "8. Sprint Swim: 25 m each for at Least 2 Strokes Chosen by the Swimmer",
+        "skillIds": [
+          "SplashFitness:8"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "SplashPrivate": [],
+    "TeenAdult1": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Enter and Exit Shallow Water",
+        "skillIds": [
+          "TeenAdult1:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Jump into Deep Water, Return and Exit",
+        "skillIds": [
+          "TeenAdult1:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Sideways Entry Wearing PFD",
+        "skillIds": [
+          "TeenAdult1:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Tread water (30 Sec) Wearing PFD",
+        "skillIds": [
+          "TeenAdult1:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Hold Breath Underwater 5-10 sec.",
+        "skillIds": [
+          "TeenAdult1:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Submerge and Exhale 5-10 Times",
+        "skillIds": [
+          "TeenAdult1:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Open Eyes Underwater",
+        "skillIds": [
+          "TeenAdult1:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8. Recover Object From Bottom in Chest-Deep Water",
+        "skillIds": [
+          "TeenAdult1:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "9. Wearing PFD, Jump into Deep Water, Tread 30 sec. and Swim/Kick on Back 5-10 m",
+        "skillIds": [
+          "TeenAdult1:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "10a. Float on Front",
+        "skillIds": [
+          "TeenAdult1:10a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "10b. Float on Back",
+        "skillIds": [
+          "TeenAdult1:10b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "11. Roll Laterally Front to Back and Back to Front",
+        "skillIds": [
+          "TeenAdult1:11"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "12a. Glide on Front(3-5 m.)",
+        "skillIds": [
+          "TeenAdult1:12-front-glide"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "12b. Glide on Back (3-5 m.)",
+        "skillIds": [
+          "TeenAdult1:12-back-glide"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "12c. Glide on Side (3-5 m.)",
+        "skillIds": [
+          "TeenAdult1:12-side-glide"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "13a. Flutter Kick on Front (10-15 m.)",
+        "skillIds": [
+          "TeenAdult1:13a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "13b. Flutter Kick on Back (10-15 m.)",
+        "skillIds": [
+          "TeenAdult1:13b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 19,
+        "heading": "13c. Flutter Kick on Side (10-15 m.)",
+        "skillIds": [
+          "TeenAdult1:13c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 20,
+        "heading": "14. Whip kick in Vertical Position (15-30 sec.) with Aid",
+        "skillIds": [
+          "TeenAdult1:14"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 21,
+        "heading": "15a. Front Crawl 10-15 m",
+        "skillIds": [
+          "TeenAdult1:15-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 22,
+        "heading": "15b. Back Crawl 10-15 m",
+        "skillIds": [
+          "TeenAdult1:15-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 23,
+        "heading": "16. Interval Training: 4 x 9-12 m Flutter Kick with 10-15 sec Rests",
+        "skillIds": [
+          "TeenAdult1:16"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 24,
+        "heading": "17. Water Smart Messages",
+        "skillIds": [
+          "TeenAdult1:17"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "TeenAdult2": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Standing Dive into Deep Water",
+        "skillIds": [
+          "TeenAdult2:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Forward Roll Entry into Deep Water With and Without PFD",
+        "skillIds": [
+          "TeenAdult2:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Tuck Jump (Cannonball) into Deep Water",
+        "skillIds": [
+          "TeenAdult2:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Tread Water 1-2 min",
+        "skillIds": [
+          "TeenAdult2:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Handstand in Shallow Water",
+        "skillIds": [
+          "TeenAdult2:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Front Somersault (in water)",
+        "skillIds": [
+          "TeenAdult2:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Swim Underwater 5-10 m",
+        "skillIds": [
+          "TeenAdult2:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8. Canadian Swim to Survive Standard: Roll Entry into Deep Water, Tread 1 min, and Swim 50 m",
+        "skillIds": [
+          "TeenAdult2:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "9. Flutter Kick on Back 5 m; Reverse Direction and Flutter Kick on Front 5 m",
+        "skillIds": [
+          "TeenAdult2:9"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "10. Flutter Kick on Front 5 m; Reverse Direction and Flutter Kick on back 5 m",
+        "skillIds": [
+          "TeenAdult2:10"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "11. Whip Kick on back 10-15 m",
+        "skillIds": [
+          "TeenAdult2:11"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "12. Whip Kick on Front 10-15 m",
+        "skillIds": [
+          "TeenAdult2:12"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "13. Breaststroke Arms Drill 10-15 m",
+        "skillIds": [
+          "TeenAdult2:13"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "14a. Front Crawl Crawl (25-50 m.)",
+        "skillIds": [
+          "TeenAdult2:14-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "14b. Back Crawl (25-50 m.)",
+        "skillIds": [
+          "TeenAdult2:14-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "15. Interval Training: 4 x 25 m Flutter Kick with 15-20 sec Rests",
+        "skillIds": [
+          "TeenAdult2:15"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "16. Interval Training: 4 x 25 m Front or Back Crawl with 15-20 sec Rests",
+        "skillIds": [
+          "TeenAdult2:16"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 19,
+        "heading": "17. Sprint Front Crawl 25 m",
+        "skillIds": [
+          "TeenAdult2:17"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 20,
+        "heading": "18a. Water Smart Messages - Swim with a Buddy",
+        "skillIds": [
+          "TeenAdult2:18a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 21,
+        "heading": "18b. Water Smart Messages - Wear a Lifejacket",
+        "skillIds": [
+          "TeenAdult2:18b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 22,
+        "heading": "18c. Water Smart Messages - Check the ice",
+        "skillIds": [
+          "TeenAdult2:18c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 23,
+        "heading": "18d. Water Smart Messages - Swim to Survive",
+        "skillIds": [
+          "TeenAdult2:18d"
+        ],
+        "aggregation": "all"
+      }
+    ],
+    "TeenAdult3": [
+      {
+        "cellIndex": 2,
+        "heading": "1. Shallow Dive into Deep Water",
+        "skillIds": [
+          "TeenAdult3:1"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 3,
+        "heading": "2. Stride Entry into Deep Water",
+        "skillIds": [
+          "TeenAdult3:2"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 4,
+        "heading": "3. Compact Jump into Deep Water",
+        "skillIds": [
+          "TeenAdult3:3"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 5,
+        "heading": "4. Legs-only Surface support 30-60 sec",
+        "skillIds": [
+          "TeenAdult3:4"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 6,
+        "heading": "5. Back Somersault (in water)",
+        "skillIds": [
+          "TeenAdult3:5"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 7,
+        "heading": "6. Swim Underwater 5-10 m to Recover Object",
+        "skillIds": [
+          "TeenAdult3:6"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 8,
+        "heading": "7. Eggbeater Kick on Back or Scissor Kick on Side 10-15 m",
+        "skillIds": [
+          "TeenAdult3:7"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 9,
+        "heading": "8. Breaststroke 25-50 m",
+        "skillIds": [
+          "TeenAdult3:8"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 10,
+        "heading": "9a. Front Crawl (50-100 m.)",
+        "skillIds": [
+          "TeenAdult3:9-front-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 11,
+        "heading": "9b. Back Crawl (50-100 m.)",
+        "skillIds": [
+          "TeenAdult3:9-back-crawl"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 12,
+        "heading": "10. Head-up Front Crawl 10-15 m",
+        "skillIds": [
+          "TeenAdult3:10"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 13,
+        "heading": "11. Interval Training: 4 x 50 m Front or Back Crawl or Breaststroke with 30 sec Rests",
+        "skillIds": [
+          "TeenAdult3:11"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 14,
+        "heading": "12. Sprint (25-50 m) Front Crawl, Back Crawl or Breaststroke",
+        "skillIds": [
+          "TeenAdult3:12"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 15,
+        "heading": "13. Workout 300 m: 50 m Warm-up (choice of Strokes); 4 x 25 m Front Crawl with 15 sec Rests; 4 x25 m Back Crawl with 15 sec Rests; 50 m Cool-down (Choice of Strokes)",
+        "skillIds": [
+          "TeenAdult3:13"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 16,
+        "heading": "14a. Water Smart Messages - Swim with a Buddy",
+        "skillIds": [
+          "TeenAdult3:14a"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 17,
+        "heading": "14b. Water Smart Messages Wear a Lifejacket",
+        "skillIds": [
+          "TeenAdult3:14b"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 18,
+        "heading": "14c. Water Smart Messages - Check the ice",
+        "skillIds": [
+          "TeenAdult3:14c"
+        ],
+        "aggregation": "all"
+      },
+      {
+        "cellIndex": 19,
+        "heading": "14d. Water Smart Messages - Within Arms",
+        "skillIds": [
+          "TeenAdult3:14d"
+        ],
+        "aggregation": "all"
+      }
+    ]
+  }
+}

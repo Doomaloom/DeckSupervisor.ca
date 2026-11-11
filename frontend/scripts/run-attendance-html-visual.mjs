@@ -65,6 +65,8 @@ function requestedFixtures() {
         return keys.map((key) => `attendance-${key}`);
     }
     if (value === "marking-all") return ["marking", "marking-long", "marking-private", "marking-empty", "marking-combined", "marking-names", "marking-overflow"];
+    if (value === 'completed-all') return [...keys.filter(key => key !== 'SplashPrivate').map(key => `completed-${key}`), 'completed-overflow'];
+    if (value.startsWith('completed-')) return [value];
     if (value.startsWith("marking")) return [value];
     if (["paired", "odd", "covers"].includes(value)) return [value];
     return [`attendance-${value.replace(/^attendance-/, "")}`];

@@ -5,6 +5,7 @@ import { curriculumLevels } from "../../features/instructor/LessonPlans/lessonSk
 import type { InstructorClass, InstructorSession, LessonPlan } from "../../lib/serverApi";
 import { prepareSchematicCoversForPrint } from "./schematicCover";
 import { buildAttendancePrintDocument } from "./buildAttendancePrintDocument";
+import completedMap from './completedPrintMap.json';
 import { LEGACY_ATTENDANCE_TEMPLATE_KEYS } from "./templateRegistry";
 import type { AttendancePrintItem, AttendancePrintRequest } from "./types";
 
@@ -47,6 +48,23 @@ function fixture(
     request: AttendancePrintRequest;
     options?: Parameters<typeof buildAttendancePrintDocument>[1];
 } {
+    if (name.startsWith('completed-')) {
+        const template = name === 'completed-overflow' ? 'Splash1' : name.slice('completed-'.length);
+        const roster = item(template).roster;
+        const columns = completedMap.levels[template as keyof typeof completedMap.levels];
+        if (!columns?.length) throw new Error('Completed fixture needs an assessed level.');
+        const lessonDates = ['2026-07-06', '2026-07-13', '2026-07-20'];
+        roster.completed = {curriculumVersion:completedMap.curriculumVersion, lessonDates};
+        roster.students = Array.from({length:name === 'completed-overflow' ? 17 : 4}, (_,index) => ({
+            name: index === 3 ? 'Alexandria-Marguerite Long Synthetic Name' : ['Avery Adams','Blair Brown','Casey Chen'][index % 3],
+            enrollmentId:`enrollment-${index}`,
+            results:{
+                attendance:{'2026-07-06':'present' as const,'2026-07-13':'absent' as const},
+                successfulAttempts:Object.fromEntries(columns.flatMap(column=>column.skillIds.map(id=>[id,index % 4]))),
+            },
+        }));
+        return {request:{template, roster, session:'Summer 2026',title:'Completed attendance'}};
+    }
     const template = name.replace(/^attendance-/, "");
     if (
         LEGACY_ATTENDANCE_TEMPLATE_KEYS.includes(

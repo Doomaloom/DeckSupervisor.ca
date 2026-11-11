@@ -6,13 +6,14 @@ import compatibilityCss from "./attendanceCompatibility.css?inline";
 import { buildSchematicCoverElement } from "./schematicCover";
 import { extractAttendanceTemplateSections, fillAttendanceRoster, } from "./templateDom";
 import { loadAttendanceTemplate } from "./templateRegistry";
+import { fillCompletedMarks, validateCompletedRoster } from './completedAttendance';
 import type { AttendancePrintItem, AttendancePrintOptions, AttendancePrintRequest, } from "./types";
 
 export function groupAttendancePrintItems(items: AttendancePrintItem[]) {
     const groups: AttendancePrintItem[][] = [];
     for (let index = 0; index < items.length;) {
         const next = items[index + 1];
-        if (next && next.roster.code === items[index].roster.code) {
+        if (next && !next.roster.completed && !items[index].roster.completed && next.roster.code === items[index].roster.code) {
             groups.push([items[index], next]);
             index += 2;
         } else {
@@ -66,7 +67,27 @@ export async function buildAttendancePrintDocument(
     request: AttendancePrintRequest,
     options: AttendancePrintOptions = {},
 ): Promise<Document> {
-    const items = requestItems(request);
+    const items = requestItems(request).flatMap(item => {
+        if (!item.roster.completed) return [item];
+        validateCompletedRoster(item.roster, item.template);
+        // Repeat the original front/back template for each student/date slice.
+        const pages: AttendancePrintItem[] = [];
+        const dates = [...item.roster.completed.lessonDates].sort();
+        for (let student = 0; student < Math.max(1, item.roster.students.length); student += 8) {
+            for (let date = 0; date < dates.length; date += 14) {
+                const lessonDates = dates.slice(date, date + 14);
+                pages.push({ ...item, roster: {
+                    ...item.roster,
+                    completed: { ...item.roster.completed, lessonDates },
+                    students: item.roster.students.slice(student, student + 8).map(person => ({
+                        ...person,
+                        results: { ...person.results!, attendance: Object.fromEntries(Object.entries(person.results!.attendance).filter(([day]) => lessonDates.includes(day))) },
+                    })),
+                } });
+            }
+        }
+        return pages;
+    });
     const document = window.document.implementation.createHTMLDocument(
         request.title?.trim() || "Attendance Sheets",
     );
@@ -142,6 +163,7 @@ export async function buildAttendancePrintDocument(
                         item.roster,
                         request.session?.trim() || "Session",
                     );
+                    fillCompletedMarks(fragment, item.roster, item.template);
                     if (paired) {
                         const slot = document.createElement("div");
                         slot.className = "combined-slot";

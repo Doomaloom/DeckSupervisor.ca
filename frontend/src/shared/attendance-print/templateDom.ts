@@ -134,10 +134,20 @@ export function fillAttendanceRoster(
         const days = root.ownerDocument.createElement("span");
         days.style.color = "rgb(98, 98, 98)";
         days.style.fontSize = "10.5px";
-        days.textContent = Array.from(
-            { length: 14 },
-            (_, day) => `[Day ${day + 1}]`,
-        ).join(" ");
+        if (roster.completed) {
+            days.style.fontFamily = 'Arial';
+            days.style.fontSize = '9px';
+            days.textContent = [...roster.completed.lessonDates].sort().map(date => {
+                const status = student.results?.attendance[date];
+                const mark = status === 'present' ? '✓' : status === 'absent' ? '×' : ' ';
+                return `[${date.slice(5).replace('-', '/')} ${mark}]`;
+            }).join(' ');
+        } else {
+            days.textContent = Array.from(
+                { length: 14 },
+                (_, day) => `[Day ${day + 1}]`,
+            ).join(" ");
+        }
         font.append(days);
         if (options.dailyAttendance !== false) nameCell.append(font);
         row.append(nameCell);

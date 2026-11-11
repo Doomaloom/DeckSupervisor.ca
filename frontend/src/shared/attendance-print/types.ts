@@ -1,4 +1,11 @@
-export type AttendancePrintStudent = { name: string };
+export type AttendancePrintStudent = {
+    name: string;
+    enrollmentId?: string;
+    results?: {
+        attendance: Record<string, "present" | "absent" | "unmarked">;
+        successfulAttempts: Record<string, number>;
+    };
+};
 
 export type AttendancePrintRoster = {
     code: string;
@@ -9,6 +16,11 @@ export type AttendancePrintRoster = {
     location: string;
     schedule: string;
     students: AttendancePrintStudent[];
+    completed?: {
+        curriculumVersion: string;
+        lessonDates: string[];
+        unresolvedConflicts?: boolean;
+    };
 };
 
 export type AttendancePrintItem = {
