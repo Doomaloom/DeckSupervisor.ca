@@ -1,3 +1,4 @@
+import {SupervisorResults} from "../features/results/Results.component";
 import ForgotPasswordPage from "../shared/pages/ForgotPassword/ForgotPassword.component";
 import ResetPasswordPage from "../shared/pages/ResetPassword/ResetPassword.component";
 import PrintPlans from "../features/instructor/PrintPlans/PrintPlans.component";
@@ -69,6 +70,7 @@ function AppRoutes() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/manage-sessions" element={<ManageSessionsPage />} />
             <Route path="/device-exports" element={<DeviceExportPage />} />
+            <Route path="/results" element={<SupervisorResults />} />
             <Route path="/print" element={<PrintPage />} />
             <Route path="/rosters" element={<RostersPage />} />
             <Route path="/schematic" element={<SchematicPage />} />

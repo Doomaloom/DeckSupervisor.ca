@@ -39,6 +39,7 @@ export function ExportSession(props: {
                 <h2 className="text-2xl font-semibold text-secondary">
                     Device Exports
                 </h2>
+            <Link className="underline" to="/results">Review attendance, results, identities and tablet access</Link>
             </header>
             {error && <Notice tone="danger" role="alert">{error}</Notice>}
             {notice && <Notice tone="success" role="status">{notice}</Notice>}
