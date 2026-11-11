@@ -118,3 +118,5 @@ alter table public.instructor_plans add constraint instructor_plan_curriculum_le
 commit;
 `,
 );
+// Keep the completed-sheet column contract aligned with the same catalog.
+await import('./generate-completed-print-map.mjs');

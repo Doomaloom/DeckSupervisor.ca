@@ -33,3 +33,28 @@ Without roster data, ten blank student rows are provided.
 
 Run `npm run test:attendance-html-visual -- marking-all` to generate the marking,
 continuation, private-curriculum, and empty-plan visual fixtures.
+
+## Completed session sheets
+
+The optional `roster.completed` input fills these same historical templates with
+saved dated attendance and zero to three earned checks. Administrative columns
+stay blank. Each student must have a resolved local name, stable enrollment ID,
+and accepted results; unresolved conflicts or a mismatched curriculum block
+completed printing. Private classes use their swimmers' assessed level sheets,
+since the private reference sheet has no individual skill columns.
+
+`completedPrintMap.json` pins each printed column to its curriculum skill ID,
+including repeated numbers and component columns. The generator checks the
+actual header text against the tablet catalog before writing the mapping.
+`npm run generate:lesson-skills` regenerates this mapping too. The tablet sibling
+checkout must be available; commit and review the generated outputs together.
+
+Completed sheets continue after eight students or fourteen lesson dates, repeat
+class metadata and names, and preserve the original reverse-side requirements.
+The current catalog's OR skills remain single assessment skills; separate
+required components are never added together to invent extra earned checks.
+
+Run `npm run test:run -- src/shared/attendance-print` and
+`npm run test:attendance-html-visual -- completed-all`. The latter produces
+synthetic PDFs for every assessable level and a large-class continuation fixture.
+Blank-sheet visual parity remains `npm run test:attendance-html-visual -- all`.
