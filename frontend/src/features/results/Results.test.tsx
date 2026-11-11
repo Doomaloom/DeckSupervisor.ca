@@ -22,6 +22,6 @@ it('shows named historical results after a transfer while excluding inactive enr
  mocks.results.mockResolvedValue({schemaVersion:1,records:[attempt],history:[{recordId:'attempt-one',revision:2,record:{...attempt,revision:2}}],conflicts:[]});
  const user=userEvent.setup();render(<ResultsView session={session} supervisor/>);
  await screen.findByText('Synthetic swimmer');await user.selectOptions(screen.getByLabelText('Class'),'class-one');await user.selectOptions(screen.getByLabelText('Lesson date'),'2026-09-04');
- expect(screen.getByText('Synthetic swimmer')).toBeVisible();expect(screen.queryByLabelText('Attendance for Synthetic swimmer')).not.toBeInTheDocument();
+ expect(screen.getByText('Synthetic swimmer',{selector:'strong'})).toBeVisible();expect(screen.queryByLabelText('Attendance for Synthetic swimmer')).not.toBeInTheDocument();
  await user.click(screen.getByText('Revision history'));expect(screen.getByText('Revision 2 · 2026-09-04')).toBeVisible();
 });
