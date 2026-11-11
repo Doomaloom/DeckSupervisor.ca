@@ -19,6 +19,6 @@ export const fetchResultClasses=(id:string)=>resultRequest<{classes:{id:string;c
 export const reconcileResultIdentity=(id:string,body:{courseId:string;swimmerId:string;enrollmentId:string;matchKey:string})=>resultRequest(`${base(id)}/result-identities/reconcile`,'POST',body);
 export const fetchResults=(id:string)=>resultRequest<Results>(`${base(id)}/results`);
 export const submitResult=(id:string,operation:ResultOperation)=>resultRequest<{receipts:{operationId:string;status:string;revision:number;reason?:string}[]}>(`${base(id)}/results`,'POST',{schemaVersion:1,operations:[operation]});
-export const resolveResultConflict=(id:string,conflict:string,choice:'current'|'incoming')=>resultRequest(`${base(id)}/results/conflicts/${encodeURIComponent(conflict)}/resolve`,'POST',{choice});
+export const resolveResultConflict=(id:string,conflict:string,choice:'current'|'incoming',expectedRevision:number)=>resultRequest(`${base(id)}/results/conflicts/${encodeURIComponent(conflict)}/resolve`,'POST',{choice,expectedRevision});
 export const fetchResultGrants=(id:string)=>resultRequest<{grants:ResultGrant[]}>(`${base(id)}/result-grants`);
 export const revokeResultGrant=(id:string,grant:string)=>resultRequest(`${base(id)}/result-grants/${encodeURIComponent(grant)}`,'DELETE');
