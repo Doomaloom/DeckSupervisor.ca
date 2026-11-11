@@ -44,11 +44,12 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
  const [error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(true),[rosterWarning,setRosterWarning]=useState('');
  const [choices,setChoices]=useState<Record<string,string>>({});const mounted=useRef(true),working=useRef(false);
  const displayKey=()=>getScopedKey(`result-display-package:${session.id}`);
+ function savedPackages():unknown[]{const text=localStorage.getItem(displayKey());if(!text)return [];const parsed:unknown=JSON.parse(text);return Array.isArray(parsed)?parsed:[parsed];}
  async function refresh(){
   const [r,d,g]=await Promise.all([api.fetchResultRegistry(session.id),api.fetchResults(session.id),supervisor?api.fetchResultGrants(session.id):Promise.resolve({grants:[]})]);
   let resolved:LocalIdentity[]=[],warning='';
   if(r){try{const courses=await loadExportCourses(session,!supervisor);if(supervisor)await recoverRegistry(session.id,courses);resolved=await resolveLocalIdentities(session.id,courses,r)}catch(e){warning=`Load this session’s class package below to resolve names. ${errorMessage(e)}`;}
-   try{const stored=localStorage.getItem(displayKey());if(stored){const imported=localNamesFromPackage(JSON.parse(stored),r);resolved=[...resolved,...imported.filter(i=>!resolved.some(j=>j.enrollmentId===i.enrollmentId))];}}catch{warning='Saved local names could not be matched. Load a current class package.';}}
+   try{const saved=savedPackages();for(const pkg of saved.reverse()){const imported=localNamesFromPackage(pkg,r);resolved=[...resolved,...imported.filter(i=>!resolved.some(j=>j.enrollmentId===i.enrollmentId))];}}catch{warning='Saved local names could not be matched. Load a current class package.';}}
   if(!mounted.current)return;setRegistry(r);setData(d);setGrants(g.grants);setIdentities(resolved);setRosterWarning(warning);
  }
  useEffect(()=>{mounted.current=true;void refresh().catch(e=>{if(mounted.current)setError(errorMessage(e))}).finally(()=>{if(mounted.current)setBusy(false)});return()=>{mounted.current=false}},[session.id]);
@@ -79,7 +80,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
   else{const prior=saved.swimmers.find(s=>s.enrollmentId===choice);if(!prior)throw new Error('The selected enrollment changed. Refresh and review again.');sourceId=prior.sourceId;await api.reconcileResultIdentity(session.id,{courseId:saved.sourceId,swimmerId:sourceId,enrollmentId:prior.enrollmentId,matchKey:identity.matchKey});}
   const local=loadRegistry(session.id)??{...newRegistry(session.id),datasetId:registry.datasetId};saveRegistry(bindLocalAlias(local,identity,sourceId));
  }
- async function importNames(file:File){if(!registry)return;if(file.size>10*1024*1024)throw new Error('Package exceeds 10 MB.');const text=await file.text(),names=localNamesFromPackage(JSON.parse(text),registry);localStorage.setItem(displayKey(),text);setIdentities(names);setRosterWarning('');}
+ async function importNames(file:File){if(!registry)return;if(file.size>10*1024*1024)throw new Error('Package exceeds 10 MB.');const text=await file.text(),pkg:unknown=JSON.parse(text),names=localNamesFromPackage(pkg,registry);const previous=savedPackages();localStorage.setItem(displayKey(),JSON.stringify([...previous,pkg]));setIdentities(names);setRosterWarning('');}
  async function printCompleted(){
   if(!course||!registry||!data)throw new Error('Choose a registered class.');
   if(data.conflicts.some(c=>!c.resolved&&c.operation.classId===classId))throw new Error('Resolve this class’s conflicts before printing.');
