@@ -131,21 +131,19 @@ try {
             path: resolve(output, `${name}-saved-plan.png`),
             fullPage: true,
         });
-        await page.getByLabel("Week", { exact: true }).selectOption(
-            "2026-10-12",
-        );
+        await page.getByLabel("Previous week", { exact: true }).click();
         await page.getByText(/No lesson plan saved for this week/).waitFor();
         assert.equal(
             await page.getByLabel("Skill 1", { exact: true }).count(),
             0,
         );
-        await page.getByLabel("Week", {exact:true}).selectOption("2026-10-05");
+        await page.getByLabel("Next week", {exact:true}).click();
         await page.getByRole("link", { name: "Print", exact: true }).click();
         await page.getByRole("button", {name:"Print PDF",exact:true}).waitFor();
         await page.locator('iframe[title$="preview"]').first().waitFor();
         await page.screenshot({path:resolve(output,`${name}-print.png`),fullPage:true});
         await page.getByRole("link", {name:"Attendance",exact:true}).click();
-        await page.getByRole("heading", {name:"Attendance",exact:true}).waitFor();
+        await page.getByRole("heading", {name:"Attendance and results",exact:true}).waitFor();
         await page.getByRole("button", { name: "Logout", exact: true }).click();
         await page.waitForURL(base + "/sign-in");
         await page.goto(base + "/instructor");

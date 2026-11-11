@@ -27,4 +27,18 @@ python3 "$qa_repo/backend/tests/instructor-qa/provider.py" "$qa_root" >"$qa_root
 "$qa_root/api" >"$qa_root/api.log" 2>&1 & qa_children+=("$!")
 (cd "$qa_repo/frontend"; exec node node_modules/vite/bin/vite.js --config vite.instructor-qa.config.ts) >"$qa_root/vite.log" 2>&1 & qa_children+=("$!")
 printf 'QA URL http://127.0.0.1:18082; database %s; synthetic password: Synthetic-test-only-42!\n' "$qa_root"
-read -r -p 'Press Enter to stop and remove all disposable fixtures. ' qa_end
+if (( $# )); then
+ python3 - <<'PY'
+import time, urllib.request
+for attempt in range(300):
+ try:
+  with urllib.request.urlopen('http://127.0.0.1:18082/sign-in', timeout=1) as response:
+   if response.status == 200: break
+ except OSError: pass
+ time.sleep(.1)
+else: raise SystemExit('Local QA frontend did not become ready')
+PY
+ "$@"
+else
+ read -r -p 'Press Enter to stop and remove all disposable fixtures. ' qa_end
+fi
