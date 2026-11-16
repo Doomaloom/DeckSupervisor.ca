@@ -18,15 +18,17 @@ async function login(page,email='supervisor@example.invalid'){
 }
 try{
  const context=await browser.newContext({viewport:{width:1440,height:1000}});
- await context.addInitScript(()=>{window.print=()=>{window.__printed=true;};});
+ // Keep the print popup open when Chromium's PDF capture fires afterprint.
+ await context.addInitScript(()=>{window.print=()=>{window.__printed=true;};window.close=()=>{};});
  const page=await context.newPage();await login(page);
  await page.getByRole('button',{name:'Select Existing Session',exact:true}).click();
  await page.getByRole('button').filter({hasText:'Synthetic Pool A'}).click();
  await page.goto(base+'/results');await page.getByRole('heading',{name:'Attendance and results',exact:true}).waitFor();
  const pkg={schemaVersion:1,kind:'rec-tablet-classes',datasetId:fixture.datasetId,instructor:'Alex',courses:[{sourceId:fixture.courseSourceId,name:'Synthetic QA Class',level:'Splash1',startTime:'09:00',location:'Pool',lessonDates:[fixture.lessonDate],swimmers:[{sourceId:fixture.swimmerSourceId,name:'Synthetic QA Swimmer'}]}]};
+ await page.waitForFunction(()=>{const input=document.querySelector('input[type=file]');return input&&!input.disabled;});
  await page.getByLabel('Load local class package to resolve names (stays in this browser)').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(pkg))});
- await page.getByLabel('Class',{exact:true}).selectOption(fixture.classId);
- await page.getByText('Synthetic QA Swimmer',{exact:true}).first().waitFor();
+ await page.locator('label').filter({hasText:/^Class/}).locator('select').selectOption(fixture.classId);
+ await page.locator('article strong').filter({hasText:/^Synthetic QA Swimmer$/}).first().waitFor();
  let data=await api(context);
  const attempt=()=>data.records.find(r=>r.recordId===fixture.attemptId);
  assert.equal(attempt().revision,2);assert.equal(attempt().success,false);
@@ -55,14 +57,19 @@ try{
  assert.equal(data.conflicts.filter(c=>!c.resolved).length,0);
  await page.getByText(/0 \/ 3 successful attempts/).waitFor();
  for(const [name,viewport] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]){
-  await page.setViewportSize(viewport);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.setViewportSize(viewport);
+  if(name==='mobile')await page.getByRole('button',{name:'Collapse sidebar',exact:true}).click();
+  await page.locator('#layout-main').evaluate(el=>{el.scrollTop=0;});
   await page.screenshot({path:resolve(out,`${name}-results.png`),fullPage:true});
+  const contentWidth=await page.locator('article').first().evaluate(el=>el.getBoundingClientRect().width);
+  assert.ok(contentWidth>=200,`Results need a readable content width; got ${contentWidth}px at ${viewport.width}px`);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  }
  await page.setViewportSize({width:1440,height:1000});
  const popupPromise=context.waitForEvent('page');await page.getByRole('button',{name:'Print completed sheets',exact:true}).click();
  const popup=await popupPromise;await popup.waitForFunction(()=>window.__printed===true);
  const rows=await popup.locator('[data-generated-attendance-row]').evaluateAll(rows=>rows.map(row=>({enrollmentId:row.dataset.enrollmentId,text:row.textContent,checks:[...row.querySelectorAll('[data-earned-checks]')].map(c=>Number(c.dataset.earnedChecks))})));
- assert.equal(rows.length,1);assert.equal(rows[0].enrollmentId,fixture.enrollmentId);assert.match(rows[0].text,/Synthetic QA Swimmer/);assert.match(rows[0].text,/09\/22 ×/);assert.ok(rows[0].checks.every(n=>n===0));
+ assert.equal(rows.length,1);assert.equal(rows[0].enrollmentId,fixture.enrollmentId);assert.match(rows[0].text,/Synthetic QA Swimmer/);assert.ok(rows[0].text.includes(`${fixture.lessonDate.slice(5).replace('-', '/')} ×`));assert.ok(rows[0].checks.every(n=>n===0));
  await popup.pdf({path:resolve(out,'completed-results.pdf'),preferCSSPageSize:true,printBackground:true});
  await writeFile(resolve(out,'completed-print.html'),await popup.content());
  const other=await browser.newContext();const otherPage=await other.newPage();await login(otherPage,'instructor-b@example.invalid');
