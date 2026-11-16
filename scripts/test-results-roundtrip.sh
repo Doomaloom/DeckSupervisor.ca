@@ -13,6 +13,9 @@ mkdir -p "$qa_evidence"
  GOCACHE=${GOCACHE:-/tmp/rec-tec-roundtrip-cache} \
  go test -tags ci ./src/workflows/swimming/repository -run '^TestLiveResultsRoundTrip$' -count=1 -v
 ) | tee "$qa_evidence/tablet-live.log"
+if declare -F qa_restart_results_backend >/dev/null; then
+ qa_restart_results_backend | tee "$qa_evidence/backend-restart.log"
+fi
 (
  cd "$qa_website/frontend"
  node scripts/test-results-browser.mjs "$qa_evidence/tablet-evidence.json" "$qa_evidence/results-browser"

@@ -62,7 +62,7 @@ class Handler(BaseHTTPRequestHandler):
     args=','.join(quote(json.dumps(body[k]) if isinstance(body[k],dict) else body[k]) for k in functions[name])
     return self.send(db('select to_jsonb('+ident(name)+'('+args+'))',user))
    table=u.path.rsplit('/',1)[1]
-   allowed={'profiles','teams','team_members','team_invites','sessions','schematics','instructor_assignments','instructor_classes','instructor_plans','session_shares'}
+   allowed={'profiles','teams','team_members','team_invites','sessions','schematics','instructor_assignments','instructor_classes','instructor_plans','session_shares','roster_level_edits','roster_student_level_edits'}
    if table not in allowed:raise ValueError('Unsupported test table '+table)
    filters=[]
    for k,v in q.items():

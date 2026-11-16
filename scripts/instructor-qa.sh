@@ -6,6 +6,7 @@ qa_root=$(mktemp -d /tmp/instructor-qa.XXXXXX)
 qa_children=()
 cleanup() {
  for qa_pid in "${qa_children[@]}"; do kill "$qa_pid" 2>/dev/null || true; done
+ if [[ -f "$qa_root/api.pid" ]]; then kill "$(cat "$qa_root/api.pid")" 2>/dev/null || true; fi
  pg_ctl -D "$qa_root/data" -m fast -w stop >/dev/null 2>&1 || true
  rm -rf -- "$qa_root"
  printf 'Disposable QA accounts, plans, metadata, database and processes removed.\n'
@@ -24,7 +25,28 @@ for qa_migration in supabase_lesson_plan_activities.sql supabase_lesson_plan_equ
 done
 (cd "$qa_repo/backend"; GOCACHE=/tmp/cob-go-cache go build -o "$qa_root/api" ./cmd/instructor-qa)
 python3 "$qa_repo/backend/tests/instructor-qa/provider.py" "$qa_root" >"$qa_root/provider.log" 2>&1 & qa_children+=("$!")
-"$qa_root/api" >"$qa_root/api.log" 2>&1 & qa_children+=("$!")
+"$qa_root/api" >"$qa_root/api.log" 2>&1 & echo "$!" >"$qa_root/api.pid"
+# Available only to this disposable fixture's child command. Restarting both
+# persistence and API between the tablet and browser phases proves durability.
+qa_restart_results_backend() {
+ kill "$(cat "$qa_root/api.pid")"
+ pg_ctl -D "$qa_root/data" -m fast -w restart >"$qa_root/restart.log" 2>&1
+ "$qa_root/api" >>"$qa_root/api.log" 2>&1 & echo "$!" >"$qa_root/api.pid"
+ python3 - <<'PY'
+import time, urllib.request, urllib.error
+for attempt in range(100):
+ try:
+  urllib.request.urlopen('http://127.0.0.1:18080/api/device-results', timeout=1)
+ except urllib.error.HTTPError as error:
+  if error.code == 401: break
+ except OSError: pass
+ time.sleep(.1)
+else: raise SystemExit('Restarted QA backend did not become ready')
+PY
+ printf 'Restarted disposable PostgreSQL and Go API; existing results retained for browser verification.\n'
+}
+export qa_root
+export -f qa_restart_results_backend
 (cd "$qa_repo/frontend"; exec node node_modules/vite/bin/vite.js --config vite.instructor-qa.config.ts) >"$qa_root/vite.log" 2>&1 & qa_children+=("$!")
 printf 'QA URL http://127.0.0.1:18082; database %s; synthetic password: Synthetic-test-only-42!\n' "$qa_root"
 if (( $# )); then
