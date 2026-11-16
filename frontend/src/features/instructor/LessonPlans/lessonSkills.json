@@ -2364,7 +2364,7 @@
                 "compactName": "Front crawl 5m",
                 "subskills": [
                     {
-                        "text": "Minimum distance completed",
+                        "text": "Minimum distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -2399,7 +2399,7 @@
                 "compactName": "Back crawl 5m",
                 "subskills": [
                     {
-                        "text": "Minimum distance completed",
+                        "text": "Minimum distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -2713,7 +2713,7 @@
                 "compactName": "Front crawl 10m",
                 "subskills": [
                     {
-                        "text": "Minimum distance completed",
+                        "text": "Minimum distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -2748,7 +2748,7 @@
                 "compactName": "Back crawl 10m",
                 "subskills": [
                     {
-                        "text": "Minimum distance completed",
+                        "text": "Minimum distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -3050,7 +3050,7 @@
                 "compactName": "Front crawl 15m",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -3085,7 +3085,7 @@
                 "compactName": "Back crawl 15m",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -3325,7 +3325,7 @@
                 "compactName": "Front crawl 25m",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -3360,7 +3360,7 @@
                 "compactName": "Back crawl 25m",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -3634,7 +3634,7 @@
                 "compactName": "Front crawl 50m",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -3681,7 +3681,7 @@
                 "compactName": "Back crawl 50m",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -4042,7 +4042,7 @@
                 "compactName": "Front crawl 100m",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -4089,7 +4089,7 @@
                 "compactName": "Back crawl 100m",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for both strokes)",
                         "group": []
                     },
                     {
@@ -4403,7 +4403,7 @@
                 "compactName": "Front crawl 50m/yd",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for each stroke)",
                         "group": []
                     },
                     {
@@ -4450,7 +4450,7 @@
                 "compactName": "Back crawl 50m/yd",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for each stroke)",
                         "group": []
                     },
                     {
@@ -4491,7 +4491,7 @@
                 "compactName": "Breaststroke 50m/yd",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for each stroke)",
                         "group": []
                     },
                     {
@@ -4852,7 +4852,7 @@
                 "compactName": "Front crawl 75m/yd",
                 "subskills": [
                     {
-                        "text": "Minimum distance completed",
+                        "text": "Minimum distance completed (for each stroke)",
                         "group": []
                     },
                     {
@@ -4899,7 +4899,7 @@
                 "compactName": "Back crawl 75m/yd",
                 "subskills": [
                     {
-                        "text": "Minimum distance completed",
+                        "text": "Minimum distance completed (for each stroke)",
                         "group": []
                     },
                     {
@@ -4940,7 +4940,7 @@
                 "compactName": "Breaststroke 75m/yd",
                 "subskills": [
                     {
-                        "text": "Minimum distance completed",
+                        "text": "Minimum distance completed (for each stroke)",
                         "group": []
                     },
                     {
@@ -5428,7 +5428,7 @@
                 "compactName": "Front crawl 100m/yd",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for each stroke)",
                         "group": []
                     },
                     {
@@ -5475,7 +5475,7 @@
                 "compactName": "Back crawl 100m/yd",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for each stroke)",
                         "group": []
                     },
                     {
@@ -5516,7 +5516,7 @@
                 "compactName": "Breaststroke 100m/yd",
                 "subskills": [
                     {
-                        "text": "Minimum Distance completed",
+                        "text": "Minimum Distance completed (for each stroke)",
                         "group": []
                     },
                     {
