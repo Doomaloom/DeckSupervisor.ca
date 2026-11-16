@@ -58,7 +58,10 @@ try{
  await page.getByText(/0 \/ 3 successful attempts/).waitFor();
  for(const [name,viewport] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]){
   await page.setViewportSize(viewport);
-  if(name==='mobile')await page.getByRole('button',{name:'Collapse sidebar',exact:true}).click();
+  if(name==='mobile'){
+   await page.getByRole('button',{name:'Collapse sidebar',exact:true}).click();
+   await page.waitForFunction(()=>document.querySelector('#layout-sidebar').getBoundingClientRect().width<=84);
+  }
   await page.locator('#layout-main').evaluate(el=>{el.scrollTop=0;});
   await page.screenshot({path:resolve(out,`${name}-results.png`),fullPage:true});
   const contentWidth=await page.locator('article').first().evaluate(el=>el.getBoundingClientRect().width);
