@@ -99,9 +99,53 @@ Verified so far on integrated changes:
 - Completed print mapping tests passed for all 23 template keys. Synthetic PDFs
   cover every assessable level, zero through three checks and continuation pages.
 
-The final real round-trip/browser/PDF evidence and tablet final gate results are
-recorded here after the final integrated run. Until those are recorded, this document
-does not certify the full feature as accepted.
+Checkpoint on November 16, 2026:
+
+- Final website frontend run: 97 files / 405 tests passed; production build passed.
+- Integrated tablet `make test`, `make vet`, and `make smoke` passed.
+- The full integrated `make race` run failed only `TestExtractionParity`. The
+  bundled catalog had omitted source qualifiers from 21 split-stroke criteria.
+  Commit `631cc5f` restores the 42 affected text/source-line fields without changing
+  IDs, version, scoring, or source hashes. The corrected curriculum package passes
+  `go test -race -tags ci ./src/workflows/swimming/curriculum`; a final full
+  `make race` rerun remains outstanding. Independent integration race suites and
+  the screenshot-enabled large/timed subset passed.
+- Actual tablet repository → real API → website browser → completed PDF passed,
+  including ordered lesson-plan code delivery, offline SQLite reopen, re-sharing
+  changed plans without losing assessments/drafts, upload, correction/deletion,
+  pull without echo, conflict review, and cross-account denial. The wrapper also
+  restarted PostgreSQL and the Go API before browser verification.
+- Completed PDF front/reverse pages and desktop/mobile screenshots were visually
+  inspected. Mobile spacing was repaired, and browser checks wait for the sidebar
+  transition before measuring readable content width.
+
+Implementation heads: website `450c445`, tablet `631cc5f`. The last combined demo
+ran on website `992539c` and tablet `631cc5f`; the subsequent website change only
+regenerated lesson-plan criterion labels from the restored source text. Its full
+frontend tests/build passed. Logs and generated evidence are under each repo's
+`tmp/results-sync/` directory and are local artifacts, not committed release assets.
+
+This is a handoff checkpoint, not final certification. See
+`results-sync-handoff.md` for remaining verification and completion-audit work.
+
+### Evidence map for final review
+
+| Requirement | Authoritative checks |
+| --- | --- |
+| Canonical identity, fresh-browser recovery, changed names/contact, duplicates, transfers and legacy IDs | `frontend/src/features/results/identity.test.ts`, `DeviceExport/services/resultRegistry.test.ts`, `backend/tests/rls_results_sync.sql` |
+| Assignment isolation, expired/revoked grants, wrong-session upload, upload-only capability | Backend results handler tests and `rls_results_sync.sql`; the SQL checks authorization before returning even a previously accepted receipt |
+| Atomic outbox, draft exclusion, correction/undo/reset, interrupted retry and idempotency | Tablet `repository/sync_test.go`, including injected outbox-write failure and interrupted HTTP receipt |
+| Offline logout, another instructor's login, same-name profile isolation and rename | Tablet `next/runtime/results_sync_test.go` |
+| Existing database migration, protected credential storage, manual exports, curriculum upgrade | Tablet `repository/sync_test.go` and runtime profile migration tests |
+| Accepted corrections/deletions, draft preservation and no synchronization echo | Tablet repository pull tests and `TestLiveResultsRoundTrip` against the real Go API |
+| Conflict review, concurrent third edit and historical corrections | SQL/RLS tests, frontend results component tests and `test-results-browser.mjs` |
+| Existing instructor, lesson-plan and activity workflows | `test-instructor-browser.mjs`, instructor-links/activity browser evidence, and tablet `lesson_plans_test.go` |
+| All template columns, required/alternative skills, 0–3 checks, continuation pages and print blocking | `completedAttendance.test.ts`, all-level visual fixtures, live browser-generated completed PDF |
+| Blank-template parity | Direct same-browser comparison of all 46 pages against baseline `55fb9df`; historical golden mismatch reproduced on that baseline |
+| Server restart durability | Round-trip wrapper restarts the disposable PostgreSQL and Go API after tablet upload, then browser acceptance checks the retained records and history |
+
+The restart hook is exported only by the disposable QA wrapper. It is not a service
+administration command and cannot restart the deployed application.
 
 Physical tablet touch/fullscreen/readability, enclosure/wet-touch/battery, projector,
 deployed revision checks, and a rehearsal/backup recording remain release gates.
