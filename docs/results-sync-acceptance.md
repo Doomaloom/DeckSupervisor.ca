@@ -125,22 +125,107 @@ regenerated lesson-plan criterion labels from the restored source text. Its full
 frontend tests/build passed. Logs and generated evidence are under each repo's
 `tmp/results-sync/` directory and are local artifacts, not committed release assets.
 
-This is a handoff checkpoint, not final certification. See
-`results-sync-handoff.md` for remaining verification and completion-audit work.
+The checkpoint above was a handoff, not certification. The completion audit
+below closed it.
+
+### Completion audit, November 16, 2026
+
+Final implementation heads: website `1e4650e`, tablet `4c532b1`. Nothing was
+pushed or deployed and no hosted migration was applied; `supabase_results_sync.sql`
+has only ever run on disposable databases.
+
+The outstanding full tablet `make race` was rerun first on tablet `631cc5f` and
+passed: 53 packages ok, no data-race report (`tmp/results-sync/race-final-rerun.log`).
+
+Every identity, synchronization, privacy, durability, permission and print
+requirement in the contract and handoff was then traced to a specific assertion
+by three scoped audits (backend, frontend, tablet). Requirements with no proving
+assertion received targeted tests. Four defects were found and fixed:
+
+- **Backend, security.** Reserved envelope keys on a submitted device-share were
+  stripped by exact spelling, while `encoding/json` decodes them case-insensitively.
+  A guest share carrying e.g. `_CREATORID` could be redeemed as a bound package and
+  have the server mint upload/read grants (still limited by `result_mint` requiring
+  real owner/session/class/enrollment IDs). Keys are now stripped case-insensitively
+  and only the exact three-key server envelope is treated as bound.
+- **Tablet.** A profile stored at the base database path was never retried by
+  another instructor's login, because the process already holds that lock. Its
+  queue is now retried and counted in the aggregate.
+- **Tablet.** Rejected operations were re-sent within one upload call and 200 of
+  them at the head of the queue starved everything behind. They still stay queued
+  unchanged, but are offered once per call and no longer hold back other records.
+- **Tablet.** A bound login routed to a legacy name-keyed profile containing a
+  class outside the new scope failed on every attempt. It now uses a separate
+  canonical database and leaves the legacy profile's data in place.
+
+A fourth tablet fix lets the Classes screen's aggregate sync notice survive a
+navigation refresh, which previously overwrote it (see limits below).
+
+Final gates, all on the committed trees:
+
+| Gate | Result |
+| --- | --- |
+| Website `npm run test:run` / `npm run build` | 101 files / 460 tests passed; build passed |
+| Backend `go test ./...` (and handlers under `-race`) | Passed |
+| `bash scripts/test-rls.sh` | Passed, 627 PASS notices (372 from `rls_results_sync.sql`), including re-apply over live data, injected-failure rollback and privilege self-heal. `regression.log` contains a marked block of expected errors from the injected failure |
+| Curriculum generators (frontend and SQL) against the tablet catalog | Empty diff |
+| Tablet `make test`, `make vet`, `make smoke` | Passed; tablet `tmp/results-sync/{test,vet,smoke}-audit.log` |
+| Tablet `make race` | 53 packages ok, no data race; tablet `tmp/results-sync/race-audit.log` |
+| `instructor-qa.sh` round trip (tablet repository, real API, restart, browser, PDF) | Passed; `tmp/results-sync/roundtrip-audit.log` |
+| `instructor-qa.sh` instructor browser suite | Passed; `tmp/results-sync/instructor-browser-audit.log` |
+
+Not rerun in the audit: the instructor-links and activity-library browser suites
+and the blank-template pixel comparison. No code they exercise changed.
+
+Known limits and open decisions. None blocks the synthetic workflow; each should
+be decided before release.
+
+- The redesigned tablet shell does not draw the navigation notice on teaching
+  screens. The in-shift text ("Results uploaded", "N results waiting to upload at
+  logout", review counts) is computed and tested in state, but an instructor sees
+  sync status only on the login screen after logout. Showing it is a UI decision.
+- `--ui=legacy` still reopens the last profile without a code and never uploads
+  or pulls. The default UI is `next`; legacy is outside this workflow.
+- A rejected operation stays queued indefinitely and keeps the "will retry"
+  notice; later edits to that record wait behind it. There is no quarantine.
+- Corrections for a removed or transferred enrollment are accepted only from the
+  session owner. A tablet's queued correction for such a swimmer is rejected on
+  every upload, including a retry of an operation the server already accepted.
+- The API maps every non-401 upstream failure to 403, and upload failures to
+  `rejected` receipts, so a database outage looks the same as a refusal. The tablet
+  has no distinct handling or message for a revoked or expired grant; the queue is
+  retained and drains after a renewed code.
+- One pulled record with an unknown enrollment, lesson date, or a curriculum
+  version other than the local course's aborts the whole refresh on every login
+  ("Website refresh unavailable; local work preserved"). Local data is unaffected.
+  A device first installed after a catalog bump can reach this.
+- Curriculum is validated by version and skill, not bound to the class level.
+- Tablet upload-token protection is file mode 0600 on SQLite, not encryption.
+- Tablet wire-format conformance against the real server is proven by the opt-in
+  live round trip; `make test` has a raw-body key-set and privacy test only.
+- After a stale-revision conflict rejection the website shows the error but the
+  reviewer must press "Refresh submissions" before retrying. Continuation sheets
+  restart row numbering at 1. A class with no accepted records cannot print a
+  completed sheet. Every production print column is single-skill, so
+  required-minimum/alternative-maximum aggregation is exercised by unit tests only.
+- The live round trip is not a physical-tablet or native-touch rehearsal.
+
+With those limits stated, the implementation is complete against the approved
+objective. Release gates at the end of this document remain open.
 
 ### Evidence map for final review
 
 | Requirement | Authoritative checks |
 | --- | --- |
-| Canonical identity, fresh-browser recovery, changed names/contact, duplicates, transfers and legacy IDs | `frontend/src/features/results/identity.test.ts`, `DeviceExport/services/resultRegistry.test.ts`, `backend/tests/rls_results_sync.sql` |
-| Assignment isolation, expired/revoked grants, wrong-session upload, upload-only capability | Backend results handler tests and `rls_results_sync.sql`; the SQL checks authorization before returning even a previously accepted receipt |
-| Atomic outbox, draft exclusion, correction/undo/reset, interrupted retry and idempotency | Tablet `repository/sync_test.go`, including injected outbox-write failure and interrupted HTTP receipt |
-| Offline logout, another instructor's login, same-name profile isolation and rename | Tablet `next/runtime/results_sync_test.go` |
+| Canonical identity, fresh-browser recovery, changed names/contact, duplicates, transfers and legacy IDs | `frontend/src/features/results/identity.test.ts`, `Results.audit.test.tsx`, `DeviceExport/services/resultRegistry.test.ts` and `resultRegistry.audit.test.ts`, `backend/tests/rls_results_sync.sql` |
+| Assignment isolation, expired/revoked grants, wrong-session upload, upload-only capability, forged guest envelopes | Backend results handler tests (`results_sync_test.go`, `results_sync_audit_test.go`) and `rls_results_sync.sql`; the SQL checks authorization before returning even a previously accepted receipt |
+| Atomic outbox, draft exclusion, correction/undo/reset, interrupted retry and idempotency | Tablet `repository/sync_test.go` and `sync_audit_test.go`, including injected outbox-write failure, interrupted HTTP receipt, rejected receipts, batch cap and wire-format/privacy |
+| Offline logout, another instructor's login, same-name profile isolation and rename | Tablet `next/runtime/results_sync_test.go` and `results_sync_audit_test.go` |
 | Existing database migration, protected credential storage, manual exports, curriculum upgrade | Tablet `repository/sync_test.go` and runtime profile migration tests |
 | Accepted corrections/deletions, draft preservation and no synchronization echo | Tablet repository pull tests and `TestLiveResultsRoundTrip` against the real Go API |
 | Conflict review, concurrent third edit and historical corrections | SQL/RLS tests, frontend results component tests and `test-results-browser.mjs` |
 | Existing instructor, lesson-plan and activity workflows | `test-instructor-browser.mjs`, instructor-links/activity browser evidence, and tablet `lesson_plans_test.go` |
-| All template columns, required/alternative skills, 0–3 checks, continuation pages and print blocking | `completedAttendance.test.ts`, all-level visual fixtures, live browser-generated completed PDF |
+| All template columns, required/alternative skills, 0–3 checks, continuation pages and print blocking | `completedAttendance.test.ts`, `completedAttendance.audit.test.ts`, all-level visual fixtures, live browser-generated completed PDF |
 | Blank-template parity | Direct same-browser comparison of all 46 pages against baseline `55fb9df`; historical golden mismatch reproduced on that baseline |
 | Server restart durability | Round-trip wrapper restarts the disposable PostgreSQL and Go API after tablet upload, then browser acceptance checks the retained records and history |
 

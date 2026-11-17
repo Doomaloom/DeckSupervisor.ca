@@ -5,6 +5,13 @@ hand remaining work to another agent orchestrator. The full implementation goal
 has **not** been declared complete. Do not deploy or apply hosted migrations as
 part of resuming local verification.
 
+> **Closed November 16, 2026.** Outstanding items 1–3 below are done: the full
+> tablet `make race` passed, the completion audit ran, and the acceptance record
+> carries the final commits (website `1e4650e`, tablet `4c532b1`), gates, fixes and
+> limits. Subagents were Claude agents, not `gpt-6.1-sol`, which the resuming
+> orchestrator could not start. Item 4, the release-only gates, remains open. The
+> rest of this document is kept as written at handoff.
+
 ## Start here
 
 1. Read this document, `results-sync-contract.md`, and `results-sync-acceptance.md`.
