@@ -131,8 +131,8 @@ below closed it.
 ### Completion audit, November 16, 2026
 
 Final implementation heads: website `1e4650e`, tablet `4c532b1`. Nothing was
-pushed or deployed and no hosted migration was applied; `supabase_results_sync.sql`
-has only ever run on disposable databases.
+pushed or deployed. At the time of the audit `supabase_results_sync.sql` had only
+run on disposable databases; see the hosted migration note below.
 
 The outstanding full tablet `make race` was rerun first on tablet `631cc5f` and
 passed: 53 packages ok, no data-race report (`tmp/results-sync/race-final-rerun.log`).
@@ -212,6 +212,25 @@ be decided before release.
 
 With those limits stated, the implementation is complete against the approved
 objective. Release gates at the end of this document remain open.
+
+### Hosted migration, November 16, 2026
+
+At the owner's instruction, and without a prior backup by their choice,
+`backend/supabase_results_sync.sql` was applied to the hosted Supabase project
+(Decksupervisor.ca). The prerequisite instructor, lesson-plan, session-instructor
+and equipment objects were already present, so nothing else was applied.
+
+It went in as two recorded migrations: `results_sync` (tables, functions, RLS
+lockdown and grants, one transaction) and `results_sync_curriculum` (the 353
+frozen curriculum rows, written as one generated insert equivalent to the file's
+individual inserts). Afterwards the hosted objects were fingerprinted against a
+fresh local database built from the committed file: all nine function bodies,
+their security settings and execute privileges, all ten tables' columns,
+constraints, RLS state and client privileges, and the curriculum contents match
+exactly. No existing table, function, policy or row was changed.
+
+The backend, frontend and tablet builds have not been deployed. The deployed API
+still needs `SUPABASE_SERVICE_ROLE_KEY` before device upload can work.
 
 ### Evidence map for final review
 
