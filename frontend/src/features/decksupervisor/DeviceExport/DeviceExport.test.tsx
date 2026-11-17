@@ -238,3 +238,86 @@ it("binds authenticated shares only after registering canonical identities", asy
     expect(mocks.register.mock.invocationCallOrder[0]).toBeLessThan(mocks.createShare.mock.invocationCallOrder[0]);
     expect(mocks.createShare.mock.calls[0][1]).toBe(session.id);
 });
+
+// Completion-audit regressions: guest/legacy sharing stays import-only and bound shares need a registry.
+it("keeps guest sharing and guest downloads unbound, without any results registration", async () => {
+    const user = userEvent.setup();
+    show();
+    await user.selectOptions(await screen.findByRole("combobox"), "Alex");
+    await user.click(
+        screen.getByRole("button", { name: "Download instructor classes" }),
+    );
+    await waitFor(() => expect(mocks.download).toHaveBeenCalledTimes(1));
+    await user.click(
+        screen.getByRole("button", { name: "Start Session and Create Codes" }),
+    );
+    await waitFor(() => expect(mocks.createShare).toHaveBeenCalledTimes(1));
+    expect(mocks.createShare.mock.calls[0][1]).toBeUndefined();
+    expect(mocks.register).not.toHaveBeenCalled();
+    expect(mocks.recover).not.toHaveBeenCalled();
+    const packages = [
+        mocks.download.mock.calls[0][0],
+        ...mocks.createShare.mock.calls[0][0].map((
+            item: { package: unknown },
+        ) => item.package),
+    ];
+    for (const pkg of packages) {
+        expect(pkg.schemaVersion).toBe(1);
+        expect(pkg.kind).toBe("rec-tablet-classes");
+        expect(Object.keys(pkg).sort()).toEqual([
+            "courses",
+            "datasetId",
+            "instructor",
+            "kind",
+            "schemaVersion",
+        ]);
+        expect(JSON.stringify(pkg)).not.toMatch(/"sync"|Token|enrollmentId/);
+    }
+});
+
+it("does not create an authenticated share when identities cannot be registered", async () => {
+    mocks.isGuest = false;
+    mocks.register.mockRejectedValue(
+        new Error("Class 004201 needs one saved instructor assignment before sharing."),
+    );
+    const user = userEvent.setup();
+    show();
+    const start = await screen.findByRole("button", {
+        name: "Start Session and Create Codes",
+    });
+    await waitFor(() => expect(start).toBeEnabled());
+    await user.click(start);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+        "needs one saved instructor assignment before sharing",
+    );
+    expect(mocks.createShare).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "End Sharing" })).not
+        .toBeInTheDocument();
+    expect(loadRegistry(session.id)).toBeNull();
+});
+
+it("sends the session binding in the share request only for authenticated sharing", async () => {
+    const actual = await vi.importActual<typeof import("../../../lib/serverApi")>(
+        "../../../lib/serverApi",
+    );
+    const bodies: unknown[] = [];
+    vi.stubGlobal(
+        "fetch",
+        vi.fn(async (_url: string, init: RequestInit) => {
+            bodies.push(JSON.parse(String(init.body)));
+            return new Response(
+                JSON.stringify({ id: "s", hostToken: "t", codes: [], expiresAt: "" }),
+                { status: 200 },
+            );
+        }),
+    );
+    const packages = [{ instructor: "Alex", package: { schemaVersion: 1 } }];
+    await actual.createDeviceShare(packages);
+    await actual.createDeviceShare(packages, session.id);
+    expect(bodies).toEqual([{ packages }, { packages, sessionId: session.id }]);
+    expect(vi.mocked(fetch).mock.calls.map((call) => call[0])).toEqual([
+        "/api/device-shares",
+        "/api/device-shares",
+    ]);
+    vi.unstubAllGlobals();
+});

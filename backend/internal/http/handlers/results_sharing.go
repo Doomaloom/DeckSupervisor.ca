@@ -41,8 +41,14 @@ func bindResultPackage(r *http.Request, session string, data json.RawMessage) (j
 	if json.Unmarshal(data, &p) != nil {
 		return nil, errors.New("invalid package")
 	}
-	for _, k := range []string{"sync", "_resultPackage", "_creatorId", "_sync"} {
-		delete(p, k)
+	// encoding/json matches struct fields case-insensitively, so every case
+	// variant of a reserved key must go, not only its exact spelling.
+	for k := range p {
+		for _, reserved := range []string{"sync", "_resultPackage", "_creatorId", "_sync"} {
+			if strings.EqualFold(k, reserved) {
+				delete(p, k)
+			}
+		}
 	}
 	clean, err := json.Marshal(p)
 	if err != nil {
@@ -157,6 +163,12 @@ func bindResultPackage(r *http.Request, session string, data json.RawMessage) (j
 }
 func redeemResultPackage(r *http.Request, data []byte) (map[string]any, error) {
 	var env boundResultEnvelope
+	// Only the exact envelope written by bindResultPackage is a bound package;
+	// anything else, including look-alike keys, stays import-only.
+	var keys map[string]json.RawMessage
+	if json.Unmarshal(data, &keys) != nil || len(keys) != 3 || keys["_creatorId"] == nil || keys["_sync"] == nil || keys["_resultPackage"] == nil {
+		return map[string]any{"package": json.RawMessage(data)}, nil
+	}
 	_ = json.Unmarshal(data, &env)
 	if env.CreatorID == "" {
 		return map[string]any{"package": json.RawMessage(data)}, nil
