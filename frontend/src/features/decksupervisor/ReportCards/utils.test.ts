@@ -124,6 +124,17 @@ describe("report card utils", () => {
         ]);
     });
 
+    it("leaves waitlisted swimmers out of report card counts", () => {
+        const summary = buildStudentReportCardSummary([
+            students[0],
+            { ...students[0], id: "w", name: "Waiting", instructor: "", waitlist: true },
+        ]);
+
+        expect(summary.totalStudents).toBe(1);
+        expect(summary.lessonBlockTotals).toEqual([{ level: "Splash 3", count: 1 }]);
+        expect(summary.instructorSummaries.map((entry) => entry.name)).toEqual(["Coach Amy"]);
+    });
+
     it("aggregates employee totals by instructor and level", () => {
         expect(
             buildEmployeeReportCardSummaries([

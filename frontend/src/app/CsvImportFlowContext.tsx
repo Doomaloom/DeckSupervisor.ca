@@ -11,13 +11,24 @@ import {
     setExtractedClassesForSession,
 } from "../lib/extractedClassesStorage";
 import {
+    applySchematicAssignments,
     getSessionTermLabel,
+    hasSavedSchematicAssignments,
+    type SavedSchematicAssignments,
     syncReportCardsForDay,
 } from "../lib/reportCardSync";
-import { createSession, fetchCsvAnalyze } from "../lib/serverApi";
+import {
+    createSession,
+    fetchCsvAnalyze,
+    fetchSchematic,
+} from "../lib/serverApi";
 import { formatSessionDisplayName } from "../shared/session/sessionLabels";
 import { normalizeSessionLocations } from "../shared/session/sourceLocations";
-import { getInstructorsForDay, getStudentsForDay } from "../lib/storage";
+import {
+    getInstructorsForDay,
+    getStudentsForDay,
+    setStudentsForDay,
+} from "../lib/storage";
 import {
     loadSessions,
     saveSessions,
@@ -310,9 +321,35 @@ export function CsvImportFlowProvider(
             return;
         }
 
-        const students = getStudentsForDay(day);
+        let students = getStudentsForDay(day);
         if (students.length === 0) {
             return;
+        }
+
+        // The uploaded roster has no instructors: take them from the saved Schematic.
+        let schematic: SavedSchematicAssignments = null;
+        try {
+            schematic = (await fetchSchematic(session.id)).schematic?.data;
+        } catch (error) {
+            console.error("Failed to load schematic after roster upload", error);
+            showAppNotice(
+                "Roster uploaded. Report card totals were not updated because the saved Schematic could not be loaded.",
+                "info",
+            );
+            return;
+        }
+        if (!hasSavedSchematicAssignments(schematic)) {
+            // Nothing has failed yet: totals are saved once a Schematic exists.
+            showAppNotice(
+                "Roster uploaded. Assign instructors in Schematic and save to record report card totals.",
+                "info",
+            );
+            return;
+        }
+        const assigned = applySchematicAssignments(students, schematic);
+        if (assigned !== students) {
+            students = assigned;
+            setStudentsForDay(day, students);
         }
 
         const result = await syncReportCardsForDay({
@@ -324,7 +361,7 @@ export function CsvImportFlowProvider(
 
         if (result.status === "blocked_unassigned") {
             showAppNotice(
-                "Roster uploaded. Report card totals were not synced because some students are missing instructor assignments.",
+                "Roster uploaded. Some classes have no instructor in the saved Schematic, so report card totals were not updated. Assign them in Schematic and save.",
                 "info",
             );
         }

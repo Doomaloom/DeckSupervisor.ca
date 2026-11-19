@@ -69,7 +69,8 @@ export function buildStudentReportCardSummary(
     const totalMap = new Map<string, LevelCount>();
     let totalStudents = 0;
 
-    students.forEach((student) => {
+    // Waitlisted swimmers are not in a class and get no report card.
+    students.filter((student) => !student.waitlist).forEach((student) => {
         const instructor = normalizeInstructorName(student.instructor);
         const level = normalizeLevel(student);
 

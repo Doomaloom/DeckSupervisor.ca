@@ -8,11 +8,13 @@ import { useCurrentTeam } from "../../../app/useCurrentTeam";
 
 import { useCurrentTerm } from "../../../app/useCurrentTerm";
 
-import { getSessionTermLabel, syncReportCardsForDay, } from "../../../lib/reportCardSync";
+import { applySchematicAssignments, getSessionTermLabel, type SavedSchematicAssignments, syncReportCardsForDay, } from "../../../lib/reportCardSync";
+
+import { getLoadedRosterSession } from "../../../lib/loadedRosterSession";
 
 import { applyPersistedLevelEdits, fetchRosterLevelEdits, fetchRosterStudentEdits, hashStudentNames, } from "../../../lib/rosterEditsApi";
 
-import { fetchReportCardTotals } from "../../../lib/serverApi";
+import { fetchReportCardTotals, fetchSchematic } from "../../../lib/serverApi";
 
 import { useDay } from "../../../app/DayContext";
 
@@ -34,6 +36,9 @@ export function useReportCardsLogic() {
     >([]);
     const [employeeTotalsLoading, setEmployeeTotalsLoading] = useState(false);
     const [syncWarning, setSyncWarning] = useState("");
+    const [schematic, setSchematic] = useState<
+        { sessionId: string; data: SavedSchematicAssignments; failed: boolean } | null
+    >(null);
     const appliedEditsKey = useRef("");
 
     useEffect(() => {
@@ -159,9 +164,48 @@ export function useReportCardsLogic() {
         };
     }, [accountType, currentTeamId, currentTerm?.label]);
 
+    // A roster upload carries no instructors, so read them from the saved Schematic
+    // instead of relying on this browser having visited Schematic or Rosters.
+    useEffect(() => {
+        if (accountType === "full_time" || !sessionId || isGuest) {
+            setSchematic(null);
+            return;
+        }
+        let active = true;
+        setSchematic(null);
+        fetchSchematic(sessionId).then((response) => {
+            if (active) {
+                setSchematic({
+                    sessionId,
+                    data: response.schematic?.data ?? null,
+                    failed: false,
+                });
+            }
+        }).catch((error) => {
+            console.error("Failed to load schematic for report cards", error);
+            if (active) {
+                setSchematic({ sessionId, data: null, failed: true });
+            }
+        });
+        return () => {
+            active = false;
+        };
+    }, [accountType, isGuest, sessionId]);
+
+    const schematicLoaded = Boolean(sessionId) && schematic?.sessionId === sessionId;
+    const assignedStudents = useMemo(() => {
+        const loadedSession = getLoadedRosterSession(selectedDay);
+        if (
+            !schematicLoaded || (loadedSession && loadedSession !== sessionId)
+        ) {
+            return students;
+        }
+        return applySchematicAssignments(students, schematic?.data);
+    }, [schematic, schematicLoaded, selectedDay, sessionId, students]);
+
     const { instructorSummaries, lessonBlockTotals, totalStudents } = useMemo(
-        () => buildStudentReportCardSummary(students),
-        [students],
+        () => buildStudentReportCardSummary(assignedStudents),
+        [assignedStudents],
     );
 
     const totalEmployeeReportCards = useMemo(
@@ -189,16 +233,23 @@ export function useReportCardsLogic() {
             isGuest ||
             !user ||
             access.mode !== "owner" ||
-            !sessionLabel
+            !sessionLabel ||
+            !schematicLoaded
         ) {
             setSyncWarning("");
+            return;
+        }
+        if (schematic?.failed) {
+            setSyncWarning(
+                "Report card totals were not saved because the saved Schematic could not be loaded. Please try again.",
+            );
             return;
         }
 
         const sync = async () => {
             const result = await syncReportCardsForDay({
                 day: selectedDay,
-                students,
+                students: assignedStudents,
                 sessionLabel,
                 teamId: currentSession?.team_id ?? null,
             });
@@ -220,11 +271,13 @@ export function useReportCardsLogic() {
     }, [
         accountType,
         access.mode,
+        assignedStudents,
         currentSession?.team_id,
         isGuest,
+        schematic?.failed,
+        schematicLoaded,
         selectedDay,
         sessionLabel,
-        students,
         user,
     ]);
 
