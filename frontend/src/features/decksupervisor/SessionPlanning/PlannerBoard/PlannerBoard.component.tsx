@@ -96,7 +96,7 @@ function PlannerBoard(props: PlannerBoardProps) {
                         <div
                             className="w-max min-w-full"
                             style={{
-                                minWidth: `${Math.max(760, 128 + boardColumns.length * columnMinWidthPx)}px`,
+                                minWidth: `max(100%, ${Math.max(760, 128 + boardColumns.length * columnMinWidthPx)}px)`,
                             }}
                         >
                             <div className="flex">
