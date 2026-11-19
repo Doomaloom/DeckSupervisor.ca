@@ -11,6 +11,15 @@ import { message } from "../DeviceExport.logic";
 import { buildPackage, type ExportCourse, MAX_EXPORT_BYTES, newRegistry, parseDates, } from "../services/exportPackage";
 import { downloadJSON, exportFilename, loadRegistry, restoreRegistry, saveRegistry, } from "../services/exportStorage";
 import { loadExportCourses } from "../services/loadExportCourses";
+export type ShareStatus = { tone: "info" | "warning"; text: string };
+// The device-share API answers 404 "shared device session not found" once a share expired, was closed or the
+// backend restarted, and 403 "host token is invalid" when this page's token no longer matches. Neither can recover.
+// The API client only exposes the response text, so match the backend's messages.
+export function isShareGone(cause: unknown) {
+    const text = cause instanceof Error ? cause.message.toLowerCase() : "";
+    return text.includes("shared device session not found") ||
+        text.includes("host token is invalid");
+}
 export function useExportSessionLogic({ session, isGuest, scope }: {
     session: SessionRecord;
     isGuest: boolean;
@@ -23,6 +32,7 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
         null,
     );
     const [shareBusy, setShareBusy] = useState(false);
+    const [shareStatus, setShareStatus] = useState<ShareStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
@@ -146,6 +156,7 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
         setShareBusy(true);
         setError("");
         setNotice("");
+        setShareStatus(null);
         const current = generation.current;
         try {
             let registry = isGuest ? (loadRegistry(session.id) ?? newRegistry(session.id)) : await recoverRegistry(session.id, courses);
@@ -199,8 +210,14 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
         if (!shareSession) return;
         setShareBusy(true);
         try {
-            await closeDeviceShare(shareSession.id, shareSession.hostToken);
+            try {
+                await closeDeviceShare(shareSession.id, shareSession.hostToken);
+            } catch (cause) {
+                // A share that already expired or closed is ended, which is what was asked for.
+                if (!isShareGone(cause)) throw cause;
+            }
             setShareSession(null);
+            setShareStatus(null);
             setNotice("Session sharing ended.");
         } catch (cause) {
             setError(message(cause));
@@ -212,14 +229,49 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
         if (!shareSession) return;
         const id = shareSession.id;
         const token = shareSession.hostToken;
-        const timer = window.setInterval(() => {
-            void heartbeatDeviceShare(id, token).catch((cause) =>
-                setError(`Sharing connection interrupted: ${message(cause)}`)
-            );
-        }, 15_000);
+        let active = true;
+        let inFlight = false;
+        const beat = () => {
+            if (!active || inFlight) return;
+            inFlight = true;
+            void heartbeatDeviceShare(id, token).then(() => {
+                if (active) setShareStatus(null);
+            }, (cause) => {
+                if (!active) return;
+                if (isShareGone(cause)) {
+                    active = false;
+                    setShareSession(null);
+                    setNotice("");
+                    setShareStatus({
+                        tone: "warning",
+                        text: "Sharing ended because this page lost contact with the server for too long, so the codes no longer work. Choose Start Session and Create Codes to make new ones.",
+                    });
+                } else {
+                    setShareStatus({
+                        tone: "info",
+                        text: "Reconnecting to the sharing service… The codes stay active while this page keeps trying.",
+                    });
+                }
+            }).finally(() => {
+                inFlight = false;
+            });
+        };
+        // Hidden tabs throttle timers, so check in as soon as the page is visible, focused or online again.
+        const onVisible = () => {
+            if (document.visibilityState === "visible") beat();
+        };
+        const timer = window.setInterval(beat, 15_000);
+        document.addEventListener("visibilitychange", onVisible);
+        window.addEventListener("online", beat);
+        window.addEventListener("focus", beat);
         return () => {
+            const open = active;
+            active = false;
             window.clearInterval(timer);
-            void closeDeviceShare(id, token).catch(() => undefined);
+            document.removeEventListener("visibilitychange", onVisible);
+            window.removeEventListener("online", beat);
+            window.removeEventListener("focus", beat);
+            if (open) void closeDeviceShare(id, token).catch(() => undefined);
         };
     }, [shareSession?.id, shareSession?.hostToken]);
     const backup = () => {
@@ -275,6 +327,7 @@ export function useExportSessionLogic({ session, isGuest, scope }: {
         busy,
         shareBusy,
         shareSession,
+        shareStatus,
         setInstructor,
         setError,
         setNotice,

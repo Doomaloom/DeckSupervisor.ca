@@ -17,6 +17,7 @@ export function ExportSession(props: {
         busy,
         shareBusy,
         shareSession,
+        shareStatus,
         setInstructor,
         setError,
         setNotice,
@@ -196,6 +197,11 @@ export function ExportSession(props: {
                                     downloads that instructor’s package. Sharing
                                     ends when you end it or leave this page.
                                 </p>
+                                {shareStatus && (
+                                    <Notice tone={shareStatus.tone} role="status">
+                                        {shareStatus.text}
+                                    </Notice>
+                                )}
                                 {shareSession
                                     ? (
                                         <>
