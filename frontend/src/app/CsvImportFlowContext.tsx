@@ -4,7 +4,10 @@ import { useAuth } from "./AuthContext";
 import { useDay } from "./DayContext";
 import { useCurrentTeam } from "./useCurrentTeam";
 import { useCurrentTerm } from "./useCurrentTerm";
-import { processCsvAndStore, storeProcessedRosters } from "../lib/api";
+import {
+    applyLocalInstructorsToRosters,
+    storeProcessedRosters,
+} from "../lib/api";
 import { setCsvImportDatasetForSession } from "../lib/csvImportDatasetStorage";
 import {
     setExtractedClassesForScope,
@@ -375,6 +378,21 @@ export function CsvImportFlowProvider(
         setState((current) => ({ ...current, processing: true, error: "" }));
         try {
             const matchedSession = candidate.matchedSession;
+            // Check the analyzed roster before creating a session, so a failed
+            // import does not leave an empty session behind.
+            const analyzedRosters =
+                state.rostersByCandidate[candidate.sessionKey] ?? [];
+            if (analyzedRosters.length === 0) {
+                throw new Error(
+                    "No roster data was returned for the selected CSV session.",
+                );
+            }
+            const candidateRosters = isGuest
+                ? applyLocalInstructorsToRosters(
+                    analyzedRosters,
+                    buildInstructorUploadConfig(candidate.dayOfWeek),
+                )
+                : analyzedRosters;
             const targetSession = matchedSession
                 ? matchedSession.session
                 : isGuest
@@ -397,32 +415,12 @@ export function CsvImportFlowProvider(
                 state.classesBySession,
                 candidate,
             );
-            if (isGuest) {
-                const uploadInstructors = buildInstructorUploadConfig(
-                    candidate.dayOfWeek,
-                );
-                await processCsvAndStore(
-                    state.file,
-                    candidate.dayOfWeek,
-                    uploadInstructors,
-                    {
-                        courseCodes: extractedClassesForCandidate.map((
-                            classEntry,
-                        ) => classEntry.courseCode),
-                        rawLocations: candidate.rawLocations,
-                    },
-                );
-            } else {
-                const candidateRosters =
-                    state.rostersByCandidate[candidate.sessionKey] ?? [];
-                if (candidateRosters.length === 0) {
-                    throw new Error(
-                        "No roster data was returned for the selected CSV session.",
-                    );
-                }
+            // Guests use the same analyzed rosters as signed-in users; their
+            // names stay in this browser and nothing is tracked on the server.
+            if (!isGuest) {
                 await trackUploadedRosters(targetSession.id, candidateRosters);
-                storeProcessedRosters(candidateRosters);
             }
+            storeProcessedRosters(candidateRosters, targetSession.id);
             const dayStudents = getStudentsForDay(candidate.dayOfWeek);
             console.log("[csv-import] selected day students", {
                 day: candidate.dayOfWeek,

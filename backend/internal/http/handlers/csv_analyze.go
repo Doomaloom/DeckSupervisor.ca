@@ -83,7 +83,18 @@ type CSVMatchedSessionData struct {
 	Instructors        []map[string]string `json:"instructors"`
 }
 
+// Roster CSVs are tens of KB; match the session planner's upload cap.
+const maxCSVAnalyzeBytes = 32 << 20
+
+// AnalyzeCSV also serves guests (no session cookie). It only parses the upload
+// and returns it: nothing is stored or logged.
 func AnalyzeCSV(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxCSVAnalyzeBytes)
+	if err := r.ParseMultipartForm(maxCSVAnalyzeBytes); err != nil {
+		http.Error(w, "Invalid or oversized roster CSV", http.StatusBadRequest)
+		return
+	}
+
 	client, err := supabasesvc.NewClientFromRequest(r)
 	isGuest := err != nil
 

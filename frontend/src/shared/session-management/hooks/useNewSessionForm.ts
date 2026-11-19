@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { TeamRecord } from "../../../app/useCurrentTeam";
 import type { CurrentTerm } from "../../../app/useCurrentTerm";
-import { extractClassesFromCsv } from "../../../lib/api";
 import { createSession, fetchCsvAnalyze } from "../../../lib/serverApi";
 import { loadSessions, saveSessions } from "../../../lib/sessionStorage";
 import type { ExtractedSession } from "../../../types/app";
@@ -89,10 +88,11 @@ export function useNewSessionForm({
         setIsInspectingRosterFile(true);
         setNewSessionTimeMessage("");
         try {
-            const extracted = isGuest ? await extractClassesFromCsv(file) : (
+            // Guests use the same endpoint; it serves signed-out requests.
+            const extracted = (
                 await fetchCsvAnalyze(
                     file,
-                    accountType === "full_time" && currentTeamId
+                    !isGuest && accountType === "full_time" && currentTeamId
                         ? {
                             teamId: currentTeamId,
                             termSeason: currentTerm?.season,

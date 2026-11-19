@@ -1,67 +1,53 @@
 import { getCurrentSessionId } from "./sessionStorage";
 import { setLoadedRosterSession } from "./loadedRosterSession";
-import type {
-    ClassRoster,
-    ExtractedClass,
-    ExtractedSession,
-    InstructorEntry,
-    Student,
-} from "../types/app";
+import type { ClassRoster, InstructorEntry, Student } from "../types/app";
 import { setStudentsForDay } from "./storage";
-import { normalizeSessionLocationKey } from "../shared/session/sourceLocations";
 
-type ProcessCsvResponse = {
-    success: boolean;
-    day?: string;
-    total: number;
-    classes: ClassRoster[];
-};
-
-type ExtractClassesResponse = {
-    success: boolean;
-    totalSessions: number;
-    totalClasses: number;
-    sessions: ExtractedSession[];
-    classesBySession: Record<string, ExtractedClass[]>;
-};
-
-function summarizeProcessCsvClasses(classes: ClassRoster[]) {
-    return classes.map((roster) => ({
-        code: roster.code,
-        studentCount: roster.students.length,
-        waitlistCount:
-            roster.students.filter((student) => Boolean(student.waitlist))
-                .length,
-        students: roster.students.map((student) => ({
-            name: student.name,
-            waitlist: Boolean(student.waitlist),
-        })),
-    }));
+// Same rule as the backend's NormalizeEventID: all-digit codes ignore leading zeros.
+function normalizeCourseCode(value: string) {
+    const trimmed = value.trim();
+    if (!/^\d+$/.test(trimmed)) {
+        return trimmed;
+    }
+    return trimmed.replace(/^0+/, "") || "0";
 }
 
-async function processCsv(
-    file: File,
-    day: string,
-    instructors: InstructorEntry[] = [],
-): Promise<ProcessCsvResponse> {
-    const formData = new FormData();
-    formData.append("csv_file", file);
-    formData.append("day", day);
+// Guests have no saved Schematic, so the server cannot assign instructors.
+// Apply the browser's own instructor-to-class setup to the analyzed rosters.
+export function applyLocalInstructorsToRosters(
+    rosters: ClassRoster[],
+    instructors: InstructorEntry[],
+): ClassRoster[] {
+    const nameByCode = new Map<string, string>();
     instructors.forEach((instructor) => {
-        formData.append("instructor_names[]", instructor.name);
-        formData.append("instructor_codes[]", instructor.codes);
+        const name = instructor.name.trim();
+        if (!name) {
+            return;
+        }
+        instructor.codes.split(",").forEach((code) => {
+            const normalized = normalizeCourseCode(code);
+            if (normalized) {
+                nameByCode.set(normalized, name);
+            }
+        });
     });
-
-    const response = await fetch("/api/process-csv", {
-        method: "POST",
-        body: formData,
-    });
-
-    if (!response.ok) {
-        throw new Error("Failed to process CSV");
+    if (nameByCode.size === 0) {
+        return rosters;
     }
-
-    return (await response.json()) as ProcessCsvResponse;
+    return rosters.map((roster) => {
+        const name = nameByCode.get(normalizeCourseCode(roster.code));
+        if (!name) {
+            return roster;
+        }
+        return {
+            ...roster,
+            instructor: name,
+            students: roster.students.map((student) => ({
+                ...student,
+                instructor: name,
+            })),
+        };
+    });
 }
 
 export function rosterToStudents(rosters: ClassRoster[]): Student[] {
@@ -112,72 +98,4 @@ export function storeProcessedRosters(
         setLoadedRosterSession(key, sessionId);
         setStudentsForDay(key, list);
     });
-}
-
-export async function processCsvAndStore(
-    file: File,
-    day: string,
-    instructors: InstructorEntry[] = [],
-    options?: { courseCodes?: string[]; rawLocations?: string[] },
-): Promise<ProcessCsvResponse> {
-    const data = await processCsv(file, day, instructors);
-    console.log("[csv-import] process-csv raw response", {
-        requestedDay: day,
-        classCount: data.classes?.length ?? 0,
-        classes: summarizeProcessCsvClasses(data.classes ?? []),
-    });
-    const allowedCodes = new Set(
-        (options?.courseCodes ?? []).map((code) => code.trim()).filter(Boolean),
-    );
-    const allowedLocationKeys = new Set(
-        (options?.rawLocations ?? []).map((location) =>
-            normalizeSessionLocationKey(location)
-        ).filter(Boolean),
-    );
-    const classes = allowedCodes.size > 0
-        ? (data.classes ?? []).filter((roster) => {
-            if (!allowedCodes.has(roster.code.trim())) {
-                return false;
-            }
-            if (allowedLocationKeys.size === 0) {
-                return true;
-            }
-            return allowedLocationKeys.has(
-                normalizeSessionLocationKey(roster.location),
-            );
-        })
-        : (data.classes ?? []);
-
-    storeProcessedRosters(classes);
-    return {
-        ...data,
-        classes,
-        total: classes.reduce((sum, roster) => sum + roster.students.length, 0),
-    };
-}
-
-export async function processCsvWithoutStore(
-    file: File,
-    day = "",
-    instructors: InstructorEntry[] = [],
-): Promise<ProcessCsvResponse> {
-    return processCsv(file, day, instructors);
-}
-
-export async function extractClassesFromCsv(
-    file: File,
-): Promise<ExtractClassesResponse> {
-    const formData = new FormData();
-    formData.append("csv_file", file);
-
-    const response = await fetch("/api/extract-classes", {
-        method: "POST",
-        body: formData,
-    });
-
-    if (!response.ok) {
-        throw new Error("Failed to extract classes from CSV");
-    }
-
-    return (await response.json()) as ExtractClassesResponse;
 }
