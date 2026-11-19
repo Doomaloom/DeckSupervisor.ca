@@ -485,14 +485,14 @@ function PlannerDetailsPanel(props: PlannerDetailsPanelProps) {
                                 </div>
                             )
                             : (
-                                <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-secondary/20 bg-bg p-4">
+                                <div data-component="planner-call-workflow" className="flex flex-1 flex-col rounded-2xl border border-secondary/20 bg-bg p-4">
                                     <h4 className="text-sm font-semibold uppercase tracking-[0.14em] text-secondary/70">
                                         {selectedClass.planningStatus ===
                                             "planned_move"
                                             ? "Move Call Workflow"
                                             : "Cancellation Call Workflow"}
                                     </h4>
-                                    <div className="mt-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
+                                    <div className="mt-4 flex flex-col gap-4">
                                         {bookedParticipants.map(
                                             (participant) => {
                                                 const callRecord = dataset
