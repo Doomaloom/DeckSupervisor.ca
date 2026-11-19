@@ -3,7 +3,7 @@ import { useCurrentTeam } from "../../../../app/useCurrentTeam";
 import { useCurrentTerm } from "../../../../app/useCurrentTerm";
 import { getExtractedClassesForScope, onExtractedClassesUpdated, } from "../../../../lib/extractedClassesStorage";
 import { fetchSchematics, fetchTeamSessions } from "../../../../lib/serverApi";
-import { getStudentsByDay, onStudentsUpdated } from "../../../../lib/storage";
+import { getStudentsForDay, onStudentsUpdated } from "../../../../lib/storage";
 import { extractStartTime } from "../../../../lib/time";
 import { dayNames, SLOT_HEIGHT_REM, SLOT_MINUTES } from "../../../../shared/schedule/constants";
 import { buildTimeLabels, timeToMinutes } from "../../../../shared/schedule/time";
@@ -382,13 +382,27 @@ export function useFullTimeSchematicView(enabled: boolean) {
             return () => { };
         }
 
-        const load = () => setStudentsByDay(getStudentsByDay());
+        // Each team session keeps its own roster cache; combine this term's
+        // sessions by weekday for the team-wide view.
+        const load = () => {
+            const next: Record<string, Student[]> = {};
+            termSessions.forEach((session) => {
+                const rows = getStudentsForDay(session.session_day, session.id);
+                if (rows.length > 0) {
+                    next[session.session_day] = [
+                        ...(next[session.session_day] ?? []),
+                        ...rows,
+                    ];
+                }
+            });
+            setStudentsByDay(next);
+        };
         load();
 
         return onStudentsUpdated(() => {
             load();
         });
-    }, [enabled]);
+    }, [enabled, termSessions]);
 
     const selectedSessionSchematic = useMemo(() => {
         if (!selectedSession) {

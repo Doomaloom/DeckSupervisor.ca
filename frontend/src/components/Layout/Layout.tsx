@@ -119,7 +119,7 @@ function Layout({ children }: LayoutProps) {
         if (!selectedDay || !user || !sessionId) {
             return;
         }
-        const students = getStudentsForDay(selectedDay);
+        const students = getStudentsForDay(selectedDay, sessionId);
         if (students.length === 0) {
             return;
         }
@@ -165,7 +165,7 @@ function Layout({ children }: LayoutProps) {
             return;
         }
 
-        const students = getStudentsForDay(targetDay);
+        const students = getStudentsForDay(targetDay, sessionId);
         if (students.length === 0) {
             return;
         }

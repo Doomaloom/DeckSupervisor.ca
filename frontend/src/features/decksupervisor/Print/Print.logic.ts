@@ -764,7 +764,10 @@ export function usePrintLogic() {
     };
 
     const buildRosterGroupsForDay = (day: string) => {
-        const students = getStudentsForDay(day);
+        const students = getStudentsForDay(
+            day,
+            currentSession?.id ?? getCurrentSessionId(),
+        );
         const rosterGroups = buildRosterGroups(students);
         if (!day) {
             return rosterGroups;

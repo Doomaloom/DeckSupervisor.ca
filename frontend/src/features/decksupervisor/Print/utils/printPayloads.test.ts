@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setExtractedClassesForSession } from "../../../../lib/extractedClassesStorage";
 import { getCustomRosterDayKey, setCustomRostersForDay, setScheduleForDay, setStudentsForDay, } from "../../../../lib/storage";
+import { setCurrentSessionId } from "../../../../lib/sessionStorage";
 import { setStorageScope } from "../../../../lib/storageScope";
 import { buildMasterlistRows } from "../../../../shared/pdf/masterlist/masterlistModel";
 import type { FormatOptions, Student } from "../../../../types/app";
@@ -58,6 +59,8 @@ describe("printPayloads", () => {
     beforeEach(() => {
         window.sessionStorage.clear();
         setStorageScope("guest");
+        // Roster rows are cached per session (triage W10).
+        setCurrentSessionId("session-1");
     });
 
     afterEach(() => {

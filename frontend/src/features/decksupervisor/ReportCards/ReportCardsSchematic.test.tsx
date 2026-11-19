@@ -29,7 +29,7 @@ beforeEach(() => {
     api.syncReportCards.mockReset().mockResolvedValue({ status: "synced" });
     // A fresh browser that has only uploaded the roster: no instructors stored locally.
     setLoadedRosterSession("Thursday", "thu");
-    setStudentsForDay("Thursday", [student("A", "98007"), student("B", "98007"), student("C", "98006"), student("Wait", "98007", true)]);
+    setStudentsForDay("Thursday", [student("A", "98007"), student("B", "98007"), student("C", "98006"), student("Wait", "98007", true)], "thu");
 });
 
 it("uses the saved schematic and leaves waitlisted swimmers out", async () => {

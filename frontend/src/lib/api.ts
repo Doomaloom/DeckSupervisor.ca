@@ -96,6 +96,6 @@ export function storeProcessedRosters(
     );
     Object.entries(grouped).forEach(([key, list]) => {
         setLoadedRosterSession(key, sessionId);
-        setStudentsForDay(key, list);
+        setStudentsForDay(key, list, sessionId);
     });
 }

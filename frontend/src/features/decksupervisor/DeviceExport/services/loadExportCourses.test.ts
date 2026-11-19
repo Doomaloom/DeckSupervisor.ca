@@ -15,7 +15,7 @@ beforeEach(() => {
     window.sessionStorage.clear();
     setStorageScope("export-test");
     setExtractedClassesForSession(session.id, classes);
-    setStudentsForDay("Fr", students);
+    setStudentsForDay("Fr", students, session.id);
     vi.mocked(fetchSchematic).mockReset().mockResolvedValue(
         {
             schematic: {
@@ -53,7 +53,7 @@ it("does not export other loaded classes on the same day", async () => {
         ...students[0],
         code: "other-session-class",
         name: "Excluded",
-    }]);
+    }], session.id);
     const result = await loadExportCourses(session, true);
     expect(
         result.flatMap((course) => course.students).some((student) =>
@@ -62,12 +62,29 @@ it("does not export other loaded classes on the same day", async () => {
     ).toBe(false);
 });
 
-it("rejects rows loaded for a different session on the same weekday", async () => {
+it("never exports another same-weekday session's roster (triage W10)", async () => {
     const { setLoadedRosterSession } = await import(
         "../../../../lib/loadedRosterSession"
     );
+    setStudentsForDay("Fr", [], session.id);
+    setStudentsForDay("Fr", students, "another-session");
     setLoadedRosterSession("Fr", "another-session");
     await expect(loadExportCourses(session, true)).rejects.toThrow(
         "another session",
     );
+});
+
+it("still exports this session after another same-weekday session uploads", async () => {
+    const { setLoadedRosterSession } = await import(
+        "../../../../lib/loadedRosterSession"
+    );
+    const exportedNames = async () =>
+        (await loadExportCourses(session, true))
+            .flatMap((course) => course.students)
+            .map((student) => student.name);
+    const before = await exportedNames();
+    setStudentsForDay("Fr", [{ ...students[0], name: "Other pool" }], "another-session");
+    setLoadedRosterSession("Fr", "another-session");
+    expect(await exportedNames()).toEqual(before);
+    expect(before).not.toContain("Other pool");
 });

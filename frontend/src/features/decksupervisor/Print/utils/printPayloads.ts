@@ -106,7 +106,7 @@ function buildExtractedStudentCountByCode(sessionId: string, day: string) {
 }
 
 function applyExtractedStudentCounts(sessionId: string, day: string) {
-    const students = getStudentsForDay(day);
+    const students = getStudentsForDay(day, sessionId);
     const extractedCounts = buildExtractedStudentCountByCode(sessionId, day);
     if (students.length === 0) {
         return [];
@@ -344,7 +344,7 @@ export function buildRosterGroupsForPrint(
     sessionId?: string,
     customRostersOverride?: CustomRoster[],
 ) {
-    const students = getStudentsForDay(day);
+    const students = getStudentsForDay(day, sessionId);
     const rosterGroups = buildRosterGroups(students);
     if (!day) {
         return rosterGroups;

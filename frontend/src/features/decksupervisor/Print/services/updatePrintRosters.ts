@@ -1,5 +1,4 @@
 import { rosterToStudents } from "../../../../lib/api";
-import { getLoadedRosterSession } from "../../../../lib/loadedRosterSession";
 import type { RosterPrintUpdate, UploadedPrintRoster } from "../../../../lib/rosterPrintUpdates";
 import { getStudentsForDay } from "../../../../lib/storage";
 import { buildAttendancePrintItems, buildRosterGroups } from "../../Rosters/utils";
@@ -26,12 +25,10 @@ export function buildUpdatePrintItems(
             schedule: roster.schedule,
             students: [],
         };
-        // Assignment changes are not student changes. Use the current local
-        // assignment only when those day rows came from this same session.
-        if (getLoadedRosterSession(roster.day) === sessionId) {
-            const current = getStudentsForDay(roster.day).find((s) => s.code === roster.code && s.instructor);
-            if (current) group.instructor = current.instructor;
-        }
+        // Assignment changes are not student changes. Use this session's
+        // current local assignment when its roster is loaded.
+        const current = getStudentsForDay(roster.day, sessionId).find((s) => s.code === roster.code && s.instructor);
+        if (current) group.instructor = current.instructor;
         return buildAttendancePrintItems(group);
     });
 }

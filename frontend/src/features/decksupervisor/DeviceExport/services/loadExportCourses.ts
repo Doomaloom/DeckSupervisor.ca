@@ -5,7 +5,7 @@ import { getExtractedClassesForSession } from "../../../../lib/extractedClassesS
 import { getLoadedRosterSession } from "../../../../lib/loadedRosterSession";
 import { applyPersistedLevelEdits, hashStudentNames, } from "../../../../lib/rosterEditsApi";
 import { fetchRosterEdits, fetchSchematic } from "../../../../lib/serverApi";
-import { getInstructorsForDay, getStudentsByDay } from "../../../../lib/storage";
+import { getInstructorsForDay, getStudentsForDay } from "../../../../lib/storage";
 import { buildCourses } from "./exportPackage";
 
 export async function loadExportCourses(
@@ -26,19 +26,14 @@ export async function loadExportCourses(
             }, dataset).classes;
         }
     }
-    const byDay = getStudentsByDay();
-    for (const day of Object.keys(byDay)) {
-        const source = getLoadedRosterSession(day);
-        if (day === session.session_day && source && source !== session.id) {
-            throw new Error(
-                "The loaded roster belongs to another session. Load the selected session’s CSV before exporting.",
-            );
-        }
+    // Only this session's own roster cache, never another same-weekday session's.
+    let students = getStudentsForDay(session.session_day, session.id);
+    const source = getLoadedRosterSession(session.session_day);
+    if (students.length === 0 && source && source !== session.id) {
+        throw new Error(
+            "The loaded roster belongs to another session. Load the selected session’s CSV before exporting.",
+        );
     }
-    let students = Object.entries(byDay).filter(([day]) =>
-        !getLoadedRosterSession(day) ||
-        getLoadedRosterSession(day) === session.id
-    ).flatMap(([, rows]) => rows);
     const local = getInstructorsForDay(session.session_day);
     let names = local?.names ?? [];
     let codes = local?.codes ?? [];

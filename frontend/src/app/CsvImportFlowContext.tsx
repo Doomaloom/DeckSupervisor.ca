@@ -324,7 +324,7 @@ export function CsvImportFlowProvider(
             return;
         }
 
-        let students = getStudentsForDay(day);
+        let students = getStudentsForDay(day, session.id);
         if (students.length === 0) {
             return;
         }
@@ -352,7 +352,7 @@ export function CsvImportFlowProvider(
         const assigned = applySchematicAssignments(students, schematic);
         if (assigned !== students) {
             students = assigned;
-            setStudentsForDay(day, students);
+            setStudentsForDay(day, students, session.id);
         }
 
         const result = await syncReportCardsForDay({
@@ -421,7 +421,10 @@ export function CsvImportFlowProvider(
                 await trackUploadedRosters(targetSession.id, candidateRosters);
             }
             storeProcessedRosters(candidateRosters, targetSession.id);
-            const dayStudents = getStudentsForDay(candidate.dayOfWeek);
+            const dayStudents = getStudentsForDay(
+                candidate.dayOfWeek,
+                targetSession.id,
+            );
             console.log("[csv-import] selected day students", {
                 day: candidate.dayOfWeek,
                 sessionKey: candidate.sessionKey,

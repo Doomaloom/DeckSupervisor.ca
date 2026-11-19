@@ -146,7 +146,7 @@ function refreshImportedSessionDataForSession(
                 sessionId,
             );
         } else {
-            setStudentsForDay(target.sessionDay, []);
+            setStudentsForDay(target.sessionDay, [], sessionId);
         }
     }
 
@@ -745,11 +745,14 @@ export function useManageSessionForm({
                 );
                 setStudentsForDay(
                     editSessionDay,
-                    getStudentsForDay(local.sessionDay).map((student) => ({
+                    getStudentsForDay(local.sessionDay, currentSessionId).map((
+                        student,
+                    ) => ({
                         ...student,
                         instructor: namesByCode.get(student.code) ??
                             student.instructor,
                     })),
+                    currentSessionId,
                 );
             }
             const updatedSessions = loadSessions().map((session) => {

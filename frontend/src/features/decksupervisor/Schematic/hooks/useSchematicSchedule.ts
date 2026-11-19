@@ -24,16 +24,16 @@ export function useSchematicSchedule(selectedDay: string | null) {
         StoredCourseLayout | null
     >(null);
     useEffect(() => {
-        setStudents(getStudentsForDay(selectedDay ?? ""));
-    }, [selectedDay]);
+        setStudents(getStudentsForDay(selectedDay ?? "", sessionId));
+    }, [selectedDay, sessionId]);
 
     useEffect(() => {
         return onStudentsUpdated((day) => {
             if (day === selectedDay) {
-                setStudents(getStudentsForDay(selectedDay ?? ""));
+                setStudents(getStudentsForDay(selectedDay ?? "", sessionId));
             }
         });
-    }, [selectedDay]);
+    }, [selectedDay, sessionId]);
 
     useEffect(() => {
         if (!sessionId) {
@@ -238,7 +238,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
             );
         });
 
-        const dayStudents = getStudentsForDay(selectedDay);
+        const dayStudents = getStudentsForDay(selectedDay, sessionId);
         const updated = dayStudents.map((student) => {
             const instructor = instructorByCode.get(student.code);
             return { ...student, instructor: instructor ?? "" };
@@ -276,7 +276,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
             setRemoteSchedule(nextRemoteSchedule);
         }
 
-        setStudentsForDay(selectedDay, updated);
+        setStudentsForDay(selectedDay, updated, sessionId);
         if (sessionId) {
             await invalidateCachedSchematicPdfs(sessionId, selectedDay);
             void prefetchSchematicPdfs({

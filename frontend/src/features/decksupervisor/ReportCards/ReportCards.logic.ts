@@ -10,7 +10,6 @@ import { useCurrentTerm } from "../../../app/useCurrentTerm";
 
 import { applySchematicAssignments, getSessionTermLabel, type SavedSchematicAssignments, syncReportCardsForDay, } from "../../../lib/reportCardSync";
 
-import { getLoadedRosterSession } from "../../../lib/loadedRosterSession";
 
 import { applyPersistedLevelEdits, fetchRosterLevelEdits, fetchRosterStudentEdits, hashStudentNames, } from "../../../lib/rosterEditsApi";
 
@@ -46,8 +45,8 @@ export function useReportCardsLogic() {
             setStudents([]);
             return;
         }
-        setStudents(getStudentsForDay(selectedDay));
-    }, [accountType, selectedDay]);
+        setStudents(getStudentsForDay(selectedDay, sessionId));
+    }, [accountType, selectedDay, sessionId]);
 
     useEffect(() => {
         if (accountType === "full_time") {
@@ -55,10 +54,10 @@ export function useReportCardsLogic() {
         }
         return onStudentsUpdated((day) => {
             if (day === selectedDay) {
-                setStudents(getStudentsForDay(selectedDay));
+                setStudents(getStudentsForDay(selectedDay, sessionId));
             }
         });
-    }, [accountType, selectedDay]);
+    }, [accountType, selectedDay, sessionId]);
 
     useEffect(() => {
         if (
@@ -107,7 +106,7 @@ export function useReportCardsLogic() {
             }
 
             setStudents(next);
-            setStudentsForDay(selectedDay, next);
+            setStudentsForDay(selectedDay, next, sessionId);
         };
 
         void applyEdits().catch((error) => {
@@ -194,14 +193,12 @@ export function useReportCardsLogic() {
 
     const schematicLoaded = Boolean(sessionId) && schematic?.sessionId === sessionId;
     const assignedStudents = useMemo(() => {
-        const loadedSession = getLoadedRosterSession(selectedDay);
-        if (
-            !schematicLoaded || (loadedSession && loadedSession !== sessionId)
-        ) {
+        // students is this session's own roster cache.
+        if (!schematicLoaded) {
             return students;
         }
         return applySchematicAssignments(students, schematic?.data);
-    }, [schematic, schematicLoaded, selectedDay, sessionId, students]);
+    }, [schematic, schematicLoaded, students]);
 
     const { instructorSummaries, lessonBlockTotals, totalStudents } = useMemo(
         () => buildStudentReportCardSummary(assignedStudents),

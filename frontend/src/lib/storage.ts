@@ -6,11 +6,19 @@ import type {
     ScheduleConfig,
     Student,
 } from "../types/app";
-import { getStoredItem, setStoredItem } from "./browserStorage";
+import { getStoredItem, removeStoredItem, setStoredItem } from "./browserStorage";
+import { getExtractedClassesForSession } from "./extractedClassesStorage";
+import { getLoadedRosterSession } from "./loadedRosterSession";
+import { getCurrentSessionId } from "./sessionStorage";
 import { getScopedKey } from "./storageScope";
 
 const selectedDayKey = () => getScopedKey("selectedDay");
-const studentsKey = () => getScopedKey("studentsByDay");
+// Roster rows are cached per session, then per weekday: two sessions on the
+// same weekday must never share or overwrite each other's swimmers.
+const studentsKey = () => getScopedKey("studentsBySession");
+// Before triage W10 rows were cached by weekday only. Entries are moved into
+// a session's cache once they can be attributed to it (adoptLegacyStudents).
+const legacyStudentsKey = () => getScopedKey("studentsByDay");
 const instructorsKey = () => getScopedKey("instructorsByDay");
 const formatOptionsKey = () => getScopedKey("formatOptions");
 const masterlistDraftOptionsKey = () => getScopedKey("masterlistDraftOptions");
@@ -20,6 +28,7 @@ const customRostersKey = () => getScopedKey("customRostersByDay");
 const studentsUpdatedEvent = () => getScopedKey("students-updated");
 
 type StudentsByDay = Record<string, Student[]>;
+type StudentsBySession = Record<string, StudentsByDay>;
 type InstructorsByDay = Record<string, InstructorConfig>;
 type SchedulesByDay = Record<string, ScheduleConfig>;
 type InstructorCoursesByDay = Record<string, InstructorCourseConfig>;
@@ -129,28 +138,88 @@ export function setMasterlistDraftOptions(options: FormatOptions) {
     saveJson(masterlistDraftOptionsKey(), options);
 }
 
-export function getStudentsByDay(): StudentsByDay {
-    return loadJson(studentsKey(), {});
+// Omitted means the current session; "" is the cache used with no session.
+function resolveRosterSessionId(sessionId?: string) {
+    return (sessionId ?? getCurrentSessionId()).trim();
 }
 
-export function getStudentsForDay(day: string): Student[] {
+function loadStudentsBySession(): StudentsBySession {
+    return loadJson<StudentsBySession>(studentsKey(), {});
+}
+
+function rowsMatchSessionClasses(rows: Student[], sessionId: string) {
+    const codes = new Set(
+        getExtractedClassesForSession(sessionId)
+            .map((entry) => entry.courseCode.trim())
+            .filter(Boolean),
+    );
+    return codes.size > 0 && rows.every((row) => codes.has(row.code.trim()));
+}
+
+// Move a weekday-only entry into this session's cache when it provably belongs
+// to it: the upload recorded this session, or (for uploads older than that
+// record) every row is one of this session's classes. Otherwise leave it.
+function adoptLegacyStudents(day: string, sessionId: string): Student[] | null {
+    if (!sessionId) {
+        return null;
+    }
+    const legacy = loadJson<StudentsByDay>(legacyStudentsKey(), {});
+    const rows = legacy[day];
+    if (!Array.isArray(rows) || rows.length === 0) {
+        return null;
+    }
+    const owner = getLoadedRosterSession(day);
+    const belongs = owner
+        ? owner === sessionId
+        : rowsMatchSessionClasses(rows, sessionId);
+    if (!belongs) {
+        return null;
+    }
+    const all = loadStudentsBySession();
+    all[sessionId] = { ...(all[sessionId] ?? {}), [day]: rows };
+    saveJson(studentsKey(), all);
+    delete legacy[day];
+    if (Object.keys(legacy).length === 0) {
+        removeStoredItem(legacyStudentsKey());
+    } else {
+        saveJson(legacyStudentsKey(), legacy);
+    }
+    return rows;
+}
+
+export function getStudentsByDay(sessionId?: string): StudentsByDay {
+    return loadStudentsBySession()[resolveRosterSessionId(sessionId)] ?? {};
+}
+
+export function getStudentsForDay(day: string, sessionId?: string): Student[] {
     if (!day) {
         return [];
     }
-    const all = getStudentsByDay();
-    return all[day] ?? [];
+    const id = resolveRosterSessionId(sessionId);
+    const cached = getStudentsByDay(id)[day];
+    if (cached) {
+        return cached;
+    }
+    return adoptLegacyStudents(day, id) ?? [];
 }
 
-export function setStudentsForDay(day: string, students: Student[]) {
+export function setStudentsForDay(
+    day: string,
+    students: Student[],
+    sessionId?: string,
+) {
     if (!day) {
         return;
     }
-    const all = getStudentsByDay();
-    all[day] = students;
+    const id = resolveRosterSessionId(sessionId);
+    const all = loadStudentsBySession();
+    all[id] = { ...(all[id] ?? {}), [day]: students };
     saveJson(studentsKey(), all);
     if (typeof window !== "undefined") {
         window.dispatchEvent(
-            new CustomEvent(studentsUpdatedEvent(), { detail: { day } }),
+            new CustomEvent(studentsUpdatedEvent(), {
+                detail: { day, sessionId: id },
+            }),
         );
     }
 }
@@ -159,24 +228,27 @@ export function updateStudentForDay(
     day: string,
     studentId: string,
     update: Partial<Student>,
+    sessionId?: string,
 ) {
     if (!day) {
         return;
     }
-    const students = getStudentsForDay(day);
+    const students = getStudentsForDay(day, sessionId);
     const updated = students.map((student) =>
         student.id === studentId ? { ...student, ...update } : student
     );
-    setStudentsForDay(day, updated);
+    setStudentsForDay(day, updated, sessionId);
 }
 
-export function onStudentsUpdated(handler: (day: string) => void) {
+export function onStudentsUpdated(
+    handler: (day: string, sessionId: string) => void,
+) {
     if (typeof window === "undefined") {
         return () => {};
     }
     const listener = (event: Event) => {
-        const custom = event as CustomEvent<{ day?: string }>;
-        handler(custom.detail?.day ?? "");
+        const custom = event as CustomEvent<{ day?: string; sessionId?: string }>;
+        handler(custom.detail?.day ?? "", custom.detail?.sessionId ?? "");
     };
     const eventName = studentsUpdatedEvent();
     window.addEventListener(eventName, listener);
@@ -293,19 +365,20 @@ export function clearDayData(day: string) {
     if (!day) {
         return;
     }
-    const students = getStudentsByDay();
+    const studentsBySession = loadStudentsBySession();
+    const sessionId = resolveRosterSessionId();
     const instructors = getInstructorsByDay();
     const schedules = getSchedulesByDay();
     const instructorCourses = getInstructorCoursesByDay();
     const customRosters = getCustomRostersByDay();
 
-    delete students[day];
+    delete studentsBySession[sessionId]?.[day];
     delete instructors[day];
     delete schedules[day];
     delete instructorCourses[day];
     delete customRosters[day];
 
-    saveJson(studentsKey(), students);
+    saveJson(studentsKey(), studentsBySession);
     saveJson(instructorsKey(), instructors);
     saveJson(schedulesKey(), schedules);
     saveJson(instructorCoursesKey(), instructorCourses);

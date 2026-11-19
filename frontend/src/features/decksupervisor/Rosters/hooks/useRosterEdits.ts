@@ -82,7 +82,7 @@ export function useRosterEdits({
             student.code === code ? { ...student, level } : student
         );
         setStudents(updated);
-        setStudentsForDay(selectedDay, updated);
+        setStudentsForDay(selectedDay, updated, sessionId);
         notifyDirtyInstructors(
             updated
                 .filter((student) => student.code === code)
@@ -99,7 +99,7 @@ export function useRosterEdits({
             student.id === studentId ? { ...student, level } : student
         );
         setStudents(updated);
-        updateStudentForDay(selectedDay, studentId, { level });
+        updateStudentForDay(selectedDay, studentId, { level }, sessionId);
         const student = students.find((item) => item.id === studentId);
         if (student?.instructor) {
             notifyDirtyInstructors([student.instructor]);

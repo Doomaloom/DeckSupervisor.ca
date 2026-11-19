@@ -19,7 +19,7 @@ beforeEach(() => sessionStorage.clear());
 
 it("uses matching upload students, omits waitlists, and applies current session assignments", () => {
     setLoadedRosterSession("Mo", "session-a");
-    setStudentsForDay("Mo", rosterToStudents([{ ...snapshot.roster, students: [{ ...snapshot.roster.students[0], instructor: "Current" }] }]));
+    setStudentsForDay("Mo", rosterToStudents([{ ...snapshot.roster, students: [{ ...snapshot.roster.students[0], instructor: "Current" }] }]), "session-a");
     expect(buildUpdatePrintItems("session-a", [update], { A: snapshot })[0].roster).toMatchObject({
         code: "A", instructor: "Current", students: [{ name: "Alice" }],
     });

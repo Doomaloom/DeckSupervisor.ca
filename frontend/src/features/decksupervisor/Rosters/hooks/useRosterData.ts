@@ -63,16 +63,16 @@ export function useRosterData(
     const appliedEditsKey = useRef("");
 
     useEffect(() => {
-        setStudents(getStudentsForDay(selectedDay));
-    }, [selectedDay]);
+        setStudents(getStudentsForDay(selectedDay, sessionId));
+    }, [selectedDay, sessionId]);
 
     useEffect(() => {
         return onStudentsUpdated((day) => {
             if (day === selectedDay) {
-                setStudents(getStudentsForDay(selectedDay));
+                setStudents(getStudentsForDay(selectedDay, sessionId));
             }
         });
-    }, [selectedDay]);
+    }, [selectedDay, sessionId]);
 
     useEffect(() => {
         if (!sessionId || isGuest) {
@@ -112,7 +112,7 @@ export function useRosterData(
             return;
         }
         setStudents(next);
-        setStudentsForDay(selectedDay, next);
+        setStudentsForDay(selectedDay, next, sessionId);
     }, [isGuest, remoteSchematic, selectedDay, sessionId, students]);
 
     useEffect(() => {
@@ -150,7 +150,7 @@ export function useRosterData(
             );
 
             setStudents(next);
-            setStudentsForDay(selectedDay, next);
+            setStudentsForDay(selectedDay, next, sessionId);
         };
         void applyEdits();
         return () => {

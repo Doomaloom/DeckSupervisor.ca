@@ -129,7 +129,7 @@ it("imports a signed-out roster from the analyzed CSV without another request", 
     expect(mocks.createSession).not.toHaveBeenCalled();
     const sessions = loadSessions();
     expect(sessions).toHaveLength(1);
-    expect(getStudentsForDay("Th").map((s) => [s.name, s.instructor])).toEqual([
+    expect(getStudentsForDay("Th", sessions[0].id).map((s) => [s.name, s.instructor])).toEqual([
         ["Avery Test", "Jordan"],
         ["Blair Test", "Jordan"],
     ]);
