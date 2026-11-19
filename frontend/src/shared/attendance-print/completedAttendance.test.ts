@@ -43,6 +43,51 @@ describe('completed historical attendance sheets', () => {
         expect(document.querySelectorAll('[data-page-kind="attendance-back"]')).toHaveLength(4);
         expect(document.querySelectorAll('.combined-page')).toHaveLength(0);
     });
+    const classOf = (count: number, lessonDates = ['2026-09-10','2026-09-17']): AttendancePrintRoster => ({
+        code:'98012', level:'Splash7', serviceName:'Splash 7', time:'17:00', instructor:'Alex', location:'Pool', schedule:'Thu 2026-09-10',
+        completed:{curriculumVersion:COMPLETED_PRINT_CURRICULUM_VERSION, lessonDates},
+        students:Array.from({length:count},(_,i)=>({
+            name:`Swimmer ${i+1}`, enrollmentId:`e${i+1}`,
+            results:{attendance:{[lessonDates[0]]:i%2?'absent':'present'}, successfulAttempts:{'Splash7:1':i%3+1,'Splash7:2':(i+1)%3}},
+        })),
+    });
+    const fronts = (document: Document) => [...document.querySelectorAll('[data-page-kind="attendance-front"]')].map(page =>
+        [...page.querySelectorAll<HTMLElement>('[data-generated-attendance-row]')].map(row => {
+            const marks = [...row.querySelectorAll<HTMLElement>('[data-earned-checks]')].map(cell => Number(cell.dataset.earnedChecks));
+            return {label: row.querySelector('td strong')!.textContent, id: row.dataset.enrollmentId, marks: marks.slice(0,2), ticks: row.querySelector('td font span:last-child')!.textContent};
+        }));
+    const expected = (n: number, lessonDates = ['2026-09-10','2026-09-17']) => ({
+        label:`${n}. Swimmer ${n}`, id:`e${n}`, marks:[(n-1)%3+1, n%3],
+        ticks:lessonDates.map((date,d)=>`[${date.slice(5).replace('-','/')} ${d===0 && date==='2026-09-10' ? ((n-1)%2?'×':'✓') : ' '}]`).join(' '),
+    });
+    it('keeps an 8-swimmer class on one sheet numbered 1 to 8', async () => {
+        const pages = fronts(await buildAttendancePrintDocument({template:'Splash7', roster:classOf(8)}));
+        expect(pages).toEqual([[1,2,3,4,5,6,7,8].map(n => expected(n))]);
+    });
+    it('numbers continuation sheets on from the first sheet and keeps each swimmer\'s results on their row', async () => {
+        for (const [count, sheets] of [[11,[[1,8],[9,11]]],[17,[[1,8],[9,16],[17,17]]]] as const) {
+            const pages = fronts(await buildAttendancePrintDocument({template:'Splash7', roster:classOf(count)}));
+            expect(pages, `${count} swimmers`).toEqual(sheets.map(([from,to]) => Array.from({length:to-from+1},(_,i)=>expected(from+i))));
+        }
+    });
+    it('repeats the same row numbers on date-continuation sheets', async () => {
+        const dates = Array.from({length:15},(_,i)=>`2026-09-${String(i+10).padStart(2,'0')}`);
+        const pages = fronts(await buildAttendancePrintDocument({template:'Splash7', roster:classOf(11, dates)}));
+        expect(pages.map(rows => rows.map(row => row.label))).toEqual([
+            [1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8], [9,10,11], [9,10,11],
+        ].map(sheet => sheet.map(n => `${n}. Swimmer ${n}`)));
+        expect(pages[0][1]).toEqual(expected(2, dates.slice(0,14)));
+        expect(pages[3][2]).toEqual(expected(11, dates.slice(14)));
+    });
+    it('numbers blank sheets from 1 in one table for every level template', async () => {
+        for (const key of LEGACY_ATTENDANCE_TEMPLATE_KEYS) {
+            const r = classOf(20); delete r.completed; r.students.forEach(s => { delete s.results; delete s.enrollmentId; });
+            const document = await buildAttendancePrintDocument({template:key, roster:r});
+            expect(document.querySelectorAll('[data-page-kind="attendance-front"]'), key).toHaveLength(1);
+            expect([...document.querySelectorAll('[data-generated-attendance-row] td strong')].map(cell => cell.textContent), key)
+                .toEqual(Array.from({length:20},(_,i)=>`${i+1}. Swimmer ${i+1}`));
+        }
+    });
     it('uses required minimum and alternative maximum, never sums components', () => {
         const column={cellIndex:1,heading:'group',skillIds:['front','back'],aggregation:'all' as const};
         expect(earnedChecks(column,{front:3,back:1})).toBe(1);

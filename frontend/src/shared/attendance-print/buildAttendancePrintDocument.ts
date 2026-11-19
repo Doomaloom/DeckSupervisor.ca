@@ -76,7 +76,7 @@ export async function buildAttendancePrintDocument(
         for (let student = 0; student < Math.max(1, item.roster.students.length); student += 8) {
             for (let date = 0; date < dates.length; date += 14) {
                 const lessonDates = dates.slice(date, date + 14);
-                pages.push({ ...item, roster: {
+                pages.push({ ...item, firstRowNumber: student + 1, roster: {
                     ...item.roster,
                     completed: { ...item.roster.completed, lessonDates },
                     students: item.roster.students.slice(student, student + 8).map(person => ({
@@ -162,6 +162,7 @@ export async function buildAttendancePrintDocument(
                         fragment,
                         item.roster,
                         request.session?.trim() || "Session",
+                        { firstRowNumber: item.firstRowNumber },
                     );
                     fillCompletedMarks(fragment, item.roster, item.template);
                     if (paired) {

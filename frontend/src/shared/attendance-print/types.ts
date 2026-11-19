@@ -26,6 +26,8 @@ export type AttendancePrintRoster = {
 export type AttendancePrintItem = {
     template: string;
     roster: AttendancePrintRoster;
+    /** Row number of the first student on a completed continuation sheet. */
+    firstRowNumber?: number;
 };
 
 export type AttendancePrintRequest = {

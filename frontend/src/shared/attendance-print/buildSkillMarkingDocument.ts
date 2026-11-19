@@ -76,7 +76,7 @@ export function buildSkillMarkingDocument(session: InstructorSession, course: In
             schedule: `${session.session_day} ${plan.week}`,
             time: `${course.start_time.slice(0, 5)}-${course.end_time.slice(0, 5)}`,
             students: studentRows.slice(studentPage * 14, (studentPage + 1) * 14),
-        }, sessionLabel(session), { dailyAttendance: false });
+        }, sessionLabel(session), { dailyAttendance: false, firstRowNumber: studentPage * 14 + 1 });
         // Repeated sheets use data fields so IDs remain unique in the document.
         page.querySelectorAll<HTMLElement>("[id]").forEach((element) => {
             element.dataset.field = element.id;

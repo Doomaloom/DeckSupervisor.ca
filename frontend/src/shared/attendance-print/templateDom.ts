@@ -88,8 +88,10 @@ export function fillAttendanceRoster(
     root: HTMLElement,
     roster: AttendancePrintRoster,
     session: string,
-    options: { dailyAttendance?: boolean } = {},
+    // firstRowNumber keeps numbering continuous when a class is split across sheets.
+    options: { dailyAttendance?: boolean; firstRowNumber?: number } = {},
 ) {
+    const firstRowNumber = options.firstRowNumber ?? 1;
     const startDate = roster.completed
         ? [...roster.completed.lessonDates].sort()[0] ?? ""
         : roster.schedule.trim().split(/\s+/)[1] ?? "";
@@ -119,7 +121,7 @@ export function fillAttendanceRoster(
         const nameCell = root.ownerDocument.createElement("td");
         const strong = root.ownerDocument.createElement("strong");
         strong.style.fontFamily = "Arial";
-        strong.textContent = `${index + 1}. ${student.name}`;
+        strong.textContent = `${firstRowNumber + index}. ${student.name}`;
         nameCell.append(strong);
 
         const font = root.ownerDocument.createElement("font");

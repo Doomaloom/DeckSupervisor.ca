@@ -78,7 +78,7 @@ it("fills known student names safely, and retains all students in large classes"
     expect(document.querySelectorAll(".marking-page")).toHaveLength(2);
     const rows = Array.from(document.querySelectorAll("tr[data-generated-attendance-row]"));
     expect(rows).toHaveLength(18);
-    expect(rows.map((row) => row.querySelector("td strong")!.textContent?.replace(/^\d+\. /, ""))).toEqual(students.map(({ name }) => name));
+    expect(rows.map((row) => row.querySelector("td strong")!.textContent)).toEqual(students.map(({ name }, index) => `${index + 1}. ${name}`));
     expect(document.querySelectorAll("test")).toHaveLength(0);
     expect(document.body.textContent).not.toContain("[Day");
     expect(document.body.textContent).not.toContain("Absent/Present");
