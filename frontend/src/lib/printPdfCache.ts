@@ -47,13 +47,15 @@ function openDb(): Promise<IDBDatabase> {
     }
     return new Promise((resolve, reject) => {
         const request = window.indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = () => {
+        request.onupgradeneeded = (event) => {
             const db = request.result;
             const transaction = request.transaction;
             if (!db.objectStoreNames.contains(PDF_STORE_NAME)) {
                 db.createObjectStore(PDF_STORE_NAME, { keyPath: "key" });
             }
-            if (request.oldVersion < 3) {
+            // oldVersion lives on the upgrade event, not the request. A first-time
+            // open (0) has nothing to clear; versions 1 and 2 hold stale PDFs.
+            if (event.oldVersion > 0 && event.oldVersion < 3) {
                 transaction?.objectStore(PDF_STORE_NAME).clear();
             }
         };
