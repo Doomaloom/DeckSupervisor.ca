@@ -395,7 +395,7 @@ func TestDeviceUploadForwardsCapabilityPerOperationAndIsolatesFailures(t *testin
 		if r.Status != want[i] || r.OperationID != []string{"one", "two", "three", "four"}[i] {
 			t.Fatalf("receipt %d out of order or wrong: %+v", i, r)
 		}
-		if r.Status == "rejected" && (r.Revision != 0 || r.Reason != "unauthorized_or_invalid") {
+		if r.Status == "rejected" && (r.Revision != 0 || r.Reason != map[string]string{"two": "unauthorized_or_invalid", "three": "temporarily_unavailable"}[r.OperationID]) {
 			t.Fatalf("rejection leaked detail: %+v", r)
 		}
 	}
@@ -458,7 +458,7 @@ func TestSnapshotRoutesForwardScopeAndHideDatabaseErrors(t *testing.T) {
 	if _, has := c.Body["p_session"]; w.Code != 200 || has || c.Body["p_token"] != token || c.Body["p_class"] != "class-a" || c.APIKey != "sb_secret_results_audit" {
 		t.Fatalf("device snapshot: %d %#v", w.Code, c)
 	}
-	for status, want := range map[int]int{401: 401, 403: 403, 404: 403, 400: 403, 500: 403} {
+	for status, want := range map[int]int{401: 401, 403: 403, 400: 400, 409: 409, 404: 502, 500: 502, 503: 502} {
 		fail = status
 		for _, device := range []bool{false, true} {
 			if device {

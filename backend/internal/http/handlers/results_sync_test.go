@@ -164,3 +164,13 @@ func TestBoundSameNameInstructorSharingMintsHashOnlyGrants(t *testing.T) {
 		t.Fatalf("minted %d", minted)
 	}
 }
+func TestResultsUploadOutageIsReportedAsUnavailableNotUnauthorized(t *testing.T) {
+	staffServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(503)
+		io.WriteString(w, `{"message":"DO-NOT-RETURN-DB-TEXT"}`)
+	})
+	w := staffRequest("POST", "/api/sessions/session-a/results", `{"schemaVersion":1,"operations":[{"operationId":"one","sessionId":"session-a"}]}`, true)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"reason":"temporarily_unavailable"`) || strings.Contains(w.Body.String(), "DO-NOT") {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+}

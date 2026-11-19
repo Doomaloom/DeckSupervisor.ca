@@ -11,14 +11,33 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const resultUnavailable = "Results service is unavailable right now. Try again in a moment."
+
+// resultServerFailure reports upstream failures that are not the caller's fault:
+// transport errors, PostgREST 5xx, and 404 (an RPC missing from the schema).
+func resultServerFailure(err error) bool {
+	var api *supabase.APIError
+	return !errors.As(err, &api) || api.StatusCode >= 500 || api.StatusCode == 404
+}
+
 // Never return/log database exception text: input may contain rejected PII.
 func resultError(w http.ResponseWriter, err error) {
-	var api *supabase.APIError
-	if errors.As(err, &api) && api.StatusCode == 401 {
-		http.Error(w, "Unauthorized", 401)
+	if resultServerFailure(err) {
+		http.Error(w, resultUnavailable, 502)
 		return
 	}
-	http.Error(w, "Request not authorized or invalid", 403)
+	var api *supabase.APIError
+	errors.As(err, &api)
+	switch api.StatusCode {
+	case 401:
+		http.Error(w, "Unauthorized", 401)
+	case 403:
+		http.Error(w, "Request not authorized or invalid", 403)
+	case 409:
+		http.Error(w, "Request conflicts with current results; refresh and try again", 409)
+	default:
+		http.Error(w, "Invalid request", 400)
+	}
 }
 func resultClient(w http.ResponseWriter, r *http.Request, device bool) *supabase.Client {
 	var c *supabase.Client
@@ -170,7 +189,13 @@ func Results(w http.ResponseWriter, r *http.Request) {
 		var receipt json.RawMessage
 		// Each RPC is its own transaction; a bad operation cannot roll back its siblings.
 		if err := c.RPC(r.Context(), "result_apply", args, &receipt); err != nil {
-			receipt, _ = json.Marshal(map[string]any{"operationId": id.OperationID, "status": "rejected", "revision": 0, "reason": "unauthorized_or_invalid"})
+			// Still per operation, so one failing operation cannot block its siblings; the reason
+			// tells an outage apart from a refusal (clients keep rejected operations queued).
+			reason := "unauthorized_or_invalid"
+			if resultServerFailure(err) {
+				reason = "temporarily_unavailable"
+			}
+			receipt, _ = json.Marshal(map[string]any{"operationId": id.OperationID, "status": "rejected", "revision": 0, "reason": reason})
 		}
 		receipts = append(receipts, receipt)
 	}
