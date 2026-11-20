@@ -125,22 +125,28 @@ export function fillAttendanceRoster(
         nameCell.append(strong);
 
         const font = root.ownerDocument.createElement("font");
-        font.append(root.ownerDocument.createElement("br"));
 
-        const absent = root.ownerDocument.createElement("span");
-        absent.style.textDecoration = "underline";
-        absent.textContent = "A";
-        font.append(absent, "bsent/");
-        const present = root.ownerDocument.createElement("span");
-        present.style.textDecoration = "underline";
-        present.textContent = "P";
-        font.append(present, "resent", root.ownerDocument.createElement("br"));
+        // Completed sheets omit the handwritten A/P prompt (the dated ✓/× line already records
+        // attendance) and set that line as a tight block, so a whole class fits on one page.
+        if (!roster.completed) {
+            font.append(root.ownerDocument.createElement("br"));
+            const absent = root.ownerDocument.createElement("span");
+            absent.style.textDecoration = "underline";
+            absent.textContent = "A";
+            font.append(absent, "bsent/");
+            const present = root.ownerDocument.createElement("span");
+            present.style.textDecoration = "underline";
+            present.textContent = "P";
+            font.append(present, "resent", root.ownerDocument.createElement("br"));
+        }
         const days = root.ownerDocument.createElement("span");
         days.style.color = "rgb(98, 98, 98)";
         days.style.fontSize = "10.5px";
         if (roster.completed) {
             days.style.fontFamily = 'Arial';
             days.style.fontSize = '9px';
+            days.style.display = 'block';
+            days.style.lineHeight = '1.2';
             days.textContent = [...roster.completed.lessonDates].sort().map(date => {
                 const status = student.results?.attendance[date];
                 const mark = status === 'present' ? '✓' : status === 'absent' ? '×' : ' ';

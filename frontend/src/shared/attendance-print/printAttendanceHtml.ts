@@ -1,3 +1,4 @@
+import { fitCompletedAttendancePages } from "./fitCompletedAttendancePages";
 import { prepareSkillMarkingLayout } from "./prepareSkillMarkingLayout";
 import { prepareSchematicCoversForPrint } from "./schematicCover";
 import { buildAttendancePrintDocument } from "./buildAttendancePrintDocument";
@@ -66,6 +67,7 @@ export async function printPreparedAttendanceDocument(prepared: Document, existi
     existingWindow.document.close();
     await withTimeout(waitForLayout(existingWindow));
     prepareSkillMarkingLayout(existingWindow.document);
+    fitCompletedAttendancePages(existingWindow.document);
     existingWindow.addEventListener(
         "afterprint",
         () => existingWindow.close(),
@@ -73,6 +75,7 @@ export async function printPreparedAttendanceDocument(prepared: Document, existi
     );
     existingWindow.addEventListener("beforeprint", () => {
         prepareSkillMarkingLayout(existingWindow.document);
+        fitCompletedAttendancePages(existingWindow.document);
         prepareSchematicCoversForPrint(existingWindow);
     });
     existingWindow.focus();

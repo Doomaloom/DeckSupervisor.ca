@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import resultsCurriculum from '../../features/results/curriculum.json';
 import planningLevels from '../../features/instructor/LessonPlans/lessonSkills.json';
-import { buildAttendancePrintDocument } from './buildAttendancePrintDocument';
+import { buildAttendancePrintDocument, COMPLETED_STUDENTS_PER_SHEET as LIMIT } from './buildAttendancePrintDocument';
 import { earnedChecks, type CompletedPrintColumn } from './completedAttendance';
 import manifest from './completedPrintMap.json';
 import { LEGACY_ATTENDANCE_TEMPLATE_KEYS } from './templateRegistry';
@@ -98,15 +98,15 @@ describe('completed sheets across every production template', () => {
 
     it('splits continuation pages so each student and lesson date is printed exactly once with its own marks', async () => {
         const dates = Array.from({ length: 15 }, (_, i) => `2026-09-${String(i + 1).padStart(2, '0')}`);
-        const roster = completedRoster('Splash1', Array.from({ length: 9 }, (_, i) => `Swimmer ${i}`));
+        const roster = completedRoster('Splash1', Array.from({ length: LIMIT + 1 }, (_, i) => `Swimmer ${i}`));
         // Deliberately unsorted input dates: slices must still be chronological.
         roster.completed!.lessonDates = [...dates].reverse();
-        roster.students.forEach((student, index) => { student.results!.attendance = { [dates[0]]: 'present', [dates[14]]: index === 8 ? 'absent' : 'present' }; });
+        roster.students.forEach((student, index) => { student.results!.attendance = { [dates[0]]: 'present', [dates[14]]: index === LIMIT ? 'absent' : 'present' }; });
         const document = await buildAttendancePrintDocument({ template: 'Splash1', roster });
         const fronts = [...document.querySelectorAll<HTMLElement>('[data-page-kind="attendance-front"]')];
         const summary = fronts.map(front => [...front.querySelectorAll<HTMLTableRowElement>('[data-generated-attendance-row]')].map(row => ({ id: row.dataset.enrollmentId!, text: row.children[0].textContent!, checks: row0Checks(row) })));
         expect(summary.map(rows => rows.map(row => row.id))).toEqual([
-            Array.from({ length: 8 }, (_, i) => `enrollment-${i}`), Array.from({ length: 8 }, (_, i) => `enrollment-${i}`), ['enrollment-8'], ['enrollment-8'],
+            Array.from({ length: LIMIT }, (_, i) => `enrollment-${i}`), Array.from({ length: LIMIT }, (_, i) => `enrollment-${i}`), [`enrollment-${LIMIT}`], [`enrollment-${LIMIT}`],
         ]);
         const dateLabels = (text: string) => [...text.matchAll(/\[(\d\d\/\d\d) (.)\]/g)].map(match => `${match[1]}${match[2]}`);
         expect(dateLabels(summary[0][0].text)).toEqual(dates.slice(0, 14).map((date, i) => `${date.slice(5).replace('-', '/')}${i === 0 ? '✓' : ' '}`));
@@ -115,7 +115,7 @@ describe('completed sheets across every production template', () => {
         // Earned checks are cumulative for the session and repeat unchanged on each continuation sheet.
         expect(summary[1][0].checks).toEqual(summary[0][0].checks);
         expect(summary[3][0].checks).toEqual(summary[2][0].checks);
-        expect(summary[2][0].checks).toEqual(levels.Splash1.map((_, columnIndex) => Math.min(3, count(8, columnIndex))));
+        expect(summary[2][0].checks).toEqual(levels.Splash1.map((_, columnIndex) => Math.min(3, count(LIMIT, columnIndex))));
     });
 
     it('rejects malformed completed input instead of printing a misleading sheet', async () => {

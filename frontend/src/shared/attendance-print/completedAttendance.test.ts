@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import planningLevels from '../../features/instructor/LessonPlans/lessonSkills.json';
-import { buildAttendancePrintDocument } from './buildAttendancePrintDocument';
+import { buildAttendancePrintDocument, COMPLETED_STUDENTS_PER_SHEET } from './buildAttendancePrintDocument';
 import { COMPLETED_PRINT_CURRICULUM_VERSION, earnedChecks } from './completedAttendance';
 import manifest from './completedPrintMap.json';
 import { LEGACY_ATTENDANCE_TEMPLATE_KEYS, loadAttendanceTemplate } from './templateRegistry';
@@ -34,14 +34,15 @@ describe('completed historical attendance sheets', () => {
         ]) { const r=roster(); change(r); await expect(buildAttendancePrintDocument({template:'Splash1',roster:r})).rejects.toThrow(); }
         await expect(buildAttendancePrintDocument({template:'SplashPrivate',roster:roster()})).rejects.toThrow('assessed curriculum');
     });
-    it('repeats complete sheets for large classes and long sessions', async () => {
-        const r=roster(); r.students=Array.from({length:9},(_,i)=>({...r.students[0],enrollmentId:`e${i}`}));
+    it('repeats complete sheets only for classes over the one-sheet limit and long sessions', async () => {
+        const r=roster(); r.students=Array.from({length:COMPLETED_STUDENTS_PER_SHEET+1},(_,i)=>({...r.students[0],enrollmentId:`e${i}`}));
         r.completed!.lessonDates=Array.from({length:15},(_,i)=>`2026-09-${String(i+1).padStart(2,'0')}`);
         r.students.forEach(s=>s.results={attendance:{},successfulAttempts:{}});
         const document=await buildAttendancePrintDocument({template:'Splash1',roster:r});
         expect(document.querySelectorAll('[data-page-kind="attendance-front"]')).toHaveLength(4);
         expect(document.querySelectorAll('[data-page-kind="attendance-back"]')).toHaveLength(4);
         expect(document.querySelectorAll('.combined-page')).toHaveLength(0);
+        expect(document.querySelectorAll('.print-page:not([data-completed="true"])')).toHaveLength(0);
     });
     const classOf = (count: number, lessonDates = ['2026-09-10','2026-09-17']): AttendancePrintRoster => ({
         code:'98012', level:'Splash7', serviceName:'Splash 7', time:'17:00', instructor:'Alex', location:'Pool', schedule:'Thu 2026-09-10',
@@ -60,24 +61,43 @@ describe('completed historical attendance sheets', () => {
         label:`${n}. Swimmer ${n}`, id:`e${n}`, marks:[(n-1)%3+1, n%3],
         ticks:lessonDates.map((date,d)=>`[${date.slice(5).replace('-','/')} ${d===0 && date==='2026-09-10' ? ((n-1)%2?'×':'✓') : ' '}]`).join(' '),
     });
-    it('keeps an 8-swimmer class on one sheet numbered 1 to 8', async () => {
-        const pages = fronts(await buildAttendancePrintDocument({template:'Splash7', roster:classOf(8)}));
-        expect(pages).toEqual([[1,2,3,4,5,6,7,8].map(n => expected(n))]);
-    });
-    it('numbers continuation sheets on from the first sheet and keeps each swimmer\'s results on their row', async () => {
-        for (const [count, sheets] of [[11,[[1,8],[9,11]]],[17,[[1,8],[9,16],[17,17]]]] as const) {
-            const pages = fronts(await buildAttendancePrintDocument({template:'Splash7', roster:classOf(count)}));
-            expect(pages, `${count} swimmers`).toEqual(sheets.map(([from,to]) => Array.from({length:to-from+1},(_,i)=>expected(from+i))));
+    it('keeps every realistic class on one sheet numbered 1 to N with each swimmer\'s results on their row', async () => {
+        for (const count of [1, 8, 11, 12, 14, COMPLETED_STUDENTS_PER_SHEET]) {
+            const document = await buildAttendancePrintDocument({template:'Splash7', roster:classOf(count)});
+            expect(fronts(document), `${count} swimmers`).toEqual([Array.from({length:count},(_,i)=>expected(i+1))]);
+            expect(document.querySelectorAll('[data-page-kind="attendance-back"]'), `${count} swimmers`).toHaveLength(1);
         }
+    });
+    it('maps marks by enrolment ID whatever order the roster lists swimmers in', async () => {
+        const r = classOf(12); r.students.reverse();
+        const rows = fronts(await buildAttendancePrintDocument({template:'Splash7', roster:r}))[0];
+        expect(rows.map(row => row.id)).toEqual(Array.from({length:12},(_,i)=>`e${12-i}`));
+        rows.forEach((row, i) => expect(row).toEqual({...expected(12-i), label:`${i+1}. Swimmer ${12-i}`}));
+    });
+    it('continues a class over the one-sheet limit on a second sheet numbered on from the first', async () => {
+        const limit = COMPLETED_STUDENTS_PER_SHEET;
+        const pages = fronts(await buildAttendancePrintDocument({template:'Splash7', roster:classOf(limit+2)}));
+        expect(pages).toEqual([
+            Array.from({length:limit},(_,i)=>expected(i+1)),
+            [expected(limit+1), expected(limit+2)],
+        ]);
     });
     it('repeats the same row numbers on date-continuation sheets', async () => {
         const dates = Array.from({length:15},(_,i)=>`2026-09-${String(i+10).padStart(2,'0')}`);
         const pages = fronts(await buildAttendancePrintDocument({template:'Splash7', roster:classOf(11, dates)}));
         expect(pages.map(rows => rows.map(row => row.label))).toEqual([
-            [1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8], [9,10,11], [9,10,11],
+            Array.from({length:11},(_,i)=>i+1), Array.from({length:11},(_,i)=>i+1),
         ].map(sheet => sheet.map(n => `${n}. Swimmer ${n}`)));
         expect(pages[0][1]).toEqual(expected(2, dates.slice(0,14)));
-        expect(pages[3][2]).toEqual(expected(11, dates.slice(14)));
+        expect(pages[1][10]).toEqual(expected(11, dates.slice(14)));
+    });
+    it('drops the handwritten Absent/Present prompt only on completed rows', async () => {
+        const completed = await buildAttendancePrintDocument({template:'Splash7', roster:classOf(2)});
+        expect(completed.querySelector('[data-generated-attendance-row] td')!.textContent).not.toContain('bsent/');
+        const r = classOf(2); delete r.completed; r.students.forEach(s => { delete s.results; delete s.enrollmentId; });
+        const blank = await buildAttendancePrintDocument({template:'Splash7', roster:r});
+        expect(blank.querySelector('[data-generated-attendance-row] td')!.textContent).toContain('Absent/Present');
+        expect(blank.querySelectorAll('.print-page[data-completed]')).toHaveLength(0);
     });
     it('numbers blank sheets from 1 in one table for every level template', async () => {
         for (const key of LEGACY_ATTENDANCE_TEMPLATE_KEYS) {

@@ -1,4 +1,5 @@
 import { buildLessonPlanMarkingDocument } from "./buildLessonPlanMarkingDocument";
+import { fitCompletedAttendancePages } from "./fitCompletedAttendancePages";
 import { prepareSkillMarkingLayout } from "./prepareSkillMarkingLayout";
 import { buildCombinedSkillMarkingDocument, buildSkillMarkingDocument } from "./buildSkillMarkingDocument";
 import { curriculumLevels } from "../../features/instructor/LessonPlans/lessonSkills";
@@ -42,6 +43,12 @@ function item(
     };
 }
 
+// ?students=N and ?dates=N size a fixture class so print layouts can be measured at real class sizes.
+const fixtureParams = new URLSearchParams(window.location.search);
+const studentCount = Number(fixtureParams.get("students")) || 0;
+const dateCount = Number(fixtureParams.get("dates")) || 3;
+const sizedStudents = (count: number) => Array.from({ length: count }, (_, index) => ({ name: index === 3 ? 'Alexandria-Marguerite Long Synthetic Name' : `${['Avery Adams', 'Blair Brown', 'Casey Chen'][index % 3]} ${index + 1}` }));
+
 function fixture(
     name: string,
 ): {
@@ -53,13 +60,13 @@ function fixture(
         const roster = item(template).roster;
         const columns = completedMap.levels[template as keyof typeof completedMap.levels];
         if (!columns?.length) throw new Error('Completed fixture needs an assessed level.');
-        const lessonDates = ['2026-07-06', '2026-07-13', '2026-07-20'];
+        const lessonDates = Array.from({ length: dateCount }, (_, index) => new Date(Date.UTC(2026, 6, 6 + index * 7)).toISOString().slice(0, 10));
         roster.completed = {curriculumVersion:completedMap.curriculumVersion, lessonDates};
-        roster.students = Array.from({length:name === 'completed-overflow' ? 17 : 4}, (_,index) => ({
-            name: index === 3 ? 'Alexandria-Marguerite Long Synthetic Name' : ['Avery Adams','Blair Brown','Casey Chen'][index % 3],
+        roster.students = Array.from({length:studentCount || (name === 'completed-overflow' ? 20 : 4)}, (_,index) => ({
+            name: index === 3 ? 'Alexandria-Marguerite Long Synthetic Name' : `${['Avery Adams','Blair Brown','Casey Chen'][index % 3]} ${index + 1}`,
             enrollmentId:`enrollment-${index}`,
             results:{
-                attendance:{'2026-07-06':'present' as const,'2026-07-13':'absent' as const},
+                attendance:Object.fromEntries(lessonDates.slice(0, -1).map((date, day) => [date, (day + index) % 5 ? 'present' as const : 'absent' as const])),
                 successfulAttempts:Object.fromEntries(columns.flatMap(column=>column.skillIds.map(id=>[id,index % 4]))),
             },
         }));
@@ -72,6 +79,7 @@ function fixture(
         )
     ) {
         const roster = item(template).roster;
+        if (studentCount) roster.students = sizedStudents(studentCount);
         return {
             request: {
                 template,
@@ -177,6 +185,7 @@ async function mount() {
     );
     await document.fonts.ready;
     prepareSkillMarkingLayout(document);
+    fitCompletedAttendancePages(document);
     window.addEventListener("beforeprint", () => prepareSkillMarkingLayout(document));
     window.__ATTENDANCE_FIXTURE_READY__ = true;
 }

@@ -49,8 +49,13 @@ actual header text against the tablet catalog before writing the mapping.
 `npm run generate:lesson-skills` regenerates this mapping too. The tablet sibling
 checkout must be available; commit and review the generated outputs together.
 
-Completed sheets continue after eight students or fourteen lesson dates, repeat
-class metadata and names, and preserve the original reverse-side requirements.
+A completed sheet keeps the whole class on one page: completed rows omit the
+handwritten Absent/Present prompt, and `fitCompletedAttendancePages` zooms each
+page to the paper (the same shrink Chrome applies to these wide templates, plus
+more only for a page still too tall). Classes over 18 students
+(`COMPLETED_STUDENTS_PER_SHEET`) or sessions over fourteen lesson dates continue
+on another sheet that repeats class metadata, numbers rows on from the first
+sheet, and preserves the original reverse-side requirements.
 The current catalog's OR skills remain single assessment skills; separate
 required components are never added together to invent extra earned checks.
 

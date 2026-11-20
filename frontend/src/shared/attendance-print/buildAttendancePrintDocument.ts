@@ -35,6 +35,12 @@ function requestItems(request: AttendancePrintRequest) {
     throw new Error("No attendance rosters were provided.");
 }
 
+/** Largest class printed on one completed sheet. Measured in Chromium with 14 lesson dates, 18
+ * swimmers fit every level template on one letter-landscape page with the smallest text (the dated
+ * attendance line) at 4.5pt or more, about what an unfitted sheet prints. Larger classes continue
+ * on a second sheet numbered on from the first rather than shrinking further. */
+export const COMPLETED_STUDENTS_PER_SHEET = 18;
+
 export function attendanceFontCss() {
     return `
 @font-face { font-family: Arial; src: url("${sansRegular}"); font-weight: 400; }
@@ -70,16 +76,17 @@ export async function buildAttendancePrintDocument(
     const items = requestItems(request).flatMap(item => {
         if (!item.roster.completed) return [item];
         validateCompletedRoster(item.roster, item.template);
-        // Repeat the original front/back template for each student/date slice.
+        // A class prints on one sheet (fitCompletedAttendancePages scales it to the page). Only a class
+        // larger than COMPLETED_STUDENTS_PER_SHEET, or over 14 lesson dates, repeats the front/back template.
         const pages: AttendancePrintItem[] = [];
         const dates = [...item.roster.completed.lessonDates].sort();
-        for (let student = 0; student < Math.max(1, item.roster.students.length); student += 8) {
+        for (let student = 0; student < Math.max(1, item.roster.students.length); student += COMPLETED_STUDENTS_PER_SHEET) {
             for (let date = 0; date < dates.length; date += 14) {
                 const lessonDates = dates.slice(date, date + 14);
                 pages.push({ ...item, firstRowNumber: student + 1, roster: {
                     ...item.roster,
                     completed: { ...item.roster.completed, lessonDates },
-                    students: item.roster.students.slice(student, student + 8).map(person => ({
+                    students: item.roster.students.slice(student, student + COMPLETED_STUDENTS_PER_SHEET).map(person => ({
                         ...person,
                         results: { ...person.results!, attendance: Object.fromEntries(Object.entries(person.results!.attendance).filter(([day]) => lessonDates.includes(day))) },
                     })),
@@ -151,6 +158,7 @@ export async function buildAttendancePrintDocument(
             for (const side of ["front", "back"] as const) {
                 const page = printPage(document, `attendance-${side}`);
                 if (paired) page.classList.add("combined-page");
+                if (group[0].roster.completed) page.dataset.completed = "true";
                 for (const item of group) {
                     const sections = byItem.get(item);
                     if (!sections) continue;
