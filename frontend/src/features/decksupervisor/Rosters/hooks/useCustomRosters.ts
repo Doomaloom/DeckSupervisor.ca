@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../../../app/AuthContext";
+import { showAppNotice } from "../../../../lib/appNotice";
 import { deleteCustomRoster, resolveCustomRosters, saveCustomRoster, } from "../../../../lib/customRostersApi";
 import { getCustomRosterDayKey, getCustomRostersForDay, setCustomRostersForDay, } from "../../../../lib/storage";
 import type { CustomRoster, Student } from "../../../../types/app";
@@ -128,6 +129,10 @@ export function useCustomRosters(
             ]);
         } catch (error) {
             console.error("Failed to save custom rosters", error);
+            showAppNotice(
+                "Your custom roster was not saved. Check your connection and try again.",
+                "error",
+            );
         }
     };
 
