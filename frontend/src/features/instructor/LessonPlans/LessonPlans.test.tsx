@@ -960,3 +960,37 @@ it("offers separate short-form float choices and preserves historical saved rows
         duration: 10, equipment: ["Noodles"],
     }));
 });
+it("does not autosave a cleared duration and saves the retyped one", async () => {
+    api.fetchLessonPlan.mockResolvedValue({
+        plan: { rows: [{ skill: "", activity: "Practice", location: "Lane", duration: 6 }] },
+    });
+    const user = userEvent.setup();
+    setup();
+    const input = await screen.findByLabelText<HTMLInputElement>("Duration (minutes) 1");
+    await user.clear(input);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(api.saveLessonPlan).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await user.type(input, "4");
+    expect(input.value).toBe("4");
+    await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledTimes(1));
+    expect(api.saveLessonPlan.mock.calls[0][3][0].duration).toBe(4);
+});
+it("saves the newest edit when an earlier autosave fails after it", async () => {
+    let failFirst!: (reason: unknown) => void;
+    api.saveLessonPlan.mockImplementationOnce(() => new Promise((_resolve, reject) => {
+        failFirst = reject;
+    }));
+    const user = userEvent.setup();
+    setup();
+    await screen.findByText(/No lesson plan saved/);
+    await user.click(screen.getByRole("button", { name: "Add activity" }));
+    await user.click(screen.getByRole("button", { name: "Custom activity for row 1" }));
+    await user.type(screen.getByLabelText("Activity / drill 1"), "First");
+    await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledTimes(1));
+    await user.type(screen.getByLabelText("Activity / drill 1"), " second");
+    await act(async () => { failFirst(new Error("Invalid activity row")); });
+    await waitFor(() => expect(api.saveLessonPlan).toHaveBeenCalledTimes(2));
+    expect(api.saveLessonPlan.mock.calls[1][3][0].activity).toBe("First second");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});

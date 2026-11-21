@@ -5,7 +5,7 @@ export default function DurationPicker(props: {
     rowNumber: number;
 }) {
     const viewModel = useDurationPickerLogic(props);
-    const { controls, rowNumber, value, onChange } = viewModel;
+    const { controls, rowNumber, text, type, blur } = viewModel;
     const button = ({ step, Icon, label, disabled, onClick }: typeof controls[number]) => (
         <button
             key={step}
@@ -30,8 +30,9 @@ export default function DurationPicker(props: {
                 max={maximum}
                 step={1}
                 required
-                value={value}
-                onChange={(event) => onChange(Number(event.target.value))}
+                value={text}
+                onChange={(event) => type(event.target.value)}
+                onBlur={blur}
             />
             {controls.slice(2).map(button)}
         </div>

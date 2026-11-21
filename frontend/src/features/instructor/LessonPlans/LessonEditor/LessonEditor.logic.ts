@@ -86,6 +86,8 @@ export function useLessonEditorLogic({ sessionId, classId, week, level, lessonDu
         [persistableRows, assignedLevel, curriculumLevel]
     );
     const dirty = !loading && content !== savedContent;
+    const latestContent = useRef(content);
+    latestContent.current = content;
     const blocker = useBlocker(dirty);
     useEffect(() => {
         if (blocker.state === "blocked") {
@@ -159,7 +161,9 @@ export function useLessonEditorLogic({ sessionId, classId, week, level, lessonDu
                     setMissing(false);
                 }
             } catch (e) {
-                if (active.current) {
+                // A failure for content that has since been edited is stale:
+                // leave the error unset so the newest content is saved next.
+                if (active.current && latestContent.current === content) {
                     setError(e instanceof Error
                         ? e.message
                         : "Autosave failed.");
