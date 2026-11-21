@@ -5,6 +5,7 @@ import {
 } from "./serverApi";
 import { formatLevelName } from "../shared/levels/formatLevelName";
 import type { Student } from "../types/app";
+import { getStudentsForDay, setStudentsForDay } from "./storage";
 
 export type RosterLevelEdit = {
     code: string;
@@ -160,4 +161,36 @@ export function applyPersistedLevelEdits(
     });
 
     return changed ? next : students;
+}
+
+// Applies the session's saved level edits to the roster cached for a day, so
+// pages that read only that cache (Print) match Rosters without visiting it.
+export async function applySavedLevelEditsToStoredRoster(
+    day: string,
+    sessionId: string,
+    isActive: () => boolean = () => true,
+): Promise<void> {
+    if (!day || !sessionId || getStudentsForDay(day, sessionId).length === 0) {
+        return;
+    }
+    const data = await fetchRosterEditsRequest(sessionId);
+    if (!isActive()) {
+        return;
+    }
+    const students = getStudentsForDay(day, sessionId);
+    const nameHashMap = await hashStudentNames(
+        students.map((student) => student.name),
+    );
+    if (!isActive()) {
+        return;
+    }
+    const next = applyPersistedLevelEdits(
+        students,
+        data.rosterEdits ?? [],
+        data.studentEdits ?? [],
+        nameHashMap,
+    );
+    if (next !== students) {
+        setStudentsForDay(day, next, sessionId);
+    }
 }

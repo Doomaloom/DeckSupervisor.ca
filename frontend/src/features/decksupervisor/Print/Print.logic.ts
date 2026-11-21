@@ -16,6 +16,8 @@ import { getStorageScope } from "../../../lib/storageScope";
 
 import { getCurrentSessionId } from "../../../lib/sessionStorage";
 
+import { applySavedLevelEditsToStoredRoster } from "../../../lib/rosterEditsApi";
+
 import { showAppNotice } from "../../../lib/appNotice";
 
 import { openAttendancePrintWindow } from "../../../shared/attendance-print/openAttendancePrintWindow";
@@ -193,6 +195,26 @@ export function usePrintLogic() {
         }
         setMasterlistFormatOptions(getMasterlistDraftOptions());
     }, [activeModal]);
+
+    // Saved level edits are otherwise applied only when Rosters loads; apply
+    // them here too so sheets printed straight after an upload match Rosters.
+    const rosterSessionId = currentSession?.id ?? getCurrentSessionId();
+    useEffect(() => {
+        if (!selectedDay || !rosterSessionId || isGuest) {
+            return;
+        }
+        let active = true;
+        applySavedLevelEditsToStoredRoster(
+            selectedDay,
+            rosterSessionId,
+            () => active,
+        ).catch((error) => {
+            console.error("Failed to apply saved roster level edits", error);
+        });
+        return () => {
+            active = false;
+        };
+    }, [isGuest, rosterSessionId, selectedDay]);
 
     useEffect(() => {
         if (activeModal !== "masterlist") {
