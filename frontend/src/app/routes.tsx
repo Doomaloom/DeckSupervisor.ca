@@ -18,6 +18,7 @@ import ReportCardsPage from "../features/decksupervisor/ReportCards/ReportCards.
 import StaffNotesPage from "../features/decksupervisor/StaffNotes/StaffNotes.component";
 import FullTimerToolsPage from "../features/decksupervisor/FullTimerTools/FullTimerTools.component";
 import RequestsPage from "../features/decksupervisor/Requests/Requests.component";
+import NotFoundPage from "../shared/pages/NotFound/NotFound.component";
 import SignInPage from "../shared/pages/SignIn/SignIn.component";
 import AccountPage from "../shared/pages/Account/Account.component";
 import TeamPage from "../features/decksupervisor/Team/Team.component";
@@ -93,6 +94,7 @@ function AppRoutes() {
                     </RequireFullTime>
                 }
             />
+            <Route path="*" element={<NotFoundPage />} />
         </Routes>
     );
 }
