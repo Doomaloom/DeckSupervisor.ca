@@ -11,7 +11,7 @@ import { getExtractedClassesForScope, getExtractedClassesForSession, setExtracte
 import { type AccountProfile, deleteSession, fetchCurrentTeams, fetchMySessions, fetchSessionInstructors, type SessionInstructor, updateSession, } from "../../../lib/serverApi";
 import { clearCurrentSessionId, loadSessions, saveSessions, setCurrentSessionId, } from "../../../lib/sessionStorage";
 import { getCustomRosterDayKey, getCustomRostersForDay, getInstructorCoursesForDay, getScheduleForDay, getStudentsForDay, setInstructorCoursesForDay, setInstructorsForDay, setScheduleForDay, setStudentsForDay, } from "../../../lib/storage";
-import type { ClassRoster } from "../../../types/app";
+import type { ClassRoster, Student } from "../../../types/app";
 import { formatSessionTermLabel, getYearFromDate, resolveSessionYear, } from "../../session/sessionLabels";
 import { inferSingleSessionWindowFromClasses } from "../../session/sessionTimeInference";
 import { getEffectiveSourceLocations, normalizeSessionLocationKey, normalizeSessionLocations, } from "../../session/sourceLocations";
@@ -118,6 +118,39 @@ function getRemovedCodeDependencyMessage(
     return "";
 }
 
+// Class and swimmer level edits live only in the stored students (guests have
+// no server copy), so rebuilding them from the CSV must put the edits back.
+export function restoreEditedStudentLevels(
+    previous: Array<[string, Student[]]>,
+    sessionId: string,
+) {
+    previous.forEach(([day, oldStudents]) => {
+        const edited = new Map<string, string>();
+        oldStudents.forEach((student) => {
+            const level = student.level?.trim();
+            if (level && level !== student.service_name?.trim()) {
+                edited.set(student.id, student.level);
+            }
+        });
+        if (edited.size === 0) {
+            return;
+        }
+        const current = getStudentsForDay(day, sessionId);
+        let changed = false;
+        const next = current.map((student) => {
+            const level = edited.get(student.id);
+            if (level === undefined || level === student.level) {
+                return student;
+            }
+            changed = true;
+            return { ...student, level };
+        });
+        if (changed) {
+            setStudentsForDay(day, next, sessionId);
+        }
+    });
+}
+
 function refreshImportedSessionDataForSession(
     sessionId: string,
     target: CsvReconcileTarget,
@@ -138,6 +171,12 @@ function refreshImportedSessionDataForSession(
         Object.keys(dataset.rostersByCandidate ?? {}).length > 0;
     if (hasRosterData) {
         if (derived.rosters.length > 0) {
+            const previousStudents = Array.from(
+                new Set(derived.rosters.map((roster) => roster.day)),
+            ).map((day): [string, Student[]] => [
+                day,
+                getStudentsForDay(day, sessionId),
+            ]);
             storeProcessedRosters(
                 applyAssignedInstructorsToRosters(
                     target.sessionDay,
@@ -145,6 +184,7 @@ function refreshImportedSessionDataForSession(
                 ),
                 sessionId,
             );
+            restoreEditedStudentLevels(previousStudents, sessionId);
         } else {
             setStudentsForDay(target.sessionDay, [], sessionId);
         }
