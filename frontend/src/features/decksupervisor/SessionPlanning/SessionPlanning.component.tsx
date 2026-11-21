@@ -8,6 +8,8 @@ import PlannerHeader from "./PlannerHeader/PlannerHeader.component";
 
 import PlannerPlannedChangesModal from "./PlannerPlannedChangesModal/PlannerPlannedChangesModal.component";
 
+import { COLUMN_MIN_WIDTH_PX } from "../../../shared/schedule/constants";
+
 import { plannerBoardLayout } from "./hooks/usePlannerViewModel";
 
 import { useSessionPlanningLogic } from "./SessionPlanning.logic";
@@ -166,6 +168,9 @@ function SessionPlanningPage() {
                             timeLabels={timeLabels}
                             visibleClasses={visibleClasses}
                             {...plannerBoardLayout}
+                            columnMinWidthPx={isInfoPanelOpen
+                                ? COLUMN_MIN_WIDTH_PX
+                                : plannerBoardLayout.columnMinWidthPx}
                         />
 
                         <PlannerDetailsPanel

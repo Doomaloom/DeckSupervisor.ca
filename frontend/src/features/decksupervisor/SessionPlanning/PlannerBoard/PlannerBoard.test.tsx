@@ -103,7 +103,7 @@ it("selects classes and swaps same-time courses between lanes", async () => {
     );
     expect(setClassLanes).toHaveBeenCalledTimes(1);
 
-    // The lane grid fills the board when it is wider than the lanes need (e.g. after the details panel closes).
+    // The lane grid fills the board when it is wider than the lanes need (e.g. after the details panel closes), and needs only the rails plus the lanes' minimum (2 lanes x 180 + 128), so it does not scroll when the details panel is open.
     const grid = screen.getByLabelText("Planning schematic").firstElementChild as HTMLElement;
-    expect(grid.getAttribute("style")).toContain("max(100%, 760px)");
+    expect(grid.getAttribute("style")).toContain("max(100%, 488px)");
 });
