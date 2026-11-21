@@ -13,6 +13,8 @@ import (
 
 const resultUnavailable = "Results service is unavailable right now. Try again in a moment."
 
+const conflictChanged = "This conflict changed or was already resolved. Reload the page to see the latest."
+
 // resultServerFailure reports upstream failures that are not the caller's fault:
 // transport errors, PostgREST 5xx, and 404 (an RPC missing from the schema).
 func resultServerFailure(err error) bool {
@@ -123,6 +125,13 @@ func ResultsAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 	var out json.RawMessage
 	if err := c.RPC(r.Context(), "result_admin", map[string]any{"p_session": vars["sessionId"], "p_action": action, "p_body": body}, &out); err != nil {
+		// The database raises a plain exception (HTTP 400) when someone else changed or resolved
+		// the conflict first. Say so in plain words instead of "Invalid request".
+		var api *supabase.APIError
+		if action == "resolve" && errors.As(err, &api) && api.StatusCode == 400 && strings.HasPrefix(api.Message, "Conflict changed") {
+			http.Error(w, conflictChanged, 409)
+			return
+		}
 		resultError(w, err)
 		return
 	}

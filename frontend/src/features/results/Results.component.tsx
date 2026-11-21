@@ -55,7 +55,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
   if(!mounted.current)return;setRegistry(r);setData(d);setGrants(g.grants);setIdentities(resolved);setRosterWarning(warning);
  }
  useEffect(()=>{mounted.current=true;void refresh().catch(e=>{if(mounted.current)setError(errorMessage(e))}).finally(()=>{if(mounted.current)setBusy(false)});return()=>{mounted.current=false}},[session.id]);
- async function run(action:()=>Promise<void>){if(working.current)return;working.current=true;setBusy(true);setError('');setNotice('');try{await action();await refresh()}catch(e){if(mounted.current)setError(errorMessage(e))}finally{working.current=false;if(mounted.current)setBusy(false)}}
+ async function run(action:()=>Promise<void>){if(working.current)return;working.current=true;setBusy(true);setError('');setNotice('');try{await action();await refresh()}catch(e){if(mounted.current)setError(errorMessage(e));if(e instanceof api.ResultRequestError&&e.status===409)await refresh().catch(()=>{})}finally{working.current=false;if(mounted.current)setBusy(false)}}
  const localFor=(id:string)=>{const matches=identities.filter(i=>i.enrollmentId===id);return matches.length===1?matches[0]:undefined};
  const nameFor=(id:string)=>localFor(id)?.name??`Unresolved student (${id.slice(0,8)})`;
  // List swimmers in the blank-sheet order so row N is the same swimmer on blank and completed sheets.

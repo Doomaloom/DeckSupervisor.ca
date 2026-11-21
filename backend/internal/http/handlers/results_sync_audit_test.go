@@ -602,3 +602,23 @@ func TestResultsHandlersWriteNothingToTheProcessLog(t *testing.T) {
 		t.Fatalf("results handlers logged: %q", logged.String())
 	}
 }
+
+// R2-C5: the database raises a plain exception when the conflict already changed; the
+// supervisor must get a plain 409 message, not "Invalid request".
+func TestResolveConflictThatAlreadyChangedReportsPlainConflict(t *testing.T) {
+	message := "Conflict changed; refresh review"
+	calls := auditUpstream(t, func(c auditCall, w http.ResponseWriter) {
+		w.WriteHeader(400)
+		io.WriteString(w, `{"code":"P0001","message":"`+message+`"}`)
+	})
+	_ = calls
+	w := auditRequest("POST", "/api/sessions/session-a/results/conflicts/conflict-1/resolve", `{"choice":"current","expectedRevision":2}`, "198.51.100.111", true)
+	if w.Code != 409 || !strings.Contains(w.Body.String(), "already resolved") || strings.Contains(w.Body.String(), "Invalid request") || strings.Contains(w.Body.String(), "refresh review") {
+		t.Fatalf("changed conflict: %d %s", w.Code, w.Body)
+	}
+	message = "Invalid conflict"
+	w = auditRequest("POST", "/api/sessions/session-a/results/conflicts/conflict-1/resolve", `{"choice":"current","expectedRevision":2}`, "198.51.100.111", true)
+	if w.Code != 400 {
+		t.Fatalf("other 400s must stay 400: %d %s", w.Code, w.Body)
+	}
+}

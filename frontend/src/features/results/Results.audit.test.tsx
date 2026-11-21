@@ -176,6 +176,17 @@ it('sends the displayed revision when resolving a conflict and surfaces a stale-
  expect(sent('POST','/results/conflicts/conflict-new/resolve')[0].body).toEqual({choice:'incoming',expectedRevision:0});
 });
 
+it('shows the plain "already changed" message when another reviewer resolved the conflict, and reloads the list',async()=>{
+ const incoming={...attempt(),operationId:'incoming-op',baseRevision:1};
+ server.results=results([attempt()],{conflicts:[{id:'conflict-one',operation:incoming,current:attempt(),resolved:false}]});
+ server.resolve=()=>{server.results={...server.results,conflicts:[{id:'conflict-one',operation:incoming,current:attempt(),resolved:true}]};return {status:409,text:'This conflict changed or was already resolved. Reload the page to see the latest.'};};
+ const user=userEvent.setup();show();
+ await user.click(await screen.findByRole('button',{name:'Keep current'}));
+ expect(await screen.findByRole('alert')).toHaveTextContent('This conflict changed or was already resolved. Reload the page to see the latest.');
+ expect(screen.getByRole('alert')).not.toHaveTextContent('Invalid request');
+ await waitFor(()=>expect(screen.queryByRole('button',{name:'Keep current'})).not.toBeInTheDocument());
+});
+
 it('displays tombstones as deleted, keeps them out of progress, and deletes through an audited delete operation',async()=>{
  server.results=results([attempt({recordId:'tombstone',action:'delete',payload:{},deleted:true,success:false,revision:5}),attempt({recordId:'attendance:enrollment-h:2026-09-04',kind:'attendance',payload:{status:'present'},revision:2})],{history:[{recordId:'tombstone',revision:4,record:attempt({recordId:'tombstone',revision:4,success:true})}]});
  const user=userEvent.setup();show();
