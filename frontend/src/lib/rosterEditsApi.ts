@@ -3,6 +3,7 @@ import {
     upsertRosterLevelEdit as upsertRosterLevelEditRequest,
     upsertRosterStudentLevelEdit as upsertRosterStudentLevelEditRequest,
 } from "./serverApi";
+import { formatLevelName } from "../shared/levels/formatLevelName";
 import type { Student } from "../types/app";
 
 export type RosterLevelEdit = {
@@ -126,12 +127,17 @@ export function applyPersistedLevelEdits(
         return students;
     }
 
+    // Older edits were saved as compact values ("Splash5"); read them as the
+    // spaced name the level dropdown offers ("Splash 5").
     const levelByCode = new Map(
-        rosterEdits.map((edit) => [edit.code, edit.level]),
+        rosterEdits.map((edit) => [edit.code, formatLevelName(edit.level)]),
     );
     const studentOverride = new Map(
         studentEdits.map(
-            (edit) => [`${edit.code}:${edit.student_name_hash}`, edit.level],
+            (edit) => [
+                `${edit.code}:${edit.student_name_hash}`,
+                formatLevelName(edit.level),
+            ],
         ),
     );
 

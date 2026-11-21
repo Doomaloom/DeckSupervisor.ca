@@ -34,7 +34,7 @@ beforeEach(() => {
 it("uses loaded classes, current saved assignments and edited swimmer levels", async () => {
     const result = await loadExportCourses(session, false);
     expect(result[0].instructor).toBe("Lee");
-    expect(result[0].students.every((student) => student.level === "Splash2A"))
+    expect(result[0].students.every((student) => student.level === "Splash 2A"))
         .toBe(true);
     expect(result[0].students).toHaveLength(2);
     expect(fetchSchematic).toHaveBeenCalledWith(session.id);

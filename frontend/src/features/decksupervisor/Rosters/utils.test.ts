@@ -239,4 +239,40 @@ describe("roster utils", () => {
             },
         ]);
     });
+
+    it("shows compact saved levels with spaces and keeps the class on one sheet (R2-W4)", () => {
+        const base = students[2];
+        const mixed: Student[] = [
+            { ...base, id: "a", name: "Ava", level: "LittleSplash1" },
+            { ...base, id: "b", name: "Bo", level: "Little Splash 1" },
+        ];
+        const [group] = buildRosterGroups(mixed);
+        expect(group.level).toBe("Little Splash 1");
+
+        const items = buildAttendancePrintItems(group);
+        expect(items).toHaveLength(1);
+        expect(items[0].template).toBe("LittleSplash1");
+        expect(items[0].roster.level).toBe("Little Splash 1");
+        expect(items[0].roster.serviceName).toBe("Little Splash 1");
+        expect(items[0].roster.students).toEqual([
+            { name: "Ava" },
+            { name: "Bo" },
+        ]);
+
+        const customRoster: CustomRoster = {
+            id: "c1",
+            serviceName: "Splash5",
+            instructor: "",
+            sourceCodes: ["1002"],
+            studentIds: ["a"],
+            createdAt: "2026-11-20T00:00:00Z",
+        };
+        const [custom] = buildCustomRosterGroups(
+            [customRoster],
+            new Map([[group.code, group]]),
+            new Map(mixed.map((student) => [student.id, student])),
+        );
+        expect(custom.serviceName).toBe("Splash 5");
+        expect(custom.level).toBe("Splash 5");
+    });
 });

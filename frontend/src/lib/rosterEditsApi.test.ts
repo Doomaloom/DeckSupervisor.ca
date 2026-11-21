@@ -75,4 +75,27 @@ describe("rosterEditsApi", () => {
             { ...students[1], level: "Splash 4" },
         ]);
     });
+
+    it("reads compact saved levels as the spaced name (R2-W4)", () => {
+        const nameHashMap = new Map([
+            ["Student One", "hash-one"],
+            ["Student Two", "hash-two"],
+        ]);
+
+        expect(
+            applyPersistedLevelEdits(
+                students,
+                [{ code: "1001", level: "LittleSplash1" }],
+                [{
+                    code: "1001",
+                    student_name_hash: "hash-two",
+                    level: "Splash5",
+                }],
+                nameHashMap,
+            ),
+        ).toEqual([
+            { ...students[0], level: "Little Splash 1" },
+            { ...students[1], level: "Splash 5" },
+        ]);
+    });
 });

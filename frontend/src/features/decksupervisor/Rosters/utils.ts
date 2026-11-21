@@ -1,4 +1,5 @@
 import { extractStartTime } from "../../../lib/time";
+import { formatLevelName } from "../../../shared/levels/formatLevelName";
 import { sanitizeLevel } from "../../../shared/levels/sanitizeLevel";
 import type { CustomRoster, Student } from "../../../types/app";
 import type { RosterGroup, RosterListItem } from "./types";
@@ -40,7 +41,7 @@ export function buildRosterGroups(students: Student[]): RosterGroup[] {
             classesMap.set(student.code, {
                 code: student.code,
                 serviceName: student.service_name,
-                level: student.level || student.service_name,
+                level: formatLevelName(student.level || student.service_name),
                 time: student.time,
                 instructor: student.instructor ?? "",
                 location: student.location,
@@ -82,20 +83,24 @@ export function buildAttendanceRosterStudents(students: Student[]) {
 export function buildAttendancePrintItems(
     roster: RosterGroup,
 ): AttendancePrintItem[] {
-    const grouped = new Map<string, Student[]>();
+    // Group by level key, so "Splash 5" and an older "Splash5" share a sheet.
+    const grouped = new Map<string, { level: string; students: Student[] }>();
 
     getVisibleRosterStudents(roster.students).forEach((student) => {
-        const level = student.level?.trim() || roster.level;
-        const existing = grouped.get(level);
+        const level = formatLevelName(student.level?.trim() || roster.level);
+        const key = sanitizeLevel(level);
+        const existing = grouped.get(key);
         if (existing) {
-            existing.push(student);
+            existing.students.push(student);
             return;
         }
-        grouped.set(level, [student]);
+        grouped.set(key, { level, students: [student] });
     });
 
-    const items = Array.from(grouped.entries()).map(([level, students]) => ({
-        template: sanitizeLevel(level),
+    const items = Array.from(grouped.entries()).map((
+        [template, { level, students }],
+    ) => ({
+        template,
         roster: {
             code: roster.code,
             level,
@@ -147,8 +152,8 @@ export function buildCustomRosterGroups(
         return {
             code: `custom-${customRoster.id}`,
             customRosterId: customRoster.id,
-            serviceName: customRoster.serviceName,
-            level: customRoster.serviceName,
+            serviceName: formatLevelName(customRoster.serviceName),
+            level: formatLevelName(customRoster.serviceName),
             time: sourceRoster?.time ?? "",
             instructor: customRoster.instructor ?? "",
             location: sourceRoster?.location ?? "",
