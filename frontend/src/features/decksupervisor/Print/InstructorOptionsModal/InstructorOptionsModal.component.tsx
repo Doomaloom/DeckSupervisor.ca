@@ -100,7 +100,9 @@ function InstructorOptionsModal(props: InstructorOptionsModalProps) {
                 {instructorNames.length === 0
                     ? (
                         <p className="mt-3 text-sm text-secondary/80">
-                            No instructors found. Add instructors in Manage
+                            No instructors found. Select a session and load
+                            its roster in this tab first. If you have
+                            already done that, add instructors in Manage
                             Sessions.
                         </p>
                     )
