@@ -105,7 +105,7 @@ func SignOut(w http.ResponseWriter, r *http.Request) {
 
 	session, _, _ := service.SessionFromRequest(r)
 	if session != nil {
-		_ = service.SignOut(r.Context(), session.AccessToken)
+		_ = service.SignOutLocal(r.Context(), session.AccessToken)
 	}
 
 	authsvc.ClearSessionCookies(w, r)

@@ -132,11 +132,27 @@ func (s *Service) SessionFromRequest(r *http.Request) (*Session, string, error) 
 	return s.SessionFromCookies(r.Context(), accessToken, refreshToken)
 }
 
+// SignOut ends every session of the token's user (the provider's default
+// "global" scope). Used after a password reset, where that is intended.
 func (s *Service) SignOut(ctx context.Context, accessToken string) error {
+	return s.signOut(ctx, accessToken, "")
+}
+
+// SignOutLocal ends only the session the access token belongs to, so other
+// browsers and devices signed in to the same account stay signed in.
+func (s *Service) SignOutLocal(ctx context.Context, accessToken string) error {
+	return s.signOut(ctx, accessToken, "local")
+}
+
+func (s *Service) signOut(ctx context.Context, accessToken, scope string) error {
 	if strings.TrimSpace(accessToken) == "" {
 		return nil
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.supabaseURL+"/auth/v1/logout", nil)
+	endpoint := s.supabaseURL + "/auth/v1/logout"
+	if scope != "" {
+		endpoint += "?scope=" + scope
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, nil)
 	if err != nil {
 		return err
 	}
