@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
 import type { PlannerClass, PlannerClassStatus, PlannerDataset, PlannerParticipant } from "../../../../types/app";
 import PlannerDetailsPanel from "./PlannerDetailsPanel.component";
 import type { PlannerDetailsPanelProps } from "./PlannerDetailsPanel.logic";
@@ -77,3 +77,38 @@ it.each([["planned_move", "Move Call Workflow"], ["pending_cancellation", "Cance
         expect(container.querySelector("#planner-details-panel")).toHaveClass("xl:overflow-y-auto");
     },
 );
+
+afterEach(() => { vi.useRealTimers(); });
+
+it("keeps every letter typed in Notes while a slow save is in flight, and saves once after a pause", async () => {
+    vi.useFakeTimers();
+    let finishSave: () => void = () => { };
+    const setCallRecord = vi.fn(() => new Promise<void>((resolve) => { finishSave = resolve; }));
+    renderPanel({ setCallRecord });
+    const notes = screen.getAllByRole("textbox")[0] as HTMLTextAreaElement;
+    notes.focus();
+    let typed = "";
+    for (const letter of "Left a message") {
+        typed += letter;
+        fireEvent.change(notes, { target: { value: typed } });
+        await act(async () => { await vi.advanceTimersByTimeAsync(50); });
+    }
+    expect(notes.value).toBe("Left a message");
+    expect(setCallRecord).not.toHaveBeenCalled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    expect(setCallRecord).toHaveBeenCalledTimes(1);
+    expect(setCallRecord).toHaveBeenCalledWith("p1", { notes: "Left a message" });
+    // A reply that arrives after the save does not wipe what is on screen.
+    await act(async () => { finishSave(); });
+    expect(notes.value).toBe("Left a message");
+});
+
+it("saves pending Notes when the field loses focus", () => {
+    const setCallRecord = vi.fn();
+    renderPanel({ setCallRecord });
+    const notes = screen.getAllByRole("textbox")[0];
+    fireEvent.focus(notes);
+    fireEvent.change(notes, { target: { value: "Voicemail" } });
+    fireEvent.blur(notes);
+    expect(setCallRecord).toHaveBeenCalledWith("p1", { notes: "Voicemail" });
+});

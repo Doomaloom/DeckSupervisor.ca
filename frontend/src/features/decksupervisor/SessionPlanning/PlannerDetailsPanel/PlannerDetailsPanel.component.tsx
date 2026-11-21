@@ -1,9 +1,71 @@
+import { useEffect, useRef, useState } from "react";
+
 import type { PlannerCallStatus, PlannerClass } from "../../../../types/app";
 
 import { plannerCallStatusOptions } from "../../../../lib/sessionPlanner";
 
 import { dayNames } from "../utils/plannerPresentation";
 import { PlannerDetailsPanelProps, formatAlternativeLabel, usePlannerDetailsPanelLogic, userenderAlternativeSectionLogic } from "./PlannerDetailsPanel.logic";
+const NOTES_SAVE_DELAY_MS = 400;
+
+// Keeps what the person is typing in local state and saves it after a short pause, so a slow shared-session
+// round trip can never overwrite letters typed in the meantime.
+function PlannerNotesField(props: { value: string; onCommit: (notes: string) => Promise<void> | void }) {
+    const { value, onCommit } = props;
+    const [draft, setDraft] = useState<string | null>(null);
+    const draftRef = useRef<string | null>(null);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const focusedRef = useRef(false);
+    const commitRef = useRef(onCommit);
+    commitRef.current = onCommit;
+
+    const flush = () => {
+        if (timerRef.current !== null) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        const sent = draftRef.current;
+        if (sent === null) {
+            return;
+        }
+        void Promise.resolve(commitRef.current(sent)).finally(() => {
+            if (draftRef.current === sent && timerRef.current === null && !focusedRef.current) {
+                draftRef.current = null;
+                setDraft(null);
+            }
+        });
+    };
+
+    useEffect(() => () => {
+        if (timerRef.current !== null) {
+            flush();
+        }
+    }, []);
+
+    return (
+        <textarea
+            className="min-h-20 rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
+            value={draft ?? value}
+            onFocus={() => { focusedRef.current = true; }}
+            onChange={(event) => {
+                draftRef.current = event.target.value;
+                setDraft(event.target.value);
+                if (timerRef.current !== null) {
+                    clearTimeout(timerRef.current);
+                }
+                timerRef.current = setTimeout(flush, NOTES_SAVE_DELAY_MS);
+            }}
+            onBlur={() => {
+                focusedRef.current = false;
+                if (draftRef.current === null) {
+                    return;
+                }
+                flush();
+            }}
+        />
+    );
+}
+
 function renderAlternativeSection(props: string, props1: PlannerClass[], props2: (option: PlannerClass) => JSX.Element) {
     const viewModel = userenderAlternativeSectionLogic(props, props1, props2);
     if (viewModel.view === "hidden") {
@@ -769,22 +831,16 @@ function PlannerDetailsPanel(props: PlannerDetailsPanelProps) {
 
                                                         <label className="mt-3 flex flex-col gap-2 text-sm font-semibold text-secondary">
                                                             Notes
-                                                            <textarea
-                                                                className="min-h-20 rounded-xl border border-secondary/30 bg-bg px-3 py-2 text-sm text-secondary"
+                                                            <PlannerNotesField
                                                                 value={callRecord
                                                                     ?.notes ??
                                                                     ""}
-                                                                onChange={(
-                                                                    event,
-                                                                ) => void setCallRecord(
+                                                                onCommit={(
+                                                                    notes,
+                                                                ) => setCallRecord(
                                                                     participant
                                                                         .id,
-                                                                    {
-                                                                        notes:
-                                                                            event
-                                                                                .target
-                                                                                .value,
-                                                                    },
+                                                                    { notes },
                                                                 )}
                                                             />
                                                         </label>
