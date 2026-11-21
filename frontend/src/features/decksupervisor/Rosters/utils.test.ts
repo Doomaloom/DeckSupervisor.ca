@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CustomRoster, Student } from "../../../types/app";
-import { buildAttendancePrintItems, buildAttendanceRosterStudents, buildCustomRosterGroups, buildRosterGroups, filterRosterItems, getEmptyMessage, getVisibleRosterStudents, sanitizeLevel, } from "./utils";
+import { buildAttendancePrintItems, buildAttendanceRosterStudents, buildCustomRosterGroups, buildRosterGroups, filterRosterItems, getEmptyMessage, getVisibleRosterStudents, getWaitlistedRosterStudents, sanitizeLevel, } from "./utils";
 
 const students: Student[] = [
     {
@@ -141,6 +141,14 @@ describe("roster utils", () => {
         expect(filterRosterItems(rosterItems, "", "Splash 3", "")).toHaveLength(
             0,
         );
+    });
+
+    it("lists only the waitlisted swimmers for the waitlist section (R2-W11)", () => {
+        const waitlisted = { ...students[0], id: "w1", name: "Xen Joshi", waitlist: true };
+        expect(
+            getWaitlistedRosterStudents([...students, waitlisted]).map((s) => s.name),
+        ).toEqual(["Xen Joshi"]);
+        expect(getWaitlistedRosterStudents(students)).toEqual([]);
     });
 
     it("excludes waitlisted students from visible roster and attendance payloads", () => {

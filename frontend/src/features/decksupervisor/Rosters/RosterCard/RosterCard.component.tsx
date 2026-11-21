@@ -1,4 +1,4 @@
-import { getVisibleRosterStudents } from "../utils";
+import { getVisibleRosterStudents, getWaitlistedRosterStudents } from "../utils";
 
 import LevelSelect from "../LevelSelect/LevelSelect.component";
 
@@ -21,6 +21,7 @@ function RosterCard(props: RosterCardProps) {
         onStudentLevelChange,
         isReadOnly,
     } = viewModel;
+    const waitlisted = getWaitlistedRosterStudents(roster.students);
     return (
         <div
             className={containerClass}
@@ -74,6 +75,25 @@ function RosterCard(props: RosterCardProps) {
                     disabled={isReadOnly || !allowStudentLevelEdits}
                 />
             ))}
+            {waitlisted.length > 0 && (
+                <div
+                    data-component="roster-waitlist"
+                    className="mt-4 border-t-2 border-secondary/20 pt-3"
+                >
+                    <h3 className="text-sm font-semibold text-secondary">
+                        Waitlist
+                    </h3>
+                    {waitlisted.map((student) => (
+                        <p
+                            key={student.id}
+                            id={`waitlist-row-${student.id}`}
+                            className="mt-2 text-secondary"
+                        >
+                            {student.name.replace(/"/g, "")}
+                        </p>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
