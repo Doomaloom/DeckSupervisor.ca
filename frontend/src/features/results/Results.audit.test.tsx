@@ -176,6 +176,14 @@ it('sends the displayed revision when resolving a conflict and surfaces a stale-
  expect(sent('POST','/results/conflicts/conflict-new/resolve')[0].body).toEqual({choice:'incoming',expectedRevision:0});
 });
 
+it('cuts heat times to a tenth of a second like the tablet instead of rounding them',async()=>{
+ const heat=(recordId:string,elapsedMs:number)=>attempt({recordId,payload:{skillId:'Splash7:10',createdAt:'2026-09-04T12:00:00Z',submittedAt:'2026-09-04T12:01:00Z',results:[{subskillId:'Splash7:10:1',status:'not_yet'}],timed:{lapsRequired:4,lapsCompleted:4,elapsedMs}}});
+ server.results=results([heat('heat-a',7784),heat('heat-b',4665)]);
+ show();
+ expect(await screen.findByText('4 of 4 laps in 7.7 seconds')).toBeVisible();
+ expect(screen.getByText('4 of 4 laps in 4.6 seconds')).toBeVisible();
+});
+
 it('shows the plain "already changed" message when another reviewer resolved the conflict, and reloads the list',async()=>{
  const incoming={...attempt(),operationId:'incoming-op',baseRevision:1};
  server.results=results([attempt()],{conflicts:[{id:'conflict-one',operation:incoming,current:attempt(),resolved:false}]});

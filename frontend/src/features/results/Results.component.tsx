@@ -32,7 +32,7 @@ export function InstructorResults(){
 function RecordValue({value}:{value:api.ResultOperation|null}){
  if(!value)return <p>No accepted record</p>;
  if(value.action==='delete')return <p>Deleted</p>;
- return value.kind==='attendance'?<p>Attendance: {value.payload.status}</p>:<div><p>{skillName(value.payload.skillId)}</p><ul>{value.payload.results?.map(c=><li key={c.subskillId}>{criterionName(c.subskillId)}: {c.status==='successful'?'Successful':'Not yet'}</li>)}</ul>{value.payload.timed&&<p>{value.payload.timed.lapsCompleted} of {value.payload.timed.lapsRequired} laps in {(value.payload.timed.elapsedMs/1000).toFixed(1)} seconds</p>}</div>;
+ return value.kind==='attendance'?<p>Attendance: {value.payload.status}</p>:<div><p>{skillName(value.payload.skillId)}</p><ul>{value.payload.results?.map(c=><li key={c.subskillId}>{criterionName(c.subskillId)}: {c.status==='successful'?'Successful':'Not yet'}</li>)}</ul>{value.payload.timed&&<p>{value.payload.timed.lapsCompleted} of {value.payload.timed.lapsRequired} laps in {(Math.floor(value.payload.timed.elapsedMs/100)/10).toFixed(1)} seconds</p>}</div>;
 }
 function AttemptEditor({record,busy,onSave}:{record:api.ResultRecord;busy:boolean;onSave:(payload:api.ResultPayload)=>void}){
  const [payload,setPayload]=useState(record.payload);
