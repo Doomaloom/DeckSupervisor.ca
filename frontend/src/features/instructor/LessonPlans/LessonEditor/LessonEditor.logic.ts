@@ -196,6 +196,12 @@ export function useLessonEditorLogic({ sessionId, classId, week, level, lessonDu
     function changeSkill(i: number, skill: string) {
         const activity = defaultWorkoutText(skill);
         if (activity) {
+            if (
+                rows[i].activities?.some((entry) => entry.text.trim()) &&
+                !window.confirm(
+                    "This skill has a set workout. Choosing it will remove the activities in this row. Continue?",
+                )
+            ) return;
             edit(i, { skill, activity, workout: undefined, activities: undefined });
             return;
         }

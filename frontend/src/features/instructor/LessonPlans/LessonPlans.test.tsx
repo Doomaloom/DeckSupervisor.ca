@@ -888,6 +888,27 @@ it("uses the skill's prescribed workout by default and opens a fresh custom buil
     }
 });
 
+it("asks before a workout skill replaces the activities in a row", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    try {
+        const user = userEvent.setup();
+        setup("Splash Fitness");
+        await screen.findByText(/No lesson plan saved/);
+        await user.click(screen.getByRole("button", { name: "Add activity" }));
+        await user.click(screen.getByRole("button", { name: "Custom activity for row 1" }));
+        await user.type(screen.getByLabelText("Activity / drill 1"), "My drill");
+        await user.selectOptions(screen.getByLabelText("Skill 1"), workoutSkill);
+        expect(confirm).toHaveBeenCalledTimes(1);
+        expect(screen.getByLabelText("Activity / drill 1")).toHaveValue("My drill");
+        expect(screen.getByLabelText("Skill 1")).toHaveValue("");
+        confirm.mockReturnValue(true);
+        await user.selectOptions(screen.getByLabelText("Skill 1"), workoutSkill);
+        expect(screen.getByLabelText("Workout summary 1").textContent)
+            .toBe(defaultWorkoutText(workoutSkill));
+    } finally {
+        confirm.mockRestore();
+    }
+});
 it("fills a saved workout skill with its default without saving until the plan is edited", async () => {
     api.fetchLessonPlan.mockResolvedValue({
         plan: {
