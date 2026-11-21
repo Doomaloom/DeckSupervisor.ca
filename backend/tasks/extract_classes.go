@@ -316,6 +316,10 @@ func frameValue(row dataframe.DataFrame, names ...string) string {
 			if column.Len() == 0 {
 				return ""
 			}
+			if column.Elem(0).IsNA() {
+				// A blank cell is parsed as NaN in numeric columns.
+				return ""
+			}
 			return strings.TrimSpace(column.Elem(0).String())
 		}
 	}

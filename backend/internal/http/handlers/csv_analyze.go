@@ -138,7 +138,7 @@ func AnalyzeCSV(w http.ResponseWriter, r *http.Request) {
 		FallbackDay: requestedDay,
 	})
 	if err != nil {
-		http.Error(w, "Failed to analyze CSV: "+err.Error(), http.StatusBadRequest)
+		writeCSVAnalyzeError(w, err)
 		return
 	}
 	if accountScope == "full_time" && termSeason != "" && termYear > 0 {
@@ -165,7 +165,7 @@ func AnalyzeCSV(w http.ResponseWriter, r *http.Request) {
 		InstructorMap: instructorMap,
 	})
 	if err != nil {
-		http.Error(w, "Failed to analyze CSV: "+err.Error(), http.StatusBadRequest)
+		writeCSVAnalyzeError(w, err)
 		return
 	}
 	if accountScope == "full_time" && termSeason != "" && termYear > 0 {
@@ -202,6 +202,16 @@ func AnalyzeCSV(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, response)
+}
+
+// writeCSVAnalyzeError shows file problems as plain messages and keeps the
+// technical prefix for everything else.
+func writeCSVAnalyzeError(w http.ResponseWriter, err error) {
+	if fileErr, ok := tasks.IsCSVFileError(err); ok {
+		http.Error(w, fileErr.Message, http.StatusBadRequest)
+		return
+	}
+	http.Error(w, "Failed to analyze CSV: "+err.Error(), http.StatusBadRequest)
 }
 
 func buildCSVAnalyzeMeta(
