@@ -28,8 +28,53 @@ function notify() {
     }
 }
 
+// The server can only store refreshed sign-in cookies on the session check
+// (/api/auth/session); other API calls refresh on the server and discard the
+// result. So a tab left open asks for that check just after the access token
+// expires, which stores the new cookies.
+const REFRESH_AFTER_EXPIRY_MS = 5_000;
+// Never check more often than this, so a clock that runs ahead of the server
+// or a server that is down cannot turn the check into a tight loop.
+const MIN_REFRESH_INTERVAL_MS = 60_000;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleRefresh(session: BrowserSession | null) {
+    if (refreshTimer) {
+        clearTimeout(refreshTimer);
+        refreshTimer = null;
+    }
+    if (!session || !session.expires_at) {
+        return;
+    }
+    const delay = Math.max(
+        session.expires_at * 1000 - Date.now() + REFRESH_AFTER_EXPIRY_MS,
+        MIN_REFRESH_INTERVAL_MS,
+    );
+    refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        void refreshStoredSession();
+    }, delay);
+}
+
+// Background refresh: only an explicit "Unauthorized" signs the user out. A
+// network blip keeps the current session and tries again later.
+async function refreshStoredSession() {
+    try {
+        const data = await requestAuth("/api/auth/session", { method: "GET" });
+        setSession(data.session ?? null);
+    } catch (error) {
+        // The server's reply ends with a line break, so compare the trimmed text.
+        if (error instanceof Error && error.message.trim() === "Unauthorized") {
+            setSession(null);
+            return;
+        }
+        scheduleRefresh(currentSession);
+    }
+}
+
 function setSession(session: BrowserSession | null) {
     currentSession = session;
+    scheduleRefresh(session);
     notify();
 }
 
