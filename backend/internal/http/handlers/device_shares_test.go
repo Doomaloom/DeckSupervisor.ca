@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 
@@ -10,9 +11,38 @@ import (
 	"testing"
 )
 
+// signedInDeviceShareRequest stubs the sign-in provider's user lookup so a
+// create request counts as signed in.
+func signedInDeviceShareRequest(t *testing.T, payload []byte) *http.Request {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, `{"id":"user-a"}`)
+	}))
+	t.Cleanup(server.Close)
+	t.Setenv("SUPABASE_URL", server.URL)
+	t.Setenv("SUPABASE_ANON_KEY", "anon-key")
+	request := httptest.NewRequest(http.MethodPost, "/api/device-shares", bytes.NewReader(payload))
+	request.AddCookie(&http.Cookie{Name: "decksupervisor_access_token", Value: "user-access-token"})
+	return request
+}
+
+func TestDeviceShareCreateRequiresSignIn(t *testing.T) {
+	t.Setenv("SUPABASE_URL", "")
+	t.Setenv("SUPABASE_ANON_KEY", "")
+	t.Setenv("VITE_SUPABASE_ANON_KEY", "")
+	payload := `{"packages":[{"instructor":"Alex","package":{"schemaVersion":1,"kind":"rec-tablet-classes","datasetId":"demo","instructor":"Alex","courses":[{"sourceId":"course-a"}]}}]}`
+	request := httptest.NewRequest(http.MethodPost, "/api/device-shares", bytes.NewBufferString(payload))
+	recorder := httptest.NewRecorder()
+	CreateDeviceShare(recorder, request)
+	if recorder.Code != http.StatusUnauthorized {
+		t.Fatalf("guest create status %d: %s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func TestDeviceShareHTTPHostAndInstructorRedemption(t *testing.T) {
 	payload := []byte(`{"packages":[{"instructor":"Alex","package":{"schemaVersion":1,"kind":"rec-tablet-classes","datasetId":"demo","instructor":"Alex","courses":[{"sourceId":"course-a"}] }},{"instructor":"Sam","package":{"schemaVersion":1,"kind":"rec-tablet-classes","datasetId":"demo","instructor":"Sam","courses":[{"sourceId":"course-b"}]}}]}`)
-	request := httptest.NewRequest(http.MethodPost, "/api/device-shares", bytes.NewReader(payload))
+	request := signedInDeviceShareRequest(t, payload)
 	recorder := httptest.NewRecorder()
 	CreateDeviceShare(recorder, request)
 	if recorder.Code != http.StatusCreated {
@@ -72,7 +102,7 @@ func TestDeviceShareHTTPHostAndInstructorRedemption(t *testing.T) {
 }
 
 func TestDeviceShareCreateRejectsMismatchedInstructorPackage(t *testing.T) {
-	request := httptest.NewRequest(http.MethodPost, "/api/device-shares", bytes.NewBufferString(`{"packages":[{"instructor":"Alex","package":{"schemaVersion":1,"kind":"rec-tablet-classes","datasetId":"demo","instructor":"Sam","courses":[{}]}}]}`))
+	request := signedInDeviceShareRequest(t, []byte(`{"packages":[{"instructor":"Alex","package":{"schemaVersion":1,"kind":"rec-tablet-classes","datasetId":"demo","instructor":"Sam","courses":[{}]}}]}`))
 	recorder := httptest.NewRecorder()
 	CreateDeviceShare(recorder, request)
 	if recorder.Code != http.StatusBadRequest {

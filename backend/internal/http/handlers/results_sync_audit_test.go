@@ -126,7 +126,7 @@ func TestGuestPackageCannotForgeBoundEnvelopeWithAnyKeyCasing(t *testing.T) {
 		pkg := `{"schemaVersion":1,"kind":"rec-tablet-classes","datasetId":"decksupervisor:80000000-0000-0000-0000-000000000001","instructor":"Alex","SYNC":{"instructorId":"forged-upper"},"Sync":{"instructorId":"forged-title"},"courses":[{"sourceId":"course-a"}],` +
 			`"` + keys[0] + `":"victim-owner","` + keys[1] + `":` + forgedSync + `,"` + keys[2] + `":{"forged":"package"}}`
 		remote := "198.51.100." + string(rune('1'+i))
-		w := auditRequest("POST", "/api/device-shares", `{"packages":[{"instructor":"Alex","package":`+pkg+`}]}`, remote, false)
+		w := auditRequest("POST", "/api/device-shares", `{"packages":[{"instructor":"Alex","package":`+pkg+`}]}`, remote, true)
 		_, _, codes := auditCodes(t, w)
 		w = auditRequest("POST", "/api/device-shares/redeem", `{"code":"`+codes[0]+`"}`, remote, false)
 		if w.Code != 200 {
@@ -156,8 +156,12 @@ func TestGuestCannotBindSessionAndUnboundAuthenticatedShareIsImportOnly(t *testi
 	calls := auditUpstream(t, nil)
 	pkg := `{"schemaVersion":1,"kind":"rec-tablet-classes","datasetId":"decksupervisor:80000000-0000-0000-0000-000000000001","instructor":"Alex","courses":[{"sourceId":"course-a","swimmers":[{"sourceId":"swimmer-a"}]}]}`
 	w := auditRequest("POST", "/api/device-shares", `{"sessionId":"session-a","packages":[{"instructor":"Alex","package":`+pkg+`}]}`, "198.51.100.20", false)
-	if w.Code != 403 || len(*calls) != 0 {
+	if w.Code != 401 || len(*calls) != 0 {
 		t.Fatalf("guest bound a session: %d %s calls=%d", w.Code, w.Body, len(*calls))
+	}
+	w = auditRequest("POST", "/api/device-shares", `{"packages":[{"instructor":"Alex","package":`+pkg+`}]}`, "198.51.100.20", false)
+	if w.Code != 401 || strings.Contains(w.Body.String(), "code") || len(*calls) != 0 {
+		t.Fatalf("guest created a device share: %d %s calls=%d", w.Code, w.Body, len(*calls))
 	}
 	w = auditRequest("POST", "/api/device-shares", `{"packages":[{"instructor":"Alex","package":`+pkg+`}]}`, "198.51.100.20", true)
 	_, _, codes := auditCodes(t, w)
