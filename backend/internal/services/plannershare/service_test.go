@@ -98,6 +98,36 @@ func TestCleanupRoomLockedReassignsHostAndRemovesStaleParticipants(t *testing.T)
 	}
 }
 
+func TestCleanupRoomLockedKeepsRoomWhenHostIsBrieflyOffline(t *testing.T) {
+	t.Parallel()
+
+	service := NewService()
+	now := time.Now().UTC()
+	room := &shareRoom{
+		Code:              "ABC123",
+		HostParticipantID: "host",
+		Participants: map[string]*ShareParticipant{
+			"host": {ID: "host", DisplayName: "Host", IsHost: true, JoinedAt: now.Add(-5 * time.Minute), LastSeenAt: now.Add(-50 * time.Second)},
+		},
+	}
+	service.sessions["ABC123"] = room
+	room.ExpiresAt = now.Add(time.Hour)
+
+	service.cleanupLocked(now)
+
+	if service.sessions["ABC123"] == nil || room.Participants["host"] == nil {
+		t.Fatal("expected a room whose only host was offline for 50 seconds to be kept")
+	}
+	if room.HostParticipantID != "host" {
+		t.Fatalf("expected host to stay host, got %q", room.HostParticipantID)
+	}
+
+	service.cleanupLocked(now.Add(abandonedRoomDuration + time.Minute))
+	if service.sessions["ABC123"] != nil {
+		t.Fatal("expected a room nobody has returned to for a long time to be dropped")
+	}
+}
+
 func ptr(value string) *string {
 	return &value
 }

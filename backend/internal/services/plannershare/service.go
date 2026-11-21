@@ -17,6 +17,9 @@ const (
 	codeLength               = 6
 	sessionLifetime          = 24 * time.Hour
 	staleParticipantDuration = 45 * time.Second
+	// A room where nobody has been heard from for staleParticipantDuration is kept this long, so a host who
+	// is briefly offline can come back to it. It is dropped after this.
+	abandonedRoomDuration = 30 * time.Minute
 )
 
 var (
@@ -504,6 +507,19 @@ func (s *Service) cleanupLocked(now time.Time) {
 }
 
 func (s *Service) cleanupRoomLocked(room *shareRoom, now time.Time) {
+	var newestSeen time.Time
+	for _, participant := range room.Participants {
+		if participant.LastSeenAt.After(newestSeen) {
+			newestSeen = participant.LastSeenAt
+		}
+	}
+	if len(room.Participants) > 0 && now.Sub(newestSeen) > staleParticipantDuration {
+		// Nobody is here, so there is nobody to hand the room to: keep it for a while instead of deleting it.
+		if now.Sub(newestSeen) > abandonedRoomDuration {
+			room.Participants = map[string]*ShareParticipant{}
+		}
+		return
+	}
 	for id, participant := range room.Participants {
 		if now.Sub(participant.LastSeenAt) > staleParticipantDuration {
 			delete(room.Participants, id)
