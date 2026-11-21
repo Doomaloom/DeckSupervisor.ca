@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	authsvc "cob-aquatics/internal/services/auth"
 	"cob-aquatics/internal/services/supabase"
 	"github.com/gorilla/mux"
 )
@@ -48,6 +49,10 @@ func resultClient(w http.ResponseWriter, r *http.Request, device bool) *supabase
 		c, err = supabase.NewServiceClientFromEnv()
 	} else {
 		c, err = supabase.NewClientFromRequest(r)
+	}
+	if errors.Is(err, authsvc.ErrAuthUnavailable) {
+		http.Error(w, resultUnavailable, 502)
+		return nil
 	}
 	if err != nil {
 		http.Error(w, "Unauthorized", 401)

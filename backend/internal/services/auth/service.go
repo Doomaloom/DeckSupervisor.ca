@@ -18,6 +18,17 @@ const (
 	RefreshCookieName = "decksupervisor_refresh_token"
 )
 
+// ErrAuthUnavailable means the sign-in provider could not be reached or failed
+// on its side (network error, timeout, 5xx, rate limit). It says nothing about
+// whether the caller's sign-in is valid, so callers must not sign the user out
+// on it. Its text is written for the user.
+var ErrAuthUnavailable = errors.New("Sign-in service is unavailable right now. Try again in a moment.")
+
+// providerFailed reports a response status that is the provider's own trouble.
+func providerFailed(status int) bool {
+	return status >= 500 || status == http.StatusTooManyRequests
+}
+
 type Service struct {
 	supabaseURL string
 	anonKey     string
@@ -102,6 +113,9 @@ func (s *Service) SignUp(ctx context.Context, email, password string) (*SignUpRe
 }
 
 func (s *Service) SessionFromCookies(ctx context.Context, accessToken, refreshToken string) (*Session, string, error) {
+	// accessUnchecked: the provider could not say whether an access token that
+	// has not expired yet is still good.
+	accessUnchecked := false
 	if strings.TrimSpace(accessToken) != "" {
 		user, err := s.fetchUser(ctx, accessToken)
 		if err == nil {
@@ -112,14 +126,22 @@ func (s *Service) SessionFromCookies(ctx context.Context, accessToken, refreshTo
 				User:        user,
 			}, refreshToken, nil
 		}
+		accessUnchecked = errors.Is(err, ErrAuthUnavailable) && parseJWTExpiry(accessToken) > time.Now().Unix()
 	}
 	if strings.TrimSpace(refreshToken) == "" {
+		if accessUnchecked {
+			return nil, "", ErrAuthUnavailable
+		}
 		return nil, "", errors.New("missing refresh token")
 	}
 	payload, err := s.authRequest(ctx, "/auth/v1/token?grant_type=refresh_token", map[string]string{
 		"refresh_token": refreshToken,
 	})
 	if err != nil {
+		if accessUnchecked {
+			// The sign-in was never shown to be bad: report the outage instead.
+			return nil, "", ErrAuthUnavailable
+		}
 		return nil, "", err
 	}
 	session := payload.toSession()
@@ -183,10 +205,13 @@ func (s *Service) authRequest(ctx context.Context, path string, payload map[stri
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, ErrAuthUnavailable
 	}
 	defer resp.Body.Close()
 
+	if providerFailed(resp.StatusCode) {
+		return nil, ErrAuthUnavailable
+	}
 	if resp.StatusCode >= 400 {
 		var authErr struct {
 			Msg              string `json:"msg"`
@@ -217,9 +242,12 @@ func (s *Service) fetchUser(ctx context.Context, accessToken string) (User, erro
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return User{}, err
+		return User{}, ErrAuthUnavailable
 	}
 	defer resp.Body.Close()
+	if providerFailed(resp.StatusCode) {
+		return User{}, ErrAuthUnavailable
+	}
 	if resp.StatusCode >= 400 {
 		return User{}, fmt.Errorf("user lookup failed: %s", resp.Status)
 	}

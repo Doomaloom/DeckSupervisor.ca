@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	authsvc "cob-aquatics/internal/services/auth"
 	"cob-aquatics/internal/services/deviceshare"
 	"cob-aquatics/internal/services/supabase"
 	"github.com/gorilla/mux"
@@ -32,7 +33,10 @@ type redeemDeviceShareRequest struct {
 func CreateDeviceShare(w http.ResponseWriter, r *http.Request) {
 	// Only a signed-in supervisor may start a share. Redeeming, heartbeat and
 	// close stay open: tablets use a code and are never signed in.
-	if _, err := supabase.NewClientFromRequest(r); err != nil {
+	if _, err := supabase.NewClientFromRequest(r); errors.Is(err, authsvc.ErrAuthUnavailable) {
+		http.Error(w, authsvc.ErrAuthUnavailable.Error(), http.StatusServiceUnavailable)
+		return
+	} else if err != nil {
 		http.Error(w, "Sign in to share classes with tablets.", http.StatusUnauthorized)
 		return
 	}

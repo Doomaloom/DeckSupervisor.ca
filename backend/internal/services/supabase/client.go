@@ -38,6 +38,10 @@ func NewClientFromRequest(r *http.Request) (*Client, error) {
 		return nil, err
 	}
 	session, _, err := authService.SessionFromRequest(r)
+	if errors.Is(err, authsvc.ErrAuthUnavailable) {
+		// Let callers tell a sign-in outage from a real refusal.
+		return nil, err
+	}
 	if err != nil || session == nil {
 		return nil, errors.New("unauthorized")
 	}

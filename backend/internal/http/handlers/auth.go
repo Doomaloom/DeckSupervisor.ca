@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	authsvc "cob-aquatics/internal/services/auth"
@@ -85,6 +86,11 @@ func Session(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session, refreshToken, err := service.SessionFromRequest(r)
+	if errors.Is(err, authsvc.ErrAuthUnavailable) {
+		// An outage is not a refusal: keep the cookies so the sign-in survives it.
+		http.Error(w, authsvc.ErrAuthUnavailable.Error(), http.StatusServiceUnavailable)
+		return
+	}
 	if err != nil {
 		authsvc.ClearSessionCookies(w, r)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
