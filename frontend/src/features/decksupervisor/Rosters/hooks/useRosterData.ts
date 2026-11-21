@@ -160,9 +160,15 @@ export function useRosterData(
 
     const rosters = useMemo(() => buildRosterGroups(students), [students]);
     const instructorOptions = useMemo(() => {
-        const instructorConfig = getInstructorsForDay(selectedDay);
-        return instructorConfig?.names?.filter(Boolean) ?? [];
-    }, [selectedDay]);
+        // Prefer this session's schematic once it has loaded; the weekday
+        // list may be empty (just after an upload) or from another session.
+        const names = remoteSchematic?.instructors?.length
+            ? remoteSchematic.instructors
+            : getInstructorsForDay(selectedDay)?.names ?? [];
+        return Array.from(
+            new Set(names.map((name) => name.trim()).filter(Boolean)),
+        );
+    }, [remoteSchematic, selectedDay]);
     return {
         students,
         setStudents,
