@@ -16,6 +16,7 @@ import { formatSessionTermLabel, getYearFromDate, resolveSessionYear, } from "..
 import { inferSingleSessionWindowFromClasses } from "../../session/sessionTimeInference";
 import { getEffectiveSourceLocations, normalizeSessionLocationKey, normalizeSessionLocations, } from "../../session/sourceLocations";
 import { type LocalSessionEntry, NO_TEAM_VALUE, SESSION_SEASON_OPTIONS, } from "../types";
+import { findDuplicateInstructorName } from "../utils/duplicateInstructorName";
 import { reconcileGuestInstructorRoster } from "../utils/guestInstructorRoster";
 import { buildSessionIdentityCriteria, resolveDisplayAndSourceLocations, } from "../utils/sessionIdentity";
 import { useSessionAutosave } from "./useSessionAutosave";
@@ -642,6 +643,16 @@ export function useManageSessionForm({
         if (resolvedLocations.validationMessage) {
             setEditMessageTone("error");
             setEditMessage(resolvedLocations.validationMessage);
+            return false;
+        }
+        const duplicateInstructor = findDuplicateInstructorName(
+            editInstructors,
+        );
+        if (duplicateInstructor) {
+            setEditMessageTone("error");
+            setEditMessage(
+                `Two instructors are named "${duplicateInstructor}". Give each instructor a different name before saving.`,
+            );
             return false;
         }
         const sessionYearValue = resolveSessionYear(
