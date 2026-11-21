@@ -453,11 +453,21 @@ export function CsvImportFlowProvider(
                 }
             }
 
-            await syncPostImportState(
-                candidate.dayOfWeek,
-                targetSession,
-                matchedSession ? matchedSession.ownedByUser : !isGuest,
-            );
+            // The roster is already imported here. A failure while updating
+            // report card totals must not keep the dialog open with an error.
+            try {
+                await syncPostImportState(
+                    candidate.dayOfWeek,
+                    targetSession,
+                    matchedSession ? matchedSession.ownedByUser : !isGuest,
+                );
+            } catch (error) {
+                console.error("Failed to update report card totals after roster upload", error);
+                showAppNotice(
+                    "Roster uploaded. Report card totals were not updated.",
+                    "info",
+                );
+            }
 
             closeModal();
             if (accountType !== "full_time") {
