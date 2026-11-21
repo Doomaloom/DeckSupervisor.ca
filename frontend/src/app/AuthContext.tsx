@@ -47,7 +47,7 @@ type AuthContextValue = {
         firstName: string,
         lastName: string,
         location?: string,
-    ) => Promise<void>;
+    ) => Promise<boolean>;
     signOut: () => Promise<void>;
 };
 
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const completeProfile = useCallback(
         async (firstName: string, lastName: string, location?: string) => {
             if (!user) {
-                return;
+                return false;
             }
             const payload: {
                 id: string;
@@ -164,9 +164,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 await updateProfileRequest(payload);
             } catch (error) {
                 console.error("Failed to save profile", error);
-                return;
+                return false;
             }
             await loadProfile(user);
+            return true;
         },
         [loadProfile, user],
     );

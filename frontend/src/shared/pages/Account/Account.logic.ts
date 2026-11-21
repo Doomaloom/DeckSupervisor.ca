@@ -57,12 +57,13 @@ export function useAccountLogic() {
         setSaveMessage("");
         setLoading(true);
         try {
-            await completeProfile(
+            const saved = await completeProfile(
                 trimmedFirst,
                 trimmedLast,
                 location.trim() || undefined,
             );
-            setSaveMessage("Profile updated.");
+            if (saved) setSaveMessage("Profile updated.");
+            else setSaveError("Could not save your profile. Please try again.");
         } finally {
             setLoading(false);
         }

@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({ completeProfile: vi.fn(), fetchAccountData: vi
     } | null, profile: { first_name: "Alex", last_name: "River", location: "Pool" } }));
 vi.mock("../../../app/AuthContext", () => ({ useAuth: () => mocks }));
 vi.mock("../../../lib/serverApi", () => mocks);
-beforeEach(() => { mocks.isGuest = false; mocks.user = { id: "staff" }; mocks.fetchAccountData.mockReset().mockResolvedValue({ invites: [], memberships: [] }); mocks.completeProfile.mockReset().mockResolvedValue(undefined); mocks.acceptTeamInvite.mockReset().mockResolvedValue(undefined); });
+beforeEach(() => { mocks.isGuest = false; mocks.user = { id: "staff" }; mocks.fetchAccountData.mockReset().mockResolvedValue({ invites: [], memberships: [] }); mocks.completeProfile.mockReset().mockResolvedValue(true); mocks.acceptTeamInvite.mockReset().mockResolvedValue(undefined); });
 function setup() { render(<MemoryRouter><Account /></MemoryRouter>); }
 it("offers sign-in in guest mode without loading private data", () => { mocks.isGuest = true; mocks.user = null; setup(); expect(screen.getByRole("link", { name: "Go to Sign In" })).toHaveAttribute("href", "/sign-in"); expect(mocks.fetchAccountData).not.toHaveBeenCalled(); });
 it("saves the profile and rejects missing required names", async () => {
@@ -22,6 +22,16 @@ it("saves the profile and rejects missing required names", async () => {
     await user.click(screen.getByRole("button", { name: "Save Profile" }));
     expect(screen.getByText("Please enter your first and last name.")).toBeVisible();
     expect(mocks.completeProfile).toHaveBeenCalledOnce();
+});
+it("shows an error instead of success when the profile save fails", async () => {
+    mocks.completeProfile.mockResolvedValue(false);
+    const user = userEvent.setup();
+    setup();
+    await user.clear(screen.getByPlaceholderText("First name"));
+    await user.type(screen.getByPlaceholderText("First name"), "Sam");
+    await user.click(screen.getByRole("button", { name: "Save Profile" }));
+    expect(await screen.findByText("Could not save your profile. Please try again.")).toBeVisible();
+    expect(screen.queryByText("Profile updated.")).not.toBeInTheDocument();
 });
 it("accepts an invite and refreshes memberships", async () => {
     mocks.fetchAccountData.mockResolvedValueOnce({ invites: [{ id: "invite", team_id: "team", status: "pending", teams: { name: "Aquatics" } }], memberships: [] });
