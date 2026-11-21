@@ -52,6 +52,7 @@ export type MasterlistStudent = {
     age?: string;
     instructor: string;
     level: string;
+    waitlist?: boolean;
 };
 
 export type MasterlistRoster = {

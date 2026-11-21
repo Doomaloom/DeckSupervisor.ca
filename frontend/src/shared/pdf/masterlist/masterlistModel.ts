@@ -73,6 +73,9 @@ function buildRosterDataRows(roster: MasterlistRosterInput): NamedDataRow[] {
         if (!name || !code) return [];
         const instructor = rosterInstructor ||
             text(student.instructor ?? student.Instructor);
+        // Waitlisted swimmers stay on the masterlist but are not enrolled, so
+        // their row says so in plain text (readable in black-and-white print).
+        const waitlisted = (student.waitlist ?? student.Waitlist) === true;
         return [{
             name,
             row: {
@@ -83,7 +86,7 @@ function buildRosterDataRows(roster: MasterlistRosterInput): NamedDataRow[] {
                     instructor,
                     serviceName ||
                     sanitizeEventName(text(student.level ?? student.Level)),
-                    name,
+                    waitlisted ? `${name} (Waitlist)` : name,
                     text(student.age ?? student.Age),
                     text(student.phone ?? student.Phone),
                 ],

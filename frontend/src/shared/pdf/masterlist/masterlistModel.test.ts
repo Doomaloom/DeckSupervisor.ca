@@ -103,6 +103,41 @@ describe("masterlist model", () => {
         });
     });
 
+    it("keeps waitlisted swimmers but labels them in both layouts", () => {
+        const rosters = [
+            roster("C1", [
+                {
+                    name: "Ben Booked",
+                    phone: "555",
+                    instructor: "Alex",
+                    level: "Splash 1",
+                },
+                {
+                    name: "Wren Waiting",
+                    phone: "556",
+                    instructor: "Alex",
+                    level: "Splash 1",
+                    waitlist: true,
+                },
+            ]),
+        ];
+        const names = (layoutRows: ReturnType<typeof buildMasterlistRows>) =>
+            layoutRows.flatMap((row) =>
+                row.kind === "data" ? [row.cells[4]] : []
+            );
+
+        expect(names(buildMasterlistRows(rosters, options))).toEqual([
+            "Ben Booked",
+            "Wren Waiting (Waitlist)",
+        ]);
+        expect(
+            names(buildMasterlistRows(rosters, {
+                ...options,
+                layout: "alphabetical",
+            })),
+        ).toEqual(["Ben Booked", "Wren Waiting (Waitlist)"]);
+    });
+
     it("globally groups and orders students by first name", () => {
         const rows = buildMasterlistRows([
             roster("C1", [

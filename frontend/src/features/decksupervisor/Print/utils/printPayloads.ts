@@ -25,6 +25,7 @@ type MasterlistStudentPayload = {
     age?: string;
     instructor: string;
     level: string;
+    waitlist?: boolean;
 };
 
 type MasterlistRosterPayload = {
@@ -396,6 +397,8 @@ function buildMasterlistRosterPayloads(
             age: student.age,
             instructor: student.instructor,
             level: student.level,
+            // Only set when true, so payloads for booked swimmers are unchanged.
+            ...(student.waitlist ? { waitlist: true } : {}),
             code: student.code,
         }));
 
@@ -432,6 +435,7 @@ function buildMasterlistRosterPayloads(
                 age: student.age,
                 instructor: student.instructor,
                 level: student.level,
+                ...(student.waitlist ? { waitlist: true } : {}),
             };
             if (bucket) {
                 bucket.push(studentPayload);

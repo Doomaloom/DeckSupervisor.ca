@@ -210,6 +210,31 @@ describe("printPayloads", () => {
         ]);
     });
 
+    it("marks waitlisted swimmers on the masterlist instead of listing them as booked", () => {
+        setStudentsForDay("Mo", [
+            makeStudent({ id: "student-1", code: "C100", name: "Alice Smith" }),
+            makeStudent({
+                id: "student-2",
+                code: "C100",
+                name: "Xen Joshi",
+                waitlist: true,
+            }),
+        ]);
+
+        const payload = buildMasterlistRequestBody({
+            day: "Mo",
+            sessionId: "session-1",
+            session,
+            options: defaultFormatOptions,
+        });
+
+        const names = buildMasterlistRows(
+            payload?.rosters ?? [],
+            payload?.options ?? defaultFormatOptions,
+        ).flatMap((row) => row.kind === "data" ? [row.cells[4]] : []);
+        expect(names).toEqual(["Alice Smith", "Xen Joshi (Waitlist)"]);
+    });
+
     it("uses the selected term for masterlist titles when no current session record is available", () => {
         setStudentsForDay("Mo", [
             makeStudent({ id: "student-1", code: "C1", name: "Alice" }),
