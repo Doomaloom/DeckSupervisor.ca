@@ -1,5 +1,7 @@
 import {
+    deleteRosterStudentLevelEdit as deleteRosterStudentLevelEditRequest,
     fetchRosterEdits as fetchRosterEditsRequest,
+    setRosterClassLevel as setRosterClassLevelRequest,
     upsertRosterLevelEdit as upsertRosterLevelEditRequest,
     upsertRosterStudentLevelEdit as upsertRosterStudentLevelEditRequest,
 } from "./serverApi";
@@ -100,6 +102,32 @@ export async function upsertRosterStudentLevelEdit(
     });
 }
 
+export async function deleteRosterStudentLevelEdit(
+    sessionId: string,
+    code: string,
+    studentName: string,
+) {
+    const hash = await hashName(studentName);
+    if (!hash) {
+        return null;
+    }
+    return deleteRosterStudentLevelEditRequest(sessionId, code, hash);
+}
+
+// Saves the class level for the whole class and removes every swimmer edit
+// for it. An empty level removes the class edit too.
+export async function setRosterClassLevel(
+    sessionId: string,
+    code: string,
+    level: string,
+) {
+    return setRosterClassLevelRequest({
+        session_id: sessionId,
+        code,
+        level,
+    });
+}
+
 export async function hashStudentNames(
     names: string[],
 ): Promise<Map<string, string>> {
@@ -121,10 +149,7 @@ export function applyPersistedLevelEdits(
     studentEdits: StudentLevelEdit[],
     nameHashMap: Map<string, string>,
 ): Student[] {
-    if (
-        students.length === 0 ||
-        (rosterEdits.length === 0 && studentEdits.length === 0)
-    ) {
+    if (students.length === 0) {
         return students;
     }
 
@@ -150,14 +175,34 @@ export function applyPersistedLevelEdits(
         const studentLevel = overrideKey
             ? studentOverride.get(overrideKey)
             : undefined;
-        const resolvedLevel = studentLevel ?? rosterLevel;
+        // Caches saved before the file level was kept have no such level.
+        // A swimmer with a saved edit is taken to have been uploaded on the
+        // class's service name; any other swimmer on the level they show.
+        const hasEdit = studentLevel !== undefined || rosterLevel !== undefined;
+        const fileLevel = student.registered_level ??
+            (hasEdit ? student.service_name : student.level);
+        // With no edit left, a swimmer goes back to their own level in the
+        // uploaded file (edits can now be removed).
+        const resolvedLevel = studentLevel ?? rosterLevel ?? fileLevel;
 
-        if (!resolvedLevel || resolvedLevel === student.level) {
+        if (
+            resolvedLevel === student.level &&
+            rosterLevel === student.class_level &&
+            fileLevel === student.registered_level
+        ) {
             return student;
         }
 
         changed = true;
-        return { ...student, level: resolvedLevel };
+        const { class_level: _previous, ...rest } = student;
+        return rosterLevel === undefined
+            ? { ...rest, level: resolvedLevel, registered_level: fileLevel }
+            : {
+                ...rest,
+                level: resolvedLevel,
+                registered_level: fileLevel,
+                class_level: rosterLevel,
+            };
     });
 
     return changed ? next : students;
@@ -169,6 +214,7 @@ export async function applySavedLevelEditsToStoredRoster(
     day: string,
     sessionId: string,
     isActive: () => boolean = () => true,
+    options?: { silent?: boolean },
 ): Promise<void> {
     if (!day || !sessionId || getStudentsForDay(day, sessionId).length === 0) {
         return;
@@ -191,6 +237,6 @@ export async function applySavedLevelEditsToStoredRoster(
         nameHashMap,
     );
     if (next !== students) {
-        setStudentsForDay(day, next, sessionId);
+        setStudentsForDay(day, next, sessionId, options);
     }
 }

@@ -126,11 +126,20 @@ export function restoreEditedStudentLevels(
     sessionId: string,
 ) {
     previous.forEach(([day, oldStudents]) => {
-        const edited = new Map<string, string>();
+        const edited = new Map<
+            string,
+            { level: string; classLevel?: string }
+        >();
         oldStudents.forEach((student) => {
             const level = student.level?.trim();
-            if (level && level !== student.service_name?.trim()) {
-                edited.set(student.id, student.level);
+            if (
+                student.class_level ||
+                (level && level !== student.service_name?.trim())
+            ) {
+                edited.set(student.id, {
+                    level: student.level,
+                    classLevel: student.class_level,
+                });
             }
         });
         if (edited.size === 0) {
@@ -139,12 +148,19 @@ export function restoreEditedStudentLevels(
         const current = getStudentsForDay(day, sessionId);
         let changed = false;
         const next = current.map((student) => {
-            const level = edited.get(student.id);
-            if (level === undefined || level === student.level) {
+            const saved = edited.get(student.id);
+            if (
+                saved === undefined ||
+                (saved.level === student.level &&
+                    saved.classLevel === student.class_level)
+            ) {
                 return student;
             }
             changed = true;
-            return { ...student, level };
+            const { class_level: _dropped, ...rest } = student;
+            return saved.classLevel
+                ? { ...rest, level: saved.level, class_level: saved.classLevel }
+                : { ...rest, level: saved.level };
         });
         if (changed) {
             setStudentsForDay(day, next, sessionId);

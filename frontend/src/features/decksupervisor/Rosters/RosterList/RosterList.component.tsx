@@ -1,26 +1,31 @@
 import RosterCard from "../RosterCard/RosterCard.component";
+import type { CardSaveState } from "../hooks/useRosterEdits";
 import type { RosterListItem } from "../types";
 
 type RosterListProps = {
     rosters: RosterListItem[];
     emptyMessage: string;
     onPrintRoster: (roster: RosterListItem["roster"]) => void;
-    onRosterLevelChange: (code: string, level: string) => void;
+    canEdit: boolean;
+    saveStates: Record<string, CardSaveState>;
+    onClassLevelChange: (code: string, level: string) => void;
+    onSetAllToLevel: (code: string, level: string) => void;
     onCustomRosterLevelChange: (id: string, level: string) => void;
     onStudentLevelChange: (studentId: string, level: string) => void;
-    studentLevelEditMap: Record<string, boolean>;
-    onToggleStudentLevelEdits: (code: string) => void;
+    onRetrySave: (code: string, target: string) => void;
 };
 
 function RosterList({
     rosters,
     emptyMessage,
     onPrintRoster,
-    onRosterLevelChange,
+    canEdit,
+    saveStates,
+    onClassLevelChange,
+    onSetAllToLevel,
     onCustomRosterLevelChange,
     onStudentLevelChange,
-    studentLevelEditMap,
-    onToggleStudentLevelEdits,
+    onRetrySave,
 }: RosterListProps) {
     return (
         <div
@@ -41,14 +46,13 @@ function RosterList({
                         roster={item.roster}
                         isCustom={item.isCustom}
                         onPrint={onPrintRoster}
-                        onRosterLevelChange={onRosterLevelChange}
+                        canEdit={canEdit}
+                        saveState={saveStates[item.roster.code]}
+                        onClassLevelChange={onClassLevelChange}
+                        onSetAllToLevel={onSetAllToLevel}
                         onCustomRosterLevelChange={onCustomRosterLevelChange}
                         onStudentLevelChange={onStudentLevelChange}
-                        allowStudentLevelEdits={Boolean(
-                            studentLevelEditMap[item.roster.code],
-                        )}
-                        onToggleStudentLevelEdits={() =>
-                            onToggleStudentLevelEdits(item.roster.code)}
+                        onRetrySave={onRetrySave}
                     />
                 ))}
             </div>

@@ -749,6 +749,135 @@ func UpsertRosterStudentLevelEdit(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// SetRosterClassLevel is the whole-class save: it sets (or, with an empty
+// level, clears) the class edit and removes every swimmer edit for the class,
+// so the saved state reads as "whole class" after a reload.
+func SetRosterClassLevel(w http.ResponseWriter, r *http.Request) {
+	client, err := supabasesvc.NewClientFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	var payload struct {
+		SessionID string `json:"session_id"`
+		Code      string `json:"code"`
+		Level     string `json:"level"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	payload.Code = strings.TrimSpace(payload.Code)
+	payload.Level = strings.TrimSpace(payload.Level)
+	if payload.SessionID == "" || payload.Code == "" {
+		http.Error(w, "Missing session id or class code", http.StatusBadRequest)
+		return
+	}
+	scope := url.Values{}
+	scope.Set("session_id", "eq."+payload.SessionID)
+	scope.Set("code", "eq."+payload.Code)
+	if payload.Level == "" {
+		if err := deleteRosterEditRows(r, client, "roster_level_edits", scope); err != nil {
+			writeRosterEditError(w, err)
+			return
+		}
+	} else {
+		row := map[string]any{
+			"session_id": payload.SessionID,
+			"code":       payload.Code,
+			"level":      payload.Level,
+			"created_by": client.User.ID,
+			"updated_at": time.Now().UTC().Format(time.RFC3339),
+		}
+		query := url.Values{}
+		query.Set("on_conflict", "session_id,code")
+		if err := client.Post(r.Context(), "/rest/v1/roster_level_edits", query, row, "resolution=merge-duplicates", nil); err != nil {
+			writeRosterEditError(w, err)
+			return
+		}
+	}
+	if err := deleteRosterEditRows(r, client, "roster_student_level_edits", scope); err != nil {
+		writeRosterEditError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeleteRosterStudentLevelEdit removes one swimmer's saved level.
+func DeleteRosterStudentLevelEdit(w http.ResponseWriter, r *http.Request) {
+	client, err := supabasesvc.NewClientFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	q := r.URL.Query()
+	sessionID, code, hash := q.Get("sessionId"), q.Get("code"), q.Get("studentNameHash")
+	if sessionID == "" || code == "" || hash == "" {
+		http.Error(w, "Missing session id, class code or swimmer", http.StatusBadRequest)
+		return
+	}
+	scope := url.Values{}
+	scope.Set("session_id", "eq."+sessionID)
+	scope.Set("code", "eq."+code)
+	scope.Set("student_name_hash", "eq."+hash)
+	if err := deleteRosterEditRows(r, client, "roster_student_level_edits", scope); err != nil {
+		writeRosterEditError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+var errRosterEditNotDeleted = errors.New("Level edit was not removed; you may not be allowed to change this session")
+
+// deleteRosterEditRows deletes the matching rows. A row-level-security denial
+// deletes nothing and returns no error, so the rows that exist are read first
+// and the delete must remove all of them. Nothing to delete is a success.
+func deleteRosterEditRows(r *http.Request, client *supabasesvc.Client, table string, scope url.Values) error {
+	path := "/rest/v1/" + table
+	check := url.Values{}
+	for key, values := range scope {
+		check[key] = append([]string(nil), values...)
+	}
+	check.Set("select", "code")
+	var existing []struct {
+		Code string `json:"code"`
+	}
+	if err := client.Get(r.Context(), path, check, &existing); err != nil {
+		return err
+	}
+	if len(existing) == 0 {
+		return nil
+	}
+	deleteQuery := url.Values{}
+	for key, values := range scope {
+		deleteQuery[key] = append([]string(nil), values...)
+	}
+	deleteQuery.Set("select", "code")
+	var removed []struct {
+		Code string `json:"code"`
+	}
+	if err := client.Delete(r.Context(), path, deleteQuery, "return=representation", &removed); err != nil {
+		return err
+	}
+	if len(removed) < len(existing) {
+		return errRosterEditNotDeleted
+	}
+	return nil
+}
+
+func writeRosterEditError(w http.ResponseWriter, err error) {
+	if errors.Is(err, errRosterEditNotDeleted) {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+	var apiErr *supabasesvc.APIError
+	if errors.As(err, &apiErr) && (apiErr.StatusCode == http.StatusForbidden || apiErr.StatusCode == http.StatusUnauthorized) {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+	http.Error(w, err.Error(), http.StatusBadRequest)
+}
+
 func loadOrCreateProfile(r *http.Request, client *supabasesvc.Client) (*profileRow, error) {
 	query := url.Values{}
 	query.Set("id", "eq."+client.User.ID)

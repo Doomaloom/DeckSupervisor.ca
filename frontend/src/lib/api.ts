@@ -70,6 +70,7 @@ export function rosterToStudents(rosters: ClassRoster[]): Student[] {
                 age: student.age,
                 instructor: student.instructor || roster.instructor,
                 level: student.level || roster.serviceName,
+                registered_level: student.level || roster.serviceName,
                 waitlist: Boolean(student.waitlist),
             });
         });

@@ -4,7 +4,15 @@ export type RosterGroup = {
     code: string;
     customRosterId?: string;
     serviceName: string;
+    // The class level: the saved class edit, else the registered level.
     level: string;
+    // The class's service name from the uploaded file, as the level list shows it.
+    registeredLevel?: string;
+    hasClassEdit?: boolean;
+    // Some booked swimmer is on a level other than the class level.
+    hasOwnLevels?: boolean;
+    // Swimmers arrived from the file on different levels than the class.
+    mixedInFile?: boolean;
     time: string;
     instructor: string;
     location: string;

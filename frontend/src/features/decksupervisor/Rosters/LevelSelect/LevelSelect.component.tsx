@@ -6,10 +6,13 @@ type LevelSelectProps = {
     onChange: (value: string) => void;
     placeholder?: string;
     disabled?: boolean;
+    id?: string;
+    ariaLabel?: string;
 };
 
 function LevelSelect(
-    { value, onChange, placeholder, disabled = false }: LevelSelectProps,
+    { value, onChange, placeholder, disabled = false, id, ariaLabel }:
+        LevelSelectProps,
 ) {
     // Store and show the spaced name the dropdown offers ("Splash 5"), and
     // show older compact values ("Splash5") the same way.
@@ -17,6 +20,8 @@ function LevelSelect(
     return (
         <select
             data-component="level-select"
+            id={id}
+            aria-label={ariaLabel}
             className={selectClass}
             value={selected}
             onChange={(event) => onChange(event.target.value)}

@@ -2,6 +2,7 @@ import { extractStartTime } from "../../../lib/time";
 import { formatLevelName } from "../../../shared/levels/formatLevelName";
 import { sanitizeLevel } from "../../../shared/levels/sanitizeLevel";
 import type { CustomRoster, Student } from "../../../types/app";
+import { LEGACY_ATTENDANCE_TEMPLATE_KEYS } from "../../../shared/attendance-print/templateRegistry";
 import type { RosterGroup, RosterListItem } from "./types";
 export { sanitizeLevel } from "../../../shared/levels/sanitizeLevel";
 
@@ -32,16 +33,36 @@ export function compareStudentNames(
     return a.name.localeCompare(b.name, "en", { sensitivity: "base" });
 }
 
+function studentLevel(student: Student) {
+    return formatLevelName(student.level || student.service_name);
+}
+
+// Booked swimmers whose level differs from the class level. Waitlisted
+// swimmers follow the class and never count.
+export function getOwnLevelStudents(
+    students: Student[],
+    classLevel: string,
+): Student[] {
+    return getVisibleRosterStudents(students).filter((student) =>
+        studentLevel(student) !== classLevel
+    );
+}
+
 export function buildRosterGroups(students: Student[]): RosterGroup[] {
     const classesMap = new Map<string, RosterGroup>();
 
     students.forEach((student) => {
         const existing = classesMap.get(student.code);
         if (!existing) {
+            const registeredLevel = formatLevelName(student.service_name);
             classesMap.set(student.code, {
                 code: student.code,
                 serviceName: student.service_name,
-                level: formatLevelName(student.level || student.service_name),
+                level: registeredLevel,
+                registeredLevel,
+                hasClassEdit: false,
+                hasOwnLevels: false,
+                mixedInFile: false,
                 time: student.time,
                 instructor: student.instructor ?? "",
                 location: student.location,
@@ -59,6 +80,21 @@ export function buildRosterGroups(students: Student[]): RosterGroup[] {
     const sorted = Array.from(classesMap.values());
     sorted.forEach((group) => {
         group.students.sort(compareStudentNames);
+        // The class level never follows a swimmer: it is the saved class
+        // edit, else the level the class was registered with.
+        const classEdit = group.students.find((student) => student.class_level)
+            ?.class_level;
+        if (classEdit) {
+            group.level = formatLevelName(classEdit);
+            group.hasClassEdit = true;
+        }
+        group.hasOwnLevels =
+            getOwnLevelStudents(group.students, group.level).length > 0;
+        group.mixedInFile = group.students.some((student) =>
+            formatLevelName(
+                student.registered_level || student.service_name,
+            ) !== group.registeredLevel
+        );
     });
 
     sorted.sort((a, b) => {
@@ -84,9 +120,35 @@ export function buildAttendanceRosterStudents(students: Student[]) {
     }));
 }
 
+function hasAttendanceTemplate(level: string) {
+    return (LEGACY_ATTENDANCE_TEMPLATE_KEYS as readonly string[]).includes(
+        sanitizeLevel(level),
+    );
+}
+
 export function buildAttendancePrintItems(
     roster: RosterGroup,
 ): AttendancePrintItem[] {
+    // A custom roster prints on its own level's sheet, one sheet for everyone
+    // in it. A level with no sheet falls back to each swimmer's own level.
+    if (roster.customRosterId && hasAttendanceTemplate(roster.level)) {
+        const booked = getVisibleRosterStudents(roster.students);
+        if (booked.length > 0) {
+            return [{
+                template: sanitizeLevel(roster.level),
+                roster: {
+                    code: roster.code,
+                    level: roster.level,
+                    serviceName: roster.level,
+                    time: roster.time,
+                    instructor: roster.instructor,
+                    location: roster.location,
+                    schedule: roster.schedule,
+                    students: buildAttendanceRosterStudents(booked),
+                },
+            }];
+        }
+    }
     // Group by level key, so "Splash 5" and an older "Splash5" share a sheet.
     const grouped = new Map<string, { level: string; students: Student[] }>();
 
@@ -158,6 +220,10 @@ export function buildCustomRosterGroups(
             customRosterId: customRoster.id,
             serviceName: formatLevelName(customRoster.serviceName),
             level: formatLevelName(customRoster.serviceName),
+            registeredLevel: formatLevelName(customRoster.serviceName),
+            hasClassEdit: false,
+            hasOwnLevels: false,
+            mixedInFile: false,
             time: sourceRoster?.time ?? "",
             instructor: customRoster.instructor ?? "",
             location: sourceRoster?.location ?? "",

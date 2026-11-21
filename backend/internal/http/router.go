@@ -76,6 +76,8 @@ func NewRouter() *mux.Router {
 	r.HandleFunc("/api/roster-edits", handlers.GetRosterEdits).Methods("GET")
 	r.HandleFunc("/api/roster-edits/level", handlers.UpsertRosterLevelEdit).Methods("POST")
 	r.HandleFunc("/api/roster-edits/student", handlers.UpsertRosterStudentLevelEdit).Methods("POST")
+	r.HandleFunc("/api/roster-edits/student", handlers.DeleteRosterStudentLevelEdit).Methods("DELETE")
+	r.HandleFunc("/api/roster-edits/class", handlers.SetRosterClassLevel).Methods("POST")
 
 	// CSV import and export flows
 	r.HandleFunc("/api/analyzeCSV", handlers.AnalyzeCSV).Methods("POST")

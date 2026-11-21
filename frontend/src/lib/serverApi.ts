@@ -948,6 +948,27 @@ export function upsertRosterStudentLevelEdit(body: Record<string, unknown>) {
     return request<void>("/api/roster-edits/student", { method: "POST", body });
 }
 
+export function deleteRosterStudentLevelEdit(
+    sessionId: string,
+    code: string,
+    studentNameHash: string,
+) {
+    const params = new URLSearchParams({ sessionId, code, studentNameHash });
+    return request<void>(`/api/roster-edits/student?${params.toString()}`, {
+        method: "DELETE",
+    });
+}
+
+// Saves the class level (an empty level clears the class edit) and removes
+// every swimmer edit for the class in one request.
+export function setRosterClassLevel(body: {
+    session_id: string;
+    code: string;
+    level: string;
+}) {
+    return request<void>("/api/roster-edits/class", { method: "POST", body });
+}
+
 export type DeviceShareStarted = {
     id: string;
     hostToken: string;

@@ -218,11 +218,13 @@ function RostersPage() {
         setSearchQuery,
         filteredRosters,
         emptyMessage,
-        handleRosterLevelChange,
+        handleClassLevelChange,
+        handleSetAllToLevel,
         updateCustomRosterLevel,
         handleStudentLevelChange,
-        studentLevelEditMap,
-        handleToggleStudentLevelEdits,
+        canEditRosters,
+        saveStates,
+        retrySave,
     } = viewModel;
     return (
         <div
@@ -273,11 +275,13 @@ function RostersPage() {
                                 rosters={filteredRosters}
                                 emptyMessage={emptyMessage}
                                 onPrintRoster={handlePrintRoster}
-                                onRosterLevelChange={handleRosterLevelChange}
+                                canEdit={canEditRosters}
+                                saveStates={saveStates}
+                                onClassLevelChange={handleClassLevelChange}
+                                onSetAllToLevel={handleSetAllToLevel}
                                 onCustomRosterLevelChange={updateCustomRosterLevel}
                                 onStudentLevelChange={handleStudentLevelChange}
-                                studentLevelEditMap={studentLevelEditMap}
-                                onToggleStudentLevelEdits={handleToggleStudentLevelEdits}
+                                onRetrySave={retrySave}
                             />
                         </>
                     )}

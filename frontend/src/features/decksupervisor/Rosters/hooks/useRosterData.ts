@@ -112,14 +112,51 @@ export function useRosterData(
             return;
         }
         setStudents(next);
-        setStudentsForDay(selectedDay, next, sessionId);
+        // Stored from the cache, so a level that is on screen but not saved
+        // yet never reaches it.
+        setStudentsForDay(
+            selectedDay,
+            applyInstructorAssignments(
+                getStudentsForDay(selectedDay, sessionId),
+                byCode,
+            ),
+            sessionId,
+            { silent: true },
+        );
     }, [isGuest, remoteSchematic, selectedDay, sessionId, students]);
 
+    // Saved levels are applied once per loaded roster, not after each level
+    // change on this page: a change that is still saving, or failed to save,
+    // must stay on screen as it is.
+    const studentsRef = useRef(students);
+    studentsRef.current = students;
+    const rosterKey = useMemo(
+        () => students.map((student) => student.id).join("|"),
+        [students],
+    );
     useEffect(() => {
-        if (!sessionId || isGuest || students.length === 0) {
+        if (!sessionId || isGuest || rosterKey === "") {
             return;
         }
         let active = true;
+        // Levels as they were when the fetch began. A swimmer or class changed
+        // since then keeps the change instead of taking the fetched edits.
+        const levelKey = (student: Student) =>
+            `${student.level}\u0000${student.class_level ?? ""}`;
+        const atStart = new Map(
+            studentsRef.current.map((student) => [
+                student.id,
+                levelKey(student),
+            ]),
+        );
+        const keepNewerChanges = (before: Student[], after: Student[]) =>
+            after.map((student, index) => {
+                const original = before[index];
+                const started = atStart.get(original.id);
+                return started !== undefined && started !== levelKey(original)
+                    ? original
+                    : student;
+            });
         const applyEdits = async () => {
             const [rosterEdits, studentEdits] = await Promise.all([
                 fetchRosterLevelEdits(sessionId),
@@ -130,9 +167,9 @@ export function useRosterData(
             }
             const editsKey = JSON.stringify({
                 sessionId,
+                rosterKey,
                 rosterEdits,
                 studentEdits,
-                studentCount: students.length,
             });
             if (editsKey === appliedEditsKey.current) {
                 return;
@@ -140,23 +177,47 @@ export function useRosterData(
             appliedEditsKey.current = editsKey;
 
             const nameHashMap = await hashStudentNames(
-                students.map((student) => student.name),
+                studentsRef.current.map((student) => student.name),
             );
-            const next = applyPersistedLevelEdits(
-                students,
-                rosterEdits,
-                studentEdits,
-                nameHashMap,
+            if (!active) {
+                return;
+            }
+            setStudents((current) =>
+                keepNewerChanges(
+                    current,
+                    applyPersistedLevelEdits(
+                        current,
+                        rosterEdits,
+                        studentEdits,
+                        nameHashMap,
+                    ),
+                )
             );
-
-            setStudents(next);
-            setStudentsForDay(selectedDay, next, sessionId);
+            // The cache holds only what the server has confirmed.
+            const cached = getStudentsForDay(selectedDay, sessionId);
+            if (cached.length === 0) {
+                return;
+            }
+            setStudentsForDay(
+                selectedDay,
+                keepNewerChanges(
+                    cached,
+                    applyPersistedLevelEdits(
+                        cached,
+                        rosterEdits,
+                        studentEdits,
+                        nameHashMap,
+                    ),
+                ),
+                sessionId,
+                { silent: true },
+            );
         };
         void applyEdits();
         return () => {
             active = false;
         };
-    }, [isGuest, selectedDay, sessionId, students]);
+    }, [isGuest, rosterKey, selectedDay, sessionId]);
 
     const rosters = useMemo(() => buildRosterGroups(students), [students]);
     const instructorOptions = useMemo(() => {

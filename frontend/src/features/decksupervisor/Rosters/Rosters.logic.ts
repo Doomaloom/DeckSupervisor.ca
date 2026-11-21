@@ -140,9 +140,6 @@ export function useRostersLogic() {
     const { currentTeam, currentTeamId } = useCurrentTeam();
     const { currentTerm } = useCurrentTerm();
     const [activeTab, setActiveTab] = useState<"default" | "custom">("default");
-    const [studentLevelEditMap, setStudentLevelEditMap] = useState<
-        Record<string, boolean>
-    >({});
     const [fullTimeDayFilter, setFullTimeDayFilter] = useState("");
     const [fullTimeLevelFilter, setFullTimeLevelFilter] = useState("");
     const [fullTimeSearchQuery, setFullTimeSearchQuery] = useState("");
@@ -228,16 +225,21 @@ export function useRostersLogic() {
         setSearchQuery,
         filteredRosters,
     } = useRosterFilters(sortedRosterItems);
+    const canEditRosters = isGuest || access.mode === "owner" ||
+        access.allowRosterEdits;
     const {
-        handleRosterLevelChange,
+        handleClassLevelChange,
+        handleSetAllToLevel,
         handleStudentLevelChange,
+        saveStates,
+        retrySave,
     } = useRosterEdits({
         selectedDay: selectedDay ?? "",
         students,
         setStudents,
         sessionId: sessionId ?? undefined,
         currentUserId: user?.id,
-        canEdit: isGuest || access.mode === "owner" || access.allowRosterEdits,
+        canEdit: canEditRosters,
     });
     const {
         blockedPrintJob,
@@ -246,12 +248,6 @@ export function useRostersLogic() {
         retryBlockedPrint,
     } = useRosterPrint();
     const emptyMessage = getEmptyMessage(students.length);
-    const handleToggleStudentLevelEdits = (code: string) => {
-        setStudentLevelEditMap((current) => ({
-            ...current,
-            [code]: !current[code],
-        }));
-    };
     useEffect(() => {
         if (accountType !== "full_time" || !currentTeamId) {
             setFullTimeRosterClasses([]);
@@ -1003,11 +999,13 @@ export function useRostersLogic() {
         setSearchQuery,
         filteredRosters,
         emptyMessage,
-        handleRosterLevelChange,
+        handleClassLevelChange,
+        handleSetAllToLevel,
         updateCustomRosterLevel,
         handleStudentLevelChange,
-        studentLevelEditMap,
-        handleToggleStudentLevelEdits,
+        canEditRosters,
+        saveStates,
+        retrySave,
     };
 
 }

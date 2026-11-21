@@ -203,10 +203,13 @@ export function getStudentsForDay(day: string, sessionId?: string): Student[] {
     return adoptLegacyStudents(day, id) ?? [];
 }
 
+// `silent` saves without telling listeners to reload, for a page that already
+// shows the change and must keep changes that are not saved yet.
 export function setStudentsForDay(
     day: string,
     students: Student[],
     sessionId?: string,
+    options?: { silent?: boolean },
 ) {
     if (!day) {
         return;
@@ -215,7 +218,7 @@ export function setStudentsForDay(
     const all = loadStudentsBySession();
     all[id] = { ...(all[id] ?? {}), [day]: students };
     saveJson(studentsKey(), all);
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !options?.silent) {
         window.dispatchEvent(
             new CustomEvent(studentsUpdatedEvent(), {
                 detail: { day, sessionId: id },

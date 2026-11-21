@@ -52,6 +52,11 @@ export type Student = {
     age?: string;
     instructor: string;
     level: string;
+    // The swimmer's own level in the uploaded file. Saved level edits change
+    // `level`; this stays as uploaded. Caches saved earlier do not have it.
+    registered_level?: string;
+    // The saved class level edit for this swimmer's class, when there is one.
+    class_level?: string;
     waitlist: boolean;
 };
 
