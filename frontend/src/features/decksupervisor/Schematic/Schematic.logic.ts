@@ -1,5 +1,7 @@
 import React from "react";
 
+import { useBlocker } from "react-router-dom";
+
 import { useAuth } from "../../../app/AuthContext";
 
 import { useDay } from "../../../app/DayContext";
@@ -58,10 +60,39 @@ export function useSchematicLogic() {
         handleDrop,
         handleDropOnCourse,
         handleSaveSchedule,
+        hasUnsavedChanges,
+        isSaving,
         addTemporaryColumn,
         removeEmptyColumn,
         setInstructorAt,
     } = useSchematicSchedule(selectedDay);
+
+    // Board moves only live on this page until Save Schedule; warn before they are discarded.
+    const guardUnsaved = accountType !== "full_time" &&
+        (hasUnsavedChanges || isSaving);
+    const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+        guardUnsaved &&
+        nextLocation.pathname !== currentLocation.pathname &&
+        nextLocation.pathname !== "/sign-in"
+    );
+    React.useEffect(() => {
+        if (blocker.state === "blocked") {
+            if (window.confirm("Discard unsaved schematic changes?")) {
+                blocker.proceed();
+            } else blocker.reset();
+        }
+    }, [blocker]);
+    React.useEffect(() => {
+        if (!guardUnsaved) {
+            return;
+        }
+        const unload = (event: BeforeUnloadEvent) => {
+            event.preventDefault();
+            event.returnValue = "";
+        };
+        window.addEventListener("beforeunload", unload);
+        return () => window.removeEventListener("beforeunload", unload);
+    }, [guardUnsaved]);
 
     const dayLabel = selectedDay
         ? (dayNames[selectedDay] ?? selectedDay)
@@ -128,6 +159,7 @@ export function useSchematicLogic() {
         instructorOptions,
         sessionLabel,
         isReadOnly,
+        isSaving,
         addTemporaryColumn,
         removeEmptyColumn,
         setInstructorAt,

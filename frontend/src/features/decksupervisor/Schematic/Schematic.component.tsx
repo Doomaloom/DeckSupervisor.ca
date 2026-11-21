@@ -218,6 +218,7 @@ function SchematicPage() {
         instructorOptions,
         sessionLabel,
         isReadOnly,
+        isSaving,
         addTemporaryColumn,
         removeEmptyColumn,
         setInstructorAt,
@@ -261,9 +262,13 @@ function SchematicPage() {
                 <button
                     className="rounded-2xl bg-primary px-6 py-3 text-white transition hover:-translate-y-0.5 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={handleSaveSchedule}
-                    disabled={isReadOnly}
+                    disabled={isReadOnly || isSaving}
                 >
-                    {isReadOnly ? "View Only" : "Save Schedule"}
+                    {isReadOnly
+                        ? "View Only"
+                        : isSaving
+                            ? "Saving..."
+                            : "Save Schedule"}
                 </button>
             </div>
         </div>

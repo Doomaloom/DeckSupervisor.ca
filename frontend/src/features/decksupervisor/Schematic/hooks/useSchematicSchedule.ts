@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentSession } from "../../../../app/useCurrentSession";
 import { showAppNotice } from "../../../../lib/appNotice";
 import { getExtractedClassesForSession, onExtractedClassesBySessionUpdated, } from "../../../../lib/extractedClassesStorage";
@@ -15,7 +15,8 @@ import type { StoredCourseLayout } from "../utils/layout";
 import { useSchematicBoard } from "./useSchematicBoard";
 
 export function useSchematicSchedule(selectedDay: string | null) {
-    const { access, session: currentSession, sessionId } = useCurrentSession();
+    const { access, session: currentSession, sessionId, loading } =
+        useCurrentSession();
     const [students, setStudents] = useState<Student[]>([]);
     const [extractedClasses, setExtractedClasses] = useState<ExtractedClass[]>(
         [],
@@ -171,6 +172,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
         ? getScheduleForDay(selectedDay ?? "")
         : remoteSchedule;
     const {
+        layoutVersion,
         assignmentIds,
         instructorIds,
         columns,
@@ -180,12 +182,12 @@ export function useSchematicSchedule(selectedDay: string | null) {
         draggedCourseCodes,
         draggedColumnIndex,
         toggleCourseSelection,
-        handleDragStart,
+        handleDragStart: startBoardDrag,
         handleDrop,
         handleDropOnCourse,
-        addTemporaryColumn,
-        removeEmptyColumn,
-        setInstructorAt,
+        addTemporaryColumn: addBoardColumn,
+        removeEmptyColumn: removeBoardColumn,
+        setInstructorAt: setBoardInstructorAt,
     } = useSchematicBoard({
         courses,
         storedLayout,
@@ -193,7 +195,49 @@ export function useSchematicSchedule(selectedDay: string | null) {
         instructorRoster,
     });
 
+    // The board counts as unsaved once it differs from the last layout loaded or saved.
+    const boardSnapshot = JSON.stringify([
+        columns.map((column) => column.map((course) => course.code)),
+        instructorIds,
+        instructors,
+    ]);
+    const [savedBoard, setSavedBoard] = useState({
+        version: layoutVersion,
+        snapshot: boardSnapshot,
+    });
+    if (savedBoard.version !== layoutVersion) {
+        setSavedBoard({ version: layoutVersion, snapshot: boardSnapshot });
+    }
+    const hasUnsavedChanges = savedBoard.version === layoutVersion &&
+        savedBoard.snapshot !== boardSnapshot;
+
+    // Edits made while a save is running would be overwritten when it finishes.
+    const [isSaving, setIsSaving] = useState(false);
+    const savingRef = useRef(false);
+    const blockWhileSaving = () => {
+        if (!savingRef.current) {
+            return false;
+        }
+        showAppNotice("Please wait for the schedule to finish saving.", "info");
+        return true;
+    };
+    const handleDragStart: typeof startBoardDrag = (...args) => {
+        if (!blockWhileSaving()) startBoardDrag(...args);
+    };
+    const addTemporaryColumn: typeof addBoardColumn = () => {
+        if (!blockWhileSaving()) addBoardColumn();
+    };
+    const removeEmptyColumn: typeof removeBoardColumn = (...args) => {
+        if (!blockWhileSaving()) removeBoardColumn(...args);
+    };
+    const setInstructorAt: typeof setBoardInstructorAt = (...args) => {
+        if (!blockWhileSaving()) setBoardInstructorAt(...args);
+    };
+
     const handleSaveSchedule = async () => {
+        if (savingRef.current) {
+            return;
+        }
         if (!selectedDay) {
             showAppNotice("Please select a day first.", "error");
             return;
@@ -207,6 +251,32 @@ export function useSchematicSchedule(selectedDay: string | null) {
             );
             return;
         }
+        if (loading) {
+            showAppNotice(
+                "The session is still loading. Try again in a moment.",
+                "error",
+            );
+            return;
+        }
+        if (access.mode !== "guest" && !currentSession) {
+            showAppNotice(
+                "No session is loaded, so the schedule was not saved. Reload the page and try again.",
+                "error",
+            );
+            return;
+        }
+        savingRef.current = true;
+        setIsSaving(true);
+        try {
+            await saveSchedule(selectedDay);
+        } finally {
+            savingRef.current = false;
+            setIsSaving(false);
+        }
+    };
+
+    const saveSchedule = async (selectedDay: string) => {
+        const savedSnapshot = boardSnapshot;
         const codes = columns.map((column) =>
             column.map((course) => course.code).join(",")
         );
@@ -285,6 +355,7 @@ export function useSchematicSchedule(selectedDay: string | null) {
                 session: currentSession,
             });
         }
+        setSavedBoard({ version: layoutVersion, snapshot: savedSnapshot });
         showAppNotice("Schedule saved successfully!", "success");
     };
 
@@ -305,6 +376,8 @@ export function useSchematicSchedule(selectedDay: string | null) {
         handleDrop,
         handleDropOnCourse,
         handleSaveSchedule,
+        hasUnsavedChanges,
+        isSaving,
         addTemporaryColumn,
         removeEmptyColumn,
         setInstructorAt,

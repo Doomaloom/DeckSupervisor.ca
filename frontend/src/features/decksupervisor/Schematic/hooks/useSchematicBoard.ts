@@ -75,6 +75,8 @@ export function useSchematicBoard({
     const [instructorIds, setInstructorIds] = useState<(string | null)[]>([]);
     const [lockedInstructors, setLockedInstructors] = useState<string[]>([]);
     const [dragged, setDragged] = useState<DragState | null>(null);
+    // Bumped on every rebuild from stored data, so callers can tell user edits from reloads.
+    const [layoutVersion, setLayoutVersion] = useState(0);
     const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>(
         [],
     );
@@ -184,6 +186,7 @@ export function useSchematicBoard({
                 : layout.instructors,
         );
         setLockedInstructors(layout.lockedInstructors);
+        setLayoutVersion((version) => version + 1);
     }, [
         courses,
         resetKey,
@@ -490,6 +493,7 @@ export function useSchematicBoard({
     };
 
     return {
+        layoutVersion,
         assignmentIds,
         instructorIds,
         columns,
