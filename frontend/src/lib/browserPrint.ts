@@ -223,10 +223,16 @@ export function openPdfPrintDialog(
         return false;
     }
 
+    // The onload timer and the fallback timer both call this; only the first
+    // attempt that actually opens the print dialog counts, so it prints once.
+    let printed = false;
     const triggerPrint = () => {
+        if (printed) {
+            return;
+        }
         const targetWindow = viewer.pdfWindow as PdfViewerWindow;
         targetWindow.focus();
-        targetWindow.__printEmbeddedPdf?.();
+        printed = targetWindow.__printEmbeddedPdf?.() === true;
     };
 
     viewer.pdfWindow.onload = () => {
