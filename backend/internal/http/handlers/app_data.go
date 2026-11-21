@@ -633,6 +633,27 @@ func GetSchematics(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]any{"schematics": rows})
 }
 
+// writeSchematicSaveError turns a refused schematic save into a message the
+// supervisor can act on. Only the database's own deliberate messages are passed
+// through; anything else (constraint or driver text) is never shown.
+func writeSchematicSaveError(w http.ResponseWriter, err error) {
+	var upstream *supabasesvc.APIError
+	if !errors.As(err, &upstream) {
+		http.Error(w, "Could not reach the database. Check your connection and try again.", http.StatusServiceUnavailable)
+		return
+	}
+	switch {
+	case upstream.Message == "Instructor was removed. Reload the session.":
+		http.Error(w, upstream.Message, http.StatusConflict)
+	case upstream.StatusCode == http.StatusUnauthorized:
+		http.Error(w, "Your sign-in has expired. Sign in again, then save again.", http.StatusUnauthorized)
+	case upstream.StatusCode == http.StatusForbidden:
+		http.Error(w, "You don't have permission to edit this session's schematic. Ask the session owner for edit access.", http.StatusForbidden)
+	default:
+		http.Error(w, "Unable to save schematic. Reload the session and try again.", http.StatusBadRequest)
+	}
+}
+
 func UpsertSchematic(w http.ResponseWriter, r *http.Request) {
 	client, err := supabasesvc.NewClientFromRequest(r)
 	if err != nil {
@@ -648,7 +669,7 @@ func UpsertSchematic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := client.RPC(r.Context(), "save_instructor_schematic", map[string]any{"p_session": sessionID, "p_data": payload.Data}, nil); err != nil {
-		http.Error(w, "Unable to save schematic", http.StatusBadRequest)
+		writeSchematicSaveError(w, err)
 		return
 	}
 	writeJSON(w, map[string]any{"schematic": schematicRow{SessionID: sessionID, Data: payload.Data}})
