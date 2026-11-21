@@ -259,6 +259,20 @@ it('builds completed sheets from accepted server-successful records only and blo
  ]);
 });
 
+it('lists swimmers in blank-sheet name order on the completed sheet, the Student filter and skill progress, not in database order',async()=>{
+ server.registry!.courses[0].swimmers[1].matchKey=johnnyKey;
+ server.registry!.courses[0].swimmers.reverse();
+ server.results=results([attempt({recordId:'attempt-j',enrollmentId:'enrollment-j'}),attempt()]);
+ const user=userEvent.setup();show();
+ await user.selectOptions(await screen.findByLabelText('Class'),'class-one');
+ expect(within(screen.getByLabelText('Student')).getAllByRole('option').map(o=>o.textContent)).toEqual(['All students','Harrold','Johnny']);
+ const progress=screen.getByText('Skill progress across all lesson dates').parentElement!;
+ expect(within(progress).getAllByRole('heading',{level:4}).map(h=>h.textContent)).toEqual(['Harrold','Johnny']);
+ await user.click(screen.getByRole('button',{name:'Print completed sheets'}));
+ await waitFor(()=>expect(mocks.print).toHaveBeenCalledTimes(1));
+ expect(mocks.print.mock.calls[0][0].rosters[0].roster.students.map((s:{name:string})=>s.name)).toEqual(['Harrold','Johnny']);
+});
+
 it('resolves names from a local class package without sending it anywhere, and rejects a package from another dataset',async()=>{
  mocks.roster.mockRejectedValue(new Error('No local roster'));
  const pkg=(datasetId:string)=>({schemaVersion:1,kind:'rec-tablet-classes',datasetId,instructor:'Package Teacher',courses:[{sourceId,name:'Splash 1',level:'Splash1',startTime:'16:00',location:'Pool',lessonDates:[DATE],swimmers:[{sourceId:'source-h',name:'Package Only Name'}]}]});

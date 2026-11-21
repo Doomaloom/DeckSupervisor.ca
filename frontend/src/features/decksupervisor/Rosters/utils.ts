@@ -22,6 +22,15 @@ export type AttendancePrintItem = {
     roster: AttendanceRosterPayload;
 };
 
+// The order swimmers are listed in on Rosters and the blank attendance sheets.
+// Attendance and Results reuses it so completed sheets list rows the same way.
+export function compareStudentNames(
+    a: { name: string },
+    b: { name: string },
+) {
+    return a.name.localeCompare(b.name, "en", { sensitivity: "base" });
+}
+
 export function buildRosterGroups(students: Student[]): RosterGroup[] {
     const classesMap = new Map<string, RosterGroup>();
 
@@ -48,9 +57,7 @@ export function buildRosterGroups(students: Student[]): RosterGroup[] {
 
     const sorted = Array.from(classesMap.values());
     sorted.forEach((group) => {
-        group.students.sort((a, b) =>
-            a.name.localeCompare(b.name, "en", { sensitivity: "base" })
-        );
+        group.students.sort(compareStudentNames);
     });
 
     sorted.sort((a, b) => {

@@ -16,6 +16,7 @@ import {findCurriculumLevel} from '../instructor/LessonPlans/lessonSkills';
 import {openAttendancePrintWindow} from '../../shared/attendance-print/openAttendancePrintWindow';
 import {COMPLETED_PRINT_CURRICULUM_VERSION} from '../../shared/attendance-print/completedAttendance';
 import type {AttendancePrintItem} from '../../shared/attendance-print/types';
+import {compareStudentNames} from '../decksupervisor/Rosters/utils';
 const errorMessage=(e:unknown)=>e instanceof Error?e.message:String(e);
 const skillNames=curriculum.skills as Record<string,string>,criterionNames=curriculum.criteria as Record<string,string>;
 const skillName=(id?:string)=>id?(skillNames[id]??id):'Unknown skill';
@@ -55,9 +56,11 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
  }
  useEffect(()=>{mounted.current=true;void refresh().catch(e=>{if(mounted.current)setError(errorMessage(e))}).finally(()=>{if(mounted.current)setBusy(false)});return()=>{mounted.current=false}},[session.id]);
  async function run(action:()=>Promise<void>){if(working.current)return;working.current=true;setBusy(true);setError('');setNotice('');try{await action();await refresh()}catch(e){if(mounted.current)setError(errorMessage(e))}finally{working.current=false;if(mounted.current)setBusy(false)}}
- const course=registry?.courses.find(c=>c.classId===classId),students=course?.swimmers??[],activeStudents=students.filter(s=>s.active!==false);
  const localFor=(id:string)=>{const matches=identities.filter(i=>i.enrollmentId===id);return matches.length===1?matches[0]:undefined};
  const nameFor=(id:string)=>localFor(id)?.name??`Unresolved student (${id.slice(0,8)})`;
+ // List swimmers in the blank-sheet order so row N is the same swimmer on blank and completed sheets.
+ const byName=<T,>(items:T[],enrollmentId:(item:T)=>string)=>items.map(item=>({item,name:nameFor(enrollmentId(item))})).sort(compareStudentNames).map(({item})=>item);
+ const course=registry?.courses.find(c=>c.classId===classId),students=byName(course?.swimmers??[],s=>s.enrollmentId),activeStudents=students.filter(s=>s.active!==false);
  const className=(c:api.ResultCourse)=>identities.find(i=>courseSourceId(session.id,i.course.code)===c.sourceId)?.course.code??c.sourceId;
  const progress=acceptedProgress((data?.records??[]).filter(r=>(!classId||r.classId===classId)&&(!student||r.enrollmentId===student)),COMPLETED_PRINT_CURRICULUM_VERSION);
  const records=(data?.records??[]).filter(r=>(!classId||r.classId===classId)&&(!date||r.lessonDate===date)&&(!student||r.enrollmentId===student));
@@ -108,7 +111,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
    {course&&date&&activeStudents.filter(s=>!student||s.enrollmentId===student).map(s=><div key={s.enrollmentId} className="flex gap-3 items-center"><span>{nameFor(s.enrollmentId)}</span><Select aria-label={`Attendance for ${nameFor(s.enrollmentId)}`} disabled={busy} value={data?.records.find(r=>!r.deleted&&r.recordId===`attendance:${s.enrollmentId}:${date}`)?.payload.status??'unmarked'} onChange={e=>void run(()=>attendance(s.enrollmentId,e.target.value as 'present'|'absent'|'unmarked'))}><option value="unmarked">Unmarked</option><option value="present">Present</option><option value="absent">Absent</option></Select></div>)}
    {!supervisor&&!!data?.conflicts.filter(c=>!c.resolved).length&&<Notice>Some submissions need supervisor review. Accepted results remain displayed until those conflicts are resolved.</Notice>}
    <h3 className="text-xl font-semibold">Skill progress across all lesson dates</h3>
-   {progress.size===0?<p>No current curriculum assessments submitted.</p>:[...progress].map(([enrollmentId,skills])=><div key={enrollmentId}><h4 className="font-semibold">{nameFor(enrollmentId)}</h4><ul>{[...skills].map(([skillId,count])=><li key={skillId}>{skillName(skillId)}: {count} / 3 successful attempts</li>)}</ul></div>)}
+   {progress.size===0?<p>No current curriculum assessments submitted.</p>:byName([...progress],([enrollmentId])=>enrollmentId).map(([enrollmentId,skills])=><div key={enrollmentId}><h4 className="font-semibold">{nameFor(enrollmentId)}</h4><ul>{[...skills].map(([skillId,count])=><li key={skillId}>{skillName(skillId)}: {count} / 3 successful attempts</li>)}</ul></div>)}
    <h3 className="text-xl font-semibold">Submitted records and revision history</h3>
    {records.length===0&&<p>No submissions for these filters.</p>}
    {records.map(r=><article key={r.recordId} className="border border-secondary/20 rounded p-3"><p><strong>{nameFor(r.enrollmentId)}</strong> · {r.lessonDate} · revision {r.revision}{r.deleted?' · deleted':''}</p><RecordValue value={r}/>{r.kind==='attempt'&&!r.deleted&&<AttemptEditor record={r} busy={busy} onSave={payload=>void run(()=>correction(r,payload))}/>}<ActionButton disabled={busy||r.deleted} onClick={()=>void run(()=>correction(r,{},'delete'))}>Delete record with audit history</ActionButton><details><summary>Revision history</summary>{data?.history.filter(h=>h.recordId===r.recordId).map(h=><div key={h.revision}><p>Revision {h.revision} · {h.record.lessonDate}</p><RecordValue value={h.record}/></div>)}</details></article>)}
