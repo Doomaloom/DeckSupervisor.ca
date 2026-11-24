@@ -4,6 +4,8 @@ import NewSessionPanel from "../../../shared/session-management/NewSessionPanel/
 
 import SessionSelectionPanel from "../../../shared/session-management/SessionSelectionPanel/SessionSelectionPanel.component";
 
+import { TutorialLibraryButton } from "../../tutorials/TutorialLibraryButton.component";
+
 import { useDashboardLogic } from "./Dashboard.logic";
 function DashboardPage() {
     const viewModel = useDashboardLogic();
@@ -47,6 +49,7 @@ function DashboardPage() {
                 {activePanel === "options"
                     ? (
                         <>
+                            <TutorialLibraryButton />
                             {accountType === "full_time"
                                 ? (
                                     <FullTimeScopePanel

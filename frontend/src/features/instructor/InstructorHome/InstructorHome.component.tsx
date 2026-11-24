@@ -2,6 +2,8 @@ import { ActionButton, EmptyState, Notice, PageShell, } from "../../../general-c
 
 import { sessionLabel } from "../session/useInstructorClasses";
 
+import { TutorialLibraryButton } from "../../tutorials/TutorialLibraryButton.component";
+
 import { groupInstructorSessions, useInstructorHomeLogic } from "./InstructorHome.logic";
 export default function InstructorHome() {
     const viewModel = useInstructorHomeLogic();
@@ -11,6 +13,7 @@ export default function InstructorHome() {
             <header className="flex flex-col gap-1">
                 <h2 className="text-2xl font-semibold">Home</h2>
                 <p className="text-sm text-secondary/75">Select a session</p>
+                <TutorialLibraryButton className="mt-2 flex w-fit items-center gap-2 rounded-full border-2 border-secondary/20 bg-accent px-4 py-2 font-semibold text-secondary transition hover:-translate-y-0.5 hover:border-secondary" />
             </header>
             {state.sessionsLoading && (
                 <p role="status">
