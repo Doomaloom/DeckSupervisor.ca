@@ -1,445 +1,1046 @@
 {
-  "level": "TeenAdult1",
-  "images": {
-    "outside": "teen-adult-1-outside.jpg",
-    "inside": "teen-adult-1-inside.jpg"
+ "level": "TeenAdult1",
+ "images": {
+  "outside": "teen-adult-1-outside.jpg",
+  "inside": "teen-adult-1-inside.jpg"
+ },
+ "source": {
+  "pdf": "splash-adult-report-cards-combined.pdf",
+  "outsidePage": 1,
+  "insidePage": 2
+ },
+ "fields": {
+  "participant": {
+   "page": "outside",
+   "x": 76.6,
+   "y": 71.6
   },
-  "source": {
-    "pdf": "splash-adult-report-cards-combined.pdf",
-    "outsidePage": 1,
-    "insidePage": 2
+  "instructor": {
+   "page": "outside",
+   "x": 76.6,
+   "y": 76.3
   },
-  "fields": {
-    "participant": {
-      "page": "outside",
-      "x": 76.6,
-      "y": 71.6
-    },
-    "instructor": {
-      "page": "outside",
-      "x": 76.6,
-      "y": 76.3
-    },
-    "date": {
-      "page": "outside",
-      "x": 73.6,
-      "y": 81.0
-    },
-    "session": {
-      "page": "outside",
-      "x": 89.4,
-      "y": 81.0
-    }
+  "date": {
+   "page": "outside",
+   "x": 73.6,
+   "y": 81.0
   },
-  "nextLevel": [
-    {
-      "level": "TeenAdult1",
-      "page": "outside",
-      "x": 37.52,
-      "y": 21.44
-    },
-    {
-      "level": "TeenAdult2",
-      "page": "outside",
-      "x": 37.5,
-      "y": 24.38
-    }
-  ],
-  "criteria": {
-    "TeenAdult1:1:1": {
-      "page": "inside",
-      "x": 3.59,
-      "y": 12.71
-    },
-    "TeenAdult1:1:2": {
-      "page": "inside",
-      "x": 3.59,
-      "y": 15.15
-    },
-    "TeenAdult1:2:1": {
-      "page": "inside",
-      "x": 3.73,
-      "y": 23.47
-    },
-    "TeenAdult1:2:2": {
-      "page": "inside",
-      "x": 3.75,
-      "y": 25.94
-    },
-    "TeenAdult1:3:1": {
-      "page": "inside",
-      "x": 3.86,
-      "y": 34.27
-    },
-    "TeenAdult1:3:2": {
-      "page": "inside",
-      "x": 3.93,
-      "y": 38.71
-    },
-    "TeenAdult1:4:1": {
-      "page": "inside",
-      "x": 4.09,
-      "y": 51.0
-    },
-    "TeenAdult1:4:2": {
-      "page": "inside",
-      "x": 4.14,
-      "y": 53.47
-    },
-    "TeenAdult1:4:3": {
-      "page": "inside",
-      "x": 4.16,
-      "y": 55.94
-    },
-    "TeenAdult1:4:4": {
-      "page": "inside",
-      "x": 4.21,
-      "y": 58.38
-    },
-    "TeenAdult1:4:5": {
-      "page": "inside",
-      "x": 4.25,
-      "y": 60.82
-    },
-    "TeenAdult1:5:1": {
-      "page": "inside",
-      "x": 4.66,
-      "y": 90.38
-    },
-    "TeenAdult1:5:2": {
-      "page": "inside",
-      "x": 4.68,
-      "y": 92.82
-    },
-    "TeenAdult1:6:1": {
-      "page": "inside",
-      "x": 36.59,
-      "y": 9.59
-    },
-    "TeenAdult1:6:2": {
-      "page": "inside",
-      "x": 36.64,
-      "y": 12.03
-    },
-    "TeenAdult1:7:1": {
-      "page": "inside",
-      "x": 4.41,
-      "y": 73.23
-    },
-    "TeenAdult1:8:1": {
-      "page": "inside",
-      "x": 4.5,
-      "y": 79.62
-    },
-    "TeenAdult1:8:2": {
-      "page": "inside",
-      "x": 4.52,
-      "y": 82.06
-    },
-    "TeenAdult1:9:1": {
-      "page": "inside",
-      "x": 36.73,
-      "y": 26.38
-    },
-    "TeenAdult1:9:2": {
-      "page": "inside",
-      "x": 36.77,
-      "y": 31.29
-    },
-    "TeenAdult1:10a:1": {
-      "page": "inside",
-      "x": 36.91,
-      "y": 45.68
-    },
-    "TeenAdult1:10a:2": {
-      "page": "inside",
-      "x": 36.93,
-      "y": 48.15
-    },
-    "TeenAdult1:10b:1": {
-      "page": "inside",
-      "x": 37.0,
-      "y": 54.44
-    },
-    "TeenAdult1:10b:2": {
-      "page": "inside",
-      "x": 37.02,
-      "y": 56.91
-    },
-    "TeenAdult1:11:1": {
-      "page": "inside",
-      "x": 37.09,
-      "y": 63.27
-    },
-    "TeenAdult1:11:2": {
-      "page": "inside",
-      "x": 37.11,
-      "y": 65.73
-    },
-    "TeenAdult1:11:3": {
-      "page": "inside",
-      "x": 37.2,
-      "y": 77.0
-    },
-    "TeenAdult1:11:4": {
-      "page": "inside",
-      "x": 37.14,
-      "y": 68.18
-    },
-    "TeenAdult1:12-front-glide:1": {
-      "page": "inside",
-      "x": 37.3,
-      "y": 85.79
-    },
-    "TeenAdult1:12-front-glide:2": {
-      "page": "inside",
-      "x": 37.32,
-      "y": 88.27
-    },
-    "TeenAdult1:12-front-glide:3": {
-      "page": "inside",
-      "x": 37.34,
-      "y": 90.71
-    },
-    "TeenAdult1:12-front-glide:4": {
-      "page": "inside",
-      "x": 37.39,
-      "y": 93.15
-    },
-    "TeenAdult1:12-back-glide:1": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 9.27
-    },
-    "TeenAdult1:12-back-glide:2": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 11.73
-    },
-    "TeenAdult1:12-back-glide:3": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 14.15
-    },
-    "TeenAdult1:12-side-glide:1": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 20.56
-    },
-    "TeenAdult1:12-side-glide:2": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 22.97
-    },
-    "TeenAdult1:12-side-glide:3": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 25.44
-    },
-    "TeenAdult1:12-side-glide:4": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 27.88
-    },
-    "TeenAdult1:12-side-glide:5": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 30.32
-    },
-    "TeenAdult1:13a:1": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 36.73
-    },
-    "TeenAdult1:13a:2": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 39.18
-    },
-    "TeenAdult1:13a:3": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 43.56
-    },
-    "TeenAdult1:13b:1": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 49.91
-    },
-    "TeenAdult1:13b:2": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 52.32
-    },
-    "TeenAdult1:13b:3": {
-      "page": "inside",
-      "x": 69.68,
-      "y": 56.73
-    },
-    "TeenAdult1:13c:1": {
-      "page": "inside",
-      "x": 69.7,
-      "y": 63.12
-    },
-    "TeenAdult1:13c:2": {
-      "page": "inside",
-      "x": 69.7,
-      "y": 65.56
-    },
-    "TeenAdult1:13c:3": {
-      "page": "inside",
-      "x": 69.7,
-      "y": 69.97
-    },
-    "TeenAdult1:14:1": {
-      "page": "inside",
-      "x": 69.7,
-      "y": 76.35
-    },
-    "TeenAdult1:14:2": {
-      "page": "inside",
-      "x": 69.7,
-      "y": 78.79
-    },
-    "TeenAdult1:15-front-crawl:1": {
-      "page": "outside",
-      "x": 3.32,
-      "y": 19.29
-    },
-    "TeenAdult1:15-front-crawl:2": {
-      "page": "outside",
-      "x": 3.27,
-      "y": 7.56
-    },
-    "TeenAdult1:15-front-crawl:3": {
-      "page": "outside",
-      "x": 3.32,
-      "y": 10.0
-    },
-    "TeenAdult1:15-front-crawl:4": {
-      "page": "outside",
-      "x": 3.32,
-      "y": 12.44
-    },
-    "TeenAdult1:15-front-crawl:5": {
-      "page": "outside",
-      "x": 3.32,
-      "y": 16.85
-    },
-    "TeenAdult1:15-back-crawl:1": {
-      "page": "outside",
-      "x": 3.36,
-      "y": 37.44
-    },
-    "TeenAdult1:15-back-crawl:2": {
-      "page": "outside",
-      "x": 3.32,
-      "y": 25.68
-    },
-    "TeenAdult1:15-back-crawl:3": {
-      "page": "outside",
-      "x": 3.34,
-      "y": 28.12
-    },
-    "TeenAdult1:15-back-crawl:4": {
-      "page": "outside",
-      "x": 3.34,
-      "y": 30.59
-    },
-    "TeenAdult1:15-back-crawl:5": {
-      "page": "outside",
-      "x": 3.36,
-      "y": 35.0
-    },
-    "TeenAdult1:16:1": {
-      "page": "outside",
-      "x": 3.41,
-      "y": 51.77
-    },
-    "TeenAdult1:16:2": {
-      "page": "outside",
-      "x": 3.41,
-      "y": 54.21
-    },
-    "TeenAdult1:17:2": {
-      "page": "outside",
-      "x": 5.57,
-      "y": 68.56
-    },
-    "TeenAdult1:17:3": {
-      "page": "outside",
-      "x": 5.59,
-      "y": 73.03
-    },
-    "TeenAdult1:17:4": {
-      "page": "outside",
-      "x": 5.41,
-      "y": 77.38
-    },
-    "TeenAdult1:17:5": {
-      "page": "outside",
-      "x": 5.57,
-      "y": 81.79
-    },
-    "TeenAdult1:17:6": {
-      "page": "outside",
-      "x": 5.43,
-      "y": 86.21
-    }
+  "session": {
+   "page": "outside",
+   "x": 89.4,
+   "y": 81.0
+  }
+ },
+ "nextLevel": [
+  {
+   "level": "TeenAdult1",
+   "page": "outside",
+   "x": 37.52,
+   "y": 21.44
   },
-  "unmapped": [
-    {
-      "criterionId": "TeenAdult1:17:1",
-      "reason": "no participation box on this card; only the five message circles"
-    }
-  ],
-  "extraBoxes": [
-    {
-      "page": "inside",
-      "x": 36.77,
-      "y": 28.85,
-      "label": "Treading water 30 second time met (Swim to Survive sequence; criterion 9:2 \"Distance and time requirements completed\" is mapped to the distance box)",
-      "ticksWith": [
-        "TeenAdult1:9:2"
-      ]
-    },
-    {
-      "page": "inside",
-      "x": 37.18,
-      "y": 74.56,
-      "label": "Roll laterally back to front: Begin in back float position (criterion 11:1 mapped to the front-float box)",
-      "ticksWith": [
-        "TeenAdult1:11:1"
-      ]
-    },
-    {
-      "page": "inside",
-      "x": 37.25,
-      "y": 79.44,
-      "label": "Roll laterally back to front: Body remains horizontal (11:4 mapped to the front-to-back box)",
-      "ticksWith": [
-        "TeenAdult1:11:4"
-      ]
-    },
-    {
-      "page": "inside",
-      "x": 69.7,
-      "y": 83.21,
-      "label": "Whip kick: Legs drive with knees apart; feet wider than knees (ticks when the skill is complete)",
-      "ticksWith": [
-        "TeenAdult1:14:1",
-        "TeenAdult1:14:2"
-      ]
-    },
-    {
-      "page": "inside",
-      "x": 69.7,
-      "y": 87.62,
-      "label": "Whip kick: 15 second minimum time met (ticks when the skill is complete)",
-      "ticksWith": [
-        "TeenAdult1:14:1",
-        "TeenAdult1:14:2"
-      ]
-    }
-  ]
+  {
+   "level": "TeenAdult2",
+   "page": "outside",
+   "x": 37.5,
+   "y": 24.38
+  }
+ ],
+ "criteria": {
+  "TeenAdult1:1:1": {
+   "page": "inside",
+   "x": 3.59,
+   "y": 12.71,
+   "highlight": {
+    "x": 2.48,
+    "y": 11.29,
+    "w": 11.09,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:1:2": {
+   "page": "inside",
+   "x": 3.59,
+   "y": 15.15,
+   "highlight": {
+    "x": 2.48,
+    "y": 13.73,
+    "w": 24.85,
+    "h": 4.24
+   }
+  },
+  "TeenAdult1:2:1": {
+   "page": "inside",
+   "x": 3.73,
+   "y": 23.47,
+   "highlight": {
+    "x": 2.61,
+    "y": 22.04,
+    "w": 11.09,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:2:2": {
+   "page": "inside",
+   "x": 3.75,
+   "y": 25.94,
+   "highlight": {
+    "x": 2.61,
+    "y": 24.47,
+    "w": 26.3,
+    "h": 4.24
+   }
+  },
+  "TeenAdult1:3:1": {
+   "page": "inside",
+   "x": 3.86,
+   "y": 34.27,
+   "highlight": {
+    "x": 2.73,
+    "y": 32.78,
+    "w": 23.88,
+    "h": 4.24
+   }
+  },
+  "TeenAdult1:3:2": {
+   "page": "inside",
+   "x": 3.93,
+   "y": 38.71,
+   "highlight": {
+    "x": 2.79,
+    "y": 37.25,
+    "w": 23.82,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:4:1": {
+   "page": "inside",
+   "x": 4.09,
+   "y": 51.0,
+   "highlight": {
+    "x": 2.97,
+    "y": 49.57,
+    "w": 14.61,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:4:2": {
+   "page": "inside",
+   "x": 4.14,
+   "y": 53.47,
+   "highlight": {
+    "x": 3.03,
+    "y": 52.0,
+    "w": 19.27,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:4:3": {
+   "page": "inside",
+   "x": 4.16,
+   "y": 55.94,
+   "highlight": {
+    "x": 3.03,
+    "y": 54.51,
+    "w": 25.33,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:4:4": {
+   "page": "inside",
+   "x": 4.21,
+   "y": 58.38,
+   "highlight": {
+    "x": 3.09,
+    "y": 56.94,
+    "w": 17.45,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:4:5": {
+   "page": "inside",
+   "x": 4.25,
+   "y": 60.82,
+   "highlight": {
+    "x": 3.15,
+    "y": 59.37,
+    "w": 13.52,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:5:1": {
+   "page": "inside",
+   "x": 4.66,
+   "y": 90.38,
+   "highlight": {
+    "x": 3.52,
+    "y": 88.94,
+    "w": 15.39,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:5:2": {
+   "page": "inside",
+   "x": 4.68,
+   "y": 92.82,
+   "highlight": {
+    "x": 3.58,
+    "y": 91.37,
+    "w": 18.12,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:6:1": {
+   "page": "inside",
+   "x": 36.59,
+   "y": 9.59,
+   "highlight": {
+    "x": 35.45,
+    "y": 8.16,
+    "w": 15.64,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:6:2": {
+   "page": "inside",
+   "x": 36.64,
+   "y": 12.03,
+   "highlight": {
+    "x": 35.52,
+    "y": 10.59,
+    "w": 27.94,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:7:1": {
+   "page": "inside",
+   "x": 4.41,
+   "y": 73.23,
+   "highlight": {
+    "x": 3.27,
+    "y": 71.76,
+    "w": 27.33,
+    "h": 4.86
+   }
+  },
+  "TeenAdult1:8:1": {
+   "page": "inside",
+   "x": 4.5,
+   "y": 79.62,
+   "highlight": {
+    "x": 3.39,
+    "y": 78.2,
+    "w": 9.94,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:8:2": {
+   "page": "inside",
+   "x": 4.52,
+   "y": 82.06,
+   "highlight": {
+    "x": 3.39,
+    "y": 80.63,
+    "w": 25.52,
+    "h": 6.67
+   }
+  },
+  "TeenAdult1:9:1": {
+   "page": "inside",
+   "x": 36.73,
+   "y": 26.38,
+   "highlight": {
+    "x": 35.64,
+    "y": 24.94,
+    "w": 27.39,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:9:2": {
+   "page": "inside",
+   "x": 36.77,
+   "y": 31.29,
+   "highlight": {
+    "x": 35.64,
+    "y": 29.8,
+    "w": 23.52,
+    "h": 4.31
+   }
+  },
+  "TeenAdult1:10a:1": {
+   "page": "inside",
+   "x": 36.91,
+   "y": 45.68,
+   "highlight": {
+    "x": 35.82,
+    "y": 44.24,
+    "w": 20.12,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:10a:2": {
+   "page": "inside",
+   "x": 36.93,
+   "y": 48.15,
+   "highlight": {
+    "x": 35.82,
+    "y": 46.67,
+    "w": 16.42,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:10b:1": {
+   "page": "inside",
+   "x": 37.0,
+   "y": 54.44,
+   "highlight": {
+    "x": 35.88,
+    "y": 53.02,
+    "w": 20.06,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:10b:2": {
+   "page": "inside",
+   "x": 37.02,
+   "y": 56.91,
+   "highlight": {
+    "x": 35.88,
+    "y": 55.45,
+    "w": 16.3,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:11:1": {
+   "page": "inside",
+   "x": 37.09,
+   "y": 63.27,
+   "highlight": {
+    "x": 35.94,
+    "y": 61.8,
+    "w": 17.52,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:11:2": {
+   "page": "inside",
+   "x": 37.11,
+   "y": 65.73,
+   "highlight": {
+    "x": 36.0,
+    "y": 64.31,
+    "w": 25.82,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:11:3": {
+   "page": "inside",
+   "x": 37.2,
+   "y": 77.0,
+   "highlight": {
+    "x": 36.06,
+    "y": 75.53,
+    "w": 25.76,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:11:4": {
+   "page": "inside",
+   "x": 37.14,
+   "y": 68.18,
+   "highlight": {
+    "x": 36.0,
+    "y": 66.75,
+    "w": 15.82,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-front-glide:1": {
+   "page": "inside",
+   "x": 37.3,
+   "y": 85.79,
+   "highlight": {
+    "x": 36.18,
+    "y": 84.31,
+    "w": 9.88,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-front-glide:2": {
+   "page": "inside",
+   "x": 37.32,
+   "y": 88.27,
+   "highlight": {
+    "x": 36.18,
+    "y": 86.82,
+    "w": 14.79,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-front-glide:3": {
+   "page": "inside",
+   "x": 37.34,
+   "y": 90.71,
+   "highlight": {
+    "x": 36.24,
+    "y": 89.25,
+    "w": 18.18,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-front-glide:4": {
+   "page": "inside",
+   "x": 37.39,
+   "y": 93.15,
+   "highlight": {
+    "x": 36.24,
+    "y": 91.69,
+    "w": 19.88,
+    "h": 4.55
+   }
+  },
+  "TeenAdult1:12-back-glide:1": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 9.27,
+   "highlight": {
+    "x": 68.55,
+    "y": 7.84,
+    "w": 9.64,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-back-glide:2": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 11.73,
+   "highlight": {
+    "x": 68.55,
+    "y": 10.27,
+    "w": 10.18,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-back-glide:3": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 14.15,
+   "highlight": {
+    "x": 68.55,
+    "y": 12.71,
+    "w": 20.0,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-side-glide:1": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 20.56,
+   "highlight": {
+    "x": 68.55,
+    "y": 19.14,
+    "w": 9.7,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-side-glide:2": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 22.97,
+   "highlight": {
+    "x": 68.55,
+    "y": 21.49,
+    "w": 21.82,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-side-glide:3": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 25.44,
+   "highlight": {
+    "x": 68.55,
+    "y": 24.0,
+    "w": 11.21,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-side-glide:4": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 27.88,
+   "highlight": {
+    "x": 68.55,
+    "y": 26.43,
+    "w": 18.0,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:12-side-glide:5": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 30.32,
+   "highlight": {
+    "x": 68.55,
+    "y": 28.86,
+    "w": 20.0,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:13a:1": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 36.73,
+   "highlight": {
+    "x": 68.55,
+    "y": 35.29,
+    "w": 23.45,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:13a:2": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 39.18,
+   "highlight": {
+    "x": 68.55,
+    "y": 37.73,
+    "w": 27.39,
+    "h": 4.47
+   }
+  },
+  "TeenAdult1:13a:3": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 43.56,
+   "highlight": {
+    "x": 68.55,
+    "y": 42.12,
+    "w": 23.94,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:13b:1": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 49.91,
+   "highlight": {
+    "x": 68.55,
+    "y": 48.47,
+    "w": 23.52,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:13b:2": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 52.32,
+   "highlight": {
+    "x": 68.55,
+    "y": 50.9,
+    "w": 27.39,
+    "h": 4.47
+   }
+  },
+  "TeenAdult1:13b:3": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 56.73,
+   "highlight": {
+    "x": 68.55,
+    "y": 55.29,
+    "w": 20.48,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:13c:1": {
+   "page": "inside",
+   "x": 69.7,
+   "y": 63.12,
+   "highlight": {
+    "x": 68.61,
+    "y": 61.65,
+    "w": 23.45,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:13c:2": {
+   "page": "inside",
+   "x": 69.7,
+   "y": 65.56,
+   "highlight": {
+    "x": 68.61,
+    "y": 64.08,
+    "w": 27.39,
+    "h": 4.55
+   }
+  },
+  "TeenAdult1:13c:3": {
+   "page": "inside",
+   "x": 69.7,
+   "y": 69.97,
+   "highlight": {
+    "x": 68.61,
+    "y": 68.55,
+    "w": 20.42,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:14:1": {
+   "page": "inside",
+   "x": 69.7,
+   "y": 76.35,
+   "highlight": {
+    "x": 68.61,
+    "y": 74.9,
+    "w": 18.24,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:14:2": {
+   "page": "inside",
+   "x": 69.7,
+   "y": 78.79,
+   "highlight": {
+    "x": 68.61,
+    "y": 77.33,
+    "w": 26.12,
+    "h": 4.47
+   }
+  },
+  "TeenAdult1:15-front-crawl:1": {
+   "page": "outside",
+   "x": 3.32,
+   "y": 19.29,
+   "highlight": {
+    "x": 2.18,
+    "y": 17.8,
+    "w": 20.73,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:15-front-crawl:2": {
+   "page": "outside",
+   "x": 3.27,
+   "y": 7.56,
+   "highlight": {
+    "x": 2.12,
+    "y": 6.12,
+    "w": 10.42,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:15-front-crawl:3": {
+   "page": "outside",
+   "x": 3.32,
+   "y": 10.0,
+   "highlight": {
+    "x": 2.18,
+    "y": 8.55,
+    "w": 14.0,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:15-front-crawl:4": {
+   "page": "outside",
+   "x": 3.32,
+   "y": 12.44,
+   "highlight": {
+    "x": 2.18,
+    "y": 10.98,
+    "w": 30.91,
+    "h": 4.55
+   }
+  },
+  "TeenAdult1:15-front-crawl:5": {
+   "page": "outside",
+   "x": 3.32,
+   "y": 16.85,
+   "highlight": {
+    "x": 2.18,
+    "y": 15.37,
+    "w": 23.21,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:15-back-crawl:1": {
+   "page": "outside",
+   "x": 3.36,
+   "y": 37.44,
+   "highlight": {
+    "x": 2.24,
+    "y": 36.0,
+    "w": 20.67,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:15-back-crawl:2": {
+   "page": "outside",
+   "x": 3.32,
+   "y": 25.68,
+   "highlight": {
+    "x": 2.18,
+    "y": 24.24,
+    "w": 10.3,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:15-back-crawl:3": {
+   "page": "outside",
+   "x": 3.34,
+   "y": 28.12,
+   "highlight": {
+    "x": 2.24,
+    "y": 26.67,
+    "w": 13.94,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:15-back-crawl:4": {
+   "page": "outside",
+   "x": 3.34,
+   "y": 30.59,
+   "highlight": {
+    "x": 2.24,
+    "y": 29.18,
+    "w": 27.76,
+    "h": 4.39
+   }
+  },
+  "TeenAdult1:15-back-crawl:5": {
+   "page": "outside",
+   "x": 3.36,
+   "y": 35.0,
+   "highlight": {
+    "x": 2.24,
+    "y": 33.57,
+    "w": 12.61,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:16:1": {
+   "page": "outside",
+   "x": 3.41,
+   "y": 51.77,
+   "highlight": {
+    "x": 2.3,
+    "y": 50.35,
+    "w": 14.97,
+    "h": 2.82
+   }
+  },
+  "TeenAdult1:16:2": {
+   "page": "outside",
+   "x": 3.41,
+   "y": 54.21,
+   "highlight": {
+    "x": 2.3,
+    "y": 52.78,
+    "w": 27.7,
+    "h": 4.47
+   }
+  },
+  "TeenAdult1:17:2": {
+   "page": "outside",
+   "x": 5.57,
+   "y": 68.56,
+   "highlight": {
+    "x": 4.42,
+    "y": 67.14,
+    "w": 22.55,
+    "h": 4.31
+   }
+  },
+  "TeenAdult1:17:3": {
+   "page": "outside",
+   "x": 5.59,
+   "y": 73.03,
+   "highlight": {
+    "x": 4.48,
+    "y": 71.61,
+    "w": 28.61,
+    "h": 4.31
+   }
+  },
+  "TeenAdult1:17:4": {
+   "page": "outside",
+   "x": 5.41,
+   "y": 77.38,
+   "highlight": {
+    "x": 4.3,
+    "y": 75.92,
+    "w": 25.21,
+    "h": 4.31
+   }
+  },
+  "TeenAdult1:17:5": {
+   "page": "outside",
+   "x": 5.57,
+   "y": 81.79,
+   "highlight": {
+    "x": 4.42,
+    "y": 80.31,
+    "w": 28.67,
+    "h": 4.39
+   }
+  },
+  "TeenAdult1:17:6": {
+   "page": "outside",
+   "x": 5.43,
+   "y": 86.21,
+   "highlight": {
+    "x": 4.3,
+    "y": 84.78,
+    "w": 28.79,
+    "h": 4.31
+   }
+  }
+ },
+ "unmapped": [
+  {
+   "criterionId": "TeenAdult1:17:1",
+   "reason": "no participation box on this card; only the five message circles"
+  }
+ ],
+ "extraBoxes": [
+  {
+   "page": "inside",
+   "x": 36.77,
+   "y": 28.85,
+   "label": "Treading water 30 second time met (Swim to Survive sequence; criterion 9:2 \"Distance and time requirements completed\" is mapped to the distance box)",
+   "ticksWith": [
+    "TeenAdult1:9:2"
+   ],
+   "highlight": {
+    "x": 35.64,
+    "y": 27.37,
+    "w": 22.12,
+    "h": 2.82
+   }
+  },
+  {
+   "page": "inside",
+   "x": 37.18,
+   "y": 74.56,
+   "label": "Roll laterally back to front: Begin in back float position (criterion 11:1 mapped to the front-float box)",
+   "ticksWith": [
+    "TeenAdult1:11:1"
+   ],
+   "highlight": {
+    "x": 36.06,
+    "y": 73.1,
+    "w": 17.39,
+    "h": 2.82
+   }
+  },
+  {
+   "page": "inside",
+   "x": 37.25,
+   "y": 79.44,
+   "label": "Roll laterally back to front: Body remains horizontal (11:4 mapped to the front-to-back box)",
+   "ticksWith": [
+    "TeenAdult1:11:4"
+   ],
+   "highlight": {
+    "x": 36.12,
+    "y": 77.96,
+    "w": 15.76,
+    "h": 2.82
+   }
+  },
+  {
+   "page": "inside",
+   "x": 69.7,
+   "y": 83.21,
+   "label": "Whip kick: Legs drive with knees apart; feet wider than knees (ticks when the skill is complete)",
+   "ticksWith": [
+    "TeenAdult1:14:1",
+    "TeenAdult1:14:2"
+   ],
+   "highlight": {
+    "x": 68.61,
+    "y": 81.73,
+    "w": 23.52,
+    "h": 4.31
+   }
+  },
+  {
+   "page": "inside",
+   "x": 69.7,
+   "y": 87.62,
+   "label": "Whip kick: 15 second minimum time met (ticks when the skill is complete)",
+   "ticksWith": [
+    "TeenAdult1:14:1",
+    "TeenAdult1:14:2"
+   ],
+   "highlight": {
+    "x": 68.61,
+    "y": 86.2,
+    "w": 18.36,
+    "h": 2.82
+   }
+  }
+ ],
+ "skills": {
+  "TeenAdult1:1": {
+   "page": "inside",
+   "x": 2.42,
+   "y": 9.02,
+   "w": 16.18,
+   "h": 2.12
+  },
+  "TeenAdult1:10a": {
+   "page": "inside",
+   "x": 35.76,
+   "y": 42.27,
+   "w": 8.06,
+   "h": 1.8
+  },
+  "TeenAdult1:10b": {
+   "page": "inside",
+   "x": 35.88,
+   "y": 51.06,
+   "w": 7.94,
+   "h": 1.8
+  },
+  "TeenAdult1:11": {
+   "page": "inside",
+   "x": 35.94,
+   "y": 59.76,
+   "w": 14.67,
+   "h": 2.04
+  },
+  "TeenAdult1:12-back-glide": {
+   "page": "inside",
+   "x": 68.61,
+   "y": 5.96,
+   "w": 14.06,
+   "h": 1.73
+  },
+  "TeenAdult1:12-front-glide": {
+   "page": "inside",
+   "x": 36.12,
+   "y": 82.35,
+   "w": 14.18,
+   "h": 1.88
+  },
+  "TeenAdult1:12-side-glide": {
+   "page": "inside",
+   "x": 68.61,
+   "y": 17.18,
+   "w": 13.7,
+   "h": 1.8
+  },
+  "TeenAdult1:13a": {
+   "page": "inside",
+   "x": 68.61,
+   "y": 33.33,
+   "w": 18.36,
+   "h": 1.8
+  },
+  "TeenAdult1:13b": {
+   "page": "inside",
+   "x": 68.61,
+   "y": 46.59,
+   "w": 18.36,
+   "h": 1.8
+  },
+  "TeenAdult1:13c": {
+   "page": "inside",
+   "x": 68.61,
+   "y": 59.76,
+   "w": 18.0,
+   "h": 1.8
+  },
+  "TeenAdult1:14": {
+   "page": "inside",
+   "x": 68.61,
+   "y": 72.86,
+   "w": 27.64,
+   "h": 2.12
+  },
+  "TeenAdult1:15-back-crawl": {
+   "page": "outside",
+   "x": 2.24,
+   "y": 22.27,
+   "w": 14.12,
+   "h": 1.8
+  },
+  "TeenAdult1:15-front-crawl": {
+   "page": "outside",
+   "x": 2.18,
+   "y": 4.16,
+   "w": 14.0,
+   "h": 1.8
+  },
+  "TeenAdult1:16": {
+   "page": "outside",
+   "x": 2.24,
+   "y": 46.43,
+   "w": 23.94,
+   "h": 3.76
+  },
+  "TeenAdult1:17": {
+   "page": "outside",
+   "x": 2.67,
+   "y": 65.25,
+   "w": 13.15,
+   "h": 1.8
+  },
+  "TeenAdult1:2": {
+   "page": "inside",
+   "x": 2.55,
+   "y": 19.61,
+   "w": 21.39,
+   "h": 2.51
+  },
+  "TeenAdult1:3": {
+   "page": "inside",
+   "x": 2.67,
+   "y": 30.51,
+   "w": 16.24,
+   "h": 2.27
+  },
+  "TeenAdult1:4": {
+   "page": "inside",
+   "x": 2.91,
+   "y": 47.22,
+   "w": 21.94,
+   "h": 2.27
+  },
+  "TeenAdult1:5": {
+   "page": "inside",
+   "x": 3.52,
+   "y": 86.67,
+   "w": 18.61,
+   "h": 2.12
+  },
+  "TeenAdult1:6": {
+   "page": "inside",
+   "x": 35.45,
+   "y": 6.12,
+   "w": 18.67,
+   "h": 2.04
+  },
+  "TeenAdult1:7": {
+   "page": "inside",
+   "x": 3.21,
+   "y": 69.65,
+   "w": 12.91,
+   "h": 2.2
+  },
+  "TeenAdult1:8": {
+   "page": "inside",
+   "x": 3.33,
+   "y": 75.69,
+   "w": 27.21,
+   "h": 2.35
+  },
+  "TeenAdult1:9": {
+   "page": "inside",
+   "x": 35.58,
+   "y": 20.86,
+   "w": 27.88,
+   "h": 4.08
+  }
+ }
 }

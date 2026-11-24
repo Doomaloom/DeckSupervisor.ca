@@ -28,6 +28,15 @@ def tick(d, img, x, y, color, label):
     W, H = img.size; px, py = x * W / 100, y * H / 100; s = 0.009 * W
     d.line([(px - s, py), (px - s / 3, py + s * 0.8), (px + s * 1.1, py - s)], fill=color, width=4)
     d.text((px + s * 1.4, py - s), label, fill=color, font=font(11))
+# highlight areas (yellow = criterion/extra box line, orange = skill heading) drawn first, under the ticks
+for side, img in pages.items():
+    layer = Image.new('RGBA', img.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(layer); W, H = img.size
+    rects = [(p['highlight'], (255, 220, 0, 90)) for p in m.get('criteria', {}).values() if p['page'] == side and 'highlight' in p]
+    rects += [(b['highlight'], (255, 220, 0, 90)) for b in m.get('extraBoxes', []) if b['page'] == side and 'highlight' in b]
+    rects += [(h, (255, 120, 0, 90)) for h in m.get('skills', {}).values() if h['page'] == side]
+    for r, col in rects:
+        ld.rectangle([r['x'] * W / 100, r['y'] * H / 100, (r['x'] + r['w']) * W / 100, (r['y'] + r['h']) * H / 100], fill=col, outline=col[:3] + (200,))
+    pages[side] = Image.alpha_composite(img.convert('RGBA'), layer).convert('RGB')
 draws = {k: ImageDraw.Draw(v) for k, v in pages.items()}
 for cid, p in m.get('criteria', {}).items():
     tick(draws[p['page']], pages[p['page']], p['x'], p['y'], (220, 0, 0), cid.split(':', 1)[1])

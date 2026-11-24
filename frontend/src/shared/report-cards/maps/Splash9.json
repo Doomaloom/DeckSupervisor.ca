@@ -1,491 +1,1104 @@
 {
-  "level": "Splash9",
-  "images": {
-    "outside": "splash-9-outside.jpg",
-    "inside": "splash-9-inside.jpg"
+ "level": "Splash9",
+ "images": {
+  "outside": "splash-9-outside.jpg",
+  "inside": "splash-9-inside.jpg"
+ },
+ "source": {
+  "pdf": "splash7-to-9-report-cards-combined.pdf",
+  "outsidePage": 5,
+  "insidePage": 6
+ },
+ "fields": {
+  "participant": {
+   "page": "outside",
+   "x": 76.0,
+   "y": 72.6
   },
-  "source": {
-    "pdf": "splash7-to-9-report-cards-combined.pdf",
-    "outsidePage": 5,
-    "insidePage": 6
+  "instructor": {
+   "page": "outside",
+   "x": 75.5,
+   "y": 77.0
   },
-  "fields": {
-    "participant": {
-      "page": "outside",
-      "x": 76.0,
-      "y": 72.6
-    },
-    "instructor": {
-      "page": "outside",
-      "x": 75.5,
-      "y": 77.0
-    },
-    "date": {
-      "page": "outside",
-      "x": 72.5,
-      "y": 81.6
-    },
-    "session": {
-      "page": "outside",
-      "x": 87.8,
-      "y": 81.6
-    }
+  "date": {
+   "page": "outside",
+   "x": 72.5,
+   "y": 81.6
   },
-  "nextLevel": [
-    {
-      "level": "Splash9",
-      "page": "outside",
-      "x": 38.39,
-      "y": 22.09
-    },
-    {
-      "level": "Bronze Star",
-      "page": "outside",
-      "x": 38.39,
-      "y": 26.03
-    }
-  ],
-  "criteria": {
-    "Splash9:13:1": {
-      "page": "outside",
-      "x": 3.98,
-      "y": 11.62
-    },
-    "Splash9:13:2": {
-      "page": "outside",
-      "x": 3.98,
-      "y": 13.88
-    },
-    "Splash9:13:3": {
-      "page": "outside",
-      "x": 4.02,
-      "y": 16.18
-    },
-    "Splash9:13:4": {
-      "page": "outside",
-      "x": 4.02,
-      "y": 20.44
-    },
-    "Splash9:13:5": {
-      "page": "outside",
-      "x": 4.07,
-      "y": 22.71
-    },
-    "Splash9:13:6": {
-      "page": "outside",
-      "x": 4.07,
-      "y": 26.94
-    },
-    "Splash9:14:1": {
-      "page": "outside",
-      "x": 4.21,
-      "y": 42.47
-    },
-    "Splash9:14:2": {
-      "page": "outside",
-      "x": 4.21,
-      "y": 44.77
-    },
-    "Splash9:15:1": {
-      "page": "outside",
-      "x": 4.29,
-      "y": 53.03
-    },
-    "Splash9:15:2": {
-      "page": "outside",
-      "x": 4.29,
-      "y": 55.32
-    },
-    "Splash9:15:3": {
-      "page": "outside",
-      "x": 4.32,
-      "y": 57.62
-    },
-    "Splash9:15:4": {
-      "page": "outside",
-      "x": 4.34,
-      "y": 59.88
-    },
-    "Splash9:15:5": {
-      "page": "outside",
-      "x": 4.36,
-      "y": 62.18
-    },
-    "Splash9:15:6": {
-      "page": "outside",
-      "x": 4.36,
-      "y": 64.47
-    },
-    "Splash9:15:7": {
-      "page": "outside",
-      "x": 4.39,
-      "y": 66.73
-    },
-    "Splash9:15:8": {
-      "page": "outside",
-      "x": 4.41,
-      "y": 71.0
-    },
-    "Splash9:15:9": {
-      "page": "outside",
-      "x": 4.46,
-      "y": 73.29
-    },
-    "Splash9:15:10": {
-      "page": "outside",
-      "x": 4.46,
-      "y": 75.56
-    },
-    "Splash9:15:11": {
-      "page": "outside",
-      "x": 4.5,
-      "y": 79.82
-    },
-    "Splash9:15:12": {
-      "page": "outside",
-      "x": 4.5,
-      "y": 82.09
-    },
-    "Splash9:1:1": {
-      "page": "inside",
-      "x": 4.02,
-      "y": 14.62
-    },
-    "Splash9:1:2": {
-      "page": "inside",
-      "x": 4.04,
-      "y": 16.91
-    },
-    "Splash9:2:1": {
-      "page": "inside",
-      "x": 4.11,
-      "y": 25.23
-    },
-    "Splash9:2:2": {
-      "page": "inside",
-      "x": 4.11,
-      "y": 27.53
-    },
-    "Splash9:2:3": {
-      "page": "inside",
-      "x": 4.11,
-      "y": 29.82
-    },
-    "Splash9:2:4": {
-      "page": "inside",
-      "x": 4.14,
-      "y": 32.12
-    },
-    "Splash9:2:5": {
-      "page": "inside",
-      "x": 4.16,
-      "y": 34.41
-    },
-    "Splash9:3:1": {
-      "page": "inside",
-      "x": 4.21,
-      "y": 44.73
-    },
-    "Splash9:3:2": {
-      "page": "inside",
-      "x": 4.21,
-      "y": 47.03
-    },
-    "Splash9:3:3": {
-      "page": "inside",
-      "x": 4.25,
-      "y": 49.29
-    },
-    "Splash9:3:4": {
-      "page": "inside",
-      "x": 4.25,
-      "y": 51.53
-    },
-    "Splash9:4:1": {
-      "page": "inside",
-      "x": 4.29,
-      "y": 59.88
-    },
-    "Splash9:4:2": {
-      "page": "inside",
-      "x": 4.32,
-      "y": 62.18
-    },
-    "Splash9:4:3": {
-      "page": "inside",
-      "x": 4.34,
-      "y": 66.44
-    },
-    "Splash9:4:4": {
-      "page": "inside",
-      "x": 4.34,
-      "y": 68.71
-    },
-    "Splash9:4:5": {
-      "page": "inside",
-      "x": 4.39,
-      "y": 72.97
-    },
-    "Splash9:5:1": {
-      "page": "inside",
-      "x": 4.43,
-      "y": 79.35
-    },
-    "Splash9:5:2": {
-      "page": "inside",
-      "x": 4.43,
-      "y": 83.62
-    },
-    "Splash9:5:3": {
-      "page": "inside",
-      "x": 4.46,
-      "y": 85.88
-    },
-    "Splash9:6:1": {
-      "page": "inside",
-      "x": 36.75,
-      "y": 9.5
-    },
-    "Splash9:6:2": {
-      "page": "inside",
-      "x": 36.75,
-      "y": 11.79
-    },
-    "Splash9:6:3": {
-      "page": "inside",
-      "x": 36.75,
-      "y": 14.06
-    },
-    "Splash9:7:1": {
-      "page": "inside",
-      "x": 36.77,
-      "y": 22.41
-    },
-    "Splash9:7:2": {
-      "page": "inside",
-      "x": 36.77,
-      "y": 24.68
-    },
-    "Splash9:7:3": {
-      "page": "inside",
-      "x": 36.77,
-      "y": 26.97
-    },
-    "Splash9:7:4": {
-      "page": "inside",
-      "x": 36.77,
-      "y": 29.27
-    },
-    "Splash9:7:5": {
-      "page": "inside",
-      "x": 36.77,
-      "y": 31.56
-    },
-    "Splash9:7:6": {
-      "page": "inside",
-      "x": 36.77,
-      "y": 33.82
-    },
-    "Splash9:8:1": {
-      "page": "inside",
-      "x": 36.77,
-      "y": 42.21
-    },
-    "Splash9:8:2": {
-      "page": "inside",
-      "x": 36.77,
-      "y": 44.5
-    },
-    "Splash9:8:3": {
-      "page": "inside",
-      "x": 36.8,
-      "y": 50.68
-    },
-    "Splash9:9-front-crawl:2": {
-      "page": "inside",
-      "x": 36.82,
-      "y": 58.97
-    },
-    "Splash9:9-front-crawl:3": {
-      "page": "inside",
-      "x": 36.82,
-      "y": 63.23
-    },
-    "Splash9:9-front-crawl:4": {
-      "page": "inside",
-      "x": 36.82,
-      "y": 65.5
-    },
-    "Splash9:9-front-crawl:5": {
-      "page": "inside",
-      "x": 36.84,
-      "y": 67.82
-    },
-    "Splash9:9-front-crawl:6": {
-      "page": "inside",
-      "x": 36.84,
-      "y": 70.12
-    },
-    "Splash9:9-front-crawl:7": {
-      "page": "inside",
-      "x": 36.84,
-      "y": 74.38
-    },
-    "Splash9:9-front-crawl:1": {
-      "page": "inside",
-      "x": 36.84,
-      "y": 76.65
-    },
-    "Splash9:9-back-crawl:2": {
-      "page": "inside",
-      "x": 36.84,
-      "y": 83.03
-    },
-    "Splash9:9-back-crawl:3": {
-      "page": "inside",
-      "x": 36.86,
-      "y": 87.27
-    },
-    "Splash9:9-back-crawl:4": {
-      "page": "inside",
-      "x": 36.86,
-      "y": 89.53
-    },
-    "Splash9:9-back-crawl:5": {
-      "page": "inside",
-      "x": 36.86,
-      "y": 91.79
-    },
-    "Splash9:9-back-crawl:6": {
-      "page": "inside",
-      "x": 36.86,
-      "y": 94.09
-    },
-    "Splash9:9-back-crawl:1": {
-      "page": "inside",
-      "x": 36.89,
-      "y": 96.38
-    },
-    "Splash9:9-breaststroke:2": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 9.21
-    },
-    "Splash9:9-breaststroke:3": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 11.5
-    },
-    "Splash9:9-breaststroke:4": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 15.73
-    },
-    "Splash9:9-breaststroke:5": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 20.0
-    },
-    "Splash9:9-breaststroke:6": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 22.29
-    },
-    "Splash9:9-breaststroke:1": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 24.56
-    },
-    "Splash9:10:8": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 32.91
-    },
-    "Splash9:10:9": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 37.18
-    },
-    "Splash9:10:10": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 41.44
-    },
-    "Splash9:11:1": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 51.68
-    },
-    "Splash9:11:2": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 53.97
-    },
-    "Splash9:11:3": {
-      "page": "inside",
-      "x": 69.32,
-      "y": 58.21
-    },
-    "Splash9:12:1": {
-      "page": "inside",
-      "x": 69.34,
-      "y": 73.09
-    },
-    "Splash9:12:2": {
-      "page": "inside",
-      "x": 69.34,
-      "y": 75.38
-    },
-    "Splash9:12:3": {
-      "page": "inside",
-      "x": 69.34,
-      "y": 77.68
-    },
-    "Splash9:12:4": {
-      "page": "inside",
-      "x": 69.34,
-      "y": 81.91
-    },
-    "Splash9:12:5": {
-      "page": "inside",
-      "x": 69.34,
-      "y": 86.15
-    },
-    "Splash9:12:6": {
-      "page": "inside",
-      "x": 69.36,
-      "y": 88.44
-    }
+  "session": {
+   "page": "outside",
+   "x": 87.8,
+   "y": 81.6
+  }
+ },
+ "nextLevel": [
+  {
+   "level": "Splash9",
+   "page": "outside",
+   "x": 38.39,
+   "y": 22.09
   },
-  "unmapped": [
-    {
-      "criterionId": "Splash9:10:1",
-      "reason": "no box on the card"
-    },
-    {
-      "criterionId": "Splash9:10:2",
-      "reason": "no box on the card"
-    },
-    {
-      "criterionId": "Splash9:10:3",
-      "reason": "no box on the card"
-    },
-    {
-      "criterionId": "Splash9:10:4",
-      "reason": "no box on the card"
-    },
-    {
-      "criterionId": "Splash9:10:5",
-      "reason": "no box on the card"
-    },
-    {
-      "criterionId": "Splash9:10:6",
-      "reason": "no box on the card"
-    },
-    {
-      "criterionId": "Splash9:10:7",
-      "reason": "no box on the card"
-    }
-  ],
-  "extraBoxes": []
+  {
+   "level": "Bronze Star",
+   "page": "outside",
+   "x": 38.39,
+   "y": 26.03
+  }
+ ],
+ "criteria": {
+  "Splash9:13:1": {
+   "page": "outside",
+   "x": 3.98,
+   "y": 11.62,
+   "highlight": {
+    "x": 2.85,
+    "y": 10.2,
+    "w": 24.61,
+    "h": 2.82
+   }
+  },
+  "Splash9:13:2": {
+   "page": "outside",
+   "x": 3.98,
+   "y": 13.88,
+   "highlight": {
+    "x": 2.85,
+    "y": 12.39,
+    "w": 16.61,
+    "h": 2.82
+   }
+  },
+  "Splash9:13:3": {
+   "page": "outside",
+   "x": 4.02,
+   "y": 16.18,
+   "highlight": {
+    "x": 2.91,
+    "y": 14.75,
+    "w": 24.3,
+    "h": 4.31
+   }
+  },
+  "Splash9:13:4": {
+   "page": "outside",
+   "x": 4.02,
+   "y": 20.44,
+   "highlight": {
+    "x": 2.91,
+    "y": 18.98,
+    "w": 26.48,
+    "h": 2.82
+   }
+  },
+  "Splash9:13:5": {
+   "page": "outside",
+   "x": 4.07,
+   "y": 22.71,
+   "highlight": {
+    "x": 2.97,
+    "y": 21.25,
+    "w": 27.58,
+    "h": 4.39
+   }
+  },
+  "Splash9:13:6": {
+   "page": "outside",
+   "x": 4.07,
+   "y": 26.94,
+   "highlight": {
+    "x": 2.97,
+    "y": 25.49,
+    "w": 17.7,
+    "h": 2.82
+   }
+  },
+  "Splash9:14:1": {
+   "page": "outside",
+   "x": 4.21,
+   "y": 42.47,
+   "highlight": {
+    "x": 3.09,
+    "y": 41.02,
+    "w": 26.97,
+    "h": 2.82
+   }
+  },
+  "Splash9:14:2": {
+   "page": "outside",
+   "x": 4.21,
+   "y": 44.77,
+   "highlight": {
+    "x": 3.09,
+    "y": 43.29,
+    "w": 25.58,
+    "h": 4.31
+   }
+  },
+  "Splash9:15:1": {
+   "page": "outside",
+   "x": 4.29,
+   "y": 53.03,
+   "highlight": {
+    "x": 3.15,
+    "y": 51.61,
+    "w": 17.64,
+    "h": 2.82
+   }
+  },
+  "Splash9:15:2": {
+   "page": "outside",
+   "x": 4.29,
+   "y": 55.32,
+   "highlight": {
+    "x": 3.15,
+    "y": 53.88,
+    "w": 17.76,
+    "h": 2.82
+   }
+  },
+  "Splash9:15:3": {
+   "page": "outside",
+   "x": 4.32,
+   "y": 57.62,
+   "highlight": {
+    "x": 3.21,
+    "y": 56.16,
+    "w": 22.48,
+    "h": 2.82
+   }
+  },
+  "Splash9:15:4": {
+   "page": "outside",
+   "x": 4.34,
+   "y": 59.88,
+   "highlight": {
+    "x": 3.21,
+    "y": 58.43,
+    "w": 9.58,
+    "h": 2.82
+   }
+  },
+  "Splash9:15:5": {
+   "page": "outside",
+   "x": 4.36,
+   "y": 62.18,
+   "highlight": {
+    "x": 3.21,
+    "y": 60.71,
+    "w": 21.27,
+    "h": 2.82
+   }
+  },
+  "Splash9:15:6": {
+   "page": "outside",
+   "x": 4.36,
+   "y": 64.47,
+   "highlight": {
+    "x": 3.21,
+    "y": 62.98,
+    "w": 25.27,
+    "h": 2.82
+   }
+  },
+  "Splash9:15:7": {
+   "page": "outside",
+   "x": 4.39,
+   "y": 66.73,
+   "highlight": {
+    "x": 3.27,
+    "y": 65.25,
+    "w": 19.09,
+    "h": 4.24
+   }
+  },
+  "Splash9:15:8": {
+   "page": "outside",
+   "x": 4.41,
+   "y": 71.0,
+   "highlight": {
+    "x": 3.27,
+    "y": 69.57,
+    "w": 24.91,
+    "h": 2.82
+   }
+  },
+  "Splash9:15:9": {
+   "page": "outside",
+   "x": 4.46,
+   "y": 73.29,
+   "highlight": {
+    "x": 3.33,
+    "y": 71.84,
+    "w": 25.03,
+    "h": 2.82
+   }
+  },
+  "Splash9:15:10": {
+   "page": "outside",
+   "x": 4.46,
+   "y": 75.56,
+   "highlight": {
+    "x": 3.33,
+    "y": 74.12,
+    "w": 19.88,
+    "h": 4.24
+   }
+  },
+  "Splash9:15:11": {
+   "page": "outside",
+   "x": 4.5,
+   "y": 79.82,
+   "highlight": {
+    "x": 3.39,
+    "y": 78.35,
+    "w": 27.7,
+    "h": 2.82
+   }
+  },
+  "Splash9:15:12": {
+   "page": "outside",
+   "x": 4.5,
+   "y": 82.09,
+   "highlight": {
+    "x": 3.39,
+    "y": 80.63,
+    "w": 24.48,
+    "h": 4.24
+   }
+  },
+  "Splash9:1:1": {
+   "page": "inside",
+   "x": 4.02,
+   "y": 14.62,
+   "highlight": {
+    "x": 2.91,
+    "y": 13.18,
+    "w": 19.15,
+    "h": 2.82
+   }
+  },
+  "Splash9:1:2": {
+   "page": "inside",
+   "x": 4.04,
+   "y": 16.91,
+   "highlight": {
+    "x": 2.91,
+    "y": 15.45,
+    "w": 18.55,
+    "h": 4.63
+   }
+  },
+  "Splash9:2:1": {
+   "page": "inside",
+   "x": 4.11,
+   "y": 25.23,
+   "highlight": {
+    "x": 2.97,
+    "y": 23.76,
+    "w": 15.45,
+    "h": 2.82
+   }
+  },
+  "Splash9:2:2": {
+   "page": "inside",
+   "x": 4.11,
+   "y": 27.53,
+   "highlight": {
+    "x": 2.97,
+    "y": 26.12,
+    "w": 22.55,
+    "h": 2.82
+   }
+  },
+  "Splash9:2:3": {
+   "page": "inside",
+   "x": 4.11,
+   "y": 29.82,
+   "highlight": {
+    "x": 2.97,
+    "y": 28.39,
+    "w": 18.79,
+    "h": 2.82
+   }
+  },
+  "Splash9:2:4": {
+   "page": "inside",
+   "x": 4.14,
+   "y": 32.12,
+   "highlight": {
+    "x": 3.03,
+    "y": 30.67,
+    "w": 24.12,
+    "h": 2.82
+   }
+  },
+  "Splash9:2:5": {
+   "page": "inside",
+   "x": 4.16,
+   "y": 34.41,
+   "highlight": {
+    "x": 3.03,
+    "y": 32.94,
+    "w": 26.36,
+    "h": 6.2
+   }
+  },
+  "Splash9:3:1": {
+   "page": "inside",
+   "x": 4.21,
+   "y": 44.73,
+   "highlight": {
+    "x": 3.09,
+    "y": 43.29,
+    "w": 14.91,
+    "h": 2.82
+   }
+  },
+  "Splash9:3:2": {
+   "page": "inside",
+   "x": 4.21,
+   "y": 47.03,
+   "highlight": {
+    "x": 3.09,
+    "y": 45.57,
+    "w": 20.91,
+    "h": 2.82
+   }
+  },
+  "Splash9:3:3": {
+   "page": "inside",
+   "x": 4.25,
+   "y": 49.29,
+   "highlight": {
+    "x": 3.15,
+    "y": 47.84,
+    "w": 18.48,
+    "h": 2.82
+   }
+  },
+  "Splash9:3:4": {
+   "page": "inside",
+   "x": 4.25,
+   "y": 51.53,
+   "highlight": {
+    "x": 3.15,
+    "y": 50.12,
+    "w": 17.58,
+    "h": 2.82
+   }
+  },
+  "Splash9:4:1": {
+   "page": "inside",
+   "x": 4.29,
+   "y": 59.88,
+   "highlight": {
+    "x": 3.15,
+    "y": 58.43,
+    "w": 14.91,
+    "h": 2.82
+   }
+  },
+  "Splash9:4:2": {
+   "page": "inside",
+   "x": 4.32,
+   "y": 62.18,
+   "highlight": {
+    "x": 3.21,
+    "y": 60.71,
+    "w": 25.58,
+    "h": 4.31
+   }
+  },
+  "Splash9:4:3": {
+   "page": "inside",
+   "x": 4.34,
+   "y": 66.44,
+   "highlight": {
+    "x": 3.21,
+    "y": 65.02,
+    "w": 27.39,
+    "h": 2.82
+   }
+  },
+  "Splash9:4:4": {
+   "page": "inside",
+   "x": 4.34,
+   "y": 68.71,
+   "highlight": {
+    "x": 3.21,
+    "y": 67.29,
+    "w": 25.64,
+    "h": 4.39
+   }
+  },
+  "Splash9:4:5": {
+   "page": "inside",
+   "x": 4.39,
+   "y": 72.97,
+   "highlight": {
+    "x": 3.27,
+    "y": 71.53,
+    "w": 20.67,
+    "h": 4.63
+   }
+  },
+  "Splash9:5:1": {
+   "page": "inside",
+   "x": 4.43,
+   "y": 79.35,
+   "highlight": {
+    "x": 3.33,
+    "y": 77.88,
+    "w": 26.36,
+    "h": 4.24
+   }
+  },
+  "Splash9:5:2": {
+   "page": "inside",
+   "x": 4.43,
+   "y": 83.62,
+   "highlight": {
+    "x": 3.33,
+    "y": 82.2,
+    "w": 23.88,
+    "h": 2.82
+   }
+  },
+  "Splash9:5:3": {
+   "page": "inside",
+   "x": 4.46,
+   "y": 85.88,
+   "highlight": {
+    "x": 3.33,
+    "y": 84.39,
+    "w": 20.24,
+    "h": 2.82
+   }
+  },
+  "Splash9:6:1": {
+   "page": "inside",
+   "x": 36.75,
+   "y": 9.5,
+   "highlight": {
+    "x": 35.64,
+    "y": 8.08,
+    "w": 27.64,
+    "h": 2.82
+   }
+  },
+  "Splash9:6:2": {
+   "page": "inside",
+   "x": 36.75,
+   "y": 11.79,
+   "highlight": {
+    "x": 35.64,
+    "y": 10.35,
+    "w": 19.52,
+    "h": 2.82
+   }
+  },
+  "Splash9:6:3": {
+   "page": "inside",
+   "x": 36.75,
+   "y": 14.06,
+   "highlight": {
+    "x": 35.64,
+    "y": 12.63,
+    "w": 23.88,
+    "h": 4.47
+   }
+  },
+  "Splash9:7:1": {
+   "page": "inside",
+   "x": 36.77,
+   "y": 22.41,
+   "highlight": {
+    "x": 35.64,
+    "y": 20.94,
+    "w": 21.39,
+    "h": 2.82
+   }
+  },
+  "Splash9:7:2": {
+   "page": "inside",
+   "x": 36.77,
+   "y": 24.68,
+   "highlight": {
+    "x": 35.64,
+    "y": 23.22,
+    "w": 11.76,
+    "h": 2.82
+   }
+  },
+  "Splash9:7:3": {
+   "page": "inside",
+   "x": 36.77,
+   "y": 26.97,
+   "highlight": {
+    "x": 35.64,
+    "y": 25.49,
+    "w": 19.03,
+    "h": 2.82
+   }
+  },
+  "Splash9:7:4": {
+   "page": "inside",
+   "x": 36.77,
+   "y": 29.27,
+   "highlight": {
+    "x": 35.64,
+    "y": 27.84,
+    "w": 15.21,
+    "h": 2.82
+   }
+  },
+  "Splash9:7:5": {
+   "page": "inside",
+   "x": 36.77,
+   "y": 31.56,
+   "highlight": {
+    "x": 35.64,
+    "y": 30.12,
+    "w": 19.7,
+    "h": 2.82
+   }
+  },
+  "Splash9:7:6": {
+   "page": "inside",
+   "x": 36.77,
+   "y": 33.82,
+   "highlight": {
+    "x": 35.64,
+    "y": 32.39,
+    "w": 23.03,
+    "h": 2.82
+   }
+  },
+  "Splash9:8:1": {
+   "page": "inside",
+   "x": 36.77,
+   "y": 42.21,
+   "highlight": {
+    "x": 35.64,
+    "y": 40.78,
+    "w": 23.76,
+    "h": 2.82
+   }
+  },
+  "Splash9:8:2": {
+   "page": "inside",
+   "x": 36.77,
+   "y": 44.5,
+   "highlight": {
+    "x": 35.64,
+    "y": 43.06,
+    "w": 27.09,
+    "h": 6.2
+   }
+  },
+  "Splash9:8:3": {
+   "page": "inside",
+   "x": 36.8,
+   "y": 50.68,
+   "highlight": {
+    "x": 35.7,
+    "y": 49.25,
+    "w": 24.18,
+    "h": 4.39
+   }
+  },
+  "Splash9:9-front-crawl:2": {
+   "page": "inside",
+   "x": 36.82,
+   "y": 58.97,
+   "highlight": {
+    "x": 35.7,
+    "y": 57.49,
+    "w": 26.73,
+    "h": 4.39
+   }
+  },
+  "Splash9:9-front-crawl:3": {
+   "page": "inside",
+   "x": 36.82,
+   "y": 63.23,
+   "highlight": {
+    "x": 35.7,
+    "y": 61.8,
+    "w": 25.82,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-front-crawl:4": {
+   "page": "inside",
+   "x": 36.82,
+   "y": 65.5,
+   "highlight": {
+    "x": 35.7,
+    "y": 64.08,
+    "w": 16.79,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-front-crawl:5": {
+   "page": "inside",
+   "x": 36.84,
+   "y": 67.82,
+   "highlight": {
+    "x": 35.7,
+    "y": 66.35,
+    "w": 10.67,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-front-crawl:6": {
+   "page": "inside",
+   "x": 36.84,
+   "y": 70.12,
+   "highlight": {
+    "x": 35.7,
+    "y": 68.71,
+    "w": 23.76,
+    "h": 4.16
+   }
+  },
+  "Splash9:9-front-crawl:7": {
+   "page": "inside",
+   "x": 36.84,
+   "y": 74.38,
+   "highlight": {
+    "x": 35.7,
+    "y": 72.94,
+    "w": 15.21,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-front-crawl:1": {
+   "page": "inside",
+   "x": 36.84,
+   "y": 76.65,
+   "highlight": {
+    "x": 35.7,
+    "y": 75.22,
+    "w": 19.52,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-back-crawl:2": {
+   "page": "inside",
+   "x": 36.84,
+   "y": 83.03,
+   "highlight": {
+    "x": 35.7,
+    "y": 81.57,
+    "w": 26.73,
+    "h": 4.31
+   }
+  },
+  "Splash9:9-back-crawl:3": {
+   "page": "inside",
+   "x": 36.86,
+   "y": 87.27,
+   "highlight": {
+    "x": 35.76,
+    "y": 85.8,
+    "w": 25.76,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-back-crawl:4": {
+   "page": "inside",
+   "x": 36.86,
+   "y": 89.53,
+   "highlight": {
+    "x": 35.76,
+    "y": 88.08,
+    "w": 16.73,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-back-crawl:5": {
+   "page": "inside",
+   "x": 36.86,
+   "y": 91.79,
+   "highlight": {
+    "x": 35.76,
+    "y": 90.35,
+    "w": 10.61,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-back-crawl:6": {
+   "page": "inside",
+   "x": 36.86,
+   "y": 94.09,
+   "highlight": {
+    "x": 35.76,
+    "y": 92.63,
+    "w": 15.15,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-back-crawl:1": {
+   "page": "inside",
+   "x": 36.89,
+   "y": 96.38,
+   "highlight": {
+    "x": 35.76,
+    "y": 94.9,
+    "w": 19.45,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-breaststroke:2": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 9.21,
+   "highlight": {
+    "x": 68.18,
+    "y": 7.76,
+    "w": 22.48,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-breaststroke:3": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 11.5,
+   "highlight": {
+    "x": 68.18,
+    "y": 10.04,
+    "w": 23.09,
+    "h": 4.24
+   }
+  },
+  "Splash9:9-breaststroke:4": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 15.73,
+   "highlight": {
+    "x": 68.18,
+    "y": 14.27,
+    "w": 25.82,
+    "h": 4.24
+   }
+  },
+  "Splash9:9-breaststroke:5": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 20.0,
+   "highlight": {
+    "x": 68.18,
+    "y": 18.59,
+    "w": 27.33,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-breaststroke:6": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 22.29,
+   "highlight": {
+    "x": 68.18,
+    "y": 20.86,
+    "w": 15.03,
+    "h": 2.82
+   }
+  },
+  "Splash9:9-breaststroke:1": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 24.56,
+   "highlight": {
+    "x": 68.18,
+    "y": 23.14,
+    "w": 19.33,
+    "h": 2.82
+   }
+  },
+  "Splash9:10:8": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 32.91,
+   "highlight": {
+    "x": 68.18,
+    "y": 31.45,
+    "w": 27.21,
+    "h": 4.47
+   }
+  },
+  "Splash9:10:9": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 37.18,
+   "highlight": {
+    "x": 68.18,
+    "y": 35.76,
+    "w": 23.76,
+    "h": 4.24
+   }
+  },
+  "Splash9:10:10": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 41.44,
+   "highlight": {
+    "x": 68.18,
+    "y": 40.0,
+    "w": 24.67,
+    "h": 4.39
+   }
+  },
+  "Splash9:11:1": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 51.68,
+   "highlight": {
+    "x": 68.18,
+    "y": 50.2,
+    "w": 18.3,
+    "h": 2.82
+   }
+  },
+  "Splash9:11:2": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 53.97,
+   "highlight": {
+    "x": 68.18,
+    "y": 52.55,
+    "w": 26.3,
+    "h": 4.39
+   }
+  },
+  "Splash9:11:3": {
+   "page": "inside",
+   "x": 69.32,
+   "y": 58.21,
+   "highlight": {
+    "x": 68.18,
+    "y": 56.78,
+    "w": 26.97,
+    "h": 4.31
+   }
+  },
+  "Splash9:12:1": {
+   "page": "inside",
+   "x": 69.34,
+   "y": 73.09,
+   "highlight": {
+    "x": 68.24,
+    "y": 71.61,
+    "w": 24.36,
+    "h": 2.82
+   }
+  },
+  "Splash9:12:2": {
+   "page": "inside",
+   "x": 69.34,
+   "y": 75.38,
+   "highlight": {
+    "x": 68.24,
+    "y": 73.96,
+    "w": 16.12,
+    "h": 2.82
+   }
+  },
+  "Splash9:12:3": {
+   "page": "inside",
+   "x": 69.34,
+   "y": 77.68,
+   "highlight": {
+    "x": 68.24,
+    "y": 76.24,
+    "w": 27.09,
+    "h": 4.39
+   }
+  },
+  "Splash9:12:4": {
+   "page": "inside",
+   "x": 69.34,
+   "y": 81.91,
+   "highlight": {
+    "x": 68.24,
+    "y": 80.47,
+    "w": 25.21,
+    "h": 4.39
+   }
+  },
+  "Splash9:12:5": {
+   "page": "inside",
+   "x": 69.34,
+   "y": 86.15,
+   "highlight": {
+    "x": 68.24,
+    "y": 84.71,
+    "w": 22.3,
+    "h": 2.82
+   }
+  },
+  "Splash9:12:6": {
+   "page": "inside",
+   "x": 69.36,
+   "y": 88.44,
+   "highlight": {
+    "x": 68.24,
+    "y": 86.98,
+    "w": 17.27,
+    "h": 2.82
+   }
+  }
+ },
+ "unmapped": [
+  {
+   "criterionId": "Splash9:10:1",
+   "reason": "no box on the card"
+  },
+  {
+   "criterionId": "Splash9:10:2",
+   "reason": "no box on the card"
+  },
+  {
+   "criterionId": "Splash9:10:3",
+   "reason": "no box on the card"
+  },
+  {
+   "criterionId": "Splash9:10:4",
+   "reason": "no box on the card"
+  },
+  {
+   "criterionId": "Splash9:10:5",
+   "reason": "no box on the card"
+  },
+  {
+   "criterionId": "Splash9:10:6",
+   "reason": "no box on the card"
+  },
+  {
+   "criterionId": "Splash9:10:7",
+   "reason": "no box on the card"
+  }
+ ],
+ "extraBoxes": [],
+ "skills": {
+  "Splash9:1": {
+   "page": "inside",
+   "x": 3.03,
+   "y": 10.75,
+   "w": 17.39,
+   "h": 2.12
+  },
+  "Splash9:10": {
+   "page": "inside",
+   "x": 68.36,
+   "y": 27.22,
+   "w": 22.61,
+   "h": 4.16
+  },
+  "Splash9:11": {
+   "page": "inside",
+   "x": 68.3,
+   "y": 45.88,
+   "w": 26.67,
+   "h": 4.24
+  },
+  "Splash9:12": {
+   "page": "inside",
+   "x": 68.36,
+   "y": 69.33,
+   "w": 18.24,
+   "h": 2.2
+  },
+  "Splash9:13": {
+   "page": "outside",
+   "x": 2.91,
+   "y": 5.65,
+   "w": 26.97,
+   "h": 4.39
+  },
+  "Splash9:14": {
+   "page": "outside",
+   "x": 3.21,
+   "y": 38.51,
+   "w": 24.12,
+   "h": 2.2
+  },
+  "Splash9:15": {
+   "page": "outside",
+   "x": 3.33,
+   "y": 49.18,
+   "w": 20.97,
+   "h": 2.12
+  },
+  "Splash9:2": {
+   "page": "inside",
+   "x": 3.09,
+   "y": 19.37,
+   "w": 18.3,
+   "h": 4.24
+  },
+  "Splash9:3": {
+   "page": "inside",
+   "x": 3.21,
+   "y": 40.78,
+   "w": 23.94,
+   "h": 2.2
+  },
+  "Splash9:4": {
+   "page": "inside",
+   "x": 3.27,
+   "y": 53.96,
+   "w": 25.09,
+   "h": 4.31
+  },
+  "Splash9:5": {
+   "page": "inside",
+   "x": 3.39,
+   "y": 75.45,
+   "w": 19.33,
+   "h": 2.35
+  },
+  "Splash9:6": {
+   "page": "inside",
+   "x": 35.82,
+   "y": 5.73,
+   "w": 17.27,
+   "h": 1.96
+  },
+  "Splash9:7": {
+   "page": "inside",
+   "x": 35.76,
+   "y": 18.59,
+   "w": 15.27,
+   "h": 2.2
+  },
+  "Splash9:8": {
+   "page": "inside",
+   "x": 35.76,
+   "y": 36.39,
+   "w": 21.52,
+   "h": 4.0
+  },
+  "Splash9:9-back-crawl": {
+   "page": "inside",
+   "x": 35.88,
+   "y": 79.29,
+   "w": 14.06,
+   "h": 1.96
+  },
+  "Splash9:9-breaststroke": {
+   "page": "inside",
+   "x": 68.36,
+   "y": 5.57,
+   "w": 14.97,
+   "h": 1.88
+  },
+  "Splash9:9-front-crawl": {
+   "page": "inside",
+   "x": 35.88,
+   "y": 55.29,
+   "w": 14.36,
+   "h": 1.96
+  }
+ }
 }
