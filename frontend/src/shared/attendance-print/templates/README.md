@@ -36,9 +36,14 @@ continuation, private-curriculum, and empty-plan visual fixtures.
 
 ## Completed session sheets
 
-The optional `roster.completed` input fills these same historical templates with
-saved dated attendance and zero to three earned checks. Administrative columns
-stay blank. Each student must have a resolved local name, stable enrollment ID,
+The optional `roster.completed` input prints the class's ordinary blank sheet
+(the same rows, "Absent/Present" prompt and [Day 1]–[Day 14] slots) and lays
+pen-style marks over it so it reads like a sheet filled in by hand: zero to
+three blue ✓ strokes in each mapped skill cell, and a handwritten P or A over
+the [Day n] slot of each lesson date (lesson dates in order; a continuation
+sheet numbers its slots on from Day 15). Marks are seeded SVG strokes from
+`../handMarks.ts`, sized by `HAND_MARK_CSS` in `../completedAttendance.ts`.
+Administrative columns stay blank. Each student must have a resolved local name, stable enrollment ID,
 and accepted results; unresolved conflicts or a mismatched curriculum block
 completed printing. Private classes use their swimmers' assessed level sheets,
 since the private reference sheet has no individual skill columns.
@@ -49,8 +54,7 @@ actual header text against the tablet catalog before writing the mapping.
 `npm run generate:lesson-skills` regenerates this mapping too. The tablet sibling
 checkout must be available; commit and review the generated outputs together.
 
-A completed sheet keeps the whole class on one page: completed rows omit the
-handwritten Absent/Present prompt, and `fitCompletedAttendancePages` zooms each
+A completed sheet keeps the whole class on one page: `fitCompletedAttendancePages` zooms each
 page to the paper (the same shrink Chrome applies to these wide templates, plus
 more only for a page still too tall). Classes over 18 students
 (`COMPLETED_STUDENTS_PER_SHEET`) or sessions over fourteen lesson dates continue
