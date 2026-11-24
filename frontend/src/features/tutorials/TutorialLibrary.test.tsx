@@ -32,6 +32,8 @@ describe("tutorial catalogue", () => {
             /\/storage\/v1\/object\/public\/tutorial-videos\/a\.mp4$/,
         );
         expect(tutorialVideoUrl("a.mp4")).not.toContain("//storage");
+        // Absolute even when VITE_SUPABASE_URL is unset (it is locally), so the player never asks the website itself.
+        expect(tutorialVideoUrl("a.mp4")).toMatch(/^https:\/\/[^/]+\.supabase\.co\//);
     });
 });
 

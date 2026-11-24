@@ -215,13 +215,16 @@ export const TUTORIAL_TABS: TutorialTab[] = [
 
 export const TUTORIAL_BUCKET = "tutorial-videos";
 
+/**
+ * Public, read-only bucket on the production Supabase project. The website does not otherwise need VITE_SUPABASE_URL
+ * (it is unset locally), so the bucket's public address is the default; VITE_TUTORIAL_VIDEOS_URL overrides it.
+ */
+export const DEFAULT_TUTORIAL_VIDEOS_URL = `https://eralmonpesbqjgxagabb.supabase.co/storage/v1/object/public/${TUTORIAL_BUCKET}`;
+
 /** The one place that turns a catalogue file name into a streaming URL. */
 export function tutorialVideoUrl(file: string): string {
-    const base = String(import.meta.env.VITE_SUPABASE_URL ?? "").replace(
-        /\/+$/,
-        "",
-    );
-    return `${base}/storage/v1/object/public/${TUTORIAL_BUCKET}/${file}`;
+    const base = String(import.meta.env.VITE_TUTORIAL_VIDEOS_URL || DEFAULT_TUTORIAL_VIDEOS_URL).replace(/\/+$/, "");
+    return `${base}/${encodeURIComponent(file)}`;
 }
 
 /** Formats seconds as m:ss, rounding to the nearest second. */
