@@ -44,7 +44,8 @@ All `x`/`y` are percentages of the landscape page (0–100, origin top left). Ti
   second per-stroke distance box ticks with the shared distance criterion.
 
 Highlights: each criterion (and each linked extra box) may carry `"highlight": {x,y,w,h}` covering its box and text, and
-`skills` maps a curriculum skill id to its heading area `{page,x,y,w,h}`. When "Highlight skills not yet achieved" is on,
+`skills` maps a curriculum skill id to its heading area `{page,x,y,w,h}`, or a list of areas when the card prints
+the skill under two headings (e.g. "Roll laterally front to back" and "back to front"). When "Highlight skills not yet achieved" is on,
 unticked criteria and the headings of skills with any unticked criterion print under a translucent yellow highlight.
 `scripts/report-cards/rc_highlights.py` measures these from the page images (it overwrites hand fixes, so re-check after).
 

@@ -9,7 +9,7 @@ export type ReportCardMap={
  fields:Partial<Record<'participant'|'instructor'|'date'|'session',CardPoint>>;
  nextLevel:(CardPoint&{level:string})[];criteria:Record<string,CardPoint>;
  /** Skill headings on the card, highlighted while the skill is not achieved. */
- skills?:Record<string,CardRect&{page:CardPage}>;
+ skills?:Record<string,(CardRect&{page:CardPage})|(CardRect&{page:CardPage})[]>;
  unmapped?:{criterionId:string;reason:string}[];
  /** Boxes with no criterion of their own. One with `ticksWith` ticks when all (or, with match "any", one) of those criteria are ticked. */
  extraBoxes?:(CardPoint&{label:string;ticksWith?:string[];match?:'all'|'any'})[];
@@ -72,7 +72,7 @@ export function buildReportCardHtml(cards:ReportCardPrint[],{paper,imageBase,tit
    const add=(r:CardRect|undefined,kind:string,id:string)=>{if(!r)return;const key=`${r.x}:${r.y}:${r.w}:${r.h}`;if(!areas.has(key))areas.set(key,`<span class="rc-hl" data-${kind}="${esc(id)}" style="left:${r.x}%;top:${r.y}%;width:${r.w}%;height:${r.h}%"></span>`);};
    for(const [id,p] of Object.entries(map.criteria))if(p.page===side&&!marks.ticked.has(id))add(p.highlight,'hl-criterion',id);
    for(const b of map.extraBoxes??[])if(b.page===side&&b.ticksWith?.length&&!linkedTicked(b,marks.ticked))add(b.highlight,'hl-linked',b.ticksWith.join(' '));
-   for(const [id,r] of Object.entries(map.skills??{}))if(r.page===side&&!skillAchieved(map,id,marks))add(r,'hl-skill',id);
+   for(const [id,value] of Object.entries(map.skills??{}))for(const r of Array.isArray(value)?value:[value])if(r.page===side&&!skillAchieved(map,id,marks))add(r,'hl-skill',id);
   }
   const ticks=[...Object.entries(map.criteria).filter(([id,p])=>p.page===side&&marks.ticked.has(id)).map(([id,p])=>`<span class="rc-tick" data-criterion="${esc(id)}" style="${at(p)}">✓</span>`),
    ...linked.map(b=>`<span class="rc-tick" data-linked="${esc(b.ticksWith!.join(' '))}" style="${at(b)}">✓</span>`),

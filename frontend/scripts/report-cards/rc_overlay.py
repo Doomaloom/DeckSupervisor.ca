@@ -33,7 +33,7 @@ for side, img in pages.items():
     layer = Image.new('RGBA', img.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(layer); W, H = img.size
     rects = [(p['highlight'], (255, 220, 0, 90)) for p in m.get('criteria', {}).values() if p['page'] == side and 'highlight' in p]
     rects += [(b['highlight'], (255, 220, 0, 90)) for b in m.get('extraBoxes', []) if b['page'] == side and 'highlight' in b]
-    rects += [(h, (255, 120, 0, 90)) for h in m.get('skills', {}).values() if h['page'] == side]
+    rects += [(h, (255, 120, 0, 90)) for v in m.get('skills', {}).values() for h in (v if isinstance(v, list) else [v]) if h['page'] == side]
     for r, col in rects:
         ld.rectangle([r['x'] * W / 100, r['y'] * H / 100, (r['x'] + r['w']) * W / 100, (r['y'] + r['h']) * H / 100], fill=col, outline=col[:3] + (200,))
     pages[side] = Image.alpha_composite(img.convert('RGBA'), layer).convert('RGB')

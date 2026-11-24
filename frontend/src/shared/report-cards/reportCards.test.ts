@@ -52,12 +52,12 @@ describe('linked extra boxes',()=>{
 describe('highlights',()=>{
  it('highlights unticked criteria, unticked linked boxes and unfinished skill headings, and nothing when switched off',()=>{
   const hlMap:ReportCardMap={...map,criteria:{'Splash1:1:1':{page:'inside',x:4,y:13,highlight:{x:3,y:12,w:20,h:2}},'Splash1:1:2':{page:'inside',x:4,y:17,highlight:{x:3,y:16,w:20,h:4}},'Splash1:2:1':{page:'inside',x:4,y:20,highlight:{x:3,y:19,w:20,h:2}}},
-   skills:{'Splash1:1':{page:'inside',x:3,y:9,w:22,h:2},'Splash1:2':{page:'inside',x:3,y:18,w:22,h:1}},
+   skills:{'Splash1:1':[{page:'inside',x:3,y:9,w:22,h:2},{page:'inside',x:40,y:9,w:22,h:2}],'Splash1:2':{page:'inside',x:3,y:18,w:22,h:1}},
    extraBoxes:[{page:'inside',x:50,y:50,label:'twin',ticksWith:['Splash1:1:2'],highlight:{x:49,y:49,w:20,h:2}}]};
   const doc=(ticked:string[],highlight=true)=>new DOMParser().parseFromString(buildReportCardHtml([{map:hlMap,participant:'A',instructor:'B',date:'',session:'',marks:{ticked:new Set(ticked),completeSkills:new Set(),levelComplete:false}}],{paper:'blank',imageBase:'',title:'',highlight}),'text/html');
   const d=doc(['Splash1:1:1','Splash1:2:1']);
   expect([...d.querySelectorAll('[data-hl-criterion]')].map(e=>e.getAttribute('data-hl-criterion'))).toEqual(['Splash1:1:2']);
-  expect([...d.querySelectorAll('[data-hl-skill]')].map(e=>e.getAttribute('data-hl-skill'))).toEqual(['Splash1:1']);
+  expect([...d.querySelectorAll('[data-hl-skill]')].map(e=>e.getAttribute('data-hl-skill'))).toEqual(['Splash1:1','Splash1:1']);
   expect(d.querySelectorAll('[data-hl-linked]')).toHaveLength(1);
   expect((d.querySelector('[data-hl-criterion]') as HTMLElement).style.height).toBe('4%');
   expect(doc(['Splash1:1:1','Splash1:1:2','Splash1:2:1']).querySelectorAll('.rc-hl')).toHaveLength(0);
