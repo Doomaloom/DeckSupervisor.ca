@@ -38,5 +38,9 @@ All `x`/`y` are percentages of the landscape page (0–100, origin top left). Ti
   (`level` may be a name outside the curriculum, such as `"Swim Patrol"`, written as on the card).
 - `criteria`: every curriculum criterion of the level that has a box on the card.
 - `unmapped` / `extraBoxes`: criteria with no box, and boxes with no criterion. Both are reviewed, never guessed.
+- An `extraBoxes` entry may add `"ticksWith": ["<criterionId>", …]` (and `"match": "any"`; default `"all"`) so a box the
+  curriculum folds into other criteria still ticks: the Water Smart participation box ticks with any of the `…:1`
+  participation criteria (`match: "any"`), the "roll back to front" boxes tick with the matching roll criteria, and a
+  second per-stroke distance box ticks with the shared distance criterion.
 
 Check a map by eye with `scripts/report-cards/rc_overlay.py maps/<LevelId>.json /tmp/out`.

@@ -7,7 +7,9 @@ export type ReportCardMap={
  level:string;images:Record<CardPage,string>;source?:{pdf:string;outsidePage:number;insidePage:number};
  fields:Partial<Record<'participant'|'instructor'|'date'|'session',CardPoint>>;
  nextLevel:(CardPoint&{level:string})[];criteria:Record<string,CardPoint>;
- unmapped?:{criterionId:string;reason:string}[];extraBoxes?:(CardPoint&{label:string})[];
+ unmapped?:{criterionId:string;reason:string}[];
+ /** Boxes with no criterion of their own. One with `ticksWith` ticks when all (or, with match "any", one) of those criteria are ticked. */
+ extraBoxes?:(CardPoint&{label:string;ticksWith?:string[];match?:'all'|'any'})[];
 };
 const maps=import.meta.glob<ReportCardMap>('./maps/*.json',{eager:true,import:'default'});
 const byLevel=new Map(Object.values(maps).map(m=>[m.level.toLowerCase(),m]));
@@ -54,7 +56,9 @@ const at=(p:CardPoint)=>`left:${p.x}%;top:${p.y}%`;
 export function buildReportCardHtml(cards:ReportCardPrint[],{paper,imageBase,title}:{paper:ReportCardPaper;imageBase:string;title:string}){
  const page=(card:ReportCardPrint,side:CardPage)=>{
   const {map,marks}=card,next=recommendedNextLevel(map,marks.levelComplete);
+  const linked=(map.extraBoxes??[]).filter(b=>b.page===side&&b.ticksWith?.length&&(b.match==='any'?b.ticksWith.some(id=>marks.ticked.has(id)):b.ticksWith.every(id=>marks.ticked.has(id))));
   const ticks=[...Object.entries(map.criteria).filter(([id,p])=>p.page===side&&marks.ticked.has(id)).map(([id,p])=>`<span class="rc-tick" data-criterion="${esc(id)}" style="${at(p)}">✓</span>`),
+   ...linked.map(b=>`<span class="rc-tick" data-linked="${esc(b.ticksWith!.join(' '))}" style="${at(b)}">✓</span>`),
    ...(next&&next.page===side?[`<span class="rc-tick rc-next" data-next-level="${esc(next.level)}" style="${at(next)}">✓</span>`]:[])];
   const fields=(['participant','instructor','date','session'] as const).flatMap(name=>{const p=map.fields[name];return p&&p.page===side?[`<span class="rc-field" data-field="${name}" style="${at(p)}">${esc(card[name])}</span>`]:[]});
   return `<section class="rc-page" data-level="${esc(map.level)}" data-side="${side}">${paper==='blank'?`<img class="rc-scan" alt="" src="${esc(imageBase+map.images[side])}">`:''}${fields.join('')}${ticks.join('')}</section>`;

@@ -39,6 +39,16 @@ describe('recommendedNextLevel',()=>{
  });
 });
 
+describe('linked extra boxes',()=>{
+ it('ticks a box with no criterion of its own when all, or any, of its linked criteria are ticked',()=>{
+  const linkedMap:ReportCardMap={...map,extraBoxes:[{page:'inside',x:50,y:50,label:'roll back to front',ticksWith:['Splash1:1:1','Splash1:1:2']},{page:'outside',x:4,y:38,label:'Water Smart participation',ticksWith:['Splash1:1:1','Splash1:2:1'],match:'any'},{page:'inside',x:9,y:9,label:'unlinked'}]};
+  const html=(ticked:string[])=>new DOMParser().parseFromString(buildReportCardHtml([{map:linkedMap,participant:'A',instructor:'B',date:'',session:'',marks:{ticked:new Set(ticked),completeSkills:new Set(),levelComplete:false}}],{paper:'preprinted',imageBase:'',title:''}),'text/html');
+  expect([...html(['Splash1:1:1']).querySelectorAll('[data-linked]')].map(e=>e.getAttribute('data-linked'))).toEqual(['Splash1:1:1 Splash1:2:1']);
+  expect(html(['Splash1:1:1','Splash1:1:2']).querySelectorAll('[data-linked]')).toHaveLength(2);
+  expect(html([]).querySelectorAll('[data-linked]')).toHaveLength(0);
+ });
+});
+
 describe('buildReportCardHtml',()=>{
  const card={map,participant:'Ana <O’Neil>',instructor:'Cleo',date:'2025-06-17',session:'Spring 2025',marks:{ticked:new Set(['Splash1:1:2']),completeSkills:new Set<string>(),levelComplete:false}};
  it('prints outside then inside as landscape pages with the scan, fields, ticked boxes and the next level',()=>{
