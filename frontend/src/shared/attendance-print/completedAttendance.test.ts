@@ -5,6 +5,7 @@ import planningLevels from '../../features/instructor/LessonPlans/lessonSkills.j
 import { buildAttendancePrintDocument, COMPLETED_STUDENTS_PER_SHEET } from './buildAttendancePrintDocument';
 import { ATTENDANCE_STROKE, COMPLETED_PRINT_CURRICULUM_VERSION, earnedChecks } from './completedAttendance';
 import manifest from './completedPrintMap.json';
+import curriculum from '../../features/results/curriculum.json';
 import { LEGACY_ATTENDANCE_TEMPLATE_KEYS, loadAttendanceTemplate } from './templateRegistry';
 import { extractAttendanceTemplateSections } from './templateDom';
 import type { AttendancePrintRoster } from './types';
@@ -31,6 +32,17 @@ describe('completed historical attendance sheets', () => {
         expect(row.children[1].textContent?.trim()).toBe('');
         expect(document.querySelector('#start_time')?.textContent).toBe('2026-09-07 09:00');
         expect(document.querySelector('[data-page-kind="attendance-back"]')?.textContent).toContain('Foot-first entry');
+    });
+    it('writes C and the next level for a swimmer who completed every skill three times, I and the same level otherwise', async () => {
+        const r = roster();
+        const splash1 = Object.keys(curriculum.skills as Record<string, string>).filter(id => id.startsWith('Splash1:'));
+        r.students.push({name:'Done Swimmer', enrollmentId:'enrollment-2', results:{attendance:{}, successfulAttempts:Object.fromEntries(splash1.map(id => [id, 3]))}});
+        const document = await buildAttendancePrintDocument({template:'Splash1', roster:r});
+        const outcome = (row: Element) => [...row.querySelectorAll('svg[data-mark="text"]')].map(svg => svg.getAttribute('data-text'));
+        const rows = [...document.querySelectorAll('[data-generated-attendance-row]')];
+        expect(outcome(rows[0])).toEqual(['I', 'S1']);
+        expect(outcome(rows[1])).toEqual(['C', 'S2A']);
+        expect((rows[1].querySelector('[data-result]') as HTMLElement).dataset.result).toBe('C');
     });
     it('blocks unresolved names, conflicts, unknown curriculum, or wrong lesson attendance', async () => {
         for (const change of [

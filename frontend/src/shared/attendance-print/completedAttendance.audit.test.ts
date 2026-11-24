@@ -8,6 +8,7 @@ import resultsCurriculum from '../../features/results/curriculum.json';
 import planningLevels from '../../features/instructor/LessonPlans/lessonSkills.json';
 import { buildAttendancePrintDocument, COMPLETED_STUDENTS_PER_SHEET as LIMIT } from './buildAttendancePrintDocument';
 import { earnedChecks, type CompletedPrintColumn } from './completedAttendance';
+import { levelCode } from './levelProgression';
 import manifest from './completedPrintMap.json';
 import { LEGACY_ATTENDANCE_TEMPLATE_KEYS } from './templateRegistry';
 import type { AttendancePrintRoster } from './types';
@@ -64,6 +65,13 @@ describe('completed sheets across every production template', () => {
             expect([...row.querySelectorAll<HTMLElement>('[data-date]')].map(slot => `${slot.textContent}${slot.querySelector('svg')?.dataset.mark ?? ''}`)).toEqual(['[Day 1]P', '[Day 2]A', '[Day 3]']);
             [...row.children].slice(1).forEach((cell, offset) => {
                 const cellIndex = offset + 1, columnIndex = mapped.get(cellIndex), element = cell as HTMLElement;
+                const heading = (completed.querySelector('#student-rows')!.children[cellIndex].textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+                if (heading.startsWith('result') || heading.startsWith('register in')) {
+                    // Result and Register in are written by hand: I and the same level, since no swimmer here completed every skill.
+                    const text = heading.startsWith('result') ? 'I' : levelCode(template);
+                    expect(element.querySelector('svg[data-mark="text"]')?.getAttribute('data-text'), `${template} ${heading}`).toBe(text);
+                    return;
+                }
                 if (columnIndex === undefined) {
                     // Administrative and unnumbered columns stay exactly as the blank sheet prints them.
                     expect(element.dataset.earnedChecks, `${template} cell ${cellIndex}`).toBeUndefined();

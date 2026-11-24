@@ -1,6 +1,7 @@
 import manifest from './completedPrintMap.json';
 import type { AttendancePrintRoster } from './types';
-import { handMarkSvg } from './handMarks';
+import { handMarkSvg, handTextSvg } from './handMarks';
+import { levelResult } from './levelProgression';
 
 export const COMPLETED_PRINT_CURRICULUM_VERSION = manifest.curriculumVersion;
 export type CompletedPrintColumn = {cellIndex: number; heading: string; skillIds: string[]; aggregation: 'all' | 'any'};
@@ -41,6 +42,9 @@ export function fillCompletedMarks(root: HTMLElement, roster: AttendancePrintRos
     for (const column of columns) {
         if (clean(header.children[column.cellIndex]?.textContent || '') !== column.heading) throw new Error('The attendance template changed. Regenerate and review its curriculum mapping.');
     }
+    // The sheet's own "Result: Complete (c) Incomplete (I)" and "Register in" columns, found by their printed heading.
+    const headings = [...header.children].map(cell => clean(cell.textContent || '').toLowerCase());
+    const resultIndex = headings.findIndex(text => text.startsWith('result')), registerIndex = headings.findIndex(text => text.startsWith('register in'));
     const rows = root.querySelectorAll<HTMLTableRowElement>('[data-generated-attendance-row]');
     rows.forEach((row, index) => {
         const student = roster.students[index];
@@ -58,6 +62,17 @@ export function fillCompletedMarks(root: HTMLElement, roster: AttendancePrintRos
             marks.dataset.count = String(count);
             for (let mark = 0; mark < count; mark += 1) marks.append(handMarkSvg(root.ownerDocument, 'check', `${id}:${column.cellIndex}:${mark}`));
             cell.append(marks);
+        }
+        const outcome = levelResult(template, student.results!.successfulAttempts);
+        for (const [index, text, name] of [[resultIndex, outcome.result, 'result'], [registerIndex, outcome.registerIn, 'registerIn']] as const) {
+            const cell = row.children[index] as HTMLElement | undefined;
+            if (index < 0 || !cell) continue;
+            cell.dataset[name] = text;
+            cell.style.position = 'relative';
+            const holder = root.ownerDocument.createElement('span');
+            holder.className = 'hand-outcome';
+            holder.append(handTextSvg(root.ownerDocument, text, `${id}:${name}`, { strokeWidth: ATTENDANCE_STROKE }));
+            cell.append(holder);
         }
         row.querySelectorAll<HTMLElement>('[data-date]').forEach(slot => {
             const status = student.results!.attendance[slot.dataset.date!];
@@ -81,5 +96,7 @@ export const HAND_MARK_CSS = `
 .hand-checks .hand-mark:nth-child(2){transform:translateX(8%)}
 .hand-checks .hand-mark:nth-child(3){transform:translateX(-5%)}
 .hand-attendance{position:absolute;left:50%;top:-0.62em;width:1.9em;height:1.9em;margin-left:-0.95em;overflow:visible;pointer-events:none}
+.hand-outcome{position:absolute;inset:22% 8%;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.hand-outcome .hand-mark{width:100%;height:100%;max-height:2.4em}
 .hand-mark{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 `;
