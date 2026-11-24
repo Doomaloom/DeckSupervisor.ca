@@ -1,0 +1,237 @@
+{
+  "level": "ParentandTot3",
+  "images": {
+    "outside": "parent-and-tot-outside.jpg",
+    "inside": "parent-and-tot-inside.jpg"
+  },
+  "source": {
+    "pdf": "parent-and-tot-report-card-combined.pdf",
+    "outsidePage": 1,
+    "insidePage": 2
+  },
+  "fields": {
+    "participant": {
+      "page": "outside",
+      "x": 61.6,
+      "y": 80.0
+    },
+    "instructor": {
+      "page": "outside",
+      "x": 60.5,
+      "y": 84.5
+    },
+    "date": {
+      "page": "outside",
+      "x": 58.0,
+      "y": 89.0
+    },
+    "session": {
+      "page": "outside",
+      "x": 76.8,
+      "y": 89.0
+    }
+  },
+  "nextLevel": [],
+  "criteria": {
+    "ParentandTot3:3:1": {
+      "page": "inside",
+      "x": 69.75,
+      "y": 17.5
+    },
+    "ParentandTot3:4:1": {
+      "page": "inside",
+      "x": 69.73,
+      "y": 20.15
+    },
+    "ParentandTot3:5:1": {
+      "page": "inside",
+      "x": 69.66,
+      "y": 22.77
+    },
+    "ParentandTot3:9a:1": {
+      "page": "inside",
+      "x": 69.75,
+      "y": 37.68
+    },
+    "ParentandTot3:9b:1": {
+      "page": "inside",
+      "x": 69.75,
+      "y": 40.23
+    },
+    "ParentandTot3:10a:1": {
+      "page": "inside",
+      "x": 69.66,
+      "y": 42.79
+    },
+    "ParentandTot3:10b:1": {
+      "page": "inside",
+      "x": 69.75,
+      "y": 45.44
+    },
+    "ParentandTot3:13a:1": {
+      "page": "inside",
+      "x": 71.7,
+      "y": 58.7
+    },
+    "ParentandTot3:13b:1": {
+      "page": "inside",
+      "x": 71.7,
+      "y": 61.5
+    },
+    "ParentandTot3:13c:1": {
+      "page": "inside",
+      "x": 71.7,
+      "y": 64.3
+    }
+  },
+  "unmapped": [
+    {
+      "criterionId": "ParentandTot3:1:1",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:1:2",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:2:1",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:2:2",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:6:1",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:6:2",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:7:1",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:7:2",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:7:3",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:8:1",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:8:2",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:8:3",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:8:4",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:11a:1",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:11a:2",
+      "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
+    },
+    {
+      "criterionId": "ParentandTot3:11b:1",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:11b:2",
+      "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
+    },
+    {
+      "criterionId": "ParentandTot3:12:1",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:12:2",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:12:3",
+      "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
+    },
+    {
+      "criterionId": "ParentandTot3:13a:2",
+      "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
+    },
+    {
+      "criterionId": "ParentandTot3:13b:2",
+      "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
+    },
+    {
+      "criterionId": "ParentandTot3:13c:2",
+      "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
+    }
+  ],
+  "extraBoxes": [
+    {
+      "page": "inside",
+      "x": 69.68,
+      "y": 10.18,
+      "label": "Jump Entry (Assisted) (one skill box; skill has 2 criteria: 1)"
+    },
+    {
+      "page": "inside",
+      "x": 69.77,
+      "y": 12.82,
+      "label": "Entry and Submerge from Sitting Position (Assisted) (one skill box; skill has 2 criteria: 2)"
+    },
+    {
+      "page": "inside",
+      "x": 69.75,
+      "y": 25.35,
+      "label": "Attempt to Recover Object From Bottom (one skill box; skill has 2 criteria: 6)"
+    },
+    {
+      "page": "inside",
+      "x": 69.75,
+      "y": 28.0,
+      "label": "Standing Jump Entry, return to Edge (Assisted) (one skill box; skill has 3 criteria: 7)"
+    },
+    {
+      "page": "inside",
+      "x": 69.75,
+      "y": 32.91,
+      "label": "Jump Entry and Float Wearing PFD (Assisted) (one skill box; skill has 4 criteria: 8)"
+    },
+    {
+      "page": "inside",
+      "x": 69.75,
+      "y": 48.03,
+      "label": "Kicking on Front (Assisted) (one skill box; skill has 2 criteria: 11a)"
+    },
+    {
+      "page": "inside",
+      "x": 69.75,
+      "y": 50.68,
+      "label": "Kicking on Back (Assisted) (one skill box; skill has 2 criteria: 11b)"
+    },
+    {
+      "page": "inside",
+      "x": 69.73,
+      "y": 53.29,
+      "label": "Underwater Passes (one skill box; skill has 3 criteria: 12)"
+    },
+    {
+      "page": "inside",
+      "x": 69.73,
+      "y": 55.73,
+      "label": "Water Smart message (skill-level box, no single criterion)"
+    }
+  ]
+}

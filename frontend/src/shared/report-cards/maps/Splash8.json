@@ -1,0 +1,479 @@
+{
+  "level": "Splash8",
+  "images": {
+    "outside": "splash-8-outside.jpg",
+    "inside": "splash-8-inside.jpg"
+  },
+  "source": {
+    "pdf": "splash7-to-9-report-cards-combined.pdf",
+    "outsidePage": 3,
+    "insidePage": 4
+  },
+  "fields": {
+    "participant": {
+      "page": "outside",
+      "x": 75.0,
+      "y": 72.3
+    },
+    "instructor": {
+      "page": "outside",
+      "x": 74.3,
+      "y": 77.0
+    },
+    "date": {
+      "page": "outside",
+      "x": 71.5,
+      "y": 81.7
+    },
+    "session": {
+      "page": "outside",
+      "x": 85.7,
+      "y": 81.7
+    }
+  },
+  "nextLevel": [
+    {
+      "level": "Splash8",
+      "page": "outside",
+      "x": 35.25,
+      "y": 20.32
+    },
+    {
+      "level": "Splash9",
+      "page": "outside",
+      "x": 35.3,
+      "y": 24.29
+    }
+  ],
+  "criteria": {
+    "Splash8:13a:1": {
+      "page": "outside",
+      "x": 2.73,
+      "y": 16.09
+    },
+    "Splash8:13b:1": {
+      "page": "outside",
+      "x": 3.02,
+      "y": 32.23
+    },
+    "Splash8:13c:1": {
+      "page": "outside",
+      "x": 3.25,
+      "y": 45.88
+    },
+    "Splash8:13c:2": {
+      "page": "outside",
+      "x": 3.29,
+      "y": 48.5
+    },
+    "Splash8:13c:3": {
+      "page": "outside",
+      "x": 3.43,
+      "y": 55.62
+    },
+    "Splash8:14:1": {
+      "page": "outside",
+      "x": 3.57,
+      "y": 62.38
+    },
+    "Splash8:14:2": {
+      "page": "outside",
+      "x": 3.61,
+      "y": 65.03
+    },
+    "Splash8:14:3": {
+      "page": "outside",
+      "x": 3.66,
+      "y": 67.62
+    },
+    "Splash8:14:4": {
+      "page": "outside",
+      "x": 3.73,
+      "y": 70.27
+    },
+    "Splash8:14:5": {
+      "page": "outside",
+      "x": 3.77,
+      "y": 72.85
+    },
+    "Splash8:14:6": {
+      "page": "outside",
+      "x": 3.82,
+      "y": 75.47
+    },
+    "Splash8:14:7": {
+      "page": "outside",
+      "x": 3.91,
+      "y": 80.38
+    },
+    "Splash8:14:8": {
+      "page": "outside",
+      "x": 3.96,
+      "y": 82.97
+    },
+    "Splash8:14:9": {
+      "page": "outside",
+      "x": 4.0,
+      "y": 85.59
+    },
+    "Splash8:14:10": {
+      "page": "outside",
+      "x": 4.04,
+      "y": 88.21
+    },
+    "Splash8:14:11": {
+      "page": "outside",
+      "x": 4.09,
+      "y": 90.79
+    },
+    "Splash8:14:12": {
+      "page": "outside",
+      "x": 4.14,
+      "y": 93.44
+    },
+    "Splash8:1:1": {
+      "page": "inside",
+      "x": 3.79,
+      "y": 16.27
+    },
+    "Splash8:1:2": {
+      "page": "inside",
+      "x": 3.91,
+      "y": 21.15
+    },
+    "Splash8:2:1": {
+      "page": "inside",
+      "x": 4.04,
+      "y": 30.5
+    },
+    "Splash8:2:2": {
+      "page": "inside",
+      "x": 4.09,
+      "y": 33.09
+    },
+    "Splash8:2:3": {
+      "page": "inside",
+      "x": 4.14,
+      "y": 35.73
+    },
+    "Splash8:2:4": {
+      "page": "inside",
+      "x": 4.21,
+      "y": 38.32
+    },
+    "Splash8:3:1": {
+      "page": "inside",
+      "x": 4.32,
+      "y": 45.12
+    },
+    "Splash8:3:2": {
+      "page": "inside",
+      "x": 4.46,
+      "y": 50.0
+    },
+    "Splash8:3:3": {
+      "page": "inside",
+      "x": 4.5,
+      "y": 52.56
+    },
+    "Splash8:4:1": {
+      "page": "inside",
+      "x": 4.64,
+      "y": 59.35
+    },
+    "Splash8:4:2": {
+      "page": "inside",
+      "x": 4.68,
+      "y": 61.97
+    },
+    "Splash8:5:1": {
+      "page": "inside",
+      "x": 4.82,
+      "y": 68.44
+    },
+    "Splash8:5:2": {
+      "page": "inside",
+      "x": 4.86,
+      "y": 71.23
+    },
+    "Splash8:5:3": {
+      "page": "inside",
+      "x": 4.91,
+      "y": 74.03
+    },
+    "Splash8:5:4": {
+      "page": "inside",
+      "x": 4.98,
+      "y": 76.79
+    },
+    "Splash8:5:5": {
+      "page": "inside",
+      "x": 5.04,
+      "y": 79.56
+    },
+    "Splash8:5:6": {
+      "page": "inside",
+      "x": 5.09,
+      "y": 82.32
+    },
+    "Splash8:6:1": {
+      "page": "inside",
+      "x": 5.23,
+      "y": 88.79
+    },
+    "Splash8:6:2": {
+      "page": "inside",
+      "x": 5.29,
+      "y": 91.59
+    },
+    "Splash8:6:3": {
+      "page": "inside",
+      "x": 5.34,
+      "y": 94.38
+    },
+    "Splash8:7-front-crawl:2": {
+      "page": "inside",
+      "x": 37.2,
+      "y": 8.71
+    },
+    "Splash8:7-front-crawl:3": {
+      "page": "inside",
+      "x": 37.27,
+      "y": 13.62
+    },
+    "Splash8:7-front-crawl:4": {
+      "page": "inside",
+      "x": 37.3,
+      "y": 16.23
+    },
+    "Splash8:7-front-crawl:5": {
+      "page": "inside",
+      "x": 37.3,
+      "y": 18.85
+    },
+    "Splash8:7-front-crawl:6": {
+      "page": "inside",
+      "x": 37.32,
+      "y": 21.44
+    },
+    "Splash8:7-front-crawl:7": {
+      "page": "inside",
+      "x": 37.36,
+      "y": 26.35
+    },
+    "Splash8:7-front-crawl:1": {
+      "page": "inside",
+      "x": 37.39,
+      "y": 28.97
+    },
+    "Splash8:7-back-crawl:2": {
+      "page": "inside",
+      "x": 37.43,
+      "y": 34.94
+    },
+    "Splash8:7-back-crawl:3": {
+      "page": "inside",
+      "x": 37.48,
+      "y": 39.85
+    },
+    "Splash8:7-back-crawl:4": {
+      "page": "inside",
+      "x": 37.52,
+      "y": 42.44
+    },
+    "Splash8:7-back-crawl:5": {
+      "page": "inside",
+      "x": 37.52,
+      "y": 45.09
+    },
+    "Splash8:7-back-crawl:6": {
+      "page": "inside",
+      "x": 37.57,
+      "y": 47.68
+    },
+    "Splash8:7-back-crawl:1": {
+      "page": "inside",
+      "x": 37.57,
+      "y": 50.27
+    },
+    "Splash8:7-breaststroke:2": {
+      "page": "inside",
+      "x": 37.61,
+      "y": 56.21
+    },
+    "Splash8:7-breaststroke:3": {
+      "page": "inside",
+      "x": 37.66,
+      "y": 58.82
+    },
+    "Splash8:7-breaststroke:4": {
+      "page": "inside",
+      "x": 37.66,
+      "y": 61.44
+    },
+    "Splash8:7-breaststroke:5": {
+      "page": "inside",
+      "x": 37.7,
+      "y": 66.35
+    },
+    "Splash8:7-breaststroke:6": {
+      "page": "inside",
+      "x": 37.75,
+      "y": 68.97
+    },
+    "Splash8:7-breaststroke:1": {
+      "page": "inside",
+      "x": 37.75,
+      "y": 71.56
+    },
+    "Splash8:8:1": {
+      "page": "inside",
+      "x": 37.82,
+      "y": 77.56
+    },
+    "Splash8:8:2": {
+      "page": "inside",
+      "x": 37.86,
+      "y": 82.44
+    },
+    "Splash8:9:1": {
+      "page": "inside",
+      "x": 37.93,
+      "y": 88.44
+    },
+    "Splash8:9:2": {
+      "page": "inside",
+      "x": 37.93,
+      "y": 91.06
+    },
+    "Splash8:9:3": {
+      "page": "inside",
+      "x": 37.98,
+      "y": 93.65
+    },
+    "Splash8:10:1": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 12.03
+    },
+    "Splash8:10:2": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 14.47
+    },
+    "Splash8:10:3": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 17.09
+    },
+    "Splash8:10:4": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 22.32
+    },
+    "Splash8:10:5": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 24.94
+    },
+    "Splash8:10:6": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 27.53
+    },
+    "Splash8:10:7": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 30.15
+    },
+    "Splash8:11:1": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 36.15
+    },
+    "Splash8:11:2": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 38.77
+    },
+    "Splash8:11:3": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 41.38
+    },
+    "Splash8:11:4": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 44.0
+    },
+    "Splash8:11:5": {
+      "page": "inside",
+      "x": 70.48,
+      "y": 46.62
+    },
+    "Splash8:11:6": {
+      "page": "inside",
+      "x": 70.5,
+      "y": 49.21
+    },
+    "Splash8:11:7": {
+      "page": "inside",
+      "x": 70.5,
+      "y": 51.77
+    },
+    "Splash8:11:8": {
+      "page": "inside",
+      "x": 70.5,
+      "y": 56.68
+    },
+    "Splash8:12a:1": {
+      "page": "inside",
+      "x": 70.5,
+      "y": 62.65
+    },
+    "Splash8:12a:2": {
+      "page": "inside",
+      "x": 70.5,
+      "y": 67.56
+    },
+    "Splash8:12b:1": {
+      "page": "inside",
+      "x": 70.5,
+      "y": 73.56
+    },
+    "Splash8:12b:2": {
+      "page": "inside",
+      "x": 70.5,
+      "y": 76.15
+    },
+    "Splash8:12c:1": {
+      "page": "inside",
+      "x": 70.5,
+      "y": 82.12
+    },
+    "Splash8:12c:2": {
+      "page": "inside",
+      "x": 70.5,
+      "y": 84.73
+    },
+    "Splash8:12c:3": {
+      "page": "inside",
+      "x": 70.5,
+      "y": 87.35
+    },
+    "Splash8:12c:4": {
+      "page": "inside",
+      "x": 70.52,
+      "y": 89.97
+    }
+  },
+  "unmapped": [],
+  "extraBoxes": [
+    {
+      "page": "inside",
+      "x": 70.48,
+      "y": 19.71,
+      "label": "Assess unconscious victim: Attempt to obtain an AED (no curriculum criterion)"
+    }
+  ]
+}
