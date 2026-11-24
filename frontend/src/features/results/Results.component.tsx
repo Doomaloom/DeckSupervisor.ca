@@ -20,6 +20,8 @@ import {buildBatch,buildCompletedBatch,buildCompletedClass,buildReportCardClass,
 import {buildReportCardHtml,printReportCards,type ReportCardPaper} from '../../shared/report-cards/reportCards';
 import {RecordValue,StudentProgressModal} from './StudentProgressModal';
 import {ResultsClassCard,type ClassCardSwimmer} from './ResultsClassCard';
+import {findOddities,planOddityFix,loadIgnoredOddities,saveIgnoredOddities,type FixDirection,type FixPlan,type Oddity} from './oddities';
+import {ReportCardOdditiesModal,type OdditiesInstructorGroup} from './ReportCardOdditiesModal';
 const errorMessage=(e:unknown)=>e instanceof Error?e.message:String(e);
 const V=COMPLETED_PRINT_CURRICULUM_VERSION;
 // A whole-session snapshot grows with every record and revision and outgrows the database's
@@ -80,7 +82,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
  const historyByRecord=useMemo(()=>{const map=new Map<string,api.Results['history']>();for(const h of data?.history??[]){const list=map.get(h.recordId);if(list)list.push(h);else map.set(h.recordId,[h]);}return map;},[data]);
  const attendanceFor=(enrollmentId:string,date:string)=>{const r=recordById.get(`attendance:${enrollmentId}:${date}`);return (!r||r.deleted?'unmarked':r.payload.status??'unmarked') as 'present'|'absent'|'unmarked';};
  const swimmersFor=(c:ClassView):ClassCardSwimmer[]=>byName(c.course.swimmers,s=>s.enrollmentId).map(s=>({enrollmentId:s.enrollmentId,name:nameFor(s.enrollmentId),active:s.active!==false,present:attendanceTotals.get(s.enrollmentId)?.present??0,absent:attendanceTotals.get(s.enrollmentId)?.absent??0,mastered:[...(progress.get(s.enrollmentId)?.values()??[])].filter(n=>n>=3).length,attendance:date=>attendanceFor(s.enrollmentId,date)}));
- async function submit(operation:api.ResultOperation){const receipt=(await api.submitResult(session.id,operation)).receipts[0];if(!receipt||!['accepted','already_accepted','pending_review'].includes(receipt.status))throw new Error(receipt?.reason||'Correction rejected');setNotice(receipt.status==='pending_review'?'Correction requires supervisor review.':'Saved as a new revision.');}
+ async function submit(operation:api.ResultOperation,message?:boolean){const receipt=(await api.submitResult(session.id,operation)).receipts[0];if(!receipt||!['accepted','already_accepted','pending_review'].includes(receipt.status))throw new Error(receipt?.reason||'Correction rejected');if(message!==false)setNotice(receipt.status==='pending_review'?'Correction requires supervisor review.':'Saved as a new revision.');return receipt.status;}
  async function correction(record:api.ResultRecord,payload:api.ResultPayload,action:'upsert'|'delete'='upsert'){
   const {revision,deleted:_deleted,success:_success,updatedAt:_updatedAt,...old}=record;
   await submit({...old,operationId:crypto.randomUUID(),baseRevision:revision,action,payload});
@@ -133,13 +135,40 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
   const popup=openAttendancePrintWindow(title);if(!popup)throw new Error('Allow popups to print report cards.');
   await printReportCards(buildReportCardHtml(cards,{paper,highlight:highlightMissing,imageBase:`${window.location.origin}/report-cards/`,title}),popup);
  }
+ // Report card oddities: same-wording must-sees ticked for one skill but not another, per swimmer and class.
+ const oddityKey=getScopedKey(`results-oddities-ignored:${session.id}`);
+ const [ignoredOddities,setIgnoredOddities]=useState<Set<string>>(()=>loadIgnoredOddities(oddityKey)),[oddityOpen,setOddityOpen]=useState(false);
+ const planOwners=useRef(new WeakMap<FixPlan,{oddity:Oddity;name:string}>());
+ const oddityGroups=useMemo<OdditiesInstructorGroup[]>(()=>{
+  const out:OdditiesInstructorGroup[]=[];
+  for(const c of byInstructor(classes)){
+   const swimmers=byName(c.course.swimmers.filter(s=>s.active!==false),s=>s.enrollmentId).map(s=>({enrollmentId:s.enrollmentId,name:nameFor(s.enrollmentId),oddities:findOddities(records,{classId:c.course.classId,enrollmentId:s.enrollmentId,curriculumVersion:V})})).filter(s=>s.oddities.length);
+   if(!swimmers.length)continue;
+   let g=out.find(x=>x.instructor===c.instructor);if(!g){g={instructor:c.instructor,classes:[]};out.push(g);}
+   g.classes.push({classId:c.course.classId,code:c.code,title:c.title,swimmers});
+  }
+  return out;
+ },[registry,records,identities,session.id]);
+ const oddityCount=oddityGroups.flatMap(g=>g.classes.flatMap(c=>c.swimmers.flatMap(s=>s.oddities))).filter(o=>!ignoredOddities.has(o.id)).length;
+ const updateIgnored=(id:string,ignore:boolean)=>{const next=new Set(ignoredOddities);if(ignore)next.add(id);else next.delete(id);setIgnoredOddities(next);saveIgnoredOddities(oddityKey,next);};
+ const planFix=(oddity:Oddity,direction:FixDirection):FixPlan=>{
+  const course=registry?.courses.find(c=>c.classId===oddity.classId);
+  const plan=planOddityFix(oddity,records.filter(r=>r.classId===oddity.classId&&r.enrollmentId===oddity.enrollmentId),direction,{sessionId:session.id,datasetId:registry?.datasetId??'',lessonDates:course?.lessonDates??[],curriculumVersion:V,now:()=>new Date().toISOString(),newId:()=>crypto.randomUUID()});
+  planOwners.current.set(plan,{oddity,name:nameFor(oddity.enrollmentId)});return plan;
+ };
+ async function applyFix(plan:FixPlan){
+  const owner=planOwners.current.get(plan);let pending=false;
+  for(const operation of plan.operations)if(await submit(operation,false)==='pending_review')pending=true;
+  const n=plan.operations.length;
+  setNotice(`${pending?'Fix submitted for supervisor review':'Fixed'}: ${owner?.oddity.label??'oddity'}${owner?` for ${owner.name}`:''} (${n} ${n===1?'change':'changes'})`);
+ }
  const openClass=open?classes.find(c=>c.course.classId===open.classId):undefined;
  const openSwimmer=openClass?.course.swimmers.find(s=>s.enrollmentId===open?.enrollmentId);
  const unresolvedConflicts=(data?.conflicts??[]).filter(c=>!c.resolved);
  const codeFor=(classId:string)=>classes.find(c=>c.course.classId===classId)?.code??classId;
  return <Card className="flex min-w-0 flex-col gap-4 max-sm:p-3 [overflow-wrap:anywhere]">
   <h2 className="text-2xl font-semibold">Attendance and results</h2>
-  {!open&&error&&<Notice tone="danger" role="alert">{error}</Notice>}{!open&&notice&&<Notice role="status">{notice}</Notice>}{rosterWarning&&<Notice>{rosterWarning}</Notice>}
+  {!open&&!oddityOpen&&error&&<Notice tone="danger" role="alert">{error}</Notice>}{!open&&!oddityOpen&&notice&&<Notice role="status">{notice}</Notice>}{rosterWarning&&<Notice>{rosterWarning}</Notice>}
   <div className="flex flex-wrap items-end gap-3">
    <ActionButton disabled={busy} onClick={()=>void run(async()=>{})}>Refresh submissions</ActionButton>
    <label className="flex min-w-0 flex-col gap-1 text-sm font-semibold">Load local class package to resolve names (stays in this browser)<input type="file" accept=".json,application/json" disabled={busy||!registry} onChange={e=>{const file=e.target.files?.[0];if(file)void run(()=>importNames(file))}}/></label>
@@ -153,6 +182,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
    <div data-component="results-print-bar" className="flex flex-wrap items-center gap-3">
     {instructorFilter&&<ActionButton variant="primary" disabled={busy||!data} onClick={()=>void run(()=>printCompleted(classes.filter(c=>c.instructor===instructorFilter),`Completed sheets – ${instructorFilter}`),false)}>Print completed sheets for {instructorFilter}</ActionButton>}
     <ActionButton variant={instructorFilter?'outline':'primary'} disabled={busy||!data||!classes.length} onClick={()=>void run(()=>printCompleted(classes,'Completed sheets – all instructors'),false)}>Print all instructors</ActionButton>
+    <ActionButton variant="outline" disabled={busy||!data} onClick={()=>{setError('');setNotice('');setOddityOpen(true)}}>Review report card oddities ({oddityCount})</ActionButton>
     <span className="text-sm text-secondary/80">Showing {visible.length} of {classes.length} classes</span>
    </div>
    <div data-component="results-report-card-bar" className="flex flex-wrap items-end gap-3">
@@ -172,6 +202,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
    {openClass&&openSwimmer&&open&&<StudentProgressModal name={nameFor(open.enrollmentId)} details={`${openClass.title} · ${openClass.code} · Instructor: ${openClass.instructor}`} active={openSwimmer.active!==false} lessonDates={openClass.course.lessonDates}
     progress={progress.get(open.enrollmentId)} records={records.filter(r=>r.enrollmentId===open.enrollmentId)} history={historyByRecord} busy={busy} error={error} notice={notice}
     onClose={()=>setOpen(null)} onPrintReportCard={()=>void run(()=>printCards([openClass],`Report card – ${nameFor(open.enrollmentId)}`,false,open.enrollmentId),false)} onCorrect={(r,payload)=>void run(()=>correction(r,payload))} onDelete={r=>void run(()=>correction(r,{},'delete'))}/>}
+   {oddityOpen&&!open&&<ReportCardOdditiesModal groups={oddityGroups} ignored={ignoredOddities} busy={busy||!data} error={error} notice={notice} planFix={planFix} onApply={plan=>void run(()=>applyFix(plan))} onIgnore={id=>updateIgnored(id,true)} onRestore={id=>updateIgnored(id,false)} onOpenProgress={(classId,enrollmentId)=>{setError('');setNotice('');setOddityOpen(false);setOpen({classId,enrollmentId})}} onClose={()=>setOddityOpen(false)}/>}
    {supervisor&&<>
     <h3 className="text-xl font-semibold">Identity reconciliation</h3><p>Unchanged entries recover automatically. Confirm spelling or contact changes. A transfer creates a new enrollment in its destination class; earlier results stay in the original class.</p>
     {identities.filter(i=>!i.enrollmentId).map((i,index)=><div key={`${i.matchKey}:${index}`} className="border p-3"><p>{i.course.code}: {i.name} — unresolved</p>{i.ambiguous?<p>Indistinguishable duplicate. Correct the source roster before reconciling.</p>:<><Select aria-label={`Identity for ${i.name}`} value={choices[i.matchKey]??''} onChange={e=>setChoices({...choices,[i.matchKey]:e.target.value})}><option value="">Choose identity</option><option value="new">New student or transfer: new enrollment</option>{registry.courses.find(c=>c.sourceId===courseSourceId(session.id,i.course.code))?.swimmers.map(s=><option key={s.enrollmentId} value={s.enrollmentId}>Same student: {nameFor(s.enrollmentId)} [{s.sourceId.slice(0,8)}]</option>)}</Select><ActionButton disabled={busy} onClick={()=>void run(()=>reconcile(i))}>Confirm reconciliation</ActionButton></>}</div>)}
