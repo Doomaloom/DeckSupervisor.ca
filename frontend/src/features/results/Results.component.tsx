@@ -43,7 +43,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
  const [registry,setRegistry]=useState<api.ResultRegistry|null>(null),[data,setData]=useState<api.Results|null>(null);
  const [identities,setIdentities]=useState<LocalIdentity[]>([]),[grants,setGrants]=useState<api.ResultGrant[]>([]);
  const [instructorFilter,setInstructorFilter]=useState(''),[serviceFilter,setServiceFilter]=useState(''),[search,setSearch]=useState('');
- const [open,setOpen]=useState<{classId:string;enrollmentId:string}|null>(null),[printReport,setPrintReport]=useState<PrintBatch<unknown>|null>(null),[paper,setPaper]=useState<ReportCardPaper>('blank');
+ const [open,setOpen]=useState<{classId:string;enrollmentId:string}|null>(null),[printReport,setPrintReport]=useState<PrintBatch<unknown>|null>(null),[paper,setPaper]=useState<ReportCardPaper>('blank'),[highlightMissing,setHighlightMissing]=useState(true);
  const [error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(true),[rosterWarning,setRosterWarning]=useState('');
  const [choices,setChoices]=useState<Record<string,string>>({});const mounted=useRef(true),working=useRef(false);
  const displayKey=()=>getScopedKey(`result-display-package:${session.id}`);
@@ -131,7 +131,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
   if(!batchJob)cards=buildReportCardClass(input(targets[0]));
   else{const batch=buildBatch(byInstructor(targets).map(input),buildReportCardClass);setPrintReport(batch);if(!batch.items.length)throw new Error('None of these classes can print yet. The reasons are listed below.');cards=batch.items;}
   const popup=openAttendancePrintWindow(title);if(!popup)throw new Error('Allow popups to print report cards.');
-  await printReportCards(buildReportCardHtml(cards,{paper,imageBase:`${window.location.origin}/report-cards/`,title}),popup);
+  await printReportCards(buildReportCardHtml(cards,{paper,highlight:highlightMissing,imageBase:`${window.location.origin}/report-cards/`,title}),popup);
  }
  const openClass=open?classes.find(c=>c.course.classId===open.classId):undefined;
  const openSwimmer=openClass?.course.swimmers.find(s=>s.enrollmentId===open?.enrollmentId);
@@ -159,6 +159,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
     {instructorFilter&&<ActionButton variant="outline" disabled={busy||!data} onClick={()=>void run(()=>printCards(classes.filter(c=>c.instructor===instructorFilter),`Report cards – ${instructorFilter}`,true),false)}>Print report cards for {instructorFilter}</ActionButton>}
     <ActionButton variant="outline" disabled={busy||!data||!classes.length} onClick={()=>void run(()=>printCards(classes,'Report cards – all instructors',true),false)}>Print all report cards</ActionButton>
     <label className="flex flex-col gap-1 text-sm font-semibold">Report card paper<select className={selectClass} value={paper} onChange={e=>setPaper(e.target.value as ReportCardPaper)}><option value="blank">Blank paper (prints the whole card)</option><option value="preprinted">Pre-printed cards (ticks and names only)</option></select></label>
+    <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" className="h-5 w-5" checked={highlightMissing} onChange={e=>setHighlightMissing(e.target.checked)}/>Highlight skills not yet achieved</label>
    </div>
    {printReport&&<Notice tone={printReport.skipped.length?'danger':undefined}><p className="font-semibold">Printed {printReport.printed.length} of {printReport.printed.length+printReport.skipped.length} classes.</p>{printReport.skipped.length>0&&<><p>Not printed:</p><ul className="list-disc pl-5">{printReport.skipped.map(s=><li key={s.label}>{s.label}: {s.reason}</li>)}</ul></>}</Notice>}
    {!supervisor&&unresolvedConflicts.length>0&&<Notice>Some submissions need supervisor review. Accepted results remain displayed until those conflicts are resolved.</Notice>}

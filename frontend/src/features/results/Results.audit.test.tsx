@@ -366,6 +366,7 @@ it('prints filled report cards for a class, one swimmer, or every instructor, on
  expect(doc.querySelectorAll('.rc-page')).toHaveLength(4);expect(doc.querySelectorAll('img.rc-scan')).toHaveLength(4);
  const harrold=doc.querySelectorAll('.rc-page[data-side="inside"]')[0],johnny=doc.querySelectorAll('.rc-page[data-side="inside"]')[1];
  expect(harrold.querySelector('[data-criterion="Splash1:1:1"]')).not.toBeNull();expect(johnny.querySelector('[data-criterion]')).toBeNull();
+ expect(doc.querySelector('style')!.textContent).toContain('.rc-hl');expect(screen.getByLabelText('Highlight skills not yet achieved')).toBeChecked();
  await user.selectOptions(screen.getByLabelText('Report card paper'),'preprinted');
  await user.click(screen.getByRole('button',{name:'Open skill progress for Johnny'}));
  await user.click(screen.getByRole('button',{name:'Print report card'}));
