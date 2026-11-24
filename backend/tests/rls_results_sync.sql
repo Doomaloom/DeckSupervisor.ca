@@ -16,38 +16,38 @@ select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',p
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(1)||'{"payload":{"status":"absent"}}')->>'status'='rejected','changed operation reuse denied');
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(2))->>'status'='pending_review','stale revision durable conflict');
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(2))->>'status'='pending_review','conflict retry durable');
-select pg_temp.assert_true(jsonb_array_length(result_snapshot('20000000-0000-0000-0000-000000000004')->'conflicts')=1,'one conflict immutable');
-select result_admin('20000000-0000-0000-0000-000000000004','resolve',jsonb_build_object('id',result_snapshot('20000000-0000-0000-0000-000000000004')->'conflicts'->0->>'id','choice','incoming'));
-select pg_temp.assert_true((result_snapshot('20000000-0000-0000-0000-000000000004')->'records'->0->>'revision')::int=2,'supervisor resolution new revision');
+select pg_temp.assert_true(jsonb_array_length(result_snapshot('20000000-0000-0000-0000-000000000004')::jsonb->'conflicts')=1,'one conflict immutable');
+select result_admin('20000000-0000-0000-0000-000000000004','resolve',jsonb_build_object('id',result_snapshot('20000000-0000-0000-0000-000000000004')::jsonb->'conflicts'->0->>'id','choice','incoming'));
+select pg_temp.assert_true((result_snapshot('20000000-0000-0000-0000-000000000004')::jsonb->'records'->0->>'revision')::int=2,'supervisor resolution new revision');
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(3,2)||'{"action":"delete","payload":{}}')->>'status'='accepted','delete tombstone accepted');
-select pg_temp.assert_true((result_snapshot('20000000-0000-0000-0000-000000000004')->'records'->0->>'deleted')::boolean,'tombstone present');
-select pg_temp.assert_true(jsonb_array_length(result_snapshot('20000000-0000-0000-0000-000000000004')->'history')=3,'revision history retained');
+select pg_temp.assert_true((result_snapshot('20000000-0000-0000-0000-000000000004')::jsonb->'records'->0->>'deleted')::boolean,'tombstone present');
+select pg_temp.assert_true(jsonb_array_length(result_snapshot('20000000-0000-0000-0000-000000000004')::jsonb->'history')=3,'revision history retained');
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(4,3)||'{"payload":{"status":"present","name":"DO-NOT-PERSIST"}}')->>'status'='rejected','PII payload rejected');
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(5,0)||'{"kind":"attempt","recordId":"a0000000-0000-0000-0000-000000000001","payload":{"skillId":"LittleSplash1:1","createdAt":"2026-10-05T09:00:00Z","submittedAt":"2026-10-05T09:01:00Z","results":[{"subskillId":"LittleSplash1:1:1","status":"successful"}]}}')->>'status'='rejected','partial criteria cannot inflate success');
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(6,0)||'{"kind":"attempt","recordId":"a0000000-0000-0000-0000-000000000001","payload":{"skillId":"LittleSplash1:1","createdAt":"2026-10-05T09:00:00Z","submittedAt":"2026-10-05T09:01:00Z","results":[{"subskillId":"LittleSplash1:1:1","status":"successful"},{"subskillId":"LittleSplash1:1:2","status":"not_yet"}]}}')->>'status'='accepted','complete criteria accepted');
-select pg_temp.assert_true(not (result_snapshot('20000000-0000-0000-0000-000000000004')->'records'->0->>'success')::boolean,'server computes not-yet success');
+select pg_temp.assert_true(not (result_snapshot('20000000-0000-0000-0000-000000000004')::jsonb->'records'->0->>'success')::boolean,'server computes not-yet success');
 select result_registry('20000000-0000-0000-0000-000000000004',jsonb_build_object('courseId','course-stable-id','swimmerId','swimmer-stable-id','enrollmentId','90000000-0000-0000-0000-000000000001','matchKey',repeat('b',64)),true);
 select pg_temp.assert_true(jsonb_array_length(result_registry('20000000-0000-0000-0000-000000000004')->'courses'->0->'swimmers'->0->'matchKeys')=2,'explicit alias retained');
 select pg_temp.denied($q$select * from public.result_records$q$,'direct result table denied');
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000008","role":"authenticated"}',true);
-select pg_temp.denied($q$select result_snapshot('20000000-0000-0000-0000-000000000004')$q$,'unassigned cannot read');
+select pg_temp.denied($q$select result_snapshot('20000000-0000-0000-0000-000000000004')::jsonb$q$,'unassigned cannot read');
 select pg_temp.denied($q$select result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(7,3))$q$,'unassigned cannot correct');
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-000000000007","role":"authenticated"}',true);
-select pg_temp.assert_true(jsonb_array_length(result_snapshot('20000000-0000-0000-0000-000000000004')->'records')=2,'assigned instructor reads scope');
+select pg_temp.assert_true(jsonb_array_length(result_snapshot('20000000-0000-0000-0000-000000000004')::jsonb->'records')=2,'assigned instructor reads scope');
 select pg_temp.denied($q$select result_admin('20000000-0000-0000-0000-000000000004','grants')$q$,'instructor cannot administer grants');
 reset role;
 set role service_role;
 select set_config('request.jwt.claims','{"role":"service_role"}',true);
 select result_mint('20000000-0000-0000-0000-000000000004','00000000-0000-0000-0000-000000000002',jsonb_build_object('datasetId','decksupervisor:80000000-0000-0000-0000-000000000001','instructorId','50000000-0000-0000-0000-000000000009','uploadHash',encode(sha256(convert_to('upload-secret','UTF8')),'hex'),'readHash',encode(sha256(convert_to('read-secret','UTF8')),'hex'),'courses',jsonb_build_array(jsonb_build_object('sourceId','course-stable-id','classId','60000000-0000-0000-0000-000000000009','swimmers',jsonb_build_array(jsonb_build_object('sourceId','swimmer-stable-id','enrollmentId','90000000-0000-0000-0000-000000000001'))))));
-select pg_temp.assert_true(jsonb_array_length(result_snapshot(null,null,'read-secret')->'records')=2,'read capability scoped');
-select pg_temp.denied($q$select result_snapshot(null,null,'upload-secret')$q$,'upload capability cannot read');
+select pg_temp.assert_true(jsonb_array_length(result_snapshot(null,null,'read-secret')::jsonb->'records')=2,'read capability scoped');
+select pg_temp.denied($q$select result_snapshot(null,null,'upload-secret')::jsonb$q$,'upload capability cannot read');
 select pg_temp.denied($q$select result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(7,3),'read-secret')$q$,'read capability cannot write');
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(7,3),'upload-secret')->>'status'='accepted','upload capability accepted');
 reset role;
 select pg_temp.assert_true(not exists(select 1 from result_operations where operation::text like '%DO-NOT-PERSIST%'),'rejected PII not stored');
 update result_grants set read_expires_at=now()-interval '1 second';
 set role service_role;
-select pg_temp.denied($q$select result_snapshot(null,null,'read-secret')$q$,'read expires separately');
+select pg_temp.denied($q$select result_snapshot(null,null,'read-secret')::jsonb$q$,'read expires separately');
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(7,3),'upload-secret')->>'status'='already_accepted','upload survives read expiration');
 select pg_temp.denied($q$select result_apply('20000000-0000-0000-0000-000000000003',pg_temp.result_op(7,3),'upload-secret')$q$,'upload capability cannot cross sessions even for an accepted operation');
 reset role;
@@ -104,7 +104,7 @@ select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-00000000
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(8,0))->>'status'='pending_review','second stale edit pending');
 select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.result_op(9,4))->>'status'='accepted','third concurrent edit accepted');
 do $$ declare rejected boolean:=false; cid uuid; begin
- select (value->>'id')::uuid into cid from jsonb_array_elements(result_snapshot('20000000-0000-0000-0000-000000000004')->'conflicts') where value->'operation'->>'operationId'='70000000-0000-0000-0000-000000000008';
+ select (value->>'id')::uuid into cid from jsonb_array_elements(result_snapshot('20000000-0000-0000-0000-000000000004')::jsonb->'conflicts') where value->'operation'->>'operationId'='70000000-0000-0000-0000-000000000008';
  begin perform result_admin('20000000-0000-0000-0000-000000000004','resolve',jsonb_build_object('id',cid,'choice','incoming','expectedRevision',4)); exception when others then rejected:=true; end;
  perform pg_temp.assert_true(rejected,'stale reviewer cannot overwrite third edit');
  perform result_admin('20000000-0000-0000-0000-000000000004','resolve',jsonb_build_object('id',cid,'choice','incoming','expectedRevision',5));
@@ -170,7 +170,7 @@ create function pg_temp.att(n int,base int,r int,payload jsonb,extra jsonb defau
  select pg_temp.op(n,base,1,1,'2026-10-05',jsonb_build_object('kind','attempt','recordId',pg_temp.rec(r),'payload',payload)||extra) $$;
 create function pg_temp.ap(o jsonb,token text default null) returns jsonb language sql as $$select public.result_apply(pg_temp.sid(),o,token)$$;
 create function pg_temp.st(o jsonb,token text default null) returns text language sql as $$select public.result_apply(pg_temp.sid(),o,token)->>'status'$$;
-create function pg_temp.snap(c int default null) returns jsonb language sql as $$select public.result_snapshot(pg_temp.sid(),case when c is null then null else pg_temp.cls(c) end)$$;
+create function pg_temp.snap(c int default null) returns jsonb language sql as $$select public.result_snapshot(pg_temp.sid(),case when c is null then null else pg_temp.cls(c) end)::jsonb$$;
 create function pg_temp.one(record_id text) returns jsonb language sql as $$select r from jsonb_array_elements(pg_temp.snap()->'records') r where r->>'recordId'=record_id$$;
 create function pg_temp.rev(record_id text) returns int language sql as $$select coalesce((pg_temp.one(record_id)->>'revision')::int,0)$$;
 create function pg_temp.conflict(n int) returns jsonb language sql as $$select c from jsonb_array_elements(pg_temp.snap()->'conflicts') c where c->'operation'->>'operationId'='7a000000-0000-0000-0000-'||lpad(n::text,12,'0')$$;
@@ -189,7 +189,7 @@ create function pg_temp.reconcile(n int,s int,e int,k text,extra jsonb default '
  select public.result_registry(pg_temp.sid(),jsonb_build_object('courseId','audit:course:'||n,'swimmerId','audit-swimmer-'||s,'enrollmentId',pg_temp.enr(e),'matchKey',k)||extra,true)$$;
 create function pg_temp.mint(instr int,token text,courses jsonb,extra jsonb default '{}',creator int default 2) returns jsonb language sql as $$
  select public.result_mint(pg_temp.sid(),('00000000-0000-0000-0000-'||lpad(creator::text,12,'0'))::uuid,jsonb_build_object('datasetId',pg_temp.ds(),'instructorId',pg_temp.ins(instr),'uploadHash',encode(sha256(convert_to('audit-upload-'||token,'UTF8')),'hex'),'readHash',encode(sha256(convert_to('audit-read-'||token,'UTF8')),'hex'),'courses',courses)||extra)$$;
-create function pg_temp.read(token text) returns jsonb language sql as $$select public.result_snapshot(null,null,'audit-read-'||token)$$;
+create function pg_temp.read(token text) returns jsonb language sql as $$select public.result_snapshot(null,null,'audit-read-'||token)::jsonb$$;
 
 insert into public.session_instructors(session_id,id,name,account_id,position) values(pg_temp.sid(),pg_temp.ins(1),'','00000000-0000-0000-0000-000000000007',97),(pg_temp.sid(),pg_temp.ins(2),'','00000000-0000-0000-0000-000000000008',98);
 insert into public.instructor_assignments(session_id,id,name,account_id,instructor_id) values(pg_temp.sid(),pg_temp.ins(1),'','00000000-0000-0000-0000-000000000007',pg_temp.ins(1)),(pg_temp.sid(),pg_temp.ins(2),'','00000000-0000-0000-0000-000000000008',pg_temp.ins(2));
@@ -443,13 +443,13 @@ select pg_temp.assert_true(not exists(select 1 from result_grants g where g::tex
 select pg_temp.act('service');
 select pg_temp.assert_true((select count(*)>0 and bool_and(r->>'classId'=pg_temp.cls(1)::text and r->>'enrollmentId' in (pg_temp.enr(1)::text,pg_temp.enr(2)::text)) from jsonb_array_elements(pg_temp.read('A1')->'records') r) and (select bool_and(h->'record'->>'classId'=pg_temp.cls(1)::text) from jsonb_array_elements(pg_temp.read('A1')->'history') h) and (select count(*)>0 and bool_and(c->'operation'->>'classId'=pg_temp.cls(1)::text) from jsonb_array_elements(pg_temp.read('A1')->'conflicts') c),'read capability returns only the grant''s class and enrollments');
 select pg_temp.assert_true((select count(*)=1 and bool_and(r->>'enrollmentId'=pg_temp.enr(3)::text) from jsonb_array_elements(pg_temp.read('B1')->'records') r),'instructor B''s read capability is scoped to B');
-select pg_temp.assert_true(result_snapshot('20000000-0000-0000-0000-000000000003',pg_temp.cls(2),'audit-read-A1')->'records'='[]'::jsonb and result_snapshot('20000000-0000-0000-0000-000000000003',null,'audit-read-A1')=pg_temp.read('A1'),'a read capability ignores a caller-supplied session and cannot be widened by classId');
-select pg_temp.denied($q$select result_snapshot(null,null,'audit-upload-A1')$q$,'upload capability cannot read');
+select pg_temp.assert_true(result_snapshot('20000000-0000-0000-0000-000000000003',pg_temp.cls(2),'audit-read-A1')::jsonb->'records'='[]'::jsonb and result_snapshot('20000000-0000-0000-0000-000000000003',null,'audit-read-A1')::jsonb=pg_temp.read('A1'),'a read capability ignores a caller-supplied session and cannot be widened by classId');
+select pg_temp.denied($q$select result_snapshot(null,null,'audit-upload-A1')::jsonb$q$,'upload capability cannot read');
 select pg_temp.denied($q$select pg_temp.ap(pg_temp.op(210,4),'audit-read-A1')$q$,'read capability cannot upload');
 select pg_temp.denied($q$select pg_temp.ap(pg_temp.op(1),'audit-read-A1')$q$,'read capability cannot even fetch a duplicate receipt');
 select pg_temp.denied($q$select pg_temp.ap(pg_temp.op(210,4),'audit-upload-unknown')$q$,'unknown capability denied');
 select pg_temp.denied($q$select pg_temp.ap(pg_temp.op(210,4),'')$q$,'empty capability denied');
-select pg_temp.denied($q$select result_snapshot(null,null,'')$q$,'empty read capability denied');
+select pg_temp.denied($q$select result_snapshot(null,null,'')::jsonb$q$,'empty read capability denied');
 select pg_temp.assert_true(pg_temp.ap(pg_temp.op(210,4),'audit-upload-A1')->>'revision'='5' and pg_temp.st(pg_temp.op(210,4),'audit-upload-A1')='already_accepted','upload capability writes within its scope and retries idempotently');
 select pg_temp.assert_true(pg_temp.st(pg_temp.op(1),'audit-upload-A2')='already_accepted','a second independent grant for the same instructor works');
 select pg_temp.denied($q$select pg_temp.ap(pg_temp.op(211,1,2,3),'audit-upload-A1')$q$,'capability cannot write another instructor''s class');
@@ -648,7 +648,7 @@ select pg_temp.assert_true(pg_temp.result_fingerprint()=(select data from audit_
 begin;
 set local role service_role;
 select set_config('request.jwt.claims','{"role":"service_role"}',true);
-select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.mop(1,0),'audit-upload-M')->>'status'='already_accepted' and jsonb_array_length(result_snapshot(null,null,'audit-read-M')->'history')=2 and (result_snapshot(null,null,'audit-read-M')->'records'->0->>'deleted')::boolean and result_apply('20000000-0000-0000-0000-000000000004',pg_temp.mop(3,1),'audit-upload-M')->>'status'='pending_review' and result_apply('20000000-0000-0000-0000-000000000004',pg_temp.mop(4,2,'{"payload":{"status":"late"}}'),'audit-upload-M')->>'status'='rejected','grants, receipts, tombstones and pending conflicts keep working after re-application');
+select pg_temp.assert_true(result_apply('20000000-0000-0000-0000-000000000004',pg_temp.mop(1,0),'audit-upload-M')->>'status'='already_accepted' and jsonb_array_length(result_snapshot(null,null,'audit-read-M')::jsonb->'history')=2 and (result_snapshot(null,null,'audit-read-M')::jsonb->'records'->0->>'deleted')::boolean and result_apply('20000000-0000-0000-0000-000000000004',pg_temp.mop(3,1),'audit-upload-M')->>'status'='pending_review' and result_apply('20000000-0000-0000-0000-000000000004',pg_temp.mop(4,2,'{"payload":{"status":"late"}}'),'audit-upload-M')->>'status'='rejected','grants, receipts, tombstones and pending conflicts keep working after re-application');
 rollback;
 -- Remove the committed synthetic fixture from the disposable database.
 begin;

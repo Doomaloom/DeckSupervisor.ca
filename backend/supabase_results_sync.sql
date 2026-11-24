@@ -146,7 +146,10 @@ begin
  end if;
  return receipt;
 end $$;
-create or replace function public.result_snapshot(p_session uuid default null,p_class uuid default null,p_token text default null) returns jsonb language plpgsql security definer set search_path='' as $$
+-- Returns json, not jsonb: building a whole session as jsonb held about 20x its size in memory and ran past the
+-- 8s statement limit for signed-in users. The return type change needs the old jsonb version dropped once.
+do $$ begin if exists(select 1 from pg_proc where oid=to_regprocedure('public.result_snapshot(uuid,uuid,text)') and prorettype='jsonb'::regtype) then drop function public.result_snapshot(uuid,uuid,text); end if; end $$;
+create or replace function public.result_snapshot(p_session uuid default null,p_class uuid default null,p_token text default null) returns json language plpgsql security definer set search_path='' as $$
 declare g public.result_grants; scope uuid[]; enrollments uuid[];
 begin
  if p_token is not null then
@@ -154,9 +157,9 @@ begin
  g:=public.result_check_grant(p_token,true); p_session:=g.session_id; scope:=g.class_ids; enrollments:=g.enrollment_ids;
  else select array_agg(class_id) into scope from public.result_courses where session_id=p_session and public.result_class_access(p_session,class_id,auth.uid());
  if scope is null and not public.can_edit_session(p_session,auth.uid()) then raise insufficient_privilege; end if; end if;
- return jsonb_build_object('schemaVersion',1,'records',(select coalesce(jsonb_agg(record order by record_id),'[]'::jsonb) from public.result_records where session_id=p_session and class_id=any(scope) and (enrollments is null or enrollment_id=any(enrollments)) and (p_class is null or class_id=p_class)),
- 'conflicts',(select coalesce(jsonb_agg(jsonb_build_object('id',id,'operation',operation,'current',(select rr.record from public.result_records rr where rr.session_id=p_session and rr.record_id=result_conflicts.operation->>'recordId'),'resolved',resolved) order by id),'[]'::jsonb) from public.result_conflicts where session_id=p_session and class_id=any(scope) and (enrollments is null or (operation->>'enrollmentId')::uuid=any(enrollments)) and (p_class is null or class_id=p_class)),
- 'history',(select coalesce(jsonb_agg(jsonb_build_object('recordId',record_id,'revision',revision,'record',record) order by record_id,revision),'[]'::jsonb) from public.result_history where session_id=p_session and (record->>'classId')::uuid=any(scope) and (enrollments is null or (record->>'enrollmentId')::uuid=any(enrollments)) and (p_class is null or (record->>'classId')::uuid=p_class)));
+ return json_build_object('schemaVersion',1,'records',(select coalesce(json_agg(record order by record_id),'[]'::json) from public.result_records where session_id=p_session and class_id=any(scope) and (enrollments is null or enrollment_id=any(enrollments)) and (p_class is null or class_id=p_class)),
+ 'conflicts',(select coalesce(json_agg(json_build_object('id',id,'operation',operation,'current',(select rr.record from public.result_records rr where rr.session_id=p_session and rr.record_id=result_conflicts.operation->>'recordId'),'resolved',resolved) order by id),'[]'::json) from public.result_conflicts where session_id=p_session and class_id=any(scope) and (enrollments is null or (operation->>'enrollmentId')::uuid=any(enrollments)) and (p_class is null or class_id=p_class)),
+ 'history',(select coalesce(json_agg(json_build_object('recordId',record_id,'revision',revision,'record',record) order by record_id,revision),'[]'::json) from public.result_history where session_id=p_session and (record->>'classId')::uuid=any(scope) and (enrollments is null or (record->>'enrollmentId')::uuid=any(enrollments)) and (p_class is null or (record->>'classId')::uuid=p_class)));
 end $$;
 create or replace function public.result_admin(p_session uuid,p_action text,p_body jsonb default '{}'::jsonb) returns jsonb language plpgsql security definer set search_path='' as $$
 declare c public.result_conflicts; rec jsonb; rev integer; success boolean; original jsonb;
