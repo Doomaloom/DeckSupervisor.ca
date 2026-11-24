@@ -1,0 +1,327 @@
+{
+  "level": "Splash2B",
+  "images": {
+    "outside": "splash-2b-outside.jpg",
+    "inside": "splash-2b-inside.jpg"
+  },
+  "source": {
+    "pdf": "splash-1-to-6-report-cards-combined.pdf",
+    "outsidePage": 5,
+    "insidePage": 6
+  },
+  "fields": {
+    "participant": {
+      "page": "outside",
+      "x": 76.6,
+      "y": 72.8
+    },
+    "instructor": {
+      "page": "outside",
+      "x": 75.9,
+      "y": 77.4
+    },
+    "date": {
+      "page": "outside",
+      "x": 74.1,
+      "y": 81.6
+    },
+    "session": {
+      "page": "outside",
+      "x": 88.2,
+      "y": 81.6
+    }
+  },
+  "nextLevel": [
+    {
+      "level": "Splash2B",
+      "page": "outside",
+      "x": 38.52,
+      "y": 22.21
+    },
+    {
+      "level": "Splash3",
+      "page": "outside",
+      "x": 38.52,
+      "y": 26.15
+    }
+  ],
+  "criteria": {
+    "Splash2B:1:1": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 14.74
+    },
+    "Splash2B:1:2": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 17.03
+    },
+    "Splash2B:2a:1": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 25.71
+    },
+    "Splash2B:2a:2": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 29.94
+    },
+    "Splash2B:2b:2": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 36.68
+    },
+    "Splash2B:3:1": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 51.82
+    },
+    "Splash2B:3:2": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 54.12
+    },
+    "Splash2B:3:3": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 56.41
+    },
+    "Splash2B:3:4": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 58.71
+    },
+    "Splash2B:3:5": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 61.0
+    },
+    "Splash2B:4:1": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 76.21
+    },
+    "Splash2B:4:2": {
+      "page": "inside",
+      "x": 3.9,
+      "y": 78.5
+    },
+    "Splash2B:5:1": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 16.03
+    },
+    "Splash2B:5:2": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 18.32
+    },
+    "Splash2B:6a:1": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 36.5
+    },
+    "Splash2B:6a:2": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 38.79
+    },
+    "Splash2B:6a:3": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 43.35
+    },
+    "Splash2B:6b:1": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 50.06
+    },
+    "Splash2B:6b:2": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 52.32
+    },
+    "Splash2B:6b:3": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 56.91
+    },
+    "Splash2B:6c:1": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 63.62
+    },
+    "Splash2B:6c:2": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 65.91
+    },
+    "Splash2B:6c:3": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 70.5
+    },
+    "Splash2B:7:1": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 79.15
+    },
+    "Splash2B:7:2": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 81.44
+    },
+    "Splash2B:7:3": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 85.68
+    },
+    "Splash2B:7:4": {
+      "page": "inside",
+      "x": 36.7,
+      "y": 89.91
+    },
+    "Splash2B:8-front-crawl:2": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 13.79
+    },
+    "Splash2B:8-front-crawl:3": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 16.09
+    },
+    "Splash2B:8-front-crawl:4": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 18.38
+    },
+    "Splash2B:8-front-crawl:5": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 22.65
+    },
+    "Splash2B:8-front-crawl:1": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 24.91
+    },
+    "Splash2B:8-back-crawl:2": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 31.62
+    },
+    "Splash2B:8-back-crawl:3": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 33.94
+    },
+    "Splash2B:8-back-crawl:4": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 36.27
+    },
+    "Splash2B:8-back-crawl:5": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 40.5
+    },
+    "Splash2B:8c:1": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 49.79
+    },
+    "Splash2B:8c:2": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 52.06
+    },
+    "Splash2B:8c:3": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 54.35
+    },
+    "Splash2B:8c:4": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 58.62
+    },
+    "Splash2B:9:1": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 76.12
+    },
+    "Splash2B:9:2": {
+      "page": "inside",
+      "x": 69.3,
+      "y": 78.41
+    },
+    "Splash2B:8-back-crawl:1": {
+      "page": "inside",
+      "x": 69.25,
+      "y": 43.12
+    },
+    "Splash2B:10a:2": {
+      "page": "outside",
+      "x": 6.36,
+      "y": 22.0
+    },
+    "Splash2B:10b:2": {
+      "page": "outside",
+      "x": 6.35,
+      "y": 28.5
+    },
+    "Splash2B:10c:2": {
+      "page": "outside",
+      "x": 6.46,
+      "y": 35.09
+    },
+    "Splash2B:10d:2": {
+      "page": "outside",
+      "x": 6.5,
+      "y": 41.62
+    }
+  },
+  "unmapped": [
+    {
+      "criterionId": "Splash2B:10a:1",
+      "reason": "single shared Water Smart participation box on card (see extraBoxes)"
+    },
+    {
+      "criterionId": "Splash2B:10b:1",
+      "reason": "single shared Water Smart participation box on card (see extraBoxes)"
+    },
+    {
+      "criterionId": "Splash2B:10c:1",
+      "reason": "single shared Water Smart participation box on card (see extraBoxes)"
+    },
+    {
+      "criterionId": "Splash2B:10d:1",
+      "reason": "single shared Water Smart participation box on card (see extraBoxes)"
+    },
+    {
+      "criterionId": "Splash2B:2b:1",
+      "reason": "forward roll entry has no separate 'lifejacket donned' box on card"
+    }
+  ],
+  "extraBoxes": [
+    {
+      "page": "inside",
+      "x": 36.6,
+      "y": 20.62,
+      "label": "Swim to Survive skills: swim/kick 15 metre distance completed (criterion 5:2 'distance and time' mapped to the time box)"
+    },
+    {
+      "page": "inside",
+      "x": 69.27,
+      "y": 60.91,
+      "label": "Alternating front kick to side kick: 10 metre distance completed (no criterion)"
+    },
+    {
+      "page": "outside",
+      "x": 4.2,
+      "y": 17.35,
+      "label": "Water Smart participation box (shared by Splash2B:10a:1, 10b:1, 10c:1, 10d:1)"
+    }
+  ]
+}
