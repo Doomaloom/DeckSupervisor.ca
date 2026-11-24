@@ -64,12 +64,15 @@ export function fillCompletedMarks(root: HTMLElement, roster: AttendancePrintRos
             if (status !== 'present' && status !== 'absent') return;
             slot.dataset.attendance = status;
             slot.style.position = 'relative';
-            const mark = handMarkSvg(root.ownerDocument, status === 'present' ? 'P' : 'A', `${id}:${slot.dataset.date}`);
+            const mark = handMarkSvg(root.ownerDocument, status === 'present' ? 'P' : 'A', `${id}:${slot.dataset.date}`, { strokeWidth: ATTENDANCE_STROKE });
             mark.classList.add('hand-attendance');
             slot.append(mark);
         });
     });
 }
+
+/** Pen weight of the P and A letters (viewBox units; checks use the default of about 7), bold enough to read over the grey [Day n] text. */
+export const ATTENDANCE_STROKE = 13;
 
 /** Sizes and places the pen marks inside their cells; part of the print document's stylesheet. */
 export const HAND_MARK_CSS = `

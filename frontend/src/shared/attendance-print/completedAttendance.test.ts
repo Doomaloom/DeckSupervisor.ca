@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import planningLevels from '../../features/instructor/LessonPlans/lessonSkills.json';
 import { buildAttendancePrintDocument, COMPLETED_STUDENTS_PER_SHEET } from './buildAttendancePrintDocument';
-import { COMPLETED_PRINT_CURRICULUM_VERSION, earnedChecks } from './completedAttendance';
+import { ATTENDANCE_STROKE, COMPLETED_PRINT_CURRICULUM_VERSION, earnedChecks } from './completedAttendance';
 import manifest from './completedPrintMap.json';
 import { LEGACY_ATTENDANCE_TEMPLATE_KEYS, loadAttendanceTemplate } from './templateRegistry';
 import { extractAttendanceTemplateSections } from './templateDom';
@@ -27,6 +27,7 @@ describe('completed historical attendance sheets', () => {
         expect(row.textContent).toContain('Absent/Present');
         expect(row.textContent).toContain(Array.from({length:14},(_,d)=>`[Day ${d+1}]`).join(' '));
         expect(slots(row)).toEqual(['2026-09-07:P','2026-09-14:A','2026-09-21:']);
+        expect([...row.querySelectorAll('[data-date] svg path')].every(path => path.getAttribute('stroke-width') === String(ATTENDANCE_STROKE))).toBe(true);
         expect(row.children[1].textContent?.trim()).toBe('');
         expect(document.querySelector('#start_time')?.textContent).toBe('2026-09-07 09:00');
         expect(document.querySelector('[data-page-kind="attendance-back"]')?.textContent).toContain('Foot-first entry');
