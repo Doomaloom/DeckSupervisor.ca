@@ -2,7 +2,9 @@ import manifest from './completedPrintMap.json';
 import type { AttendancePrintRoster } from './types';
 import { handMarkSvg, handTextSvg } from './handMarks';
 import { levelResult } from './levelProgression';
+import { currentFromColumns } from '../../features/results/translate';
 
+/** The curriculum the blank sheets' columns were generated from (the previous catalog). It is not the version results are computed in: see features/results/translate.ts. */
 export const COMPLETED_PRINT_CURRICULUM_VERSION = manifest.curriculumVersion;
 export type CompletedPrintColumn = {cellIndex: number; heading: string; skillIds: string[]; aggregation: 'all' | 'any'};
 const mappings = manifest.levels as Record<string, CompletedPrintColumn[]>;
@@ -27,7 +29,7 @@ export function validateCompletedRoster(roster: AttendancePrintRoster, template:
         if (!student.name.trim() || !student.enrollmentId || !student.results) throw new Error('Resolve every student from the local roster before printing completed sheets.');
         if (ids.has(student.enrollmentId)) throw new Error('A student identity occurs twice in the completed sheet.');
         ids.add(student.enrollmentId);
-        if (Object.values(student.results.successfulAttempts).some(n => !Number.isInteger(n) || n < 0)) throw new Error('Invalid saved skill progress.');
+        if ([...Object.values(student.results.successfulAttempts), ...Object.values(student.results.currentAttempts ?? {})].some(n => !Number.isInteger(n) || n < 0)) throw new Error('Invalid saved skill progress.');
         if (Object.entries(student.results.attendance).some(([date, value]) => !roster.completed!.lessonDates.includes(date) || !['present', 'absent', 'unmarked'].includes(value))) throw new Error('Attendance does not match the selected lesson dates.');
     }
     if (!roster.completed.lessonDates.length || new Set(roster.completed.lessonDates).size !== roster.completed.lessonDates.length || roster.completed.lessonDates.some(date => !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date)) throw new Error('Completed sheets need valid, unique lesson dates.');
@@ -63,7 +65,7 @@ export function fillCompletedMarks(root: HTMLElement, roster: AttendancePrintRos
             for (let mark = 0; mark < count; mark += 1) marks.append(handMarkSvg(root.ownerDocument, 'check', `${id}:${column.cellIndex}:${mark}`));
             cell.append(marks);
         }
-        const outcome = levelResult(template, student.results!.successfulAttempts);
+        const outcome = levelResult(template, student.results!.currentAttempts ?? currentFromColumns(student.results!.successfulAttempts));
         for (const [index, text, name] of [[resultIndex, outcome.result, 'result'], [registerIndex, outcome.registerIn, 'registerIn']] as const) {
             const cell = row.children[index] as HTMLElement | undefined;
             if (index < 0 || !cell) continue;

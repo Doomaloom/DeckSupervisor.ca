@@ -12,7 +12,7 @@
  "fields": {
   "participant": {
    "page": "outside",
-   "x": 76.0,
+   "x": 76,
    "y": 72.23
   },
   "instructor": {
@@ -46,83 +46,6 @@
   }
  ],
  "criteria": {
-  "LittleSplash4:10:1": {
-   "page": "outside",
-   "x": 3.82,
-   "y": 13.21,
-   "highlight": {
-    "x": 2.73,
-    "y": 10.67,
-    "w": 11.21,
-    "h": 4.08
-   }
-  },
-  "LittleSplash4:10:2": {
-   "page": "outside",
-   "x": 3.84,
-   "y": 16.29,
-   "highlight": {
-    "x": 2.73,
-    "y": 14.82,
-    "w": 15.27,
-    "h": 2.82
-   }
-  },
-  "LittleSplash4:10:3": {
-   "page": "outside",
-   "x": 3.86,
-   "y": 19.38,
-   "highlight": {
-    "x": 2.73,
-    "y": 17.96,
-    "w": 24.3,
-    "h": 5.02
-   }
-  },
-  "LittleSplash4:10:4": {
-   "page": "outside",
-   "x": 3.89,
-   "y": 24.77,
-   "highlight": {
-    "x": 2.89,
-    "y": 23.42,
-    "w": 25.21,
-    "h": 2.78
-   }
-  },
-  "LittleSplash4:11a:1": {
-   "page": "outside",
-   "x": 3.98,
-   "y": 36.85,
-   "highlight": {
-    "x": 2.98,
-    "y": 35.4,
-    "w": 30.08,
-    "h": 5.13
-   }
-  },
-  "LittleSplash4:11a:2": {
-   "page": "outside",
-   "x": 6.7,
-   "y": 42.46,
-   "highlight": {
-    "x": 5.45,
-    "y": 40.86,
-    "w": 27.6,
-    "h": 4.92
-   }
-  },
-  "LittleSplash4:11b:2": {
-   "page": "outside",
-   "x": 6.7,
-   "y": 47.9,
-   "highlight": {
-    "x": 5.58,
-    "y": 46.43,
-    "w": 25.03,
-    "h": 7.14
-   }
-  },
   "LittleSplash4:1:1": {
    "page": "inside",
    "x": 4.57,
@@ -183,7 +106,7 @@
    "x": 5.14,
    "y": 78.15,
    "highlight": {
-    "x": 4.0,
+    "x": 4,
     "y": 76.71,
     "w": 21.82,
     "h": 2.82
@@ -230,6 +153,17 @@
     "x": 37.03,
     "y": 68.08,
     "w": 29.09,
+    "h": 2.9
+   }
+  },
+  "LittleSplash4:6:3": {
+   "page": "inside",
+   "x": 38.14,
+   "y": 73.47,
+   "highlight": {
+    "x": 37.03,
+    "y": 72,
+    "w": 23.21,
     "h": 2.9
    }
   },
@@ -326,7 +260,7 @@
    "x": 71.11,
    "y": 43.82,
    "highlight": {
-    "x": 70.0,
+    "x": 70,
     "y": 42.35,
     "w": 24.97,
     "h": 2.98
@@ -412,58 +346,116 @@
   "LittleSplash4:9c:3": {
    "page": "inside",
    "x": 70.93,
-   "y": 92.0,
+   "y": 92,
    "highlight": {
     "x": 69.82,
     "y": 90.59,
     "w": 18.85,
     "h": 2.9
    }
-  }
- },
- "unmapped": [
-  {
-   "criterionId": "LittleSplash4:11b:1",
-   "reason": "single shared Water Smart participation box on the card, used for 11a:1"
   },
-  {
-   "criterionId": "LittleSplash4:11b:3",
-   "reason": "card has one circle for the whole Lifejacket message, used for 11b:2"
-  }
- ],
- "extraBoxes": [
-  {
-   "page": "inside",
-   "x": 38.14,
-   "y": 73.47,
-   "label": "Tread water 15 second time met (no criterion; 6:2 mapped to the swim/kick distance box)",
-   "ticksWith": [
-    "LittleSplash4:6:2"
-   ],
+  "LittleSplash4:10:1": {
+   "page": "outside",
+   "x": 3.82,
+   "y": 13.21,
    "highlight": {
-    "x": 37.03,
-    "y": 72.0,
-    "w": 23.21,
-    "h": 2.9
+    "x": 2.73,
+    "y": 10.67,
+    "w": 11.21,
+    "h": 4.08
    }
   },
+  "LittleSplash4:10:2": {
+   "page": "outside",
+   "x": 3.84,
+   "y": 16.29,
+   "highlight": {
+    "x": 2.73,
+    "y": 14.82,
+    "w": 15.27,
+    "h": 2.82
+   }
+  },
+  "LittleSplash4:10:3": {
+   "page": "outside",
+   "x": 3.86,
+   "y": 19.38,
+   "highlight": {
+    "x": 2.73,
+    "y": 17.96,
+    "w": 24.3,
+    "h": 5.02
+   }
+  },
+  "LittleSplash4:10:4": {
+   "page": "outside",
+   "x": 3.89,
+   "y": 24.77,
+   "highlight": {
+    "x": 2.89,
+    "y": 23.42,
+    "w": 25.21,
+    "h": 2.78
+   }
+  },
+  "LittleSplash4:11a:2": {
+   "page": "outside",
+   "x": 6.7,
+   "y": 42.46,
+   "highlight": {
+    "x": 5.45,
+    "y": 40.86,
+    "w": 27.6,
+    "h": 4.92
+   }
+  },
+  "LittleSplash4:11b:2": {
+   "page": "outside",
+   "x": 6.7,
+   "y": 47.9,
+   "highlight": {
+    "x": 5.58,
+    "y": 46.43,
+    "w": 25.03,
+    "h": 7.14
+   }
+  }
+ },
+ "unmapped": [],
+ "extraBoxes": [
   {
    "page": "inside",
    "x": 71.25,
    "y": 18.29,
-   "label": "Streamlined side glide parent box (8:1-8:4 mapped to its four circles) (ticks when the skill is complete)",
+   "label": "Streamlined side glide",
    "ticksWith": [
     "LittleSplash4:8:1",
     "LittleSplash4:8:2",
     "LittleSplash4:8:3",
-    "LittleSplash4:8:4",
-    "LittleSplash4:8:5"
+    "LittleSplash4:8:4"
    ],
    "highlight": {
     "x": 70.12,
     "y": 16.86,
     "w": 16.06,
     "h": 2.98
+   }
+  },
+  {
+   "page": "outside",
+   "x": 3.98,
+   "y": 36.85,
+   "label": "Participation in a water activity reinforcing the Water Smart messages",
+   "ticksWith": [
+    "LittleSplash4:11a:2",
+    "LittleSplash4:11b:2"
+   ],
+   "match": "any",
+   "highlight": {
+    "x": 2.98,
+    "y": 35.4,
+    "w": 30.08,
+    "h": 5.13
    }
   }
  ],
@@ -475,20 +467,6 @@
    "w": 30.58,
    "h": 2.89
   },
-  "LittleSplash4:10": {
-   "page": "outside",
-   "x": 2.64,
-   "y": 5.13,
-   "w": 25.04,
-   "h": 5.78
-  },
-  "LittleSplash4:11a": {
-   "page": "outside",
-   "x": 2.67,
-   "y": 32.16,
-   "w": 19.39,
-   "h": 2.67
-  },
   "LittleSplash4:2": {
    "page": "inside",
    "x": 3.39,
@@ -499,13 +477,13 @@
   "LittleSplash4:3": {
    "page": "inside",
    "x": 3.7,
-   "y": 64.0,
+   "y": 64,
    "w": 27.21,
    "h": 5.8
   },
   "LittleSplash4:4": {
    "page": "inside",
-   "x": 4.0,
+   "x": 4,
    "y": 87.14,
    "w": 18.3,
    "h": 2.98
@@ -531,6 +509,13 @@
    "w": 30.58,
    "h": 2.35
   },
+  "LittleSplash4:8": {
+   "page": "inside",
+   "x": 70.08,
+   "y": 13.26,
+   "w": 17.85,
+   "h": 2.57
+  },
   "LittleSplash4:9a": {
    "page": "inside",
    "x": 68.48,
@@ -552,12 +537,19 @@
    "w": 22.64,
    "h": 2.67
   },
-  "LittleSplash4:8": {
-   "page": "inside",
-   "x": 70.08,
-   "y": 13.26,
-   "w": 17.85,
-   "h": 2.57
+  "LittleSplash4:10": {
+   "page": "outside",
+   "x": 2.64,
+   "y": 5.13,
+   "w": 25.04,
+   "h": 5.78
+  },
+  "LittleSplash4:11a": {
+   "page": "outside",
+   "x": 2.67,
+   "y": 32.16,
+   "w": 19.39,
+   "h": 2.67
   },
   "LittleSplash4:11b": {
    "page": "outside",

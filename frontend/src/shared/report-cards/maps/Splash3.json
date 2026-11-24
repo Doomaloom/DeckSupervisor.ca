@@ -17,8 +17,8 @@
   },
   "instructor": {
    "page": "outside",
-   "x": 76.0,
-   "y": 77.0
+   "x": 76,
+   "y": 77
   },
   "date": {
    "page": "outside",
@@ -158,6 +158,17 @@
   },
   "Splash3:6:2": {
    "page": "inside",
+   "x": 4.89,
+   "y": 88.5,
+   "highlight": {
+    "x": 3.76,
+    "y": 87.06,
+    "w": 22,
+    "h": 2.82
+   }
+  },
+  "Splash3:6:3": {
+   "page": "inside",
    "x": 4.93,
    "y": 90.79,
    "highlight": {
@@ -211,6 +222,17 @@
     "h": 2.82
    }
   },
+  "Splash3:7:5": {
+   "page": "inside",
+   "x": 36.82,
+   "y": 29.71,
+   "highlight": {
+    "x": 35.7,
+    "y": 28.7,
+    "w": 22.79,
+    "h": 2.8
+   }
+  },
   "Splash3:8:1": {
    "page": "inside",
    "x": 36.89,
@@ -218,7 +240,7 @@
    "highlight": {
     "x": 35.76,
     "y": 36.94,
-    "w": 24.0,
+    "w": 24,
     "h": 2.82
    }
   },
@@ -252,6 +274,17 @@
     "x": 35.82,
     "y": 45.73,
     "w": 22.73,
+    "h": 2.82
+   }
+  },
+  "Splash3:8:5": {
+   "page": "inside",
+   "x": 36.98,
+   "y": 49.47,
+   "highlight": {
+    "x": 35.88,
+    "y": 48,
+    "w": 22.67,
     "h": 2.82
    }
   },
@@ -299,17 +332,6 @@
     "h": 2.82
    }
   },
-  "Splash3:10-front-crawl:1": {
-   "page": "inside",
-   "x": 37.27,
-   "y": 88.68,
-   "highlight": {
-    "x": 36.12,
-    "y": 87.22,
-    "w": 18.36,
-    "h": 2.82
-   }
-  },
   "Splash3:10-front-crawl:2": {
    "page": "inside",
    "x": 37.16,
@@ -354,13 +376,13 @@
     "h": 4.31
    }
   },
-  "Splash3:10-back-crawl:1": {
+  "Splash3:10-front-crawl:1": {
    "page": "inside",
-   "x": 69.55,
-   "y": 30.97,
+   "x": 37.27,
+   "y": 88.68,
    "highlight": {
-    "x": 68.42,
-    "y": 29.49,
+    "x": 36.12,
+    "y": 87.22,
     "w": 18.36,
     "h": 2.82
    }
@@ -417,6 +439,17 @@
     "x": 68.42,
     "y": 27.29,
     "w": 12.55,
+    "h": 2.82
+   }
+  },
+  "Splash3:10-back-crawl:1": {
+   "page": "inside",
+   "x": 69.55,
+   "y": 30.97,
+   "highlight": {
+    "x": 68.42,
+    "y": 29.49,
+    "w": 18.36,
     "h": 2.82
    }
   },
@@ -487,79 +520,18 @@
    }
   }
  },
- "unmapped": [
-  {
-   "criterionId": "Splash3:12a:1",
-   "reason": "single shared Water Smart participation box on card (listed under extraBoxes)"
-  },
-  {
-   "criterionId": "Splash3:12b:1",
-   "reason": "single shared Water Smart participation box on card (listed under extraBoxes)"
-  },
-  {
-   "criterionId": "Splash3:12c:1",
-   "reason": "single shared Water Smart participation box on card (listed under extraBoxes)"
-  },
-  {
-   "criterionId": "Splash3:12d:1",
-   "reason": "single shared Water Smart participation box on card (listed under extraBoxes)"
-  }
- ],
+ "unmapped": [],
  "extraBoxes": [
   {
-   "page": "inside",
-   "x": 4.89,
-   "y": 88.5,
-   "label": "Treading water 30 second time met (6:2 covers time and distance together)",
-   "ticksWith": [
-    "Splash3:6:2"
-   ],
-   "highlight": {
-    "x": 3.76,
-    "y": 87.06,
-    "w": 22.0,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 36.82,
-   "y": 29.71,
-   "label": "5 metre distance completed on front (7:4 mapped to the \"on back\" box)",
-   "ticksWith": [
-    "Splash3:7:4"
-   ],
-   "highlight": {
-    "x": 35.7,
-    "y": 28.7,
-    "w": 22.79,
-    "h": 2.8
-   }
-  },
-  {
-   "page": "inside",
-   "x": 36.98,
-   "y": 49.47,
-   "label": "5 metre distance completed on back (8:4 mapped to the \"on front\" box)",
-   "ticksWith": [
-    "Splash3:8:4"
-   ],
-   "highlight": {
-    "x": 35.88,
-    "y": 48.0,
-    "w": 22.67,
-    "h": 2.82
-   }
-  },
-  {
    "page": "outside",
-   "x": 4.0,
+   "x": 4,
    "y": 16.97,
-   "label": "Water Smart participation box (one box for all four messages; no per-message criterion)",
+   "label": "Water Smart participation: Participation in a water activity reinforcing the Water Smart messages",
    "ticksWith": [
-    "Splash3:12a:1",
-    "Splash3:12b:1",
-    "Splash3:12c:1"
+    "Splash3:12a:2",
+    "Splash3:12b:2",
+    "Splash3:12c:2",
+    "Splash3:12d:2"
    ],
    "match": "any",
    "highlight": {
@@ -577,34 +549,6 @@
    "y": 10.59,
    "w": 18.91,
    "h": 2.43
-  },
-  "Splash3:10-back-crawl": {
-   "page": "inside",
-   "x": 68.48,
-   "y": 9.8,
-   "w": 12.85,
-   "h": 1.88
-  },
-  "Splash3:10-front-crawl": {
-   "page": "inside",
-   "x": 36.06,
-   "y": 69.65,
-   "w": 13.33,
-   "h": 2.04
-  },
-  "Splash3:11": {
-   "page": "inside",
-   "x": 68.42,
-   "y": 40.47,
-   "w": 25.52,
-   "h": 4.08
-  },
-  "Splash3:12a": {
-   "page": "outside",
-   "x": 2.98,
-   "y": 12.94,
-   "w": 14.96,
-   "h": 2.14
   },
   "Splash3:2": {
    "page": "inside",
@@ -653,7 +597,7 @@
    "x": 35.76,
    "y": 32.39,
    "w": 26.24,
-   "h": 4.0
+   "h": 4
   },
   "Splash3:9": {
    "page": "inside",
@@ -661,6 +605,34 @@
    "y": 52.08,
    "w": 17.94,
    "h": 2.35
+  },
+  "Splash3:10-front-crawl": {
+   "page": "inside",
+   "x": 36.06,
+   "y": 69.65,
+   "w": 13.33,
+   "h": 2.04
+  },
+  "Splash3:10-back-crawl": {
+   "page": "inside",
+   "x": 68.48,
+   "y": 9.8,
+   "w": 12.85,
+   "h": 1.88
+  },
+  "Splash3:11": {
+   "page": "inside",
+   "x": 68.42,
+   "y": 40.47,
+   "w": 25.52,
+   "h": 4.08
+  },
+  "Splash3:12a": {
+   "page": "outside",
+   "x": 2.98,
+   "y": 12.94,
+   "w": 14.96,
+   "h": 2.14
   },
   "Splash3:12b": {
    "page": "outside",

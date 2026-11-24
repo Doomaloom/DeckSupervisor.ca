@@ -1,5 +1,6 @@
 import curriculum from '../../features/results/curriculum.json';
 import type {ResultRecord} from '../../lib/resultsApi';
+import {toCurrentRecords} from '../../features/results/translate';
 
 export type CardPage='outside'|'inside';
 export type CardRect={x:number;y:number;w:number;h:number};
@@ -26,12 +27,13 @@ const skillCriteria=(skillId:string)=>criterionIds.filter(id=>id.startsWith(`${s
 
 export type ReportCardMarks={ticked:Set<string>;completeSkills:Set<string>;levelComplete:boolean};
 /**
- * Accepted, nondeleted attempts of the given curriculum version decide the ticks. A criterion is ticked once it was
+ * Accepted, nondeleted attempts of the given (current) curriculum version decide the ticks; previous-version attempts
+ * count through translation (idempotent for records that were already translated). A criterion is ticked once it was
  * marked successful on CRITERION_TICK_THRESHOLD attempts; a skill with that many successful attempts ticks all its criteria.
  */
 export function reportCardMarks(records:ResultRecord[],levelId:string,curriculumVersion:string):ReportCardMarks{
  const skillSuccess=new Map<string,number>(),criterionSuccess=new Map<string,number>();
- for(const r of records){
+ for(const r of toCurrentRecords(records)){
   if(r.deleted||r.kind!=='attempt'||r.curriculumVersion!==curriculumVersion||!r.payload.skillId?.startsWith(`${levelId}:`))continue;
   if(r.success)skillSuccess.set(r.payload.skillId,(skillSuccess.get(r.payload.skillId)??0)+1);
   for(const c of r.payload.results??[])if(c.status==='successful')criterionSuccess.set(c.subskillId,(criterionSuccess.get(c.subskillId)??0)+1);

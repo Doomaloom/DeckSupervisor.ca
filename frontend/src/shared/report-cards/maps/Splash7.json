@@ -22,7 +22,7 @@
   },
   "date": {
    "page": "outside",
-   "x": 73.0,
+   "x": 73,
    "y": 81.4
   },
   "session": {
@@ -46,72 +46,6 @@
   }
  ],
  "criteria": {
-  "Splash7:14:1": {
-   "page": "outside",
-   "x": 4.16,
-   "y": 16.97,
-   "highlight": {
-    "x": 3.03,
-    "y": 15.53,
-    "w": 29.88,
-    "h": 4.39
-   }
-  },
-  "Splash7:14:2": {
-   "page": "outside",
-   "x": 4.21,
-   "y": 21.23,
-   "highlight": {
-    "x": 3.09,
-    "y": 19.76,
-    "w": 29.82,
-    "h": 4.47
-   }
-  },
-  "Splash7:15a:1": {
-   "page": "outside",
-   "x": 4.25,
-   "y": 29.88,
-   "highlight": {
-    "x": 3.15,
-    "y": 28.39,
-    "w": 23.7,
-    "h": 6.2
-   }
-  },
-  "Splash7:15b:1": {
-   "page": "outside",
-   "x": 4.36,
-   "y": 40.5,
-   "highlight": {
-    "x": 3.21,
-    "y": 39.06,
-    "w": 29.82,
-    "h": 6.12
-   }
-  },
-  "Splash7:15b:2": {
-   "page": "outside",
-   "x": 4.41,
-   "y": 46.71,
-   "highlight": {
-    "x": 3.27,
-    "y": 45.25,
-    "w": 25.64,
-    "h": 4.55
-   }
-  },
-  "Splash7:16:1": {
-   "page": "outside",
-   "x": 4.5,
-   "y": 57.23,
-   "highlight": {
-    "x": 3.39,
-    "y": 55.76,
-    "w": 20.48,
-    "h": 2.82
-   }
-  },
   "Splash7:1:3": {
    "page": "inside",
    "x": 3.25,
@@ -163,7 +97,7 @@
    "highlight": {
     "x": 2.42,
     "y": 29.02,
-    "w": 20.0,
+    "w": 20,
     "h": 4.24
    }
   },
@@ -203,7 +137,7 @@
   "Splash7:3:3": {
    "page": "inside",
    "x": 3.84,
-   "y": 48.0,
+   "y": 48,
    "highlight": {
     "x": 2.73,
     "y": 46.51,
@@ -294,7 +228,7 @@
    "y": 81.47,
    "highlight": {
     "x": 3.33,
-    "y": 80.0,
+    "y": 80,
     "w": 23.76,
     "h": 2.82
    }
@@ -401,7 +335,7 @@
   "Splash7:8-front-crawl:7": {
    "page": "inside",
    "x": 36.32,
-   "y": 34.0,
+   "y": 34,
    "highlight": {
     "x": 35.21,
     "y": 32.55,
@@ -530,6 +464,17 @@
     "h": 4.16
    }
   },
+  "Splash7:8-breaststroke:6": {
+   "page": "inside",
+   "x": 36.77,
+   "y": 78.09,
+   "highlight": {
+    "x": 35.64,
+    "y": 76.63,
+    "w": 15.09,
+    "h": 2.82
+   }
+  },
   "Splash7:8-breaststroke:1": {
    "page": "inside",
    "x": 36.8,
@@ -596,6 +541,17 @@
     "h": 2.82
    }
   },
+  "Splash7:11:6": {
+   "page": "inside",
+   "x": 69.09,
+   "y": 26.56,
+   "highlight": {
+    "x": 67.94,
+    "y": 25.1,
+    "w": 27.03,
+    "h": 8.24
+   }
+  },
   "Splash7:11:1": {
    "page": "inside",
    "x": 69.09,
@@ -645,7 +601,7 @@
    "x": 69.11,
    "y": 45.91,
    "highlight": {
-    "x": 68.0,
+    "x": 68,
     "y": 44.47,
     "w": 19.58,
     "h": 4.24
@@ -656,7 +612,7 @@
    "x": 69.11,
    "y": 54.5,
    "highlight": {
-    "x": 68.0,
+    "x": 68,
     "y": 53.02,
     "w": 21.7,
     "h": 4.55
@@ -667,7 +623,7 @@
    "x": 69.11,
    "y": 58.73,
    "highlight": {
-    "x": 68.0,
+    "x": 68,
     "y": 57.25,
     "w": 25.33,
     "h": 4.55
@@ -676,9 +632,9 @@
   "Splash7:12:3": {
    "page": "inside",
    "x": 69.11,
-   "y": 63.0,
+   "y": 63,
    "highlight": {
-    "x": 68.0,
+    "x": 68,
     "y": 61.57,
     "w": 26.91,
     "h": 4.47
@@ -689,7 +645,7 @@
    "x": 69.11,
    "y": 71.71,
    "highlight": {
-    "x": 68.0,
+    "x": 68,
     "y": 70.27,
     "w": 24.36,
     "h": 2.82
@@ -700,7 +656,7 @@
    "x": 69.11,
    "y": 73.97,
    "highlight": {
-    "x": 68.0,
+    "x": 68,
     "y": 72.55,
     "w": 16.06,
     "h": 2.82
@@ -711,7 +667,7 @@
    "x": 69.11,
    "y": 76.27,
    "highlight": {
-    "x": 68.0,
+    "x": 68,
     "y": 74.82,
     "w": 9.76,
     "h": 2.82
@@ -722,7 +678,7 @@
    "x": 69.14,
    "y": 78.56,
    "highlight": {
-    "x": 68.0,
+    "x": 68,
     "y": 77.1,
     "w": 22.18,
     "h": 2.82
@@ -733,7 +689,7 @@
    "x": 69.14,
    "y": 80.85,
    "highlight": {
-    "x": 68.0,
+    "x": 68,
     "y": 79.37,
     "w": 10.97,
     "h": 2.82
@@ -744,7 +700,7 @@
    "x": 69.14,
    "y": 83.15,
    "highlight": {
-    "x": 68.0,
+    "x": 68,
     "y": 81.73,
     "w": 19.76,
     "h": 2.82
@@ -771,66 +727,76 @@
     "w": 27.64,
     "h": 2.82
    }
-  }
- },
- "unmapped": [
-  {
-   "criterionId": "Splash7:9:1",
-   "reason": "no box on the card"
   },
-  {
-   "criterionId": "Splash7:9:2",
-   "reason": "no box on the card"
-  },
-  {
-   "criterionId": "Splash7:9:3",
-   "reason": "no box on the card"
-  },
-  {
-   "criterionId": "Splash7:13:6",
-   "reason": "no box on the card"
-  }
- ],
- "extraBoxes": [
-  {
-   "page": "inside",
-   "x": 36.77,
-   "y": 78.09,
-   "label": "Breaststroke 50 m: Continuous propulsion (no curriculum criterion) (ticks when the skill is complete)",
-   "ticksWith": [
-    "Splash7:8-breaststroke:1",
-    "Splash7:8-breaststroke:2",
-    "Splash7:8-breaststroke:3",
-    "Splash7:8-breaststroke:4",
-    "Splash7:8-breaststroke:5"
-   ],
+  "Splash7:14:1": {
+   "page": "outside",
+   "x": 4.16,
+   "y": 16.97,
    "highlight": {
-    "x": 35.64,
-    "y": 76.63,
-    "w": 15.09,
+    "x": 3.03,
+    "y": 15.53,
+    "w": 29.88,
+    "h": 4.39
+   }
+  },
+  "Splash7:14:2": {
+   "page": "outside",
+   "x": 4.21,
+   "y": 21.23,
+   "highlight": {
+    "x": 3.09,
+    "y": 19.76,
+    "w": 29.82,
+    "h": 4.47
+   }
+  },
+  "Splash7:15a:1": {
+   "page": "outside",
+   "x": 4.25,
+   "y": 29.88,
+   "highlight": {
+    "x": 3.15,
+    "y": 28.39,
+    "w": 23.7,
+    "h": 6.2
+   }
+  },
+  "Splash7:15b:1": {
+   "page": "outside",
+   "x": 4.36,
+   "y": 40.5,
+   "highlight": {
+    "x": 3.21,
+    "y": 39.06,
+    "w": 29.82,
+    "h": 6.12
+   }
+  },
+  "Splash7:15b:2": {
+   "page": "outside",
+   "x": 4.41,
+   "y": 46.71,
+   "highlight": {
+    "x": 3.27,
+    "y": 45.25,
+    "w": 25.64,
+    "h": 4.55
+   }
+  },
+  "Splash7:16:1": {
+   "page": "outside",
+   "x": 4.5,
+   "y": 57.23,
+   "highlight": {
+    "x": 3.39,
+    "y": 55.76,
+    "w": 20.48,
     "h": 2.82
    }
-  },
-  {
-   "page": "inside",
-   "x": 69.09,
-   "y": 26.56,
-   "label": "Assess conscious victim: Demonstrate primary assessment (no curriculum criterion) (ticks when the skill is complete)",
-   "ticksWith": [
-    "Splash7:11:1",
-    "Splash7:11:2",
-    "Splash7:11:3",
-    "Splash7:11:4",
-    "Splash7:11:5"
-   ],
-   "highlight": {
-    "x": 67.94,
-    "y": 25.1,
-    "w": 27.03,
-    "h": 8.24
-   }
   }
- ],
+ },
+ "unmapped": [],
+ "extraBoxes": [],
  "skills": {
   "Splash7:1": {
    "page": "inside",
@@ -839,6 +805,83 @@
    "w": 27.64,
    "h": 2.59
   },
+  "Splash7:2": {
+   "page": "inside",
+   "x": 2.42,
+   "y": 21.65,
+   "w": 21.27,
+   "h": 2.51
+  },
+  "Splash7:3": {
+   "page": "inside",
+   "x": 2.8,
+   "y": 36.9,
+   "w": 23,
+   "h": 2.4
+  },
+  "Splash7:4a": {
+   "page": "inside",
+   "x": 2.97,
+   "y": 50.27,
+   "w": 13.82,
+   "h": 2.27
+  },
+  "Splash7:4b": {
+   "page": "inside",
+   "x": 3.15,
+   "y": 61.49,
+   "w": 14.12,
+   "h": 2.35
+  },
+  "Splash7:5": {
+   "page": "inside",
+   "x": 3.5,
+   "y": 73,
+   "w": 15.6,
+   "h": 2.2
+  },
+  "Splash7:6": {
+   "page": "inside",
+   "x": 3.58,
+   "y": 83.53,
+   "w": 22,
+   "h": 2.51
+  },
+  "Splash7:7": {
+   "page": "inside",
+   "x": 35.03,
+   "y": 5.49,
+   "w": 15.94,
+   "h": 2.04
+  },
+  "Splash7:8-front-crawl": {
+   "page": "inside",
+   "x": 35.15,
+   "y": 14.51,
+   "w": 14,
+   "h": 2.04
+  },
+  "Splash7:8-back-crawl": {
+   "page": "inside",
+   "x": 35.39,
+   "y": 38.9,
+   "w": 13.58,
+   "h": 1.96
+  },
+  "Splash7:8-breaststroke": {
+   "page": "inside",
+   "x": 35.64,
+   "y": 58.9,
+   "w": 14.73,
+   "h": 2.04
+  },
+  "Splash7:9": {
+   "page": "inside",
+   "x": 35.88,
+   "y": 82.9,
+   "w": 22.18,
+   "h": 4.24
+  },
   "Splash7:10": {
    "page": "inside",
    "x": 68.12,
@@ -846,11 +889,18 @@
    "w": 18.42,
    "h": 1.88
   },
+  "Splash7:11": {
+   "page": "inside",
+   "x": 68.1,
+   "y": 22.6,
+   "w": 14.8,
+   "h": 2.2
+  },
   "Splash7:12": {
    "page": "inside",
    "x": 68.12,
    "y": 50.51,
-   "w": 14.0,
+   "w": 14,
    "h": 2.12
   },
   "Splash7:13": {
@@ -887,90 +937,6 @@
    "y": 50.98,
    "w": 23.7,
    "h": 4.24
-  },
-  "Splash7:2": {
-   "page": "inside",
-   "x": 2.42,
-   "y": 21.65,
-   "w": 21.27,
-   "h": 2.51
-  },
-  "Splash7:4a": {
-   "page": "inside",
-   "x": 2.97,
-   "y": 50.27,
-   "w": 13.82,
-   "h": 2.27
-  },
-  "Splash7:4b": {
-   "page": "inside",
-   "x": 3.15,
-   "y": 61.49,
-   "w": 14.12,
-   "h": 2.35
-  },
-  "Splash7:6": {
-   "page": "inside",
-   "x": 3.58,
-   "y": 83.53,
-   "w": 22.0,
-   "h": 2.51
-  },
-  "Splash7:7": {
-   "page": "inside",
-   "x": 35.03,
-   "y": 5.49,
-   "w": 15.94,
-   "h": 2.04
-  },
-  "Splash7:8-back-crawl": {
-   "page": "inside",
-   "x": 35.39,
-   "y": 38.9,
-   "w": 13.58,
-   "h": 1.96
-  },
-  "Splash7:8-breaststroke": {
-   "page": "inside",
-   "x": 35.64,
-   "y": 58.9,
-   "w": 14.73,
-   "h": 2.04
-  },
-  "Splash7:8-front-crawl": {
-   "page": "inside",
-   "x": 35.15,
-   "y": 14.51,
-   "w": 14.0,
-   "h": 2.04
-  },
-  "Splash7:9": {
-   "page": "inside",
-   "x": 35.88,
-   "y": 82.9,
-   "w": 22.18,
-   "h": 4.24
-  },
-  "Splash7:3": {
-   "page": "inside",
-   "x": 2.8,
-   "y": 36.9,
-   "w": 23.0,
-   "h": 2.4
-  },
-  "Splash7:5": {
-   "page": "inside",
-   "x": 3.5,
-   "y": 73.0,
-   "w": 15.6,
-   "h": 2.2
-  },
-  "Splash7:11": {
-   "page": "inside",
-   "x": 68.1,
-   "y": 22.6,
-   "w": 14.8,
-   "h": 2.2
   }
  }
 }

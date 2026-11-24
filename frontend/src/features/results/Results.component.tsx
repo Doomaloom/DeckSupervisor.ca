@@ -12,7 +12,7 @@ import {newRegistry,type ExportCourse} from '../decksupervisor/DeviceExport/serv
 import {recoverRegistry,courseSourceId} from '../decksupervisor/DeviceExport/services/resultRegistry';
 import {resolveLocalIdentities,bindLocalAlias,localNamesFromPackage,type LocalIdentity} from './identity';
 import {openAttendancePrintWindow} from '../../shared/attendance-print/openAttendancePrintWindow';
-import {COMPLETED_PRINT_CURRICULUM_VERSION} from '../../shared/attendance-print/completedAttendance';
+import {CURRENT_CURRICULUM_VERSION} from './translate';
 import type {AttendancePrintItem} from '../../shared/attendance-print/types';
 import {compareStudentNames} from '../decksupervisor/Rosters/utils';
 import {inputClass,selectClass} from '../decksupervisor/Rosters/constants';
@@ -23,7 +23,8 @@ import {ResultsClassCard,type ClassCardSwimmer} from './ResultsClassCard';
 import {findOddities,planOddityFix,loadIgnoredOddities,saveIgnoredOddities,type FixDirection,type FixPlan,type Oddity} from './oddities';
 import {ReportCardOdditiesModal,type OdditiesInstructorGroup} from './ReportCardOdditiesModal';
 const errorMessage=(e:unknown)=>e instanceof Error?e.message:String(e);
-const V=COMPLETED_PRINT_CURRICULUM_VERSION;
+/** New marks, attendance and fixes save in the current curriculum version; older results are translated when read (see translate.ts). */
+const V=CURRENT_CURRICULUM_VERSION;
 // A whole-session snapshot grows with every record and revision and outgrows the database's
 // statement time limit within one term. Per-class snapshots stay small: fetch a few at a time and merge.
 async function resultsByClass(sessionId:string,classIds:string[],concurrency=4):Promise<api.Results>{
@@ -77,7 +78,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
  const visible=classes.filter(c=>(!instructorFilter||c.instructor===instructorFilter)&&(!serviceFilter||c.serviceName===serviceFilter)&&(!query||c.code.toLowerCase().includes(query)||c.course.swimmers.some(s=>nameFor(s.enrollmentId).toLowerCase().includes(query))));
  const records=data?.records??[];
  const recordById=useMemo(()=>new Map(records.map(r=>[r.recordId,r])),[records]);
- const progress=useMemo(()=>acceptedProgress(records,V),[records]);
+ const progress=useMemo(()=>acceptedProgress(records),[records]);
  const attendanceTotals=useMemo(()=>{const map=new Map<string,{present:number;absent:number}>();for(const r of records){if(r.kind!=='attendance'||r.deleted)continue;const t=map.get(r.enrollmentId)??{present:0,absent:0};if(r.payload.status==='present')t.present++;if(r.payload.status==='absent')t.absent++;map.set(r.enrollmentId,t);}return map;},[records]);
  const historyByRecord=useMemo(()=>{const map=new Map<string,api.Results['history']>();for(const h of data?.history??[]){const list=map.get(h.recordId);if(list)list.push(h);else map.set(h.recordId,[h]);}return map;},[data]);
  const attendanceFor=(enrollmentId:string,date:string)=>{const r=recordById.get(`attendance:${enrollmentId}:${date}`);return (!r||r.deleted?'unmarked':r.payload.status??'unmarked') as 'present'|'absent'|'unmarked';};

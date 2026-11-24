@@ -148,7 +148,7 @@
   "Splash2B:3:5": {
    "page": "inside",
    "x": 3.9,
-   "y": 61.0,
+   "y": 61,
    "highlight": {
     "x": 2.79,
     "y": 59.53,
@@ -174,7 +174,7 @@
    "highlight": {
     "x": 2.79,
     "y": 77.02,
-    "w": 26.0,
+    "w": 26,
     "h": 4.31
    }
   },
@@ -197,6 +197,17 @@
     "x": 35.58,
     "y": 16.86,
     "w": 22.12,
+    "h": 2.82
+   }
+  },
+  "Splash2B:5:3": {
+   "page": "inside",
+   "x": 36.6,
+   "y": 20.62,
+   "highlight": {
+    "x": 35.45,
+    "y": 19.14,
+    "w": 24.97,
     "h": 2.82
    }
   },
@@ -316,7 +327,7 @@
    "y": 81.44,
    "highlight": {
     "x": 35.58,
-    "y": 80.0,
+    "y": 80,
     "w": 26.55,
     "h": 4.31
    }
@@ -442,6 +453,17 @@
     "h": 2.82
    }
   },
+  "Splash2B:8-back-crawl:1": {
+   "page": "inside",
+   "x": 69.25,
+   "y": 43.12,
+   "highlight": {
+    "x": 68.12,
+    "y": 41.65,
+    "w": 18.42,
+    "h": 2.82
+   }
+  },
   "Splash2B:8c:1": {
    "page": "inside",
    "x": 69.3,
@@ -486,6 +508,17 @@
     "h": 2.82
    }
   },
+  "Splash2B:8c:5": {
+   "page": "inside",
+   "x": 69.27,
+   "y": 60.91,
+   "highlight": {
+    "x": 68.12,
+    "y": 59.45,
+    "w": 18.42,
+    "h": 2.82
+   }
+  },
   "Splash2B:9:1": {
    "page": "inside",
    "x": 69.3,
@@ -508,21 +541,10 @@
     "h": 4.63
    }
   },
-  "Splash2B:8-back-crawl:1": {
-   "page": "inside",
-   "x": 69.25,
-   "y": 43.12,
-   "highlight": {
-    "x": 68.12,
-    "y": 41.65,
-    "w": 18.42,
-    "h": 2.82
-   }
-  },
   "Splash2B:10a:2": {
    "page": "outside",
    "x": 6.36,
-   "y": 22.0,
+   "y": 22,
    "highlight": {
     "x": 5.21,
     "y": 20.55,
@@ -564,71 +586,18 @@
    }
   }
  },
- "unmapped": [
-  {
-   "criterionId": "Splash2B:10a:1",
-   "reason": "single shared Water Smart participation box on card (see extraBoxes)"
-  },
-  {
-   "criterionId": "Splash2B:10b:1",
-   "reason": "single shared Water Smart participation box on card (see extraBoxes)"
-  },
-  {
-   "criterionId": "Splash2B:10c:1",
-   "reason": "single shared Water Smart participation box on card (see extraBoxes)"
-  },
-  {
-   "criterionId": "Splash2B:10d:1",
-   "reason": "single shared Water Smart participation box on card (see extraBoxes)"
-  },
-  {
-   "criterionId": "Splash2B:2b:1",
-   "reason": "forward roll entry has no separate 'lifejacket donned' box on card"
-  }
- ],
+ "unmapped": [],
  "extraBoxes": [
-  {
-   "page": "inside",
-   "x": 36.6,
-   "y": 20.62,
-   "label": "Swim to Survive skills: swim/kick 15 metre distance completed (criterion 5:2 'distance and time' mapped to the time box)",
-   "ticksWith": [
-    "Splash2B:5:2"
-   ],
-   "highlight": {
-    "x": 35.45,
-    "y": 19.14,
-    "w": 24.97,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 69.27,
-   "y": 60.91,
-   "label": "Alternating front kick to side kick: 10 metre distance completed (no criterion) (ticks when the skill is complete)",
-   "ticksWith": [
-    "Splash2B:8c:1",
-    "Splash2B:8c:2",
-    "Splash2B:8c:3",
-    "Splash2B:8c:4"
-   ],
-   "highlight": {
-    "x": 68.12,
-    "y": 59.45,
-    "w": 18.42,
-    "h": 2.82
-   }
-  },
   {
    "page": "outside",
    "x": 4.2,
    "y": 17.35,
-   "label": "Water Smart participation box (shared by Splash2B:10a:1, 10b:1, 10c:1, 10d:1)",
+   "label": "Water Smart participation: Participation in a water activity reinforcing the Water Smart messages",
    "ticksWith": [
-    "Splash2B:10a:1",
-    "Splash2B:10b:1",
-    "Splash2B:10c:1"
+    "Splash2B:10a:2",
+    "Splash2B:10b:2",
+    "Splash2B:10c:2",
+    "Splash2B:10d:2"
    ],
    "match": "any",
    "highlight": {
@@ -646,13 +615,6 @@
    "y": 10.43,
    "w": 23.52,
    "h": 2.51
-  },
-  "Splash2B:10a": {
-   "page": "outside",
-   "x": 3.31,
-   "y": 13.37,
-   "w": 14.63,
-   "h": 1.93
   },
   "Splash2B:2a": {
    "page": "inside",
@@ -715,20 +677,20 @@
    "x": 35.64,
    "y": 73.18,
    "w": 18.06,
-   "h": 4.0
-  },
-  "Splash2B:8-back-crawl": {
-   "page": "inside",
-   "x": 68.24,
-   "y": 27.76,
-   "w": 12.97,
-   "h": 1.88
+   "h": 4
   },
   "Splash2B:8-front-crawl": {
    "page": "inside",
    "x": 68.24,
    "y": 9.96,
    "w": 13.33,
+   "h": 1.88
+  },
+  "Splash2B:8-back-crawl": {
+   "page": "inside",
+   "x": 68.24,
+   "y": 27.76,
+   "w": 12.97,
    "h": 1.88
   },
   "Splash2B:8c": {
@@ -744,6 +706,13 @@
    "y": 70.16,
    "w": 25.54,
    "h": 4.17
+  },
+  "Splash2B:10a": {
+   "page": "outside",
+   "x": 3.31,
+   "y": 13.37,
+   "w": 14.63,
+   "h": 1.93
   },
   "Splash2B:10b": {
    "page": "outside",

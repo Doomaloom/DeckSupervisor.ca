@@ -1,9 +1,10 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 
-// Run from any directory; Rectab's extracted catalog is the source of truth.
+// Run from any directory. Lesson plans and blank attendance sheets keep the PREVIOUS (template-based) catalog's skill lists;
+// the report-card catalog (catalog.json) only drives results.
 const root = new URL("../../", import.meta.url);
 const source = new URL(
-    "../rec-tablet/src/workflows/swimming/curriculum/catalog.json",
+    "../rec-tablet/src/workflows/swimming/curriculum/catalog-templates-b50c7f987e101b7e.json",
     root,
 );
 const catalog = JSON.parse(await readFile(source, "utf8"));

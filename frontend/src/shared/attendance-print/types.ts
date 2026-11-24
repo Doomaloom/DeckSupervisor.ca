@@ -3,7 +3,10 @@ export type AttendancePrintStudent = {
     enrollmentId?: string;
     results?: {
         attendance: Record<string, "present" | "absent" | "unmarked">;
+        /** Successful attempts per skill of the sheet's own (previous) curriculum, one entry per printed column. */
         successfulAttempts: Record<string, number>;
+        /** Successful attempts per current curriculum skill; decides Complete/Incomplete and Register in. Derived from the column counts when absent. */
+        currentAttempts?: Record<string, number>;
     };
 };
 

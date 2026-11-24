@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import resultsCurriculum from '../../features/results/curriculum.json';
+import resultsCurriculum from '../../features/results/curriculum-previous.json';
 import planningLevels from '../../features/instructor/LessonPlans/lessonSkills.json';
 import { buildAttendancePrintDocument, COMPLETED_STUDENTS_PER_SHEET as LIMIT } from './buildAttendancePrintDocument';
 import { earnedChecks, type CompletedPrintColumn } from './completedAttendance';
@@ -185,7 +185,7 @@ describe('curriculum-column mapping completeness against generated curriculum me
         expect(earnedChecks({ ...column, skillIds: [] }, { a: 3 })).toBe(0);
     });
 
-    const catalogPath = resolve(process.cwd(), '../../rec-tablet/src/workflows/swimming/curriculum/catalog.json');
+    const catalogPath = resolve(process.cwd(), '../../rec-tablet/src/workflows/swimming/curriculum/catalog-templates-b50c7f987e101b7e.json');
     it.runIf(existsSync(catalogPath))('matches the tablet catalog verbatim: version, skill names, criterion IDs and text, and print headings', () => {
         const catalog = JSON.parse(readFileSync(catalogPath, 'utf8')) as { version: string; levels: { id: string; skills: { id: string; number: string; name: string; subskills: { id: string; text: string }[] }[] }[] };
         const expectedSkills: Record<string, string> = {}, expectedCriteria: Record<string, string> = {};

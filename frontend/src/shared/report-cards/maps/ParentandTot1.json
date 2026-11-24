@@ -13,7 +13,7 @@
   "participant": {
    "page": "outside",
    "x": 61.6,
-   "y": 80.0
+   "y": 80
   },
   "instructor": {
    "page": "outside",
@@ -22,13 +22,13 @@
   },
   "date": {
    "page": "outside",
-   "x": 58.0,
-   "y": 89.0
+   "x": 58,
+   "y": 89
   },
   "session": {
    "page": "outside",
    "x": 76.8,
-   "y": 89.0
+   "y": 89
   }
  },
  "nextLevel": [],
@@ -44,6 +44,28 @@
     "h": 2.82
    }
   },
+  "ParentandTot1:2:1": {
+   "page": "inside",
+   "x": 4.84,
+   "y": 13.79,
+   "highlight": {
+    "x": 3.7,
+    "y": 12.31,
+    "w": 16.97,
+    "h": 2.82
+   }
+  },
+  "ParentandTot1:3:1": {
+   "page": "inside",
+   "x": 4.89,
+   "y": 16.44,
+   "highlight": {
+    "x": 3.76,
+    "y": 14.98,
+    "w": 18.97,
+    "h": 2.82
+   }
+  },
   "ParentandTot1:4:1": {
    "page": "inside",
    "x": 4.98,
@@ -55,7 +77,62 @@
     "h": 2.82
    }
   },
-  "ParentandTot1:10a:1": {
+  "ParentandTot1:5:1": {
+   "page": "inside",
+   "x": 4.98,
+   "y": 21.62,
+   "highlight": {
+    "x": 3.88,
+    "y": 20.16,
+    "w": 18.97,
+    "h": 2.82
+   }
+  },
+  "ParentandTot1:6:1": {
+   "page": "inside",
+   "x": 5.11,
+   "y": 24.27,
+   "highlight": {
+    "x": 4,
+    "y": 22.82,
+    "w": 13.82,
+    "h": 2.82
+   }
+  },
+  "ParentandTot1:7:1": {
+   "page": "inside",
+   "x": 5.02,
+   "y": 26.91,
+   "highlight": {
+    "x": 3.88,
+    "y": 25.41,
+    "w": 22.12,
+    "h": 2.9
+   }
+  },
+  "ParentandTot1:8:1": {
+   "page": "inside",
+   "x": 5.16,
+   "y": 29.62,
+   "highlight": {
+    "x": 4.06,
+    "y": 28.08,
+    "w": 24.12,
+    "h": 4.39
+   }
+  },
+  "ParentandTot1:9:1": {
+   "page": "inside",
+   "x": 5.14,
+   "y": 34.23,
+   "highlight": {
+    "x": 4,
+    "y": 32.78,
+    "w": 25.21,
+    "h": 4.39
+   }
+  },
+  "ParentandTot1:10a:2": {
    "page": "inside",
    "x": 7.5,
    "y": 41.8,
@@ -66,7 +143,7 @@
     "h": 2.82
    }
   },
-  "ParentandTot1:10b:1": {
+  "ParentandTot1:10b:2": {
    "page": "inside",
    "x": 7.6,
    "y": 44.6,
@@ -77,7 +154,7 @@
     "h": 2.82
    }
   },
-  "ParentandTot1:10c:1": {
+  "ParentandTot1:10c:2": {
    "page": "inside",
    "x": 7.6,
    "y": 47.4,
@@ -89,203 +166,17 @@
    }
   }
  },
- "unmapped": [
-  {
-   "criterionId": "ParentandTot1:2:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:2:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:3:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:3:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:5:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:5:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:6:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:6:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:7:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:7:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:8:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:8:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:9:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:9:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:9:3",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot1:10a:2",
-   "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
-  },
-  {
-   "criterionId": "ParentandTot1:10b:2",
-   "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
-  },
-  {
-   "criterionId": "ParentandTot1:10c:2",
-   "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
-  }
- ],
+ "unmapped": [],
  "extraBoxes": [
   {
    "page": "inside",
-   "x": 4.84,
-   "y": 13.79,
-   "label": "Readiness for Submersion (one skill box; skill has 2 criteria: 2)",
-   "ticksWith": [
-    "ParentandTot1:2:1",
-    "ParentandTot1:2:2"
-   ],
-   "highlight": {
-    "x": 3.7,
-    "y": 12.31,
-    "w": 16.97,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 4.89,
-   "y": 16.44,
-   "label": "Hold Tot on Front, Eye Contact (one skill box; skill has 2 criteria: 3)",
-   "ticksWith": [
-    "ParentandTot1:3:1",
-    "ParentandTot1:3:2"
-   ],
-   "highlight": {
-    "x": 3.76,
-    "y": 14.98,
-    "w": 18.97,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 4.98,
-   "y": 21.62,
-   "label": "Front Float (Face Out) - Assisted (one skill box; skill has 2 criteria: 5)",
-   "ticksWith": [
-    "ParentandTot1:5:1",
-    "ParentandTot1:5:2"
-   ],
-   "highlight": {
-    "x": 3.88,
-    "y": 20.16,
-    "w": 18.97,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 5.11,
-   "y": 24.27,
-   "label": "Back Float (Assisted) (one skill box; skill has 2 criteria: 6)",
-   "ticksWith": [
-    "ParentandTot1:6:1",
-    "ParentandTot1:6:2"
-   ],
-   "highlight": {
-    "x": 4.0,
-    "y": 22.82,
-    "w": 13.82,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 5.02,
-   "y": 26.91,
-   "label": "Float Wearing PFD (Assisted) (one skill box; skill has 2 criteria: 7)",
-   "ticksWith": [
-    "ParentandTot1:7:1",
-    "ParentandTot1:7:2"
-   ],
-   "highlight": {
-    "x": 3.88,
-    "y": 25.41,
-    "w": 22.12,
-    "h": 2.9
-   }
-  },
-  {
-   "page": "inside",
-   "x": 5.16,
-   "y": 29.62,
-   "label": "Arms: Splashing, Reaching, Paddling, On Front and Back (one skill box; skill has 2 criteria: 8)",
-   "ticksWith": [
-    "ParentandTot1:8:1",
-    "ParentandTot1:8:2"
-   ],
-   "highlight": {
-    "x": 4.06,
-    "y": 28.08,
-    "w": 24.12,
-    "h": 4.39
-   }
-  },
-  {
-   "page": "inside",
-   "x": 5.14,
-   "y": 34.23,
-   "label": "Legs: Tickling, Splashing, Kicking, on Front and Back (one skill box; skill has 3 criteria: 9)",
-   "ticksWith": [
-    "ParentandTot1:9:1",
-    "ParentandTot1:9:2",
-    "ParentandTot1:9:3"
-   ],
-   "highlight": {
-    "x": 4.0,
-    "y": 32.78,
-    "w": 25.21,
-    "h": 4.39
-   }
-  },
-  {
-   "page": "inside",
    "x": 5.25,
-   "y": 39.0,
-   "label": "Water Smart message (skill-level box, no single criterion)",
+   "y": 39,
+   "label": "Water Smart message",
    "ticksWith": [
-    "ParentandTot1:10a:1",
-    "ParentandTot1:10b:1",
-    "ParentandTot1:10c:1"
+    "ParentandTot1:10a:2",
+    "ParentandTot1:10b:2",
+    "ParentandTot1:10c:2"
    ],
    "match": "any",
    "highlight": {

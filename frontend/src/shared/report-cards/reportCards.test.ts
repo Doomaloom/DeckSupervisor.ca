@@ -2,7 +2,7 @@ import {describe,expect,it} from 'vitest';
 import {buildReportCardHtml,levelSkills,recommendedNextLevel,reportCardMarks,type ReportCardMap} from './reportCards';
 import type {ResultRecord} from '../../lib/resultsApi';
 
-const V='v1';
+import {CURRENT_CURRICULUM_VERSION as V} from '../../features/results/translate';
 let n=0;
 const attempt=(skillId:string,results:[string,'successful'|'not_yet'][],success:boolean,over:Partial<ResultRecord>={}):ResultRecord=>({operationId:`op${n}`,sessionId:'s',datasetId:'d',classId:'c',enrollmentId:'e',recordId:`r${n++}`,kind:'attempt',action:'upsert',baseRevision:0,lessonDate:'2026-09-04',curriculumVersion:V,payload:{skillId,results:results.map(([subskillId,status])=>({subskillId,status}))},revision:1,deleted:false,success,updatedAt:'',...over});
 const map:ReportCardMap={level:'Splash1',images:{outside:'splash-1-outside.jpg',inside:'splash-1-inside.jpg'},

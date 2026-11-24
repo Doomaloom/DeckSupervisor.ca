@@ -36,13 +36,22 @@ describe('completed historical attendance sheets', () => {
     it('writes C and the next level for a swimmer who completed every skill three times, I and the same level otherwise', async () => {
         const r = roster();
         const splash1 = Object.keys(curriculum.skills as Record<string, string>).filter(id => id.startsWith('Splash1:'));
-        r.students.push({name:'Done Swimmer', enrollmentId:'enrollment-2', results:{attendance:{}, successfulAttempts:Object.fromEntries(splash1.map(id => [id, 3]))}});
+        r.students.push({name:'Done Swimmer', enrollmentId:'enrollment-2', results:{attendance:{}, successfulAttempts:{}, currentAttempts:Object.fromEntries(splash1.map(id => [id, 3]))}});
         const document = await buildAttendancePrintDocument({template:'Splash1', roster:r});
         const outcome = (row: Element) => [...row.querySelectorAll('svg[data-mark="text"]')].map(svg => svg.getAttribute('data-text'));
         const rows = [...document.querySelectorAll('[data-generated-attendance-row]')];
         expect(outcome(rows[0])).toEqual(['I', 'S1']);
         expect(outcome(rows[1])).toEqual(['C', 'S2A']);
         expect((rows[1].querySelector('[data-result]') as HTMLElement).dataset.result).toBe('C');
+    });
+    it('derives the level result from the column counts when a roster has no current-skill counts', async () => {
+        const r = roster();
+        const columns = (manifest.levels as Record<string, {skillIds: string[]}[]>).Splash1.flatMap(column => column.skillIds);
+        r.students.push({name:'Done Swimmer', enrollmentId:'enrollment-2', results:{attendance:{}, successfulAttempts:Object.fromEntries(columns.map(id => [id, 3]))}});
+        const document = await buildAttendancePrintDocument({template:'Splash1', roster:r});
+        const rows = [...document.querySelectorAll('[data-generated-attendance-row]')];
+        expect((rows[1].querySelector('[data-result]') as HTMLElement).dataset.result).toBe('C');
+        expect((rows[0].querySelector('[data-result]') as HTMLElement).dataset.result).toBe('I');
     });
     it('blocks unresolved names, conflicts, unknown curriculum, or wrong lesson attendance', async () => {
         for (const change of [
@@ -137,7 +146,7 @@ describe('completed historical attendance sheets', () => {
         expect(earnedChecks(column,{front:3})).toBe(0);
     });
     it('maps every numbered column and curriculum ID in all production templates', async () => {
-        const source=resolve(process.cwd(),'../../rec-tablet/src/workflows/swimming/curriculum/catalog.json');
+        const source=resolve(process.cwd(),'../../rec-tablet/src/workflows/swimming/curriculum/catalog-templates-b50c7f987e101b7e.json');
         const catalog=existsSync(source) ? JSON.parse(readFileSync(source,'utf8')) : {levels:planningLevels,version:manifest.curriculumVersion};
         expect(manifest.curriculumVersion).toBe(catalog.version);
         for(const key of LEGACY_ATTENDANCE_TEMPLATE_KEYS) {

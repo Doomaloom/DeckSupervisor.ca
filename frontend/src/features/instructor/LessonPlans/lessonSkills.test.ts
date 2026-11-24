@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { expect, it } from "vitest";
 import { curriculumLevels, defaultWorkoutText, findCurriculumLevel, findPlanningSkill, planningSkillIds, isWorkoutSkill, plannedSkillSubskills, } from "./lessonSkills";
 import levels from "./lessonSkills.json";
+import currentCurriculum from "../../results/curriculum.json";
 
 it.each([
     ["Splash 2a", "Splash2A"],
@@ -18,7 +19,7 @@ it.each([
     expect(findCurriculumLevel(name)?.id).toBe(id);
 });
 const tabletRoot = resolve(process.cwd(), "../../rec-tablet");
-const sourcePath = resolve(tabletRoot, "src/workflows/swimming/curriculum/catalog.json");
+const sourcePath = resolve(tabletRoot, "src/workflows/swimming/curriculum/catalog-templates-b50c7f987e101b7e.json");
 // Standalone website checkouts may omit the tablet; an incorrect path in this workspace must fail.
 it.skipIf(!existsSync(tabletRoot))(
     "keeps generated curriculum aligned with the Rectab extraction",
@@ -27,6 +28,7 @@ it.skipIf(!existsSync(tabletRoot))(
         const compactTitles = JSON.parse(
             readFileSync(resolve(sourcePath, "../compact_titles.json"), "utf8"),
         );
+        const generatedCompact = new Map(levels.flatMap((level) => level.skills.map((skill) => [skill.id, skill.compactName] as const)));
         expect(levels.map((level) => ({
             ...level,
             skills: level.skills.map(({ defaultWorkoutText: _default, ...skill }) => skill),
@@ -43,7 +45,8 @@ it.skipIf(!existsSync(tabletRoot))(
                 skills: skills.map(({ id, name, subskills }) => ({
                     id,
                     name,
-                    compactName: compactTitles[id] || name,
+                    // Skills the report-card catalog split no longer have a compact title in the tablet; lesson plans keep the generated one.
+                    compactName: compactTitles[id] || (id in currentCurriculum.skills ? name : generatedCompact.get(id)),
                     subskills: subskills.map(({ text, group }) => ({ text, group })),
                 })),
             })),

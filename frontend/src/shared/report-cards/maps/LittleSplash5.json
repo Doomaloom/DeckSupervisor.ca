@@ -12,7 +12,7 @@
  "fields": {
   "participant": {
    "page": "outside",
-   "x": 76.0,
+   "x": 76,
    "y": 72.04
   },
   "instructor": {
@@ -46,39 +46,6 @@
   }
  ],
  "criteria": {
-  "LittleSplash5:10a:1": {
-   "page": "outside",
-   "x": 3.89,
-   "y": 16.15,
-   "highlight": {
-    "x": 2.89,
-    "y": 14.76,
-    "w": 30.17,
-    "h": 5.56
-   }
-  },
-  "LittleSplash5:10a:2": {
-   "page": "outside",
-   "x": 6.55,
-   "y": 22.2,
-   "highlight": {
-    "x": 5.45,
-    "y": 20.71,
-    "w": 24.85,
-    "h": 4.86
-   }
-  },
-  "LittleSplash5:10b:2": {
-   "page": "outside",
-   "x": 6.55,
-   "y": 28.16,
-   "highlight": {
-    "x": 5.45,
-    "y": 26.75,
-    "w": 25.09,
-    "h": 7.14
-   }
-  },
   "LittleSplash5:1:1": {
    "page": "inside",
    "x": 4.5,
@@ -141,7 +108,7 @@
    "highlight": {
     "x": 3.7,
     "y": 39.76,
-    "w": 12.0,
+    "w": 12,
     "h": 2.82
    }
   },
@@ -212,6 +179,17 @@
    }
   },
   "LittleSplash5:5:2": {
+   "page": "inside",
+   "x": 37.98,
+   "y": 24.47,
+   "highlight": {
+    "x": 36.85,
+    "y": 22.98,
+    "w": 23.52,
+    "h": 2.9
+   }
+  },
+  "LittleSplash5:5:3": {
    "page": "inside",
    "x": 37.98,
    "y": 28.35,
@@ -359,7 +337,7 @@
    "x": 71.14,
    "y": 23.18,
    "highlight": {
-    "x": 70.0,
+    "x": 70,
     "y": 21.73,
     "w": 13.52,
     "h": 2.9
@@ -370,7 +348,7 @@
    "x": 71.14,
    "y": 26.73,
    "highlight": {
-    "x": 70.0,
+    "x": 70,
     "y": 25.25,
     "w": 18.85,
     "h": 2.9
@@ -394,35 +372,50 @@
    "highlight": {
     "x": 69.88,
     "y": 89.96,
-    "w": 24.0,
+    "w": 24,
     "h": 5.18
+   }
+  },
+  "LittleSplash5:10a:2": {
+   "page": "outside",
+   "x": 6.55,
+   "y": 22.2,
+   "highlight": {
+    "x": 5.45,
+    "y": 20.71,
+    "w": 24.85,
+    "h": 4.86
+   }
+  },
+  "LittleSplash5:10b:2": {
+   "page": "outside",
+   "x": 6.55,
+   "y": 28.16,
+   "highlight": {
+    "x": 5.45,
+    "y": 26.75,
+    "w": 25.09,
+    "h": 7.14
    }
   }
  },
- "unmapped": [
-  {
-   "criterionId": "LittleSplash5:10b:1",
-   "reason": "single shared Water Smart participation box on the card, used for 10a:1"
-  },
-  {
-   "criterionId": "LittleSplash5:10b:3",
-   "reason": "card has one circle for the whole Lifejacket message, used for 10b:2"
-  }
- ],
+ "unmapped": [],
  "extraBoxes": [
   {
-   "page": "inside",
-   "x": 37.98,
-   "y": 24.47,
-   "label": "Treading water 20 second time met (no criterion; 5:2 mapped to the swim/kick distance box)",
+   "page": "outside",
+   "x": 3.89,
+   "y": 16.15,
+   "label": "Participation in a water activity reinforcing the Water Smart messages",
    "ticksWith": [
-    "LittleSplash5:5:2"
+    "LittleSplash5:10a:2",
+    "LittleSplash5:10b:2"
    ],
+   "match": "any",
    "highlight": {
-    "x": 36.85,
-    "y": 22.98,
-    "w": 23.52,
-    "h": 2.9
+    "x": 2.89,
+    "y": 14.76,
+    "w": 30.17,
+    "h": 5.56
    }
   }
  ],

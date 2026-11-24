@@ -13,6 +13,7 @@ import {courseSourceId,studentMatchKey} from '../decksupervisor/DeviceExport/ser
 import {installLocalStorage} from '../../test/storage';
 import {setStorageScope} from '../../lib/storageScope';
 import {COMPLETED_PRINT_CURRICULUM_VERSION} from '../../shared/attendance-print/completedAttendance';
+import {CURRENT_CURRICULUM_VERSION} from './translate';
 import type {ResultRecord,ResultRegistry,Results,ResultGrant} from '../../lib/resultsApi';
 
 const mocks=vi.hoisted(()=>({roster:vi.fn(),popup:vi.fn(),print:vi.fn(),cards:vi.fn()}));
@@ -26,7 +27,7 @@ vi.mock('../../shared/report-cards/reportCards',async original=>{const real=awai
 
 type Call={method:string;url:string;body?:any};
 type Reply={status:number;body?:unknown;text?:string};
-const DATE='2026-09-04',V=COMPLETED_PRINT_CURRICULUM_VERSION;
+const DATE='2026-09-04',V=CURRENT_CURRICULUM_VERSION;
 const sourceId=courseSourceId(session.id,'004201');
 let course:ExportCourse,harroldKey:string,johnnyKey:string,oldJohnnyKey:string;
 let calls:Call[],server:{registry:ResultRegistry|null;results:Results;grants:ResultGrant[];submit:(c:Call)=>Reply;resolve:(c:Call)=>Reply;afterReconcile:()=>void};
@@ -262,7 +263,7 @@ it('lists active and revoked grants and revokes only through the grant endpoint'
  expect(calls.find(c=>c.method==='DELETE')!.url).toBe(`/api/sessions/${session.id}/result-grants/grant-one`);
 });
 
-it('builds completed sheets from accepted server-successful records only and blocks mixed curriculum versions',async()=>{
+it('builds completed sheets from accepted server-successful records only and ignores records of unknown curriculum versions',async()=>{
  server.registry!.courses[0].swimmers[1].matchKey=johnnyKey;
  server.registry!.courses[0].swimmers.push({sourceId:'source-gone',enrollmentId:'enrollment-gone',matchKey:'c'.repeat(64),active:false});
  server.registry!.courses.push({sourceId:courseSourceId(session.id,'other'),classId:'class-two',instructorId:'instructor-two',lessonDates:[DATE],swimmers:[]});
@@ -271,20 +272,17 @@ it('builds completed sheets from accepted server-successful records only and blo
   attempt({recordId:`attendance:enrollment-h:${DATE}`,kind:'attendance',payload:{status:'present'}}),attempt({recordId:`attendance:enrollment-j:${DATE}`,enrollmentId:'enrollment-j',kind:'attendance',payload:{status:'absent'}})];
  server.results=results([...good,skill('old',{curriculumVersion:'templates-older'})],{conflicts:[{id:'elsewhere',operation:skill('x',{classId:'class-two'}),current:null,resolved:false}]});
  const user=userEvent.setup();show();
- await user.click(await screen.findByRole('button',{name:'Print completed sheet for 004201'}));
- expect(await screen.findByRole('alert')).toHaveTextContent('one curriculum version');expect(mocks.print).not.toHaveBeenCalled();
- server.results={...server.results,records:good};
- await user.click(screen.getByRole('button',{name:'Refresh submissions'}));
- await waitFor(()=>expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+ await screen.findByRole('button',{name:'Open skill progress for Harrold'});
  await user.click(screen.getByRole('button',{name:'Print completed sheet for 004201'}));
  await waitFor(()=>expect(mocks.print).toHaveBeenCalledTimes(1));
  const request=mocks.print.mock.calls[0][0];
  expect(request.rosters).toHaveLength(1);expect(request.rosters[0].template).toBe('Splash1');
  const roster=request.rosters[0].roster;
- expect(roster.completed).toEqual({curriculumVersion:V,lessonDates:[DATE,'2026-09-11']});
+ // The sheet's columns are the previous curriculum's skills; results are computed in the current one.
+ expect(roster.completed).toEqual({curriculumVersion:COMPLETED_PRINT_CURRICULUM_VERSION,lessonDates:[DATE,'2026-09-11']});
  expect(roster.students).toEqual([
-  {name:'Harrold',enrollmentId:'enrollment-h',results:{attendance:{[DATE]:'present'},successfulAttempts:{'Splash1:2':2}}},
-  {name:'Johnny',enrollmentId:'enrollment-j',results:{attendance:{[DATE]:'absent'},successfulAttempts:{}}},
+  {name:'Harrold',enrollmentId:'enrollment-h',results:{attendance:{[DATE]:'present'},successfulAttempts:{'Splash1:2':2},currentAttempts:{'Splash1:2':2}}},
+  {name:'Johnny',enrollmentId:'enrollment-j',results:{attendance:{[DATE]:'absent'},successfulAttempts:{},currentAttempts:{}}},
  ]);
 });
 

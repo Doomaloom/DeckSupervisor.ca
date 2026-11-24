@@ -48,7 +48,7 @@
  "criteria": {
   "Splash2A:1:1": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 17.41,
    "highlight": {
     "x": 3.88,
@@ -59,7 +59,7 @@
   },
   "Splash2A:1:2": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 22.32,
    "highlight": {
     "x": 3.8,
@@ -70,7 +70,7 @@
   },
   "Splash2A:2:1": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 34.38,
    "highlight": {
     "x": 3.88,
@@ -81,7 +81,7 @@
   },
   "Splash2A:2:2": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 37.03,
    "highlight": {
     "x": 3.88,
@@ -92,7 +92,7 @@
   },
   "Splash2A:2:3": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 39.65,
    "highlight": {
     "x": 3.88,
@@ -103,7 +103,7 @@
   },
   "Splash2A:2:4": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 42.24,
    "highlight": {
     "x": 3.88,
@@ -114,7 +114,7 @@
   },
   "Splash2A:2:5": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 44.85,
    "highlight": {
     "x": 3.88,
@@ -125,7 +125,7 @@
   },
   "Splash2A:3:1": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 56.88,
    "highlight": {
     "x": 3.88,
@@ -136,7 +136,7 @@
   },
   "Splash2A:4:1": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 66.62,
    "highlight": {
     "x": 3.88,
@@ -147,7 +147,7 @@
   },
   "Splash2A:4:2": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 69.21,
    "highlight": {
     "x": 3.88,
@@ -158,7 +158,7 @@
   },
   "Splash2A:5:1": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 89.09,
    "highlight": {
     "x": 3.88,
@@ -169,13 +169,24 @@
   },
   "Splash2A:5:2": {
    "page": "inside",
-   "x": 5.0,
+   "x": 5,
    "y": 91.68,
    "highlight": {
     "x": 3.88,
     "y": 90.2,
     "w": 23.33,
     "h": 2.9
+   }
+  },
+  "Splash2A:5:3": {
+   "page": "inside",
+   "x": 4.91,
+   "y": 94.29,
+   "highlight": {
+    "x": 3.82,
+    "y": 92.86,
+    "w": 26.48,
+    "h": 2.82
    }
   },
   "Splash2A:6a:1": {
@@ -321,6 +332,28 @@
     "h": 2.82
    }
   },
+  "Splash2A:7:6": {
+   "page": "inside",
+   "x": 71.2,
+   "y": 40.77,
+   "highlight": {
+    "x": 70.06,
+    "y": 39.29,
+    "w": 18.24,
+    "h": 2.82
+   }
+  },
+  "Splash2A:7:7": {
+   "page": "inside",
+   "x": 71.2,
+   "y": 43.85,
+   "highlight": {
+    "x": 70.06,
+    "y": 42.43,
+    "w": 18.73,
+    "h": 2.82
+   }
+  },
   "Splash2A:8-front-crawl:2": {
    "page": "inside",
    "x": 71.2,
@@ -393,7 +426,7 @@
    "y": 81.47,
    "highlight": {
     "x": 70.06,
-    "y": 80.0,
+    "y": 80,
     "w": 14.73,
     "h": 2.82
    }
@@ -420,7 +453,7 @@
     "h": 2.98
    }
   },
-  "Splash2A:8-back-crawl:6": {
+  "Splash2A:8-back-crawl:1": {
    "page": "inside",
    "x": 71.2,
    "y": 93.03,
@@ -498,87 +531,18 @@
    }
   }
  },
- "unmapped": [
-  {
-   "criterionId": "Splash2A:10a:1",
-   "reason": "single shared Water Smart participation box on card (see extraBoxes)"
-  },
-  {
-   "criterionId": "Splash2A:10b:1",
-   "reason": "single shared Water Smart participation box on card (see extraBoxes)"
-  },
-  {
-   "criterionId": "Splash2A:10c:1",
-   "reason": "single shared Water Smart participation box on card (see extraBoxes)"
-  },
-  {
-   "criterionId": "Splash2A:10d:1",
-   "reason": "single shared Water Smart participation box on card (see extraBoxes)"
-  },
-  {
-   "criterionId": "Splash2A:7:1",
-   "reason": "'Note: instructor-assisted' is text only, no box"
-  },
-  {
-   "criterionId": "Splash2A:8-back-crawl:1",
-   "reason": "'(for both strokes)' distance shares the single distance box; mapped to 8-front-crawl:1 / 8-back-crawl:6"
-  }
- ],
+ "unmapped": [],
  "extraBoxes": [
-  {
-   "page": "inside",
-   "x": 4.91,
-   "y": 94.29,
-   "label": "Swim to Survive skills: swim/kick 10 metre distance completed (criterion 5:2 'distance and time' mapped to the time box)",
-   "ticksWith": [
-    "Splash2A:5:2"
-   ],
-   "highlight": {
-    "x": 3.82,
-    "y": 92.86,
-    "w": 26.48,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 71.2,
-   "y": 40.77,
-   "label": "Front kick sequence: 3 second time met on side (criterion 7:5 mapped to first 'on front' box)",
-   "ticksWith": [
-    "Splash2A:7:5"
-   ],
-   "highlight": {
-    "x": 70.06,
-    "y": 39.29,
-    "w": 18.24,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 71.2,
-   "y": 43.85,
-   "label": "Front kick sequence: 3 second time met on front, second (see 7:5)",
-   "ticksWith": [
-    "Splash2A:7:5"
-   ],
-   "highlight": {
-    "x": 70.06,
-    "y": 42.43,
-    "w": 18.73,
-    "h": 2.82
-   }
-  },
   {
    "page": "outside",
    "x": 3.99,
    "y": 34.97,
-   "label": "Water Smart participation box (shared by Splash2A:10a:1, 10b:1, 10c:1, 10d:1)",
+   "label": "Water Smart participation: Participation in a water activity reinforcing the Water Smart messages",
    "ticksWith": [
-    "Splash2A:10a:1",
-    "Splash2A:10b:1",
-    "Splash2A:10c:1"
+    "Splash2A:10a:2",
+    "Splash2A:10b:2",
+    "Splash2A:10c:2",
+    "Splash2A:10d:2"
    ],
    "match": "any",
    "highlight": {
@@ -596,13 +560,6 @@
    "y": 10.12,
    "w": 26.3,
    "h": 5.65
-  },
-  "Splash2A:10a": {
-   "page": "outside",
-   "x": 2.89,
-   "y": 30.37,
-   "w": 19.09,
-   "h": 2.46
   },
   "Splash2A:2": {
    "page": "inside",
@@ -660,13 +617,6 @@
    "w": 26.03,
    "h": 7.91
   },
-  "Splash2A:8-back-crawl": {
-   "page": "inside",
-   "x": 70.08,
-   "y": 73.37,
-   "w": 15.87,
-   "h": 2.57
-  },
   "Splash2A:8-front-crawl": {
    "page": "inside",
    "x": 70.08,
@@ -674,12 +624,26 @@
    "w": 16.28,
    "h": 2.35
   },
+  "Splash2A:8-back-crawl": {
+   "page": "inside",
+   "x": 70.08,
+   "y": 73.37,
+   "w": 15.87,
+   "h": 2.57
+  },
   "Splash2A:9": {
    "page": "outside",
    "x": 2.73,
    "y": 9.84,
    "w": 25.79,
    "h": 5.13
+  },
+  "Splash2A:10a": {
+   "page": "outside",
+   "x": 2.89,
+   "y": 30.37,
+   "w": 19.09,
+   "h": 2.46
   },
   "Splash2A:10b": {
    "page": "outside",

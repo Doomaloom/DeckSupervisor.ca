@@ -1,6 +1,8 @@
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {installLocalStorage} from '../../test/storage';
 import curriculum from './curriculum.json';
+import previous from './curriculum-previous.json';
+import {PREVIOUS_CURRICULUM_VERSION as OLD} from './translate';
 import {reportCardMarks} from '../../shared/report-cards/reportCards';
 import type {ResultRecord} from '../../lib/resultsApi';
 import {attemptSucceeds,equivalentCriteriaGroups,findOddities,normalizeCriterion,loadIgnoredOddities,planOddityFix,saveIgnoredOddities,TIMED_SKILLS,type FixContext} from './oddities';
@@ -34,7 +36,7 @@ describe('equivalentCriteriaGroups',()=>{
  });
  it('never groups generic outcome criteria',()=>{
   for(const level of new Set(Object.keys(curriculum.criteria).map(id=>id.split(':')[0])))for(const g of equivalentCriteriaGroups(level)){
-   expect(g.key).not.toMatch(/minimum distance|participation in a water activity|time requirement met|repetitions completed|continuous sequence|as fast as possible/);
+   expect(g.key).not.toMatch(/minimum distance|participation in a water activity|time requirement met|metre distance|second time|repetitions completed|continuous sequence|as fast as possible/);
    expect(new Set(g.criterionIds.map(id=>id.split(':').slice(0,2).join(':'))).size).toBeGreaterThanOrEqual(2);
    for(const id of g.criterionIds)expect(Object.keys(curriculum.criteria)).toContain(id);
   }
@@ -182,6 +184,62 @@ describe('planOddityFix untick',()=>{
   const records=[attempt(S10,[RK10]),attempt(S11,[RK11])],o={id:'x',classId:CLASS,enrollmentId:ENR,level:LEVEL,key:'rhythmic kick',label:'Rhythmic kick',criteria:[],skills:[]};
   const plan=planOddityFix(o,records,'untick',ctx());
   expect(plan.possible).toBe(false);expect(plan.warnings.length).toBeGreaterThan(0);
+ });
+});
+
+describe('oddities over previous-version records',()=>{
+ const oldCriteriaOf=(skill:string)=>Object.keys(previous.criteria).filter(id=>id.startsWith(`${skill}:`));
+ /** A previous-version attempt of `skill` with the listed old criteria successful. */
+ const oldAttempt=(skill:string,ok:string[]|'all',date='2025-05-01'):ResultRecord=>{
+  const results=oldCriteriaOf(skill).map(subskillId=>({subskillId,status:ok==='all'||ok.includes(subskillId)?'successful' as const:'not_yet' as const}));
+  return attempt(skill,[],date,{curriculumVersion:OLD,payload:{skillId:skill,createdAt:`${date}T10:00:00Z`,submittedAt:`${date}T10:05:00Z`,results},success:results.every(r=>r.status==='successful')});
+ };
+ const threeOld10=dates.map(d=>oldAttempt(S10,[RK10],d));
+ it('finds oddities across old and new records and groups by the current wording',()=>{
+  const found=findOddities([...threeOld10,attempt(S11,[RK11],'2025-05-01')],scope);
+  expect(found).toHaveLength(1);
+  expect(found[0].criteria[0]).toMatchObject({criterionId:RK10,ticked:true,successfulMarks:3,attempts:3});
+  expect(found[0].criteria[1]).toMatchObject({criterionId:RK11,ticked:false,successfulMarks:1});
+ });
+ it('tick only touches real current records: flips new ones and adds new-version supervisor attempts with every subskill',()=>{
+  const records=[...threeOld10,attempt(S11,[],'2025-04-24'),attempt(S11,[RK11],'2025-05-01')],o=findOddities(records,scope)[0],plan=planOddityFix(o,records,'tick',ctx());
+  expect(plan.possible).toBe(true);
+  expect(plan.operations.every(op=>op.curriculumVersion===V)).toBe(true);
+  expect(plan.operations.map(op=>op.recordId).filter(id=>threeOld10.some(r=>r.recordId===id))).toEqual([]);
+  const added=plan.operations.filter(op=>op.baseRevision===0);expect(added).toHaveLength(1);
+  expect(added[0].payload.results!.map(r=>r.subskillId)).toEqual(criteriaOf(S11));
+  expect(reportCardMarks(apply(records,plan.operations),LEVEL,V).ticked.has(RK11)).toBe(true);
+ });
+ it('untick edits the original old record in its own version, keeping all its old criteria',()=>{
+  const sibling=oldCriteriaOf(S10).filter(id=>id!==RK10),oldFull=dates.map(d=>oldAttempt(S10,'all',d));
+  const records=[...oldFull,...dates.map(d=>attempt(S11,[RK11],d))];
+  const o={...findOddities([...threeOld10,attempt(S11,[RK11])],scope)[0]};
+  o.criteria=o.criteria.map(c=>c.criterionId===RK11?{...c,ticked:true,successfulMarks:3}:c);
+  const plan=planOddityFix(o,records,'untick',ctx());
+  expect(plan.possible).toBe(true);
+  const oldOps=plan.operations.filter(op=>op.curriculumVersion===OLD);
+  expect(oldOps).toHaveLength(1);
+  const source=oldFull.find(r=>r.recordId===oldOps[0].recordId)!;
+  expect(oldOps[0]).toMatchObject({baseRevision:source.revision,action:'upsert',kind:'attempt',lessonDate:source.lessonDate});
+  expect(oldOps[0].payload.skillId).toBe(S10);
+  expect(oldOps[0].payload.results).toEqual(oldCriteriaOf(S10).map(subskillId=>({subskillId,status:subskillId===RK10?'not_yet':'successful'})));
+  expect(sibling.length).toBeGreaterThan(0);
+  expect(plan.changes.join('\n')).toMatch(/edits the earlier-curriculum record of/);
+  const after=reportCardMarks(apply(records,plan.operations),LEVEL,V);
+  expect(after.ticked.has(RK10)||after.ticked.has(RK11)).toBe(false);
+ });
+ it('warns about the other new subskills fed by the edited old subskill (a split skill)',()=>{
+  const FRONT='Splash1:7-front-to-back',BACK='Splash1:7-back-to-front',records=dates.map(d=>oldAttempt('Splash1:7','all',d));
+  const oddity:ReturnType<typeof findOddities>[number]={id:'x',classId:CLASS,enrollmentId:ENR,level:'Splash1',key:'body remains horizontal',label:'Body remains horizontal',skills:[],
+   criteria:[{criterionId:`${FRONT}:3`,skillId:FRONT,skillName:'Roll front to back',ticked:true,successfulMarks:3,skillSuccesses:3,skillComplete:true,attempts:3}]};
+  const plan=planOddityFix(oddity,records,'untick',ctx());
+  expect(plan.possible).toBe(true);
+  expect(plan.operations).toHaveLength(1);
+  expect(plan.operations[0]).toMatchObject({curriculumVersion:OLD,payload:{skillId:'Splash1:7'}});
+  expect(plan.operations[0].payload.results).toEqual(oldCriteriaOf('Splash1:7').map(subskillId=>({subskillId,status:subskillId==='Splash1:7:3'?'not_yet':'successful'})));
+  const warning=plan.warnings.join('\n');
+  expect(warning).toMatch(/previous curriculum/);expect(warning).toContain(`${(curriculum.skills as Record<string,string>)[BACK]}: "Body remains horizontal"`);
+  expect(warning).toMatch(/will drop to 2 of 3/);
  });
 });
 

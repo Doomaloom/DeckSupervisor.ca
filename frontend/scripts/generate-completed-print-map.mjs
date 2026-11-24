@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { JSDOM } from 'jsdom';
 const root = new URL('../../', import.meta.url);
-const catalog = JSON.parse(await readFile(new URL('../rec-tablet/src/workflows/swimming/curriculum/catalog.json', root), 'utf8'));
+const catalog = JSON.parse(await readFile(new URL('../rec-tablet/src/workflows/swimming/curriculum/catalog-templates-b50c7f987e101b7e.json', root), 'utf8'));
 const clean = value => value.replace(/\s+/g, ' ').trim();
 const levels = {};
 for (const level of catalog.levels) {

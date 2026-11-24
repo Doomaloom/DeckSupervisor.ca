@@ -12,7 +12,7 @@
  "fields": {
   "participant": {
    "page": "outside",
-   "x": 75.0,
+   "x": 75,
    "y": 71.52
   },
   "instructor": {
@@ -22,7 +22,7 @@
   },
   "date": {
    "page": "outside",
-   "x": 72.0,
+   "x": 72,
    "y": 80.52
   },
   "session": {
@@ -46,39 +46,6 @@
   }
  ],
  "criteria": {
-  "LittleSplash2:9a:1": {
-   "page": "outside",
-   "x": 2.41,
-   "y": 18.65,
-   "highlight": {
-    "x": 1.27,
-    "y": 16.08,
-    "w": 26.36,
-    "h": 5.41
-   }
-  },
-  "LittleSplash2:9a:2": {
-   "page": "outside",
-   "x": 2.55,
-   "y": 23.56,
-   "highlight": {
-    "x": 1.45,
-    "y": 21.88,
-    "w": 26.91,
-    "h": 6.67
-   }
-  },
-  "LittleSplash2:9b:2": {
-   "page": "outside",
-   "x": 2.9,
-   "y": 30.61,
-   "highlight": {
-    "x": 1.76,
-    "y": 28.86,
-    "w": 27.76,
-    "h": 8.78
-   }
-  },
   "LittleSplash2:1:1": {
    "page": "inside",
    "x": 4.34,
@@ -203,7 +170,7 @@
   "LittleSplash2:5b:1": {
    "page": "inside",
    "x": 37.2,
-   "y": 66.0,
+   "y": 66,
    "highlight": {
     "x": 36.06,
     "y": 64.55,
@@ -233,7 +200,7 @@
     "h": 2.82
    }
   },
-  "LittleSplash2:6:1": {
+  "LittleSplash2:6-front-to-back:1": {
    "page": "inside",
    "x": 37.2,
    "y": 80.38,
@@ -244,7 +211,7 @@
     "h": 2.82
    }
   },
-  "LittleSplash2:6:2": {
+  "LittleSplash2:6-front-to-back:2": {
    "page": "inside",
    "x": 37.2,
    "y": 82.97,
@@ -255,7 +222,29 @@
     "h": 2.82
    }
   },
-  "LittleSplash2:6:3": {
+  "LittleSplash2:6-front-to-back:3": {
+   "page": "inside",
+   "x": 37.2,
+   "y": 85.56,
+   "highlight": {
+    "x": 36.06,
+    "y": 84.08,
+    "w": 15.88,
+    "h": 2.82
+   }
+  },
+  "LittleSplash2:6-back-to-front:5": {
+   "page": "inside",
+   "x": 69.59,
+   "y": 44.29,
+   "highlight": {
+    "x": 68.48,
+    "y": 42.82,
+    "w": 17.45,
+    "h": 2.82
+   }
+  },
+  "LittleSplash2:6-back-to-front:1": {
    "page": "inside",
    "x": 69.59,
    "y": 46.91,
@@ -266,14 +255,14 @@
     "h": 2.82
    }
   },
-  "LittleSplash2:6:4": {
+  "LittleSplash2:6-back-to-front:6": {
    "page": "inside",
-   "x": 37.2,
-   "y": 85.56,
+   "x": 69.57,
+   "y": 49.5,
    "highlight": {
-    "x": 36.06,
-    "y": 84.08,
-    "w": 15.88,
+    "x": 68.42,
+    "y": 48.08,
+    "w": 15.82,
     "h": 2.82
    }
   },
@@ -353,43 +342,47 @@
     "w": 17.76,
     "h": 2.82
    }
-  }
- },
- "unmapped": [
-  {
-   "criterionId": "LittleSplash2:9b:1",
-   "reason": "single shared Water Smart participation box on the card, used for 9a:1"
-  }
- ],
- "extraBoxes": [
-  {
-   "page": "inside",
-   "x": 69.59,
-   "y": 44.29,
-   "label": "Roll back to front: begin in back float position (6:1 mapped to front-to-back begin box)",
-   "ticksWith": [
-    "LittleSplash2:6:1"
-   ],
+  },
+  "LittleSplash2:9a:2": {
+   "page": "outside",
+   "x": 2.55,
+   "y": 23.56,
    "highlight": {
-    "x": 68.48,
-    "y": 42.82,
-    "w": 17.45,
-    "h": 2.82
+    "x": 1.45,
+    "y": 21.88,
+    "w": 26.91,
+    "h": 6.67
    }
   },
-  {
-   "page": "inside",
-   "x": 69.57,
-   "y": 49.5,
-   "label": "Roll back to front: body remains horizontal (6:4 mapped to front-to-back section)",
-   "ticksWith": [
-    "LittleSplash2:6:4"
-   ],
+  "LittleSplash2:9b:2": {
+   "page": "outside",
+   "x": 2.9,
+   "y": 30.61,
    "highlight": {
-    "x": 68.42,
-    "y": 48.08,
-    "w": 15.82,
-    "h": 2.82
+    "x": 1.76,
+    "y": 28.86,
+    "w": 27.76,
+    "h": 8.78
+   }
+  }
+ },
+ "unmapped": [],
+ "extraBoxes": [
+  {
+   "page": "outside",
+   "x": 2.41,
+   "y": 18.65,
+   "label": "Participation in a water activity reinforcing the Water Smart messages",
+   "ticksWith": [
+    "LittleSplash2:9a:2",
+    "LittleSplash2:9b:2"
+   ],
+   "match": "any",
+   "highlight": {
+    "x": 1.27,
+    "y": 16.08,
+    "w": 26.36,
+    "h": 5.41
    }
   }
  ],
@@ -432,26 +425,24 @@
   "LittleSplash2:5b": {
    "page": "inside",
    "x": 36.12,
-   "y": 60.0,
+   "y": 60,
    "w": 26.97,
    "h": 4.08
   },
-  "LittleSplash2:6": [
-   {
-    "page": "inside",
-    "x": 36.18,
-    "y": 74.35,
-    "w": 22.48,
-    "h": 4.08
-   },
-   {
-    "page": "inside",
-    "x": 66.53,
-    "y": 38.29,
-    "w": 23.72,
-    "h": 4.17
-   }
-  ],
+  "LittleSplash2:6-front-to-back": {
+   "page": "inside",
+   "x": 36.18,
+   "y": 74.35,
+   "w": 22.48,
+   "h": 4.08
+  },
+  "LittleSplash2:6-back-to-front": {
+   "page": "inside",
+   "x": 66.53,
+   "y": 38.29,
+   "w": 23.72,
+   "h": 4.17
+  },
   "LittleSplash2:7a": {
    "page": "inside",
    "x": 68.48,

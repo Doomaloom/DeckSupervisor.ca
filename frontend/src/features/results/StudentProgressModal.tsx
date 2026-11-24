@@ -1,22 +1,22 @@
 import {useEffect,useState} from 'react';
 import {ActionButton,ModalShell,Select,TextInput} from '../../general-components';
 import type * as api from '../../lib/resultsApi';
-import curriculum from './curriculum.json';
+import {criterionNameFor,skillNameFor} from './translate';
 
-const skillNames=curriculum.skills as Record<string,string>,criterionNames=curriculum.criteria as Record<string,string>;
-export const skillName=(id?:string)=>id?(skillNames[id]??id):'Unknown skill';
-const criterionName=(id:string)=>criterionNames[id]??id;
+/** Labels come from the curriculum version the record was saved in (the current one when no version is given). */
+export const skillName=(id?:string,version?:string)=>id?skillNameFor(version,id):'Unknown skill';
+const criterionName=(id:string,version?:string)=>criterionNameFor(version,id);
 const attendanceLabel={present:'Present',absent:'Absent',unmarked:'Unmarked'} as const;
 
 export function RecordValue({value}:{value:api.ResultOperation|null}){
  if(!value)return <p>No accepted record</p>;
  if(value.action==='delete')return <p>Deleted</p>;
- return value.kind==='attendance'?<p>Attendance: {value.payload.status}</p>:<div><p>{skillName(value.payload.skillId)}</p><ul>{value.payload.results?.map(c=><li key={c.subskillId}>{criterionName(c.subskillId)}: {c.status==='successful'?'Successful':'Not yet'}</li>)}</ul>{value.payload.timed&&<p>{value.payload.timed.lapsCompleted} of {value.payload.timed.lapsRequired} laps in {(Math.floor(value.payload.timed.elapsedMs/100)/10).toFixed(1)} seconds</p>}</div>;
+ return value.kind==='attendance'?<p>Attendance: {value.payload.status}</p>:<div><p>{skillName(value.payload.skillId,value.curriculumVersion)}</p><ul>{value.payload.results?.map(c=><li key={c.subskillId}>{criterionName(c.subskillId,value.curriculumVersion)}: {c.status==='successful'?'Successful':'Not yet'}</li>)}</ul>{value.payload.timed&&<p>{value.payload.timed.lapsCompleted} of {value.payload.timed.lapsRequired} laps in {(Math.floor(value.payload.timed.elapsedMs/100)/10).toFixed(1)} seconds</p>}</div>;
 }
 function AttemptEditor({record,busy,onSave}:{record:api.ResultRecord;busy:boolean;onSave:(payload:api.ResultPayload)=>void}){
  const [payload,setPayload]=useState(record.payload);
  useEffect(()=>setPayload(record.payload),[record.revision]);
- return <details><summary className="cursor-pointer font-semibold">Correct submitted assessment</summary><div className="flex flex-col gap-3 p-3">{payload.results?.map(c=><label key={c.subskillId}>{criterionName(c.subskillId)}<Select disabled={busy} value={c.status} onChange={e=>setPayload({...payload,results:payload.results!.map(item=>item===c?{...item,status:e.target.value as 'successful'|'not_yet'}:item)})}><option value="successful">Successful</option><option value="not_yet">Not yet</option></Select></label>)}{payload.timed&&(['lapsRequired','lapsCompleted','elapsedMs'] as const).map(field=><label key={field}>{field==='elapsedMs'?'Elapsed milliseconds':field==='lapsRequired'?'Laps required':'Laps completed'}<TextInput type="number" min="0" step="1" value={payload.timed![field]} onChange={e=>setPayload({...payload,timed:{...payload.timed!,[field]:Number(e.target.value)}})}/></label>)}<ActionButton disabled={busy} onClick={()=>onSave(payload)}>Save correction as a new revision</ActionButton></div></details>;
+ return <details><summary className="cursor-pointer font-semibold">Correct submitted assessment</summary><div className="flex flex-col gap-3 p-3">{payload.results?.map(c=><label key={c.subskillId}>{criterionName(c.subskillId,record.curriculumVersion)}<Select disabled={busy} value={c.status} onChange={e=>setPayload({...payload,results:payload.results!.map(item=>item===c?{...item,status:e.target.value as 'successful'|'not_yet'}:item)})}><option value="successful">Successful</option><option value="not_yet">Not yet</option></Select></label>)}{payload.timed&&(['lapsRequired','lapsCompleted','elapsedMs'] as const).map(field=><label key={field}>{field==='elapsedMs'?'Elapsed milliseconds':field==='lapsRequired'?'Laps required':'Laps completed'}<TextInput type="number" min="0" step="1" value={payload.timed![field]} onChange={e=>setPayload({...payload,timed:{...payload.timed!,[field]:Number(e.target.value)}})}/></label>)}<ActionButton disabled={busy} onClick={()=>onSave(payload)}>Save correction as a new revision</ActionButton></div></details>;
 }
 function Meter({count}:{count:number}){
  return <span aria-hidden="true" className="inline-flex gap-1">{[0,1,2].map(i=><span key={i} className={`h-3 w-3 rounded-full border-2 border-secondary ${i<count?'bg-primary':'bg-bg'}`}/>)}</span>;

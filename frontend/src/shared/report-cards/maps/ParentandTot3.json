@@ -13,7 +13,7 @@
   "participant": {
    "page": "outside",
    "x": 61.6,
-   "y": 80.0
+   "y": 80
   },
   "instructor": {
    "page": "outside",
@@ -22,17 +22,39 @@
   },
   "date": {
    "page": "outside",
-   "x": 58.0,
-   "y": 89.0
+   "x": 58,
+   "y": 89
   },
   "session": {
    "page": "outside",
    "x": 76.8,
-   "y": 89.0
+   "y": 89
   }
  },
  "nextLevel": [],
  "criteria": {
+  "ParentandTot3:1:1": {
+   "page": "inside",
+   "x": 69.68,
+   "y": 10.18,
+   "highlight": {
+    "x": 68.55,
+    "y": 8.71,
+    "w": 14.42,
+    "h": 2.82
+   }
+  },
+  "ParentandTot3:2:1": {
+   "page": "inside",
+   "x": 69.77,
+   "y": 12.82,
+   "highlight": {
+    "x": 68.67,
+    "y": 11.37,
+    "w": 24.61,
+    "h": 4.55
+   }
+  },
   "ParentandTot3:3:1": {
    "page": "inside",
    "x": 69.75,
@@ -64,6 +86,39 @@
     "y": 21.33,
     "w": 20.91,
     "h": 2.82
+   }
+  },
+  "ParentandTot3:6:1": {
+   "page": "inside",
+   "x": 69.75,
+   "y": 25.35,
+   "highlight": {
+    "x": 68.61,
+    "y": 23.92,
+    "w": 23.64,
+    "h": 2.82
+   }
+  },
+  "ParentandTot3:7:1": {
+   "page": "inside",
+   "x": 69.75,
+   "y": 28,
+   "highlight": {
+    "x": 68.61,
+    "y": 26.59,
+    "w": 21.88,
+    "h": 4.55
+   }
+  },
+  "ParentandTot3:8:1": {
+   "page": "inside",
+   "x": 69.75,
+   "y": 32.91,
+   "highlight": {
+    "x": 68.61,
+    "y": 31.45,
+    "w": 24.48,
+    "h": 4.47
    }
   },
   "ParentandTot3:9a:1": {
@@ -105,12 +160,45 @@
    "y": 45.44,
    "highlight": {
     "x": 68.61,
-    "y": 44.0,
+    "y": 44,
     "w": 18.06,
     "h": 2.82
    }
   },
-  "ParentandTot3:13a:1": {
+  "ParentandTot3:11a:1": {
+   "page": "inside",
+   "x": 69.75,
+   "y": 48.03,
+   "highlight": {
+    "x": 68.61,
+    "y": 46.59,
+    "w": 16.67,
+    "h": 2.82
+   }
+  },
+  "ParentandTot3:11b:1": {
+   "page": "inside",
+   "x": 69.75,
+   "y": 50.68,
+   "highlight": {
+    "x": 68.61,
+    "y": 49.25,
+    "w": 16.55,
+    "h": 2.82
+   }
+  },
+  "ParentandTot3:12:1": {
+   "page": "inside",
+   "x": 69.73,
+   "y": 53.29,
+   "highlight": {
+    "x": 68.61,
+    "y": 51.84,
+    "w": 12.85,
+    "h": 2.82
+   }
+  },
+  "ParentandTot3:13a:2": {
    "page": "inside",
    "x": 71.7,
    "y": 58.7,
@@ -121,7 +209,7 @@
     "h": 2.82
    }
   },
-  "ParentandTot3:13b:1": {
+  "ParentandTot3:13b:2": {
    "page": "inside",
    "x": 71.7,
    "y": 61.5,
@@ -132,7 +220,7 @@
     "h": 2.82
    }
   },
-  "ParentandTot3:13c:1": {
+  "ParentandTot3:13c:2": {
    "page": "inside",
    "x": 71.7,
    "y": 64.3,
@@ -144,242 +232,17 @@
    }
   }
  },
- "unmapped": [
-  {
-   "criterionId": "ParentandTot3:1:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:1:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:2:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:2:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:6:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:6:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:7:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:7:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:7:3",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:8:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:8:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:8:3",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:8:4",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:11a:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:11a:2",
-   "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
-  },
-  {
-   "criterionId": "ParentandTot3:11b:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:11b:2",
-   "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
-  },
-  {
-   "criterionId": "ParentandTot3:12:1",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:12:2",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:12:3",
-   "reason": "card has one box per skill, not per criterion (skill box listed in extraBoxes)"
-  },
-  {
-   "criterionId": "ParentandTot3:13a:2",
-   "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
-  },
-  {
-   "criterionId": "ParentandTot3:13b:2",
-   "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
-  },
-  {
-   "criterionId": "ParentandTot3:13c:2",
-   "reason": "Water Smart message text: card has only a circle per message (participation criterion is mapped to it)"
-  }
- ],
+ "unmapped": [],
  "extraBoxes": [
-  {
-   "page": "inside",
-   "x": 69.68,
-   "y": 10.18,
-   "label": "Jump Entry (Assisted) (one skill box; skill has 2 criteria: 1)",
-   "ticksWith": [
-    "ParentandTot3:1:1",
-    "ParentandTot3:1:2"
-   ],
-   "highlight": {
-    "x": 68.55,
-    "y": 8.71,
-    "w": 14.42,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 69.77,
-   "y": 12.82,
-   "label": "Entry and Submerge from Sitting Position (Assisted) (one skill box; skill has 2 criteria: 2)",
-   "ticksWith": [
-    "ParentandTot3:2:1",
-    "ParentandTot3:2:2"
-   ],
-   "highlight": {
-    "x": 68.67,
-    "y": 11.37,
-    "w": 24.61,
-    "h": 4.55
-   }
-  },
-  {
-   "page": "inside",
-   "x": 69.75,
-   "y": 25.35,
-   "label": "Attempt to Recover Object From Bottom (one skill box; skill has 2 criteria: 6)",
-   "ticksWith": [
-    "ParentandTot3:6:1",
-    "ParentandTot3:6:2"
-   ],
-   "highlight": {
-    "x": 68.61,
-    "y": 23.92,
-    "w": 23.64,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 69.75,
-   "y": 28.0,
-   "label": "Standing Jump Entry, return to Edge (Assisted) (one skill box; skill has 3 criteria: 7)",
-   "ticksWith": [
-    "ParentandTot3:7:1",
-    "ParentandTot3:7:2",
-    "ParentandTot3:7:3"
-   ],
-   "highlight": {
-    "x": 68.61,
-    "y": 26.59,
-    "w": 21.88,
-    "h": 4.55
-   }
-  },
-  {
-   "page": "inside",
-   "x": 69.75,
-   "y": 32.91,
-   "label": "Jump Entry and Float Wearing PFD (Assisted) (one skill box; skill has 4 criteria: 8)",
-   "ticksWith": [
-    "ParentandTot3:8:1",
-    "ParentandTot3:8:2",
-    "ParentandTot3:8:3",
-    "ParentandTot3:8:4"
-   ],
-   "highlight": {
-    "x": 68.61,
-    "y": 31.45,
-    "w": 24.48,
-    "h": 4.47
-   }
-  },
-  {
-   "page": "inside",
-   "x": 69.75,
-   "y": 48.03,
-   "label": "Kicking on Front (Assisted) (one skill box; skill has 2 criteria: 11a)",
-   "ticksWith": [
-    "ParentandTot3:11a:1",
-    "ParentandTot3:11a:2"
-   ],
-   "highlight": {
-    "x": 68.61,
-    "y": 46.59,
-    "w": 16.67,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 69.75,
-   "y": 50.68,
-   "label": "Kicking on Back (Assisted) (one skill box; skill has 2 criteria: 11b)",
-   "ticksWith": [
-    "ParentandTot3:11b:1",
-    "ParentandTot3:11b:2"
-   ],
-   "highlight": {
-    "x": 68.61,
-    "y": 49.25,
-    "w": 16.55,
-    "h": 2.82
-   }
-  },
-  {
-   "page": "inside",
-   "x": 69.73,
-   "y": 53.29,
-   "label": "Underwater Passes (one skill box; skill has 3 criteria: 12)",
-   "ticksWith": [
-    "ParentandTot3:12:1",
-    "ParentandTot3:12:2",
-    "ParentandTot3:12:3"
-   ],
-   "highlight": {
-    "x": 68.61,
-    "y": 51.84,
-    "w": 12.85,
-    "h": 2.82
-   }
-  },
   {
    "page": "inside",
    "x": 69.73,
    "y": 55.73,
-   "label": "Water Smart message (skill-level box, no single criterion)",
+   "label": "Water Smart message",
    "ticksWith": [
-    "ParentandTot3:13a:1",
-    "ParentandTot3:13b:1",
-    "ParentandTot3:13c:1"
+    "ParentandTot3:13a:2",
+    "ParentandTot3:13b:2",
+    "ParentandTot3:13c:2"
    ],
    "match": "any",
    "highlight": {
