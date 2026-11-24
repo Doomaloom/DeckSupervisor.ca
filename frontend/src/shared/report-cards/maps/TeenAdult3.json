@@ -1,0 +1,362 @@
+{
+  "level": "TeenAdult3",
+  "images": {
+    "outside": "teen-adult-3-outside.jpg",
+    "inside": "teen-adult-3-inside.jpg"
+  },
+  "source": {
+    "pdf": "splash-adult-report-cards-combined.pdf",
+    "outsidePage": 5,
+    "insidePage": 6
+  },
+  "fields": {
+    "participant": {
+      "page": "outside",
+      "x": 76.6,
+      "y": 72.2
+    },
+    "instructor": {
+      "page": "outside",
+      "x": 76.6,
+      "y": 76.9
+    },
+    "date": {
+      "page": "outside",
+      "x": 73.6,
+      "y": 81.6
+    },
+    "session": {
+      "page": "outside",
+      "x": 88.5,
+      "y": 81.6
+    }
+  },
+  "nextLevel": [
+    {
+      "level": "TeenAdult3",
+      "page": "outside",
+      "x": 35.77,
+      "y": 15.85
+    },
+    {
+      "level": "SplashFitness",
+      "page": "outside",
+      "x": 35.77,
+      "y": 19.15
+    },
+    {
+      "level": "Aquatic Leadership Programs",
+      "page": "outside",
+      "x": 35.82,
+      "y": 22.5
+    }
+  ],
+  "criteria": {
+    "TeenAdult3:1:1": {
+      "page": "inside",
+      "x": 4.07,
+      "y": 12.85
+    },
+    "TeenAdult3:2:1": {
+      "page": "inside",
+      "x": 4.27,
+      "y": 21.56
+    },
+    "TeenAdult3:3:1": {
+      "page": "inside",
+      "x": 4.46,
+      "y": 28.12
+    },
+    "TeenAdult3:3:2": {
+      "page": "inside",
+      "x": 4.5,
+      "y": 30.62
+    },
+    "TeenAdult3:3:3": {
+      "page": "inside",
+      "x": 4.57,
+      "y": 33.12
+    },
+    "TeenAdult3:4:1": {
+      "page": "inside",
+      "x": 4.9,
+      "y": 45.8
+    },
+    "TeenAdult3:4:2": {
+      "page": "inside",
+      "x": 4.9,
+      "y": 47.9
+    },
+    "TeenAdult3:4:3": {
+      "page": "inside",
+      "x": 5.0,
+      "y": 50.0
+    },
+    "TeenAdult3:4:4": {
+      "page": "inside",
+      "x": 5.1,
+      "y": 52.2
+    },
+    "TeenAdult3:5:1": {
+      "page": "inside",
+      "x": 5.32,
+      "y": 62.27
+    },
+    "TeenAdult3:6:1": {
+      "page": "inside",
+      "x": 5.57,
+      "y": 72.03
+    },
+    "TeenAdult3:6:2": {
+      "page": "inside",
+      "x": 5.64,
+      "y": 74.68
+    },
+    "TeenAdult3:6:3": {
+      "page": "inside",
+      "x": 5.68,
+      "y": 77.32
+    },
+    "TeenAdult3:7:1": {
+      "page": "inside",
+      "x": 36.2,
+      "y": 20.09
+    },
+    "TeenAdult3:7:2": {
+      "page": "inside",
+      "x": 36.3,
+      "y": 26.79
+    },
+    "TeenAdult3:7:3": {
+      "page": "inside",
+      "x": 36.34,
+      "y": 29.27
+    },
+    "TeenAdult3:7:4": {
+      "page": "inside",
+      "x": 36.41,
+      "y": 33.88
+    },
+    "TeenAdult3:7:5": {
+      "page": "inside",
+      "x": 6.18,
+      "y": 95.5
+    },
+    "TeenAdult3:7:6": {
+      "page": "inside",
+      "x": 36.02,
+      "y": 6.21
+    },
+    "TeenAdult3:7:7": {
+      "page": "inside",
+      "x": 36.09,
+      "y": 10.79
+    },
+    "TeenAdult3:7:8": {
+      "page": "inside",
+      "x": 36.16,
+      "y": 15.47
+    },
+    "TeenAdult3:8:1": {
+      "page": "inside",
+      "x": 70.3,
+      "y": 7.88
+    },
+    "TeenAdult3:8:2": {
+      "page": "inside",
+      "x": 70.3,
+      "y": 10.32
+    },
+    "TeenAdult3:8:3": {
+      "page": "inside",
+      "x": 70.3,
+      "y": 16.97
+    },
+    "TeenAdult3:8:4": {
+      "page": "inside",
+      "x": 70.3,
+      "y": 21.44
+    },
+    "TeenAdult3:8:5": {
+      "page": "inside",
+      "x": 70.3,
+      "y": 25.91
+    },
+    "TeenAdult3:8:6": {
+      "page": "inside",
+      "x": 70.3,
+      "y": 30.38
+    },
+    "TeenAdult3:8:7": {
+      "page": "inside",
+      "x": 70.32,
+      "y": 34.85
+    },
+    "TeenAdult3:9-front-crawl:1": {
+      "page": "inside",
+      "x": 36.8,
+      "y": 62.21
+    },
+    "TeenAdult3:9-front-crawl:2": {
+      "page": "inside",
+      "x": 36.5,
+      "y": 40.91
+    },
+    "TeenAdult3:9-front-crawl:3": {
+      "page": "inside",
+      "x": 36.52,
+      "y": 43.38
+    },
+    "TeenAdult3:9-front-crawl:4": {
+      "page": "inside",
+      "x": 36.59,
+      "y": 48.03
+    },
+    "TeenAdult3:9-front-crawl:5": {
+      "page": "inside",
+      "x": 36.64,
+      "y": 50.47
+    },
+    "TeenAdult3:9-front-crawl:6": {
+      "page": "inside",
+      "x": 36.66,
+      "y": 52.91
+    },
+    "TeenAdult3:9-front-crawl:7": {
+      "page": "inside",
+      "x": 36.73,
+      "y": 57.56
+    },
+    "TeenAdult3:9-back-crawl:1": {
+      "page": "inside",
+      "x": 37.18,
+      "y": 92.71
+    },
+    "TeenAdult3:9-back-crawl:2": {
+      "page": "inside",
+      "x": 36.89,
+      "y": 69.21
+    },
+    "TeenAdult3:9-back-crawl:3": {
+      "page": "inside",
+      "x": 36.91,
+      "y": 71.73
+    },
+    "TeenAdult3:9-back-crawl:4": {
+      "page": "inside",
+      "x": 36.98,
+      "y": 76.32
+    },
+    "TeenAdult3:9-back-crawl:5": {
+      "page": "inside",
+      "x": 37.05,
+      "y": 83.12
+    },
+    "TeenAdult3:9-back-crawl:6": {
+      "page": "inside",
+      "x": 37.09,
+      "y": 85.62
+    },
+    "TeenAdult3:9-back-crawl:7": {
+      "page": "inside",
+      "x": 37.14,
+      "y": 90.23
+    },
+    "TeenAdult3:10:1": {
+      "page": "inside",
+      "x": 70.34,
+      "y": 41.41
+    },
+    "TeenAdult3:10:2": {
+      "page": "inside",
+      "x": 70.34,
+      "y": 43.85
+    },
+    "TeenAdult3:11:1": {
+      "page": "inside",
+      "x": 70.36,
+      "y": 58.77
+    },
+    "TeenAdult3:11:2": {
+      "page": "inside",
+      "x": 70.39,
+      "y": 61.27
+    },
+    "TeenAdult3:12:1": {
+      "page": "inside",
+      "x": 70.39,
+      "y": 74.85
+    },
+    "TeenAdult3:13:1": {
+      "page": "outside",
+      "x": 3.59,
+      "y": 26.09
+    },
+    "TeenAdult3:14a:2": {
+      "page": "outside",
+      "x": 5.91,
+      "y": 43.82
+    },
+    "TeenAdult3:14b:2": {
+      "page": "outside",
+      "x": 5.96,
+      "y": 48.77
+    },
+    "TeenAdult3:14c:2": {
+      "page": "outside",
+      "x": 6.0,
+      "y": 53.68
+    },
+    "TeenAdult3:14d:2": {
+      "page": "outside",
+      "x": 6.09,
+      "y": 67.91
+    }
+  },
+  "unmapped": [
+    {
+      "criterionId": "TeenAdult3:14a:1",
+      "reason": "single shared \"participation\" box on the card covers all Water Smart messages"
+    },
+    {
+      "criterionId": "TeenAdult3:14b:1",
+      "reason": "single shared \"participation\" box on the card covers all Water Smart messages"
+    },
+    {
+      "criterionId": "TeenAdult3:14c:1",
+      "reason": "single shared \"participation\" box on the card covers all Water Smart messages"
+    },
+    {
+      "criterionId": "TeenAdult3:14d:1",
+      "reason": "single shared \"participation\" box on the card covers all Water Smart messages"
+    },
+    {
+      "criterionId": "TeenAdult3:14b:3",
+      "reason": "card has one circle for the Wear a Lifejacket message; 14b:2 is mapped to it"
+    },
+    {
+      "criterionId": "TeenAdult3:14c:3",
+      "reason": "card has one circle for the Check the Ice message; 14c:2 is mapped to it"
+    }
+  ],
+  "extraBoxes": [
+    {
+      "page": "inside",
+      "x": 5.77,
+      "y": 79.97,
+      "label": "Swim underwater to recover object: 5 metres minimum distance met (6:2 mapped to the \"Minimum distance completed\" box)"
+    },
+    {
+      "page": "outside",
+      "x": 3.71,
+      "y": 38.68,
+      "label": "Water Smart participation in a water activity (shared by 14a:1-14d:1)"
+    },
+    {
+      "page": "outside",
+      "x": 6.04,
+      "y": 60.79,
+      "label": "Water Smart circle: Swim to Survive (no criterion)"
+    }
+  ]
+}
