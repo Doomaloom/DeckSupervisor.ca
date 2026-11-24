@@ -15,7 +15,7 @@ vi.mock('./oddities',()=>({findOddities:mocks.find,planOddityFix:mocks.plan,load
 const registry={schemaVersion:1,sessionId:session.id,datasetId:'synthetic-dataset',courses:[{sourceId:`session:${session.id}:course:004201`,classId:'class-one',instructorId:'instructor-one',lessonDates:['2026-09-04'],swimmers:[{sourceId:'student-one',enrollmentId:'enrollment-one',matchKey:'a'.repeat(64)}]}]};
 const V=COMPLETED_PRINT_CURRICULUM_VERSION;
 const attempt={operationId:'original-op',sessionId:session.id,datasetId:'synthetic-dataset',classId:'class-one',enrollmentId:'enrollment-one',recordId:'attempt-one',kind:'attempt' as const,action:'upsert' as const,baseRevision:0,lessonDate:'2026-09-04',curriculumVersion:V,payload:{skillId:'LittleSplash1:1',results:[]},revision:3,deleted:false,success:false,updatedAt:'2026-09-04T12:01:00Z'};
-const oddity:Oddity={id:'class-one:enrollment-one:Splash2A:rhythmic kick',classId:'class-one',enrollmentId:'enrollment-one',level:'Splash2A',key:'rhythmic kick',label:'Rhythmic kick',criteria:[{criterionId:'a',skillId:'Splash2A:1',skillName:'Flutter kick on front',ticked:true,successfulMarks:3,skillSuccesses:3,skillComplete:true,attempts:3},{criterionId:'b',skillId:'Splash2A:2',skillName:'Front crawl',ticked:false,successfulMarks:1,skillSuccesses:1,skillComplete:false,attempts:1}]};
+const oddity:Oddity={id:'class-one:enrollment-one:Splash2A:rhythmic kick',classId:'class-one',enrollmentId:'enrollment-one',level:'Splash2A',key:'rhythmic kick',label:'Rhythmic kick',criteria:[{criterionId:'a',skillId:'Splash2A:1',skillName:'Flutter kick on front',ticked:true,successfulMarks:3,skillSuccesses:3,skillComplete:true,attempts:3},{criterionId:'b',skillId:'Splash2A:2',skillName:'Front crawl',ticked:false,successfulMarks:1,skillSuccesses:1,skillComplete:false,attempts:1}],skills:[{skillId:'Splash2A:1',skillName:'Flutter kick on front',successes:3,complete:true,attempts:3,criteria:[{criterionId:'Splash2A:1:1',label:'Rhythmic kick',ticked:true,successfulMarks:3,matched:true},{criterionId:'Splash2A:1:2',label:'Body on front',ticked:true,successfulMarks:3,matched:false}]},{skillId:'Splash2A:2',skillName:'Front crawl',successes:1,complete:false,attempts:3,criteria:[{criterionId:'Splash2A:2:1',label:'Rhythmic kick',ticked:false,successfulMarks:1,matched:true},{criterionId:'Splash2A:2:2',label:'Alternate arm action',ticked:false,successfulMarks:2,matched:false}]}]};
 const op=(n:number)=>({...attempt,operationId:`fix-${n}`,recordId:`r${n}`,baseRevision:n});
 beforeEach(()=>{
  vi.stubGlobal('crypto',webcrypto);installLocalStorage();localStorage.clear();setStorageScope('results-oddities');
@@ -30,7 +30,7 @@ it('adds a review button after Print all instructors that opens the oddities mod
  expect(screen.getByRole('button',{name:'Print all instructors'}).nextElementSibling).toBe(review);
  expect(mocks.find).toHaveBeenCalledWith(expect.any(Array),{classId:'class-one',enrollmentId:'enrollment-one',curriculumVersion:V});
  await user.click(review);
- expect(screen.getByRole('dialog',{name:'Report card oddities'})).toBeVisible();expect(screen.getByText('Front crawl: Not ticked · 1 of 3 marks')).toBeVisible();
+ expect(screen.getByRole('dialog',{name:'Report card oddities'})).toBeVisible();expect(screen.getByRole('region',{name:'Front crawl'})).toBeVisible();
 });
 it('submits the plan operations in order and reports the fix',async()=>{
  const user=userEvent.setup();render(<ResultsView session={session} supervisor/>);

@@ -1,6 +1,6 @@
 import {useEffect,useState} from 'react';
 import {ActionButton,ModalShell} from '../../general-components';
-import type {FixDirection,FixPlan,Oddity} from './oddities';
+import type {FixDirection,FixPlan,Oddity,OdditySkill} from './oddities';
 
 export type OdditySwimmerGroup={enrollmentId:string;name:string;oddities:Oddity[]};
 export type OdditiesClassGroup={classId:string;code:string;title:string;swimmers:OdditySwimmerGroup[]};
@@ -11,7 +11,19 @@ export type ReportCardOdditiesModalProps={
  onApply:(plan:FixPlan)=>void;onIgnore:(id:string)=>void;onRestore:(id:string)=>void;
  onOpenProgress:(classId:string,enrollmentId:string)=>void;onClose:()=>void;
 };
-const markWord=(ticked:boolean)=>ticked?'Ticked':'Not ticked';
+const marksText=(n:number)=>n<3?`${n} of 3 marks`:`${n} marks`;
+const names=(o:Oddity,ticked:boolean)=>[...new Set(o.criteria.filter(c=>c.ticked===ticked).map(c=>c.skillName))].join(' and ');
+/** One skill as it reads on the report card: every subskill with its tick, the oddity's matching subskill highlighted. */
+function OdditySkillColumn({skill}:{skill:OdditySkill}){
+ return <section aria-label={skill.skillName} className="rounded-2xl border-2 border-secondary/20 bg-accent p-3">
+  <h6 className="font-semibold">{skill.skillName}</h6>
+  <p className="text-xs text-secondary/80">{Math.min(skill.successes,3)} of 3 successful attempts · {skill.complete?'skill complete':'skill not complete'}</p>
+  <ul className="mt-2 flex flex-col gap-1 text-sm">{skill.criteria.map(c=><li key={c.criterionId} data-matched={c.matched||undefined} className={`flex flex-wrap items-start gap-x-2 gap-y-0.5 rounded-lg px-2 py-1 [overflow-wrap:break-word] ${c.matched?'bg-yellow-100 font-semibold ring-2 ring-yellow-400':'text-secondary/80'}`}>
+   <span className={`shrink-0 rounded-full px-2 text-xs font-bold ${c.ticked?'bg-emerald-600 text-white':c.matched?'bg-danger text-white':'border border-secondary/40'}`}>{c.ticked?'✓ Ticked':'✗ Not ticked'}</span>
+   <span className="min-w-[9rem] flex-1">{c.label}</span><span className="ml-auto shrink-0 text-xs font-normal">{marksText(c.successfulMarks)}</span>
+  </li>)}</ul>
+ </section>;
+}
 /** Supervisor review of report card oddities: same-wording must-sees that are ticked for one skill but not another. */
 export function ReportCardOdditiesModal({groups,ignored,busy,error,notice,planFix,onApply,onIgnore,onRestore,onOpenProgress,onClose}:ReportCardOdditiesModalProps){
  const [showIgnored,setShowIgnored]=useState(false),[preview,setPreview]=useState<{id:string;plan:FixPlan}|null>(null);
@@ -34,8 +46,8 @@ export function ReportCardOdditiesModal({groups,ignored,busy,error,notice,planFi
      <h6 className="font-semibold">{s.name}</h6>
      <ul className="mt-1 flex flex-col gap-3">{s.oddities.map(o=>{const isIgnored=ignored.has(o.id),active=preview?.id===o.id?preview.plan:null;
       return <li key={o.id} className={`rounded-2xl border-2 p-3 ${isIgnored?'border-secondary/10 bg-bg/50 opacity-80':'border-secondary/20'}`}>
-       <p className="font-semibold">{o.label}{isIgnored&&<span className="ml-2 text-sm font-normal">(ignored)</span>}</p>
-       <ul className="mt-1 list-disc pl-5 text-sm">{o.criteria.map(k=><li key={k.criterionId}>{k.skillName}: {markWord(k.ticked)} · {k.successfulMarks<3?`${k.successfulMarks} of 3 marks`:`${k.successfulMarks} marks`}{k.skillComplete&&' · skill complete'}</li>)}</ul>
+       <p className="font-semibold"><span className="rounded bg-yellow-200 px-1">“{o.label}”</span> is ticked in {names(o,true)} but not in {names(o,false)}{isIgnored&&<span className="ml-2 text-sm font-normal">(ignored)</span>}</p>
+       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">{o.skills.map(k=><OdditySkillColumn key={k.skillId} skill={k}/>)}</div>
        <div className="mt-2 flex flex-wrap gap-2">
         {isIgnored?<ActionButton className={btn} variant="outline" size="sm" disabled={busy} aria-label={`Restore ${o.label} for ${s.name}`} onClick={()=>onRestore(o.id)}>Restore</ActionButton>:<>
          <ActionButton className={btn} variant="outline" size="sm" disabled={busy} aria-label={`Tick ${o.label} everywhere for ${s.name}`} onClick={()=>setPreview({id:o.id,plan:planFix(o,'tick')})}>Tick everywhere</ActionButton>

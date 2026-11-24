@@ -66,6 +66,13 @@ describe('findOddities',()=>{
   const [a,b]=o.criteria;
   expect(a).toMatchObject({criterionId:RK10,skillId:S10,ticked:true,successfulMarks:3,skillSuccesses:0,skillComplete:false,attempts:3});
   expect(b).toMatchObject({criterionId:RK11,skillId:S11,ticked:false,successfulMarks:1,skillSuccesses:0,skillComplete:false,attempts:1});
+  // Both skills with every subskill in curriculum order, the shared one marked, for the side-by-side view.
+  expect(o.skills.map(s=>s.skillId)).toEqual([S10,S11]);
+  for(const s of o.skills)expect(s.criteria.map(c=>c.criterionId)).toEqual(Object.keys(curriculum.criteria).filter(id=>id.startsWith(`${s.skillId}:`)));
+  expect(o.skills.flatMap(s=>s.criteria.filter(c=>c.matched).map(c=>c.criterionId))).toEqual([RK10,RK11]);
+  expect(o.skills[0].criteria.find(c=>c.criterionId===RK10)).toMatchObject({ticked:true,successfulMarks:3,label:'Rhythmic kick'});
+  expect(o.skills[1].criteria.find(c=>c.criterionId===RK11)).toMatchObject({ticked:false,successfulMarks:1});
+  expect(o.skills[1]).toMatchObject({successes:0,complete:false,attempts:1});
  });
  it('flags a criterion ticked through a completed skill',()=>{
   const records=[...['2025-04-24','2025-05-01','2025-05-08'].map(d=>attempt(S10,'all',d)),attempt(S11,[],'2025-05-01')];
@@ -132,7 +139,7 @@ describe('planOddityFix tick',()=>{
  it('is not possible for timed skills and when nothing needs to change',()=>{
   const timed='Splash7:10',oddity={id:'x',classId:CLASS,enrollmentId:ENR,level:'Splash7',key:'k',label:'Kick',criteria:[
    {criterionId:'Splash7:9:1',skillId:'Splash7:9',skillName:'A',ticked:true,successfulMarks:3,skillSuccesses:0,skillComplete:false,attempts:3},
-   {criterionId:`${timed}:1`,skillId:timed,skillName:'Timed',ticked:false,successfulMarks:0,skillSuccesses:0,skillComplete:false,attempts:0}]};
+   {criterionId:`${timed}:1`,skillId:timed,skillName:'Timed',ticked:false,successfulMarks:0,skillSuccesses:0,skillComplete:false,attempts:0}],skills:[]};
   const plan=planOddityFix(oddity,[],'tick',ctx());
   expect(plan.possible).toBe(false);expect(plan.operations).toEqual([]);expect(plan.warnings.join(' ')).toMatch(/timed/);
   const noop=planOddityFix({...oddity,criteria:oddity.criteria.map(c=>({...c,ticked:true}))},[],'tick',ctx());
@@ -172,7 +179,7 @@ describe('planOddityFix untick',()=>{
   expect(after.ticked.has(RK10)).toBe(false);expect(after.ticked.has(RK11)).toBe(false);
  });
  it('is not possible when nothing is ticked',()=>{
-  const records=[attempt(S10,[RK10]),attempt(S11,[RK11])],o={id:'x',classId:CLASS,enrollmentId:ENR,level:LEVEL,key:'rhythmic kick',label:'Rhythmic kick',criteria:[]};
+  const records=[attempt(S10,[RK10]),attempt(S11,[RK11])],o={id:'x',classId:CLASS,enrollmentId:ENR,level:LEVEL,key:'rhythmic kick',label:'Rhythmic kick',criteria:[],skills:[]};
   const plan=planOddityFix(o,records,'untick',ctx());
   expect(plan.possible).toBe(false);expect(plan.warnings.length).toBeGreaterThan(0);
  });

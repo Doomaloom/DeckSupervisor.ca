@@ -10,7 +10,9 @@ import type {ResultOperation,ResultPayload,ResultRecord} from '../../lib/results
  */
 export type EquivalentGroup={key:string;label:string;criterionIds:string[]};
 export type OddityCriterion={criterionId:string;skillId:string;skillName:string;ticked:boolean;successfulMarks:number;skillSuccesses:number;skillComplete:boolean;attempts:number};
-export type Oddity={id:string;classId:string;enrollmentId:string;level:string;key:string;label:string;criteria:OddityCriterion[]};
+/** One skill involved in an oddity, with every subskill on its report card; `matched` marks the subskills of the oddity's group. */
+export type OdditySkill={skillId:string;skillName:string;successes:number;complete:boolean;attempts:number;criteria:{criterionId:string;label:string;ticked:boolean;successfulMarks:number;matched:boolean}[]};
+export type Oddity={id:string;classId:string;enrollmentId:string;level:string;key:string;label:string;criteria:OddityCriterion[];skills:OdditySkill[]};
 export type FixDirection='tick'|'untick';
 export type FixContext={sessionId:string;datasetId:string;lessonDates:string[];curriculumVersion:string;now:()=>string;newId:()=>string};
 export type FixPlan={direction:FixDirection;possible:boolean;operations:ResultOperation[];changes:string[];warnings:string[]};
@@ -56,7 +58,13 @@ export function findOddities(records:ResultRecord[],scope:Scope):Oddity[]{
     return {criterionId,skillId,skillName:skillNames[skillId]??skillId,ticked:marks.ticked.has(criterionId),
      successfulMarks:inSkill.reduce((n,r)=>n+marksOn(r,criterionId),0),skillSuccesses:inSkill.filter(r=>r.success).length,skillComplete:marks.completeSkills.has(skillId),attempts:inSkill.length};
    });
-   if(criteria.some(c=>c.ticked)&&criteria.some(c=>!c.ticked))out.push({id:`${scope.classId}:${scope.enrollmentId}:${level}:${g.key}`,classId:scope.classId,enrollmentId:scope.enrollmentId,level,key:g.key,label:g.label,criteria});
+   if(!(criteria.some(c=>c.ticked)&&criteria.some(c=>!c.ticked)))continue;
+   const skills=[...new Set(criteria.map(c=>c.skillId))].map(skillId=>{
+    const inSkill=mine.filter(r=>r.payload.skillId===skillId),first=criteria.find(c=>c.skillId===skillId)!;
+    return {skillId,skillName:first.skillName,successes:first.skillSuccesses,complete:first.skillComplete,attempts:first.attempts,
+     criteria:skillCriteria(skillId).map(criterionId=>({criterionId,label:criteriaText[criterionId].trim().replace(/:$/,'').trim(),ticked:marks.ticked.has(criterionId),successfulMarks:inSkill.reduce((n,r)=>n+marksOn(r,criterionId),0),matched:g.criterionIds.includes(criterionId)}))};
+   });
+   out.push({id:`${scope.classId}:${scope.enrollmentId}:${level}:${g.key}`,classId:scope.classId,enrollmentId:scope.enrollmentId,level,key:g.key,label:g.label,criteria,skills});
   }
  }
  return out;
