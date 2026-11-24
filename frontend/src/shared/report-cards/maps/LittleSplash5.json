@@ -1,0 +1,228 @@
+{
+  "level": "LittleSplash5",
+  "images": {
+    "outside": "little-splash-5-outside.jpg",
+    "inside": "little-splash-5-inside.jpg"
+  },
+  "source": {
+    "pdf": "little-splash-report-cards-combined.pdf",
+    "outsidePage": 9,
+    "insidePage": 10
+  },
+  "fields": {
+    "participant": {
+      "page": "outside",
+      "x": 76.0,
+      "y": 72.04
+    },
+    "instructor": {
+      "page": "outside",
+      "x": 75.5,
+      "y": 76.76
+    },
+    "date": {
+      "page": "outside",
+      "x": 72.5,
+      "y": 81.55
+    },
+    "session": {
+      "page": "outside",
+      "x": 87.25,
+      "y": 81.55
+    }
+  },
+  "nextLevel": [
+    {
+      "level": "LittleSplash5",
+      "page": "outside",
+      "x": 36.18,
+      "y": 20.15
+    },
+    {
+      "level": "Splash2B",
+      "page": "outside",
+      "x": 36.2,
+      "y": 24.15
+    }
+  ],
+  "criteria": {
+    "LittleSplash5:10a:1": {
+      "page": "outside",
+      "x": 3.89,
+      "y": 16.15
+    },
+    "LittleSplash5:10a:2": {
+      "page": "outside",
+      "x": 6.55,
+      "y": 22.2
+    },
+    "LittleSplash5:10b:2": {
+      "page": "outside",
+      "x": 6.55,
+      "y": 28.16
+    },
+    "LittleSplash5:1:1": {
+      "page": "inside",
+      "x": 4.5,
+      "y": 15.09
+    },
+    "LittleSplash5:1:2": {
+      "page": "inside",
+      "x": 4.59,
+      "y": 20.32
+    },
+    "LittleSplash5:2:1": {
+      "page": "inside",
+      "x": 4.71,
+      "y": 32.38
+    },
+    "LittleSplash5:2:2": {
+      "page": "inside",
+      "x": 4.75,
+      "y": 35.32
+    },
+    "LittleSplash5:2:3": {
+      "page": "inside",
+      "x": 4.77,
+      "y": 38.27
+    },
+    "LittleSplash5:2:4": {
+      "page": "inside",
+      "x": 4.82,
+      "y": 41.21
+    },
+    "LittleSplash5:2:5": {
+      "page": "inside",
+      "x": 4.84,
+      "y": 44.15
+    },
+    "LittleSplash5:3:1": {
+      "page": "inside",
+      "x": 5.23,
+      "y": 77.38
+    },
+    "LittleSplash5:3:2": {
+      "page": "inside",
+      "x": 5.27,
+      "y": 80.32
+    },
+    "LittleSplash5:4:1": {
+      "page": "inside",
+      "x": 5.39,
+      "y": 90.03
+    },
+    "LittleSplash5:4:2": {
+      "page": "inside",
+      "x": 5.43,
+      "y": 92.97
+    },
+    "LittleSplash5:5:1": {
+      "page": "inside",
+      "x": 37.98,
+      "y": 20.53
+    },
+    "LittleSplash5:5:2": {
+      "page": "inside",
+      "x": 37.98,
+      "y": 28.35
+    },
+    "LittleSplash5:6:1": {
+      "page": "inside",
+      "x": 38.07,
+      "y": 48.23
+    },
+    "LittleSplash5:6:2": {
+      "page": "inside",
+      "x": 38.09,
+      "y": 52.06
+    },
+    "LittleSplash5:6:3": {
+      "page": "inside",
+      "x": 38.11,
+      "y": 58.29
+    },
+    "LittleSplash5:6:4": {
+      "page": "inside",
+      "x": 38.14,
+      "y": 64.47
+    },
+    "LittleSplash5:7:1": {
+      "page": "inside",
+      "x": 38.18,
+      "y": 73.91
+    },
+    "LittleSplash5:7:2": {
+      "page": "inside",
+      "x": 38.18,
+      "y": 77.82
+    },
+    "LittleSplash5:7:3": {
+      "page": "inside",
+      "x": 38.23,
+      "y": 81.73
+    },
+    "LittleSplash5:7:4": {
+      "page": "inside",
+      "x": 38.23,
+      "y": 87.94
+    },
+    "LittleSplash5:7:5": {
+      "page": "inside",
+      "x": 38.27,
+      "y": 91.85
+    },
+    "LittleSplash5:8:1": {
+      "page": "inside",
+      "x": 71.18,
+      "y": 10.12
+    },
+    "LittleSplash5:8:2": {
+      "page": "inside",
+      "x": 71.18,
+      "y": 13.71
+    },
+    "LittleSplash5:8:3": {
+      "page": "inside",
+      "x": 71.18,
+      "y": 17.29
+    },
+    "LittleSplash5:8:4": {
+      "page": "inside",
+      "x": 71.14,
+      "y": 23.18
+    },
+    "LittleSplash5:8:5": {
+      "page": "inside",
+      "x": 71.14,
+      "y": 26.73
+    },
+    "LittleSplash5:9:1": {
+      "page": "inside",
+      "x": 71.02,
+      "y": 87.79
+    },
+    "LittleSplash5:9:2": {
+      "page": "inside",
+      "x": 71.02,
+      "y": 91.41
+    }
+  },
+  "unmapped": [
+    {
+      "criterionId": "LittleSplash5:10b:1",
+      "reason": "single shared Water Smart participation box on the card, used for 10a:1"
+    },
+    {
+      "criterionId": "LittleSplash5:10b:3",
+      "reason": "card has one circle for the whole Lifejacket message, used for 10b:2"
+    }
+  ],
+  "extraBoxes": [
+    {
+      "page": "inside",
+      "x": 37.98,
+      "y": 24.47,
+      "label": "Treading water 20 second time met (no criterion; 5:2 mapped to the swim/kick distance box)"
+    }
+  ]
+}

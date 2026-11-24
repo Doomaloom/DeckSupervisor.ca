@@ -1,0 +1,150 @@
+{
+  "level": "LittleSplash1",
+  "images": {
+    "outside": "little-splash-1-outside.jpg",
+    "inside": "little-splash-1-inside.jpg"
+  },
+  "source": {
+    "pdf": "little-splash-report-cards-combined.pdf",
+    "outsidePage": 1,
+    "insidePage": 2
+  },
+  "fields": {
+    "participant": {
+      "page": "outside",
+      "x": 75.5,
+      "y": 72.23
+    },
+    "instructor": {
+      "page": "outside",
+      "x": 75.0,
+      "y": 76.89
+    },
+    "date": {
+      "page": "outside",
+      "x": 72.0,
+      "y": 81.68
+    },
+    "session": {
+      "page": "outside",
+      "x": 86.35,
+      "y": 81.68
+    }
+  },
+  "nextLevel": [
+    {
+      "level": "LittleSplash1",
+      "page": "outside",
+      "x": 36.18,
+      "y": 20.21
+    },
+    {
+      "level": "LittleSplash2",
+      "page": "outside",
+      "x": 36.18,
+      "y": 24.18
+    }
+  ],
+  "criteria": {
+    "LittleSplash1:8a:1": {
+      "page": "outside",
+      "x": 4.02,
+      "y": 16.56
+    },
+    "LittleSplash1:8a:2": {
+      "page": "outside",
+      "x": 6.7,
+      "y": 22.52
+    },
+    "LittleSplash1:8b:2": {
+      "page": "outside",
+      "x": 6.7,
+      "y": 28.35
+    },
+    "LittleSplash1:1:1": {
+      "page": "inside",
+      "x": 4.61,
+      "y": 17.44
+    },
+    "LittleSplash1:1:2": {
+      "page": "inside",
+      "x": 4.64,
+      "y": 20.38
+    },
+    "LittleSplash1:2:1": {
+      "page": "inside",
+      "x": 4.75,
+      "y": 33.15
+    },
+    "LittleSplash1:2:2": {
+      "page": "inside",
+      "x": 4.77,
+      "y": 36.15
+    },
+    "LittleSplash1:3:1": {
+      "page": "inside",
+      "x": 4.89,
+      "y": 47.79
+    },
+    "LittleSplash1:4:1": {
+      "page": "inside",
+      "x": 38.09,
+      "y": 56.77
+    },
+    "LittleSplash1:5a:1": {
+      "page": "inside",
+      "x": 38.14,
+      "y": 69.23
+    },
+    "LittleSplash1:5b:1": {
+      "page": "inside",
+      "x": 38.16,
+      "y": 77.27
+    },
+    "LittleSplash1:6:1": {
+      "page": "inside",
+      "x": 38.2,
+      "y": 88.03
+    },
+    "LittleSplash1:7a:1": {
+      "page": "inside",
+      "x": 71.23,
+      "y": 10.32
+    },
+    "LittleSplash1:7a:2": {
+      "page": "inside",
+      "x": 71.23,
+      "y": 13.65
+    },
+    "LittleSplash1:7b:1": {
+      "page": "inside",
+      "x": 71.2,
+      "y": 22.03
+    },
+    "LittleSplash1:7b:2": {
+      "page": "inside",
+      "x": 71.2,
+      "y": 25.32
+    }
+  },
+  "unmapped": [
+    {
+      "criterionId": "LittleSplash1:8b:1",
+      "reason": "single shared Water Smart participation box on the card, used for 8a:1"
+    }
+  ],
+  "extraBoxes": [
+    {
+      "page": "inside",
+      "x": 38.2,
+      "y": 91.06,
+      "label": "Moves safely backwards (criterion 6:1 combines forwards/backwards/sideways; mapped to forwards box)"
+    },
+    {
+      "page": "inside",
+      "x": 38.23,
+      "y": 94.03,
+      "label": "Moves safely sideways (see 6:1)"
+    }
+  ]
+}

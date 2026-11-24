@@ -1,0 +1,210 @@
+{
+  "level": "LittleSplash2",
+  "images": {
+    "outside": "little-splash-2-outside.jpg",
+    "inside": "little-splash-2-inside.jpg"
+  },
+  "source": {
+    "pdf": "little-splash-report-cards-combined.pdf",
+    "outsidePage": 3,
+    "insidePage": 4
+  },
+  "fields": {
+    "participant": {
+      "page": "outside",
+      "x": 75.0,
+      "y": 71.52
+    },
+    "instructor": {
+      "page": "outside",
+      "x": 74.5,
+      "y": 75.99
+    },
+    "date": {
+      "page": "outside",
+      "x": 72.0,
+      "y": 80.52
+    },
+    "session": {
+      "page": "outside",
+      "x": 86.9,
+      "y": 80.52
+    }
+  },
+  "nextLevel": [
+    {
+      "level": "LittleSplash2",
+      "page": "outside",
+      "x": 37.41,
+      "y": 21.47
+    },
+    {
+      "level": "LittleSplash3",
+      "page": "outside",
+      "x": 37.48,
+      "y": 25.44
+    }
+  ],
+  "criteria": {
+    "LittleSplash2:9a:1": {
+      "page": "outside",
+      "x": 2.41,
+      "y": 18.65
+    },
+    "LittleSplash2:9a:2": {
+      "page": "outside",
+      "x": 2.55,
+      "y": 23.56
+    },
+    "LittleSplash2:9b:2": {
+      "page": "outside",
+      "x": 2.9,
+      "y": 30.61
+    },
+    "LittleSplash2:1:1": {
+      "page": "inside",
+      "x": 4.34,
+      "y": 15.71
+    },
+    "LittleSplash2:1:2": {
+      "page": "inside",
+      "x": 4.39,
+      "y": 20.91
+    },
+    "LittleSplash2:1:3": {
+      "page": "inside",
+      "x": 4.41,
+      "y": 23.56
+    },
+    "LittleSplash2:2:1": {
+      "page": "inside",
+      "x": 4.48,
+      "y": 30.73
+    },
+    "LittleSplash2:2:2": {
+      "page": "inside",
+      "x": 4.48,
+      "y": 33.32
+    },
+    "LittleSplash2:3:1": {
+      "page": "inside",
+      "x": 4.61,
+      "y": 47.56
+    },
+    "LittleSplash2:4:1": {
+      "page": "inside",
+      "x": 4.71,
+      "y": 54.68
+    },
+    "LittleSplash2:4:2": {
+      "page": "inside",
+      "x": 4.73,
+      "y": 57.27
+    },
+    "LittleSplash2:5a:1": {
+      "page": "inside",
+      "x": 37.2,
+      "y": 51.62
+    },
+    "LittleSplash2:5a:2": {
+      "page": "inside",
+      "x": 37.2,
+      "y": 54.23
+    },
+    "LittleSplash2:5a:3": {
+      "page": "inside",
+      "x": 37.2,
+      "y": 56.85
+    },
+    "LittleSplash2:5b:1": {
+      "page": "inside",
+      "x": 37.2,
+      "y": 66.0
+    },
+    "LittleSplash2:5b:2": {
+      "page": "inside",
+      "x": 37.2,
+      "y": 68.62
+    },
+    "LittleSplash2:5b:3": {
+      "page": "inside",
+      "x": 37.2,
+      "y": 71.21
+    },
+    "LittleSplash2:6:1": {
+      "page": "inside",
+      "x": 37.2,
+      "y": 80.38
+    },
+    "LittleSplash2:6:2": {
+      "page": "inside",
+      "x": 37.2,
+      "y": 82.97
+    },
+    "LittleSplash2:6:3": {
+      "page": "inside",
+      "x": 69.59,
+      "y": 46.91
+    },
+    "LittleSplash2:6:4": {
+      "page": "inside",
+      "x": 37.2,
+      "y": 85.56
+    },
+    "LittleSplash2:7a:1": {
+      "page": "inside",
+      "x": 69.52,
+      "y": 58.59
+    },
+    "LittleSplash2:7a:2": {
+      "page": "inside",
+      "x": 69.52,
+      "y": 61.21
+    },
+    "LittleSplash2:7b:1": {
+      "page": "inside",
+      "x": 69.48,
+      "y": 70.35
+    },
+    "LittleSplash2:7b:2": {
+      "page": "inside",
+      "x": 69.48,
+      "y": 72.97
+    },
+    "LittleSplash2:8:1": {
+      "page": "inside",
+      "x": 69.45,
+      "y": 82.09
+    },
+    "LittleSplash2:8:2": {
+      "page": "inside",
+      "x": 69.43,
+      "y": 84.68
+    },
+    "LittleSplash2:8:3": {
+      "page": "inside",
+      "x": 69.43,
+      "y": 87.32
+    }
+  },
+  "unmapped": [
+    {
+      "criterionId": "LittleSplash2:9b:1",
+      "reason": "single shared Water Smart participation box on the card, used for 9a:1"
+    }
+  ],
+  "extraBoxes": [
+    {
+      "page": "inside",
+      "x": 69.59,
+      "y": 44.29,
+      "label": "Roll back to front: begin in back float position (6:1 mapped to front-to-back begin box)"
+    },
+    {
+      "page": "inside",
+      "x": 69.57,
+      "y": 49.5,
+      "label": "Roll back to front: body remains horizontal (6:4 mapped to front-to-back section)"
+    }
+  ]
+}
