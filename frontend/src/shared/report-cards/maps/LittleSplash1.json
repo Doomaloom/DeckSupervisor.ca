@@ -138,13 +138,19 @@
       "page": "inside",
       "x": 38.2,
       "y": 91.06,
-      "label": "Moves safely backwards (criterion 6:1 combines forwards/backwards/sideways; mapped to forwards box)"
+      "label": "Moves safely backwards (criterion 6:1 combines forwards/backwards/sideways; mapped to forwards box)",
+      "ticksWith": [
+        "LittleSplash1:6:1"
+      ]
     },
     {
       "page": "inside",
       "x": 38.23,
       "y": 94.03,
-      "label": "Moves safely sideways (see 6:1)"
+      "label": "Moves safely sideways (see 6:1)",
+      "ticksWith": [
+        "LittleSplash1:6:1"
+      ]
     }
   ]
 }

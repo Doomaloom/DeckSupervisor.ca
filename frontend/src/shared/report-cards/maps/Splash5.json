@@ -325,13 +325,22 @@
       "page": "inside",
       "x": 36.93,
       "y": 18.29,
-      "label": "Treading water 90 seconds time met (6:2 mapped to the distance box)"
+      "label": "Treading water 90 seconds time met (6:2 mapped to the distance box)",
+      "ticksWith": [
+        "Splash5:6:2"
+      ]
     },
     {
       "page": "outside",
       "x": 3.82,
       "y": 64.59,
-      "label": "Water Smart participation box (one box for all four messages; no per-message criterion)"
+      "label": "Water Smart participation box (one box for all four messages; no per-message criterion)",
+      "ticksWith": [
+        "Splash5:13a:1",
+        "Splash5:13b:1",
+        "Splash5:13c:1"
+      ],
+      "match": "any"
     }
   ]
 }

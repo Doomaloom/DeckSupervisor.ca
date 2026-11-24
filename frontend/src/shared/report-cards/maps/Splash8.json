@@ -473,7 +473,16 @@
       "page": "inside",
       "x": 70.48,
       "y": 19.71,
-      "label": "Assess unconscious victim: Attempt to obtain an AED (no curriculum criterion)"
+      "label": "Assess unconscious victim: Attempt to obtain an AED (no curriculum criterion) (ticks when the skill is complete)",
+      "ticksWith": [
+        "Splash8:10:1",
+        "Splash8:10:2",
+        "Splash8:10:3",
+        "Splash8:10:4",
+        "Splash8:10:5",
+        "Splash8:10:6",
+        "Splash8:10:7"
+      ]
     }
   ]
 }

@@ -309,19 +309,34 @@
       "page": "inside",
       "x": 36.6,
       "y": 20.62,
-      "label": "Swim to Survive skills: swim/kick 15 metre distance completed (criterion 5:2 'distance and time' mapped to the time box)"
+      "label": "Swim to Survive skills: swim/kick 15 metre distance completed (criterion 5:2 'distance and time' mapped to the time box)",
+      "ticksWith": [
+        "Splash2B:5:2"
+      ]
     },
     {
       "page": "inside",
       "x": 69.27,
       "y": 60.91,
-      "label": "Alternating front kick to side kick: 10 metre distance completed (no criterion)"
+      "label": "Alternating front kick to side kick: 10 metre distance completed (no criterion) (ticks when the skill is complete)",
+      "ticksWith": [
+        "Splash2B:8c:1",
+        "Splash2B:8c:2",
+        "Splash2B:8c:3",
+        "Splash2B:8c:4"
+      ]
     },
     {
       "page": "outside",
       "x": 4.2,
       "y": 17.35,
-      "label": "Water Smart participation box (shared by Splash2B:10a:1, 10b:1, 10c:1, 10d:1)"
+      "label": "Water Smart participation box (shared by Splash2B:10a:1, 10b:1, 10c:1, 10d:1)",
+      "ticksWith": [
+        "Splash2B:10a:1",
+        "Splash2B:10b:1",
+        "Splash2B:10c:1"
+      ],
+      "match": "any"
     }
   ]
 }

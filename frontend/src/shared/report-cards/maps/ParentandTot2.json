@@ -155,55 +155,95 @@
       "page": "inside",
       "x": 36.98,
       "y": 10.53,
-      "label": "Entry from Sitting Position (Assisted) (one skill box; skill has 2 criteria: 1)"
+      "label": "Entry from Sitting Position (Assisted) (one skill box; skill has 2 criteria: 1)",
+      "ticksWith": [
+        "ParentandTot2:1:1",
+        "ParentandTot2:1:2"
+      ]
     },
     {
       "page": "inside",
       "x": 37.05,
       "y": 18.32,
-      "label": "Face Wet and in Water (one skill box; skill has 2 criteria: 4)"
+      "label": "Face Wet and in Water (one skill box; skill has 2 criteria: 4)",
+      "ticksWith": [
+        "ParentandTot2:4:1",
+        "ParentandTot2:4:2"
+      ]
     },
     {
       "page": "inside",
       "x": 37.09,
       "y": 23.56,
-      "label": "Entry from Sitting Position Wearing PFD and Return (Assisted) (one skill box; skill has 4 criteria: 6)"
+      "label": "Entry from Sitting Position Wearing PFD and Return (Assisted) (one skill box; skill has 4 criteria: 6)",
+      "ticksWith": [
+        "ParentandTot2:6:1",
+        "ParentandTot2:6:2",
+        "ParentandTot2:6:3",
+        "ParentandTot2:6:4"
+      ]
     },
     {
       "page": "inside",
       "x": 37.11,
       "y": 28.21,
-      "label": "Front Float (Face In) - Assisted (one skill box; skill has 2 criteria: 7)"
+      "label": "Front Float (Face In) - Assisted (one skill box; skill has 2 criteria: 7)",
+      "ticksWith": [
+        "ParentandTot2:7:1",
+        "ParentandTot2:7:2"
+      ]
     },
     {
       "page": "inside",
       "x": 37.16,
       "y": 31.0,
-      "label": "Back Float (Assisted) (one skill box; skill has 2 criteria: 8)"
+      "label": "Back Float (Assisted) (one skill box; skill has 2 criteria: 8)",
+      "ticksWith": [
+        "ParentandTot2:8:1",
+        "ParentandTot2:8:2"
+      ]
     },
     {
       "page": "inside",
       "x": 37.18,
       "y": 33.56,
-      "label": "Kicking on Front (Assisted) (one skill box; skill has 2 criteria: 9a)"
+      "label": "Kicking on Front (Assisted) (one skill box; skill has 2 criteria: 9a)",
+      "ticksWith": [
+        "ParentandTot2:9a:1",
+        "ParentandTot2:9a:2"
+      ]
     },
     {
       "page": "inside",
       "x": 37.16,
       "y": 36.21,
-      "label": "Kicking on Back (Assisted) (one skill box; skill has 2 criteria: 9b)"
+      "label": "Kicking on Back (Assisted) (one skill box; skill has 2 criteria: 9b)",
+      "ticksWith": [
+        "ParentandTot2:9b:1",
+        "ParentandTot2:9b:2"
+      ]
     },
     {
       "page": "inside",
       "x": 37.2,
       "y": 38.71,
-      "label": "Surface Passes with Continuous Contact (one skill box; skill has 2 criteria: 10)"
+      "label": "Surface Passes with Continuous Contact (one skill box; skill has 2 criteria: 10)",
+      "ticksWith": [
+        "ParentandTot2:10:1",
+        "ParentandTot2:10:2"
+      ]
     },
     {
       "page": "inside",
       "x": 37.23,
       "y": 41.41,
-      "label": "Water Smart message (skill-level box, no single criterion)"
+      "label": "Water Smart message (skill-level box, no single criterion)",
+      "ticksWith": [
+        "ParentandTot2:11a:1",
+        "ParentandTot2:11b:1",
+        "ParentandTot2:11c:1"
+      ],
+      "match": "any"
     }
   ]
 }

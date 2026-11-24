@@ -198,13 +198,19 @@
       "page": "inside",
       "x": 69.59,
       "y": 44.29,
-      "label": "Roll back to front: begin in back float position (6:1 mapped to front-to-back begin box)"
+      "label": "Roll back to front: begin in back float position (6:1 mapped to front-to-back begin box)",
+      "ticksWith": [
+        "LittleSplash2:6:1"
+      ]
     },
     {
       "page": "inside",
       "x": 69.57,
       "y": 49.5,
-      "label": "Roll back to front: body remains horizontal (6:4 mapped to front-to-back section)"
+      "label": "Roll back to front: body remains horizontal (6:4 mapped to front-to-back section)",
+      "ticksWith": [
+        "LittleSplash2:6:4"
+      ]
     }
   ]
 }

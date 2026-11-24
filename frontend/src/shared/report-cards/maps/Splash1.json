@@ -290,61 +290,100 @@
       "page": "outside",
       "x": 4.32,
       "y": 25.59,
-      "label": "Back crawl 5 metres wearing a lifejacket: 5 metre distance completed (no criterion)"
+      "label": "Back crawl 5 metres wearing a lifejacket: 5 metre distance completed (no criterion) (ticks when the skill is complete)",
+      "ticksWith": [
+        "Splash1:10-back-crawl-wearing-pfd-5-m:1",
+        "Splash1:10-back-crawl-wearing-pfd-5-m:2",
+        "Splash1:10-back-crawl-wearing-pfd-5-m:3"
+      ]
     },
     {
       "page": "inside",
       "x": 37.73,
       "y": 87.15,
-      "label": "Glide on front: underwater exhalation (curriculum 8a:1 combines face/exhalation/arms; mapped to first box)"
+      "label": "Glide on front: underwater exhalation (curriculum 8a:1 combines face/exhalation/arms; mapped to first box)",
+      "ticksWith": [
+        "Splash1:8a:1"
+      ]
     },
     {
       "page": "inside",
       "x": 37.73,
       "y": 90.44,
-      "label": "Glide on front: arms extended beyond head (see 8a:1)"
+      "label": "Glide on front: arms extended beyond head (see 8a:1)",
+      "ticksWith": [
+        "Splash1:8a:1"
+      ]
     },
     {
       "page": "inside",
       "x": 37.7,
       "y": 69.09,
-      "label": "Roll back to front: begin in back float position (curriculum 7:1-7:3 mapped to front-to-back boxes)"
+      "label": "Roll back to front: begin in back float position (curriculum 7:1-7:3 mapped to front-to-back boxes)",
+      "ticksWith": [
+        "Splash1:7:1"
+      ]
     },
     {
       "page": "inside",
       "x": 37.71,
       "y": 72.35,
-      "label": "Roll back to front: controlled lateral rollover (no separate criterion)"
+      "label": "Roll back to front: controlled lateral rollover (no separate criterion) (ticks when the skill is complete)",
+      "ticksWith": [
+        "Splash1:7:1",
+        "Splash1:7:2",
+        "Splash1:7:3"
+      ]
     },
     {
       "page": "inside",
       "x": 37.71,
       "y": 75.62,
-      "label": "Roll back to front: body remains horizontal (no separate criterion)"
+      "label": "Roll back to front: body remains horizontal (no separate criterion) (ticks when the skill is complete)",
+      "ticksWith": [
+        "Splash1:7:1",
+        "Splash1:7:2",
+        "Splash1:7:3"
+      ]
     },
     {
       "page": "inside",
       "x": 70.82,
       "y": 27.82,
-      "label": "Glide on side: bottom arm extended beyond head (curriculum 8c:1 combines; mapped to 'body on side' box)"
+      "label": "Glide on side: bottom arm extended beyond head (curriculum 8c:1 combines; mapped to 'body on side' box)",
+      "ticksWith": [
+        "Splash1:8c:1"
+      ]
     },
     {
       "page": "inside",
       "x": 70.8,
       "y": 31.09,
-      "label": "Glide on side: top arm by side (see 8c:1)"
+      "label": "Glide on side: top arm by side (see 8c:1)",
+      "ticksWith": [
+        "Splash1:8c:1"
+      ]
     },
     {
       "page": "inside",
       "x": 70.77,
       "y": 34.38,
-      "label": "Glide on side: head resting on bottom arm (see 8c:1)"
+      "label": "Glide on side: head resting on bottom arm (see 8c:1)",
+      "ticksWith": [
+        "Splash1:8c:1"
+      ]
     },
     {
       "page": "outside",
       "x": 4.5,
       "y": 38.15,
-      "label": "Water Smart participation box (shared by Splash1:11a:1, 11b:1, 11c:1, 11d:1)"
+      "label": "Water Smart participation box (shared by Splash1:11a:1, 11b:1, 11c:1, 11d:1)",
+      "ticksWith": [
+        "Splash1:11a:1",
+        "Splash1:11b:1",
+        "Splash1:11c:1"
+      ],
+      "match": "any"
     }
   ]
 }

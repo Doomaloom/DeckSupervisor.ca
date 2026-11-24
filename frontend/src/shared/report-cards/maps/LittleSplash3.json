@@ -255,19 +255,32 @@
       "page": "inside",
       "x": 36.86,
       "y": 71.35,
-      "label": "Roll front to back: body remains horizontal (no criterion)"
+      "label": "Roll front to back: body remains horizontal (no criterion) (ticks when the skill is complete)",
+      "ticksWith": [
+        "LittleSplash3:8:1",
+        "LittleSplash3:8:2",
+        "LittleSplash3:8:3"
+      ]
     },
     {
       "page": "inside",
       "x": 36.91,
       "y": 79.21,
-      "label": "Roll back to front: begin in back float position (no criterion)"
+      "label": "Roll back to front: begin in back float position (no criterion)",
+      "ticksWith": [
+        "LittleSplash3:8:1"
+      ]
     },
     {
       "page": "inside",
       "x": 36.95,
       "y": 85.03,
-      "label": "Roll back to front: body remains horizontal (no criterion)"
+      "label": "Roll back to front: body remains horizontal (no criterion) (ticks when the skill is complete)",
+      "ticksWith": [
+        "LittleSplash3:8:1",
+        "LittleSplash3:8:2",
+        "LittleSplash3:8:3"
+      ]
     }
   ]
 }

@@ -138,49 +138,84 @@
       "page": "inside",
       "x": 4.84,
       "y": 13.79,
-      "label": "Readiness for Submersion (one skill box; skill has 2 criteria: 2)"
+      "label": "Readiness for Submersion (one skill box; skill has 2 criteria: 2)",
+      "ticksWith": [
+        "ParentandTot1:2:1",
+        "ParentandTot1:2:2"
+      ]
     },
     {
       "page": "inside",
       "x": 4.89,
       "y": 16.44,
-      "label": "Hold Tot on Front, Eye Contact (one skill box; skill has 2 criteria: 3)"
+      "label": "Hold Tot on Front, Eye Contact (one skill box; skill has 2 criteria: 3)",
+      "ticksWith": [
+        "ParentandTot1:3:1",
+        "ParentandTot1:3:2"
+      ]
     },
     {
       "page": "inside",
       "x": 4.98,
       "y": 21.62,
-      "label": "Front Float (Face Out) - Assisted (one skill box; skill has 2 criteria: 5)"
+      "label": "Front Float (Face Out) - Assisted (one skill box; skill has 2 criteria: 5)",
+      "ticksWith": [
+        "ParentandTot1:5:1",
+        "ParentandTot1:5:2"
+      ]
     },
     {
       "page": "inside",
       "x": 5.11,
       "y": 24.27,
-      "label": "Back Float (Assisted) (one skill box; skill has 2 criteria: 6)"
+      "label": "Back Float (Assisted) (one skill box; skill has 2 criteria: 6)",
+      "ticksWith": [
+        "ParentandTot1:6:1",
+        "ParentandTot1:6:2"
+      ]
     },
     {
       "page": "inside",
       "x": 5.02,
       "y": 26.91,
-      "label": "Float Wearing PFD (Assisted) (one skill box; skill has 2 criteria: 7)"
+      "label": "Float Wearing PFD (Assisted) (one skill box; skill has 2 criteria: 7)",
+      "ticksWith": [
+        "ParentandTot1:7:1",
+        "ParentandTot1:7:2"
+      ]
     },
     {
       "page": "inside",
       "x": 5.16,
       "y": 29.62,
-      "label": "Arms: Splashing, Reaching, Paddling, On Front and Back (one skill box; skill has 2 criteria: 8)"
+      "label": "Arms: Splashing, Reaching, Paddling, On Front and Back (one skill box; skill has 2 criteria: 8)",
+      "ticksWith": [
+        "ParentandTot1:8:1",
+        "ParentandTot1:8:2"
+      ]
     },
     {
       "page": "inside",
       "x": 5.14,
       "y": 34.23,
-      "label": "Legs: Tickling, Splashing, Kicking, on Front and Back (one skill box; skill has 3 criteria: 9)"
+      "label": "Legs: Tickling, Splashing, Kicking, on Front and Back (one skill box; skill has 3 criteria: 9)",
+      "ticksWith": [
+        "ParentandTot1:9:1",
+        "ParentandTot1:9:2",
+        "ParentandTot1:9:3"
+      ]
     },
     {
       "page": "inside",
       "x": 5.25,
       "y": 39.0,
-      "label": "Water Smart message (skill-level box, no single criterion)"
+      "label": "Water Smart message (skill-level box, no single criterion)",
+      "ticksWith": [
+        "ParentandTot1:10a:1",
+        "ParentandTot1:10b:1",
+        "ParentandTot1:10c:1"
+      ],
+      "match": "any"
     }
   ]
 }

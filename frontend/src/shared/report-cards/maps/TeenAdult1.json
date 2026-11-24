@@ -398,31 +398,48 @@
       "page": "inside",
       "x": 36.77,
       "y": 28.85,
-      "label": "Treading water 30 second time met (Swim to Survive sequence; criterion 9:2 \"Distance and time requirements completed\" is mapped to the distance box)"
+      "label": "Treading water 30 second time met (Swim to Survive sequence; criterion 9:2 \"Distance and time requirements completed\" is mapped to the distance box)",
+      "ticksWith": [
+        "TeenAdult1:9:2"
+      ]
     },
     {
       "page": "inside",
       "x": 37.18,
       "y": 74.56,
-      "label": "Roll laterally back to front: Begin in back float position (criterion 11:1 mapped to the front-float box)"
+      "label": "Roll laterally back to front: Begin in back float position (criterion 11:1 mapped to the front-float box)",
+      "ticksWith": [
+        "TeenAdult1:11:1"
+      ]
     },
     {
       "page": "inside",
       "x": 37.25,
       "y": 79.44,
-      "label": "Roll laterally back to front: Body remains horizontal (11:4 mapped to the front-to-back box)"
+      "label": "Roll laterally back to front: Body remains horizontal (11:4 mapped to the front-to-back box)",
+      "ticksWith": [
+        "TeenAdult1:11:4"
+      ]
     },
     {
       "page": "inside",
       "x": 69.7,
       "y": 83.21,
-      "label": "Whip kick: Legs drive with knees apart; feet wider than knees"
+      "label": "Whip kick: Legs drive with knees apart; feet wider than knees (ticks when the skill is complete)",
+      "ticksWith": [
+        "TeenAdult1:14:1",
+        "TeenAdult1:14:2"
+      ]
     },
     {
       "page": "inside",
       "x": 69.7,
       "y": 87.62,
-      "label": "Whip kick: 15 second minimum time met"
+      "label": "Whip kick: 15 second minimum time met (ticks when the skill is complete)",
+      "ticksWith": [
+        "TeenAdult1:14:1",
+        "TeenAdult1:14:2"
+      ]
     }
   ]
 }

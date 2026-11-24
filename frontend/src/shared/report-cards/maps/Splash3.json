@@ -270,25 +270,40 @@
       "page": "inside",
       "x": 4.89,
       "y": 88.5,
-      "label": "Treading water 30 second time met (6:2 covers time and distance together)"
+      "label": "Treading water 30 second time met (6:2 covers time and distance together)",
+      "ticksWith": [
+        "Splash3:6:2"
+      ]
     },
     {
       "page": "inside",
       "x": 36.82,
       "y": 29.71,
-      "label": "5 metre distance completed on front (7:4 mapped to the \"on back\" box)"
+      "label": "5 metre distance completed on front (7:4 mapped to the \"on back\" box)",
+      "ticksWith": [
+        "Splash3:7:4"
+      ]
     },
     {
       "page": "inside",
       "x": 36.98,
       "y": 49.47,
-      "label": "5 metre distance completed on back (8:4 mapped to the \"on front\" box)"
+      "label": "5 metre distance completed on back (8:4 mapped to the \"on front\" box)",
+      "ticksWith": [
+        "Splash3:8:4"
+      ]
     },
     {
       "page": "outside",
       "x": 4.0,
       "y": 16.97,
-      "label": "Water Smart participation box (one box for all four messages; no per-message criterion)"
+      "label": "Water Smart participation box (one box for all four messages; no per-message criterion)",
+      "ticksWith": [
+        "Splash3:12a:1",
+        "Splash3:12b:1",
+        "Splash3:12c:1"
+      ],
+      "match": "any"
     }
   ]
 }

@@ -345,31 +345,53 @@
       "page": "inside",
       "x": 36.25,
       "y": 6.15,
-      "label": "Roll entry / Swim to Survive: Treading water 1 minute time met (criterion 8:2 mapped to the swim 50 m distance box)"
+      "label": "Roll entry / Swim to Survive: Treading water 1 minute time met (criterion 8:2 mapped to the swim 50 m distance box)",
+      "ticksWith": [
+        "TeenAdult2:8:2"
+      ]
     },
     {
       "page": "inside",
       "x": 36.41,
       "y": 35.09,
-      "label": "Flutter kick back then front: 5 metre distance completed on back (9:4 mapped to the front box)"
+      "label": "Flutter kick back then front: 5 metre distance completed on back (9:4 mapped to the front box)",
+      "ticksWith": [
+        "TeenAdult2:9:4"
+      ]
     },
     {
       "page": "inside",
       "x": 36.59,
       "y": 60.38,
-      "label": "Flutter kick front then back: 5 metre distance completed on front (10:4 mapped to the back box)"
+      "label": "Flutter kick front then back: 5 metre distance completed on front (10:4 mapped to the back box)",
+      "ticksWith": [
+        "TeenAdult2:10:4"
+      ]
     },
     {
       "page": "inside",
       "x": 70.3,
       "y": 51.79,
-      "label": "Back crawl: Hand drive finishes at thigh; recovery above surface; entry beyond shoulder"
+      "label": "Back crawl: Hand drive finishes at thigh; recovery above surface; entry beyond shoulder (ticks when the skill is complete)",
+      "ticksWith": [
+        "TeenAdult2:14-back-crawl:1",
+        "TeenAdult2:14-back-crawl:2",
+        "TeenAdult2:14-back-crawl:3",
+        "TeenAdult2:14-back-crawl:4",
+        "TeenAdult2:14-back-crawl:5"
+      ]
     },
     {
       "page": "outside",
       "x": 3.79,
       "y": 58.35,
-      "label": "Water Smart participation in a water activity (shared by 18a:1, 18b:1, 18c:1, 18d:1)"
+      "label": "Water Smart participation in a water activity (shared by 18a:1, 18b:1, 18c:1, 18d:1)",
+      "ticksWith": [
+        "TeenAdult2:18a:1",
+        "TeenAdult2:18b:1",
+        "TeenAdult2:18c:1"
+      ],
+      "match": "any"
     },
     {
       "page": "outside",

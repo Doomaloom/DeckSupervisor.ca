@@ -344,13 +344,22 @@
       "page": "inside",
       "x": 5.77,
       "y": 79.97,
-      "label": "Swim underwater to recover object: 5 metres minimum distance met (6:2 mapped to the \"Minimum distance completed\" box)"
+      "label": "Swim underwater to recover object: 5 metres minimum distance met (6:2 mapped to the \"Minimum distance completed\" box)",
+      "ticksWith": [
+        "TeenAdult3:6:2"
+      ]
     },
     {
       "page": "outside",
       "x": 3.71,
       "y": 38.68,
-      "label": "Water Smart participation in a water activity (shared by 14a:1-14d:1)"
+      "label": "Water Smart participation in a water activity (shared by 14a:1-14d:1)",
+      "ticksWith": [
+        "TeenAdult3:14a:1",
+        "TeenAdult3:14b:1",
+        "TeenAdult3:14c:1"
+      ],
+      "match": "any"
     },
     {
       "page": "outside",

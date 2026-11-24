@@ -400,13 +400,27 @@
       "page": "inside",
       "x": 36.77,
       "y": 78.09,
-      "label": "Breaststroke 50 m: Continuous propulsion (no curriculum criterion)"
+      "label": "Breaststroke 50 m: Continuous propulsion (no curriculum criterion) (ticks when the skill is complete)",
+      "ticksWith": [
+        "Splash7:8-breaststroke:1",
+        "Splash7:8-breaststroke:2",
+        "Splash7:8-breaststroke:3",
+        "Splash7:8-breaststroke:4",
+        "Splash7:8-breaststroke:5"
+      ]
     },
     {
       "page": "inside",
       "x": 69.09,
       "y": 26.56,
-      "label": "Assess conscious victim: Demonstrate primary assessment (no curriculum criterion)"
+      "label": "Assess conscious victim: Demonstrate primary assessment (no curriculum criterion) (ticks when the skill is complete)",
+      "ticksWith": [
+        "Splash7:11:1",
+        "Splash7:11:2",
+        "Splash7:11:3",
+        "Splash7:11:4",
+        "Splash7:11:5"
+      ]
     }
   ]
 }

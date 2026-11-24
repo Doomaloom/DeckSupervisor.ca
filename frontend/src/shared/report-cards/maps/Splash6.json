@@ -325,7 +325,13 @@
       "page": "outside",
       "x": 3.71,
       "y": 15.29,
-      "label": "Water Smart participation box (one box for all four messages; no per-message criterion)"
+      "label": "Water Smart participation box (one box for all four messages; no per-message criterion)",
+      "ticksWith": [
+        "Splash6:13a:1",
+        "Splash6:13b:1",
+        "Splash6:13c:1"
+      ],
+      "match": "any"
     }
   ]
 }

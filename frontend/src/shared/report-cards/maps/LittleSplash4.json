@@ -232,13 +232,23 @@
       "page": "inside",
       "x": 38.14,
       "y": 73.47,
-      "label": "Tread water 15 second time met (no criterion; 6:2 mapped to the swim/kick distance box)"
+      "label": "Tread water 15 second time met (no criterion; 6:2 mapped to the swim/kick distance box)",
+      "ticksWith": [
+        "LittleSplash4:6:2"
+      ]
     },
     {
       "page": "inside",
       "x": 71.25,
       "y": 18.29,
-      "label": "Streamlined side glide parent box (8:1-8:4 mapped to its four circles)"
+      "label": "Streamlined side glide parent box (8:1-8:4 mapped to its four circles) (ticks when the skill is complete)",
+      "ticksWith": [
+        "LittleSplash4:8:1",
+        "LittleSplash4:8:2",
+        "LittleSplash4:8:3",
+        "LittleSplash4:8:4",
+        "LittleSplash4:8:5"
+      ]
     }
   ]
 }

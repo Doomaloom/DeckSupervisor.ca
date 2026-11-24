@@ -222,7 +222,10 @@
       "page": "inside",
       "x": 37.98,
       "y": 24.47,
-      "label": "Treading water 20 second time met (no criterion; 5:2 mapped to the swim/kick distance box)"
+      "label": "Treading water 20 second time met (no criterion; 5:2 mapped to the swim/kick distance box)",
+      "ticksWith": [
+        "LittleSplash5:5:2"
+      ]
     }
   ]
 }
