@@ -73,8 +73,10 @@ export function fillCompletedMarks(root: HTMLElement, roster: AttendancePrintRos
 
 /** Sizes and places the pen marks inside their cells; part of the print document's stylesheet. */
 export const HAND_MARK_CSS = `
-.hand-checks{position:absolute;inset:12% 4%;display:flex;align-items:center;justify-content:center;gap:2%;pointer-events:none}
-.hand-checks .hand-mark{width:31%;height:100%;flex:0 0 31%}
-.hand-attendance{position:absolute;left:58%;top:-0.95em;width:1.35em;height:1.35em;pointer-events:none}
+.hand-checks{position:absolute;inset:6% 8%;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;pointer-events:none}
+.hand-checks .hand-mark{width:78%;height:30%;flex:0 0 30%;overflow:visible}
+.hand-checks .hand-mark:nth-child(2){transform:translateX(8%)}
+.hand-checks .hand-mark:nth-child(3){transform:translateX(-5%)}
+.hand-attendance{position:absolute;left:50%;top:-0.62em;width:1.9em;height:1.9em;margin-left:-0.95em;overflow:visible;pointer-events:none}
 .hand-mark{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 `;
