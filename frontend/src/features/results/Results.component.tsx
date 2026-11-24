@@ -16,7 +16,8 @@ import {COMPLETED_PRINT_CURRICULUM_VERSION} from '../../shared/attendance-print/
 import type {AttendancePrintItem} from '../../shared/attendance-print/types';
 import {compareStudentNames} from '../decksupervisor/Rosters/utils';
 import {inputClass,selectClass} from '../decksupervisor/Rosters/constants';
-import {buildCompletedBatch,buildCompletedClass,type CompletedBatch,type CompletedClassInput} from './completedPrint';
+import {buildBatch,buildCompletedBatch,buildCompletedClass,buildReportCardClass,type CompletedClassInput,type PrintBatch} from './completedPrint';
+import {buildReportCardHtml,printReportCards,type ReportCardPaper} from '../../shared/report-cards/reportCards';
 import {RecordValue,StudentProgressModal} from './StudentProgressModal';
 import {ResultsClassCard,type ClassCardSwimmer} from './ResultsClassCard';
 const errorMessage=(e:unknown)=>e instanceof Error?e.message:String(e);
@@ -42,7 +43,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
  const [registry,setRegistry]=useState<api.ResultRegistry|null>(null),[data,setData]=useState<api.Results|null>(null);
  const [identities,setIdentities]=useState<LocalIdentity[]>([]),[grants,setGrants]=useState<api.ResultGrant[]>([]);
  const [instructorFilter,setInstructorFilter]=useState(''),[serviceFilter,setServiceFilter]=useState(''),[search,setSearch]=useState('');
- const [open,setOpen]=useState<{classId:string;enrollmentId:string}|null>(null),[printReport,setPrintReport]=useState<CompletedBatch|null>(null);
+ const [open,setOpen]=useState<{classId:string;enrollmentId:string}|null>(null),[printReport,setPrintReport]=useState<PrintBatch<unknown>|null>(null),[paper,setPaper]=useState<ReportCardPaper>('blank');
  const [error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(true),[rosterWarning,setRosterWarning]=useState('');
  const [choices,setChoices]=useState<Record<string,string>>({});const mounted=useRef(true),working=useRef(false);
  const displayKey=()=>getScopedKey(`result-display-package:${session.id}`);
@@ -101,6 +102,8 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
   const local=loadRegistry(session.id)??{...newRegistry(session.id),datasetId:registry.datasetId};saveRegistry(bindLocalAlias(local,identity,sourceId));
  }
  async function importNames(file:File){if(!registry)return;if(file.size>10*1024*1024)throw new Error('Package exceeds 10 MB.');const text=await file.text(),pkg:unknown=JSON.parse(text),names=localNamesFromPackage(pkg,registry);const previous=savedPackages();localStorage.setItem(displayKey(),JSON.stringify([...previous,pkg]));setIdentities(names);setRosterWarning('');}
+ // Instructor by instructor, each instructor's classes in time order, like the deck schedule.
+ const byInstructor=(targets:ClassView[])=>[...targets].sort((a,b)=>a.instructor.localeCompare(b.instructor)||(a.info?.startTime??'').localeCompare(b.info?.startTime??'')||a.code.localeCompare(b.code));
  const completedInput=(c:ClassView,d:api.Results):CompletedClassInput&{label:string}=>({course:c.course,data:d,label:`${c.code} ${c.title} (${c.instructor})`,swimmers:byName(c.course.swimmers.filter(s=>s.active!==false),s=>s.enrollmentId).map(s=>({enrollmentId:s.enrollmentId,local:localFor(s.enrollmentId)}))});
  /** One class prints or explains why not; several classes print every ready class and list the rest. */
  async function printCompleted(targets:ClassView[],title:string,batchJob=true){
@@ -109,9 +112,7 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
   let rosters:AttendancePrintItem[];
   if(!batchJob)rosters=buildCompletedClass(completedInput(targets[0],data));
   else{
-   // Instructor by instructor, each instructor's classes in time order, like the deck schedule.
-   const ordered=[...targets].sort((a,b)=>a.instructor.localeCompare(b.instructor)||(a.info?.startTime??'').localeCompare(b.info?.startTime??'')||a.code.localeCompare(b.code));
-   const batch=buildCompletedBatch(ordered.map(c=>completedInput(c,data)));setPrintReport(batch);
+   const batch=buildCompletedBatch(byInstructor(targets).map(c=>completedInput(c,data)));setPrintReport(batch);
    if(!batch.items.length)throw new Error('None of these classes can print yet. The reasons are listed below.');
    rosters=batch.items;
   }
@@ -119,6 +120,18 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
   const {printAttendanceHtml}=await import('../../shared/attendance-print/printAttendanceHtml');
   const result=await printAttendanceHtml({session:[session.session_season,session.session_year].filter(Boolean).join(' '),title,rosters},popup);
   if(result.status==='failed')throw result.error;if(result.status==='popup-blocked')throw new Error('Allow popups to print completed sheets.');
+ }
+ const sessionLabel=[session.session_season,session.session_year].filter(Boolean).join(' ');
+ /** Report cards follow the same rules as completed sheets; `only` prints one swimmer's card from the progress popup. */
+ async function printCards(targets:ClassView[],title:string,batchJob:boolean,only?:string){
+  setPrintReport(null);
+  if(!registry||!data)throw new Error('Choose a registered class.');
+  const input=(c:ClassView)=>{const base=completedInput(c,data);return {...base,session:sessionLabel,curriculumVersion:V,swimmers:only?base.swimmers.filter(s=>s.enrollmentId===only):base.swimmers};};
+  let cards;
+  if(!batchJob)cards=buildReportCardClass(input(targets[0]));
+  else{const batch=buildBatch(byInstructor(targets).map(input),buildReportCardClass);setPrintReport(batch);if(!batch.items.length)throw new Error('None of these classes can print yet. The reasons are listed below.');cards=batch.items;}
+  const popup=openAttendancePrintWindow(title);if(!popup)throw new Error('Allow popups to print report cards.');
+  await printReportCards(buildReportCardHtml(cards,{paper,imageBase:`${window.location.origin}/report-cards/`,title}),popup);
  }
  const openClass=open?classes.find(c=>c.course.classId===open.classId):undefined;
  const openSwimmer=openClass?.course.swimmers.find(s=>s.enrollmentId===open?.enrollmentId);
@@ -142,17 +155,22 @@ export function ResultsView({session,supervisor=false}:{session:SessionRecord;su
     <ActionButton variant={instructorFilter?'outline':'primary'} disabled={busy||!data||!classes.length} onClick={()=>void run(()=>printCompleted(classes,'Completed sheets – all instructors'),false)}>Print all instructors</ActionButton>
     <span className="text-sm text-secondary/80">Showing {visible.length} of {classes.length} classes</span>
    </div>
+   <div data-component="results-report-card-bar" className="flex flex-wrap items-end gap-3">
+    {instructorFilter&&<ActionButton variant="outline" disabled={busy||!data} onClick={()=>void run(()=>printCards(classes.filter(c=>c.instructor===instructorFilter),`Report cards – ${instructorFilter}`,true),false)}>Print report cards for {instructorFilter}</ActionButton>}
+    <ActionButton variant="outline" disabled={busy||!data||!classes.length} onClick={()=>void run(()=>printCards(classes,'Report cards – all instructors',true),false)}>Print all report cards</ActionButton>
+    <label className="flex flex-col gap-1 text-sm font-semibold">Report card paper<select className={selectClass} value={paper} onChange={e=>setPaper(e.target.value as ReportCardPaper)}><option value="blank">Blank paper (prints the whole card)</option><option value="preprinted">Pre-printed cards (ticks and names only)</option></select></label>
+   </div>
    {printReport&&<Notice tone={printReport.skipped.length?'danger':undefined}><p className="font-semibold">Printed {printReport.printed.length} of {printReport.printed.length+printReport.skipped.length} classes.</p>{printReport.skipped.length>0&&<><p>Not printed:</p><ul className="list-disc pl-5">{printReport.skipped.map(s=><li key={s.label}>{s.label}: {s.reason}</li>)}</ul></>}</Notice>}
    {!supervisor&&unresolvedConflicts.length>0&&<Notice>Some submissions need supervisor review. Accepted results remain displayed until those conflicts are resolved.</Notice>}
    <div data-component="results-class-list" className="flex flex-col gap-6">
     {visible.length===0&&<p>No classes match these filters.</p>}
     {visible.map(c=><ResultsClassCard key={c.course.classId} classId={c.course.classId} code={c.code} title={c.title} instructor={c.instructor} lessonDates={c.course.lessonDates} swimmers={swimmersFor(c)} busy={busy||!data}
-     onPrint={()=>void run(()=>printCompleted([c],`Completed sheet – ${c.code}`,false),false)} onOpen={enrollmentId=>{setError('');setNotice('');setOpen({classId:c.course.classId,enrollmentId})}}
+     onPrint={()=>void run(()=>printCompleted([c],`Completed sheet – ${c.code}`,false),false)} onPrintReportCards={()=>void run(()=>printCards([c],`Report cards – ${c.code}`,false),false)} onOpen={enrollmentId=>{setError('');setNotice('');setOpen({classId:c.course.classId,enrollmentId})}}
      onAttendance={(enrollmentId,date,status)=>void run(()=>attendance(c.course,enrollmentId,date,status))}/>)}
    </div>
    {openClass&&openSwimmer&&open&&<StudentProgressModal name={nameFor(open.enrollmentId)} details={`${openClass.title} · ${openClass.code} · Instructor: ${openClass.instructor}`} active={openSwimmer.active!==false} lessonDates={openClass.course.lessonDates}
     progress={progress.get(open.enrollmentId)} records={records.filter(r=>r.enrollmentId===open.enrollmentId)} history={historyByRecord} busy={busy} error={error} notice={notice}
-    onClose={()=>setOpen(null)} onCorrect={(r,payload)=>void run(()=>correction(r,payload))} onDelete={r=>void run(()=>correction(r,{},'delete'))}/>}
+    onClose={()=>setOpen(null)} onPrintReportCard={()=>void run(()=>printCards([openClass],`Report card – ${nameFor(open.enrollmentId)}`,false,open.enrollmentId),false)} onCorrect={(r,payload)=>void run(()=>correction(r,payload))} onDelete={r=>void run(()=>correction(r,{},'delete'))}/>}
    {supervisor&&<>
     <h3 className="text-xl font-semibold">Identity reconciliation</h3><p>Unchanged entries recover automatically. Confirm spelling or contact changes. A transfer creates a new enrollment in its destination class; earlier results stay in the original class.</p>
     {identities.filter(i=>!i.enrollmentId).map((i,index)=><div key={`${i.matchKey}:${index}`} className="border p-3"><p>{i.course.code}: {i.name} — unresolved</p>{i.ambiguous?<p>Indistinguishable duplicate. Correct the source roster before reconciling.</p>:<><Select aria-label={`Identity for ${i.name}`} value={choices[i.matchKey]??''} onChange={e=>setChoices({...choices,[i.matchKey]:e.target.value})}><option value="">Choose identity</option><option value="new">New student or transfer: new enrollment</option>{registry.courses.find(c=>c.sourceId===courseSourceId(session.id,i.course.code))?.swimmers.map(s=><option key={s.enrollmentId} value={s.enrollmentId}>Same student: {nameFor(s.enrollmentId)} [{s.sourceId.slice(0,8)}]</option>)}</Select><ActionButton disabled={busy} onClick={()=>void run(()=>reconcile(i))}>Confirm reconciliation</ActionButton></>}</div>)}

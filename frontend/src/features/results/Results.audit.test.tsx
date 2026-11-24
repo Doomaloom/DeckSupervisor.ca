@@ -15,10 +15,14 @@ import {setStorageScope} from '../../lib/storageScope';
 import {COMPLETED_PRINT_CURRICULUM_VERSION} from '../../shared/attendance-print/completedAttendance';
 import type {ResultRecord,ResultRegistry,Results,ResultGrant} from '../../lib/resultsApi';
 
-const mocks=vi.hoisted(()=>({roster:vi.fn(),popup:vi.fn(),print:vi.fn()}));
+const mocks=vi.hoisted(()=>({roster:vi.fn(),popup:vi.fn(),print:vi.fn(),cards:vi.fn()}));
 vi.mock('../decksupervisor/DeviceExport/services/loadExportCourses',()=>({loadExportCourses:mocks.roster}));
 vi.mock('../../shared/attendance-print/openAttendancePrintWindow',()=>({openAttendancePrintWindow:mocks.popup}));
 vi.mock('../../shared/attendance-print/printAttendanceHtml',()=>({printAttendanceHtml:mocks.print}));
+// Report cards use the real page builder with one synthetic card map; only the print dialog is replaced.
+vi.mock('../../shared/report-cards/reportCards',async original=>{const real=await original<typeof import('../../shared/report-cards/reportCards')>();
+ const map={level:'Splash1',images:{outside:'s1-outside.jpg',inside:'s1-inside.jpg'},fields:{participant:{page:'outside',x:70,y:72}},nextLevel:[{level:'Splash1',page:'outside',x:36,y:20},{level:'Splash2A',page:'outside',x:36,y:24}],criteria:{'Splash1:1:1':{page:'inside',x:4,y:13}}};
+ return {...real,reportCardMap:(id:string)=>id==='Splash1'?map:undefined,printReportCards:mocks.cards};});
 
 type Call={method:string;url:string;body?:any};
 type Reply={status:number;body?:unknown;text?:string};
@@ -347,4 +351,30 @@ it('prints one instructor or every instructor in one job, skipping classes that 
  await user.click(screen.getByRole('button',{name:'Print completed sheets for Unassigned'}));
  expect(await screen.findByRole('alert')).toHaveTextContent('None of these classes can print yet');
  expect(mocks.print).toHaveBeenCalledTimes(2);
+});
+
+it('prints filled report cards for a class, one swimmer, or every instructor, on blank or pre-printed paper',async()=>{
+ server.registry!.courses[0].swimmers[1].matchKey=johnnyKey;
+ server.registry!.courses.push({sourceId:courseSourceId(session.id,'other'),classId:'class-two',instructorId:'instructor-two',lessonDates:[DATE],swimmers:[]});
+ server.results=results([1,2,3].map(i=>attempt({recordId:`ok-${i}`,payload:{...attempt().payload,skillId:'Splash1:1',results:[{subskillId:'Splash1:1:1',status:'successful'}]},success:true})));
+ mocks.cards.mockReset().mockResolvedValue(undefined);
+ const user=userEvent.setup();show();
+ await user.click(await screen.findByRole('button',{name:'Print report cards for 004201'}));
+ await waitFor(()=>expect(mocks.cards).toHaveBeenCalledTimes(1));
+ const doc=new DOMParser().parseFromString(mocks.cards.mock.calls[0][0],'text/html');
+ expect([...doc.querySelectorAll('[data-field="participant"]')].map(f=>f.textContent)).toEqual(['Harrold','Johnny']);
+ expect(doc.querySelectorAll('.rc-page')).toHaveLength(4);expect(doc.querySelectorAll('img.rc-scan')).toHaveLength(4);
+ const harrold=doc.querySelectorAll('.rc-page[data-side="inside"]')[0],johnny=doc.querySelectorAll('.rc-page[data-side="inside"]')[1];
+ expect(harrold.querySelector('[data-criterion="Splash1:1:1"]')).not.toBeNull();expect(johnny.querySelector('[data-criterion]')).toBeNull();
+ await user.selectOptions(screen.getByLabelText('Report card paper'),'preprinted');
+ await user.click(screen.getByRole('button',{name:'Open skill progress for Johnny'}));
+ await user.click(screen.getByRole('button',{name:'Print report card'}));
+ await waitFor(()=>expect(mocks.cards).toHaveBeenCalledTimes(2));
+ const one=new DOMParser().parseFromString(mocks.cards.mock.calls[1][0],'text/html');
+ expect([...one.querySelectorAll('[data-field="participant"]')].map(f=>f.textContent)).toEqual(['Johnny']);expect(one.querySelectorAll('img')).toHaveLength(0);
+ await user.click(screen.getByRole('button',{name:'Close skill progress'}));
+ await user.click(screen.getByRole('button',{name:'Print all report cards'}));
+ await waitFor(()=>expect(mocks.cards).toHaveBeenCalledTimes(3));
+ expect(screen.getByText('Printed 1 of 2 classes.')).toBeVisible();
+ expect(calls.every(c=>c.method==='GET')).toBe(true);
 });

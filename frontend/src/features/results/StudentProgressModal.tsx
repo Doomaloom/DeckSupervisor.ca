@@ -26,10 +26,10 @@ export type StudentProgressModalProps={
  name:string;details:string;active:boolean;lessonDates:string[];
  progress:Map<string,number>|undefined;records:api.ResultRecord[];history:Map<string,api.Results['history']>;
  busy:boolean;error?:string;notice?:string;
- onClose:()=>void;onCorrect:(record:api.ResultRecord,payload:api.ResultPayload)=>void;onDelete:(record:api.ResultRecord)=>void;
+ onClose:()=>void;onPrintReportCard?:()=>void;onCorrect:(record:api.ResultRecord,payload:api.ResultPayload)=>void;onDelete:(record:api.ResultRecord)=>void;
 };
 /** One swimmer's skill progress, attendance and submitted records, opened from a class card. */
-export function StudentProgressModal({name,details,active,lessonDates,progress,records,history,busy,error,notice,onClose,onCorrect,onDelete}:StudentProgressModalProps){
+export function StudentProgressModal({name,details,active,lessonDates,progress,records,history,busy,error,notice,onClose,onPrintReportCard,onCorrect,onDelete}:StudentProgressModalProps){
  const [date,setDate]=useState('');
  useEffect(()=>{const onKey=(e:KeyboardEvent)=>{if(e.key==='Escape')onClose()};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[onClose]);
  const attendance=new Map(records.filter(r=>r.kind==='attendance'&&!r.deleted).map(r=>[r.lessonDate,r.payload.status??'unmarked']));
@@ -38,6 +38,7 @@ export function StudentProgressModal({name,details,active,lessonDates,progress,r
  const present=[...attendance.values()].filter(s=>s==='present').length;
  return <ModalShell title={name} description={details} onClose={onClose} closeLabel="Close skill progress" panelClassName="max-h-[90vh] overflow-y-auto max-sm:p-4 [overflow-wrap:anywhere]"
   notice={<>{error&&<p role="alert" className="rounded-card border-2 border-danger/30 bg-danger/10 p-3 text-sm font-semibold text-danger">{error}</p>}{notice&&<p role="status" className="rounded-card border-2 border-secondary/20 bg-bg p-3 text-sm font-semibold">{notice}</p>}{!active&&<p className="text-sm">This enrollment is no longer active in this class. Earlier results stay here.</p>}</>}>
+  {onPrintReportCard&&<div className="mt-4"><ActionButton variant="primary" disabled={busy} onClick={onPrintReportCard}>Print report card</ActionButton></div>}
   <section aria-labelledby="student-progress-skills" className="mt-6">
    <h4 id="student-progress-skills" className="text-lg font-semibold">Skill progress</h4>
    {skills.length===0?<p>No current curriculum assessments submitted.</p>:<ul className="mt-2 divide-y divide-secondary/15 border-y border-secondary/15">{skills.map(([skillId,count])=><li key={skillId} className="flex items-center justify-between gap-3 py-2"><span>{skillName(skillId)}: {count} / 3 successful attempts</span><Meter count={count}/></li>)}</ul>}

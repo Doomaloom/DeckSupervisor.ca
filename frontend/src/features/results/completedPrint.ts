@@ -2,14 +2,14 @@ import type * as api from '../../lib/resultsApi';
 import type {AttendancePrintItem} from '../../shared/attendance-print/types';
 import {findCurriculumLevel} from '../instructor/LessonPlans/lessonSkills';
 import type {LocalIdentity} from './identity';
+import {reportCardMap,reportCardMarks,type ReportCardPrint} from '../../shared/report-cards/reportCards';
 
 export type CompletedSwimmer={enrollmentId:string;local?:LocalIdentity};
 export type CompletedClassInput={course:api.ResultCourse;swimmers:CompletedSwimmer[];data:api.Results};
 
 /** Builds one class's completed sheets, or throws the reason it cannot print yet. Swimmers arrive in blank-sheet order. */
 export function buildCompletedClass({course,swimmers,data}:CompletedClassInput):AttendancePrintItem[]{
- if(data.conflicts.some(c=>!c.resolved&&c.operation.classId===course.classId))throw new Error('Resolve this class’s conflicts before printing.');
- if(!swimmers.length||swimmers.some(s=>!s.local))throw new Error('Load and reconcile every student name before printing.');
+ assertClassPrintable({course,swimmers,data});
  const accepted=data.records.filter(r=>r.classId===course.classId&&!r.deleted),versions=[...new Set(accepted.map(r=>r.curriculumVersion))];
  if(versions.length!==1)throw new Error('Completed printing needs submitted results from one curriculum version.');
  // Private and mixed classes split into the sheet of each swimmer's own level.
@@ -21,10 +21,31 @@ export function buildCompletedClass({course,swimmers,data}:CompletedClassInput):
    return {name:s.local!.name,enrollmentId:s.enrollmentId,results:{attendance,successfulAttempts}};})}};});
 }
 
-export type CompletedBatch={items:AttendancePrintItem[];printed:string[];skipped:{label:string;reason:string}[]};
+export type PrintBatch<T>={items:T[];printed:string[];skipped:{label:string;reason:string}[]};
+export type CompletedBatch=PrintBatch<AttendancePrintItem>;
 /** Prints every class that is ready and reports the rest instead of failing the whole batch. */
-export function buildCompletedBatch(classes:(CompletedClassInput&{label:string})[]):CompletedBatch{
- const batch:CompletedBatch={items:[],printed:[],skipped:[]};
- for(const c of classes){try{batch.items.push(...buildCompletedClass(c));batch.printed.push(c.label);}catch(e){batch.skipped.push({label:c.label,reason:e instanceof Error?e.message:String(e)});}}
+export function buildBatch<I extends {label:string},T>(classes:I[],build:(c:I)=>T[]):PrintBatch<T>{
+ const batch:PrintBatch<T>={items:[],printed:[],skipped:[]};
+ for(const c of classes){try{batch.items.push(...build(c));batch.printed.push(c.label);}catch(e){batch.skipped.push({label:c.label,reason:e instanceof Error?e.message:String(e)});}}
  return batch;
+}
+export const buildCompletedBatch=(classes:(CompletedClassInput&{label:string})[])=>buildBatch(classes,buildCompletedClass);
+
+/** Checks shared by completed sheets and report cards: no open conflicts, and every swimmer named. */
+export function assertClassPrintable({course,swimmers,data}:CompletedClassInput){
+ if(data.conflicts.some(c=>!c.resolved&&c.operation.classId===course.classId))throw new Error('Resolve this class’s conflicts before printing.');
+ if(!swimmers.length||swimmers.some(s=>!s.local))throw new Error('Load and reconcile every student name before printing.');
+}
+
+/** One filled report card per swimmer, on the card of the swimmer's own level. */
+export function buildReportCardClass(input:CompletedClassInput&{session:string;curriculumVersion:string}):ReportCardPrint[]{
+ assertClassPrintable(input);
+ const {course,swimmers,data,session,curriculumVersion}=input,date=[...course.lessonDates].sort().at(-1)??'';
+ return swimmers.map(s=>{
+  const local=s.local!,level=findCurriculumLevel(local.level);
+  if(!level)throw new Error(`Choose a supported curriculum level for ${local.name}.`);
+  const map=reportCardMap(level.id);if(!map)throw new Error(`There is no report card scan for ${local.name}’s level (${level.id}) yet.`);
+  const records=data.records.filter(r=>r.enrollmentId===s.enrollmentId&&r.classId===course.classId);
+  return {map,participant:local.name,instructor:local.course.instructor,date,session,marks:reportCardMarks(records,level.id,curriculumVersion)};
+ });
 }
