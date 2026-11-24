@@ -44,7 +44,9 @@ beforeEach(async()=>{
   if(url.endsWith('/result-identities')&&method==='GET')return json(server.registry?{status:200,body:server.registry}:{status:404,text:'not registered'});
   if(url.endsWith('/result-identities')&&method==='PUT'){server.afterReconcile();return json({status:200,body:call.body});}
   if(url.endsWith('/result-identities/reconcile')){server.afterReconcile();return json({status:200,body:{}});}
-  if(url.endsWith('/results')&&method==='GET')return json({status:200,body:server.results});
+  // The page loads results per registered class (GET /results?classId=<id>); filter like result_snapshot's p_class.
+  const byClass=/\/results\?classId=([^&]+)$/.exec(url);
+  if(byClass&&method==='GET'){const c=decodeURIComponent(byClass[1]),all=server.results;return json({status:200,body:{...all,records:all.records.filter(r=>r.classId===c),conflicts:all.conflicts.filter(x=>x.operation.classId===c),history:all.history.filter(h=>h.record.classId===c)}});}
   if(url.endsWith('/results')&&method==='POST')return json(server.submit(call));
   if(url.endsWith('/resolve'))return json(server.resolve(call));
   if(url.endsWith('/result-grants'))return json({status:200,body:{grants:server.grants}});
@@ -105,9 +107,8 @@ it('blocks indistinguishable duplicate roster entries from reconciliation and fr
  expect(await screen.findAllByText('Indistinguishable duplicate. Correct the source roster before reconciling.')).toHaveLength(2);
  expect(screen.queryByLabelText('Identity for Harrold')).not.toBeInTheDocument();
  expect(screen.queryByRole('button',{name:'Confirm reconciliation'})).not.toBeInTheDocument();
- expect(screen.getByText('Unresolved student (enrollme)',{selector:'strong'})).toBeVisible();
- await user.selectOptions(screen.getByLabelText('Class'),'class-one');
- await user.click(screen.getByRole('button',{name:'Print completed sheets'}));
+ expect(screen.getAllByText('Unresolved student (enrollme)',{selector:'strong'})[0]).toBeVisible();
+ await user.click(screen.getByRole('button',{name:'Print completed sheet for 004201'}));
  expect(await screen.findByRole('alert')).toHaveTextContent('Load and reconcile every student name before printing');
  expect(mocks.print).not.toHaveBeenCalled();
  expect(calls.every(c=>c.method==='GET')).toBe(true);
@@ -119,6 +120,7 @@ it('shows server-derived success rather than recomputing it from criteria, and d
  server.results=results([allCriteria,timed]);
  const skills=curriculum.skills as Record<string,string>;
  const user=userEvent.setup();show();
+ await user.click(await screen.findByRole('button',{name:'Open skill progress for Harrold'}));
  expect(await screen.findByText(`${skills['LittleSplash1:1']}: 0 / 3 successful attempts`)).toBeVisible();
  expect(screen.getByText(`${skills['Splash7:10']}: 1 / 3 successful attempts`)).toBeVisible();
  const article=screen.getByText('4 of 4 laps in 170.0 seconds').closest('article')!;
@@ -136,6 +138,7 @@ it('shows server-derived success rather than recomputing it from criteria, and d
 it('retains the reviewer’s unsaved correction and reports the reason when the server rejects or fails the save',async()=>{
  server.submit=c=>({status:200,body:{schemaVersion:1,receipts:[{operationId:c.body.operations[0].operationId,status:'rejected',revision:3,reason:'changed operation reuse'}]}});
  const user=userEvent.setup();show();
+ await user.click(await screen.findByRole('button',{name:'Open skill progress for Harrold'}));
  await user.click(await screen.findByText('Correct submitted assessment'));
  const select=()=>screen.getByLabelText(new RegExp((curriculum.criteria as Record<string,string>)['LittleSplash1:1:2'].replace(/[.*+?^${}()|[\]\\]/g,'\\$&'))) as HTMLSelectElement;
  await user.selectOptions(select(),'successful');
@@ -167,7 +170,9 @@ it('sends the displayed revision when resolving a conflict and surfaces a stale-
  server.results={...server.results,records:[attempt({revision:4})],conflicts:server.results.conflicts.map(c=>c.current?{...c,current:attempt({revision:4})}:c)};
  server.resolve=()=>({status:200,body:{resolved:true}});
  await user.click(screen.getByRole('button',{name:'Refresh submissions'}));
+ await user.click(await screen.findByRole('button',{name:'Open skill progress for Harrold'}));
  await screen.findByText(/revision 4/);
+ await user.click(screen.getByRole('button',{name:'Close skill progress'}));
  await user.click(screen.getAllByRole('button',{name:'Keep current'})[0]);
  await waitFor(()=>expect(sent('POST','/results/conflicts/conflict-one/resolve')).toHaveLength(2));
  expect(sent('POST','/results/conflicts/conflict-one/resolve')[1].body).toEqual({choice:'current',expectedRevision:4});
@@ -179,7 +184,8 @@ it('sends the displayed revision when resolving a conflict and surfaces a stale-
 it('cuts heat times to a tenth of a second like the tablet instead of rounding them',async()=>{
  const heat=(recordId:string,elapsedMs:number)=>attempt({recordId,payload:{skillId:'Splash7:10',createdAt:'2026-09-04T12:00:00Z',submittedAt:'2026-09-04T12:01:00Z',results:[{subskillId:'Splash7:10:1',status:'not_yet'}],timed:{lapsRequired:4,lapsCompleted:4,elapsedMs}}});
  server.results=results([heat('heat-a',7784),heat('heat-b',4665)]);
- show();
+ const user=userEvent.setup();show();
+ await user.click(await screen.findByRole('button',{name:'Open skill progress for Harrold'}));
  expect(await screen.findByText('4 of 4 laps in 7.7 seconds')).toBeVisible();
  expect(screen.getByText('4 of 4 laps in 4.6 seconds')).toBeVisible();
 });
@@ -198,6 +204,7 @@ it('shows the plain "already changed" message when another reviewer resolved the
 it('displays tombstones as deleted, keeps them out of progress, and deletes through an audited delete operation',async()=>{
  server.results=results([attempt({recordId:'tombstone',action:'delete',payload:{},deleted:true,success:false,revision:5}),attempt({recordId:'attendance:enrollment-h:2026-09-04',kind:'attendance',payload:{status:'present'},revision:2})],{history:[{recordId:'tombstone',revision:4,record:attempt({recordId:'tombstone',revision:4,success:true})}]});
  const user=userEvent.setup();show();
+ await user.click(await screen.findByRole('button',{name:'Open skill progress for Harrold'}));
  const tombstone=(await screen.findByText(/revision 5 · deleted/)).closest('article')!;
  expect(within(tombstone).getByText('Deleted')).toBeVisible();
  expect(within(tombstone).getByRole('button',{name:'Delete record with audit history'})).toBeDisabled();
@@ -214,7 +221,7 @@ it('displays tombstones as deleted, keeps them out of progress, and deletes thro
 it('marks attendance with the contract record ID and first-revision base, then corrects against the accepted revision',async()=>{
  server.registry!.courses[0].swimmers[1].matchKey=johnnyKey;server.results=results([]);
  const user=userEvent.setup();show();
- await user.selectOptions(await screen.findByLabelText('Class'),'class-one');await user.selectOptions(screen.getByLabelText('Lesson date'),DATE);
+ await user.selectOptions(await screen.findByLabelText('Lesson date for 004201'),DATE);
  await user.selectOptions(screen.getByLabelText('Attendance for Johnny'),'absent');
  await waitFor(()=>expect(sent('POST','/results')).toHaveLength(1));
  expect(sent('POST','/results')[0].body.operations[0]).toMatchObject({sessionId:session.id,datasetId:'synthetic-dataset',classId:'class-one',enrollmentId:'enrollment-j',recordId:`attendance:enrollment-j:${DATE}`,kind:'attendance',action:'upsert',baseRevision:0,lessonDate:DATE,payload:{status:'absent'}});
@@ -232,7 +239,7 @@ it('gives instructors the scoped classes only, without grants, reconciliation or
  server.grants=[{id:'grant-one',instructorId:'instructor-one',expiresAt:'2026-10-01T00:00:00Z',revoked:false}];
  show(false);
  expect(await screen.findByText('Some submissions need supervisor review. Accepted results remain displayed until those conflicts are resolved.')).toBeVisible();
- expect(within(screen.getByLabelText('Class')).getAllByRole('option').map(o=>(o as HTMLOptionElement).value)).toEqual(['','class-one']);
+ expect([...document.querySelectorAll('[data-component="results-class-card"]')].map(e=>e.getAttribute('data-class-id'))).toEqual(['class-one']);
  for(const heading of ['Identity reconciliation','Conflicts requiring review','Tablet access grants'])expect(screen.queryByText(heading)).not.toBeInTheDocument();
  for(const name of ['Keep current','Accept incoming','Revoke access','Confirm reconciliation'])expect(screen.queryByRole('button',{name})).not.toBeInTheDocument();
  expect(calls.some(c=>c.url.includes('result-grants')||c.url.includes('result-classes'))).toBe(false);
@@ -260,13 +267,12 @@ it('builds completed sheets from accepted server-successful records only and blo
   attempt({recordId:`attendance:enrollment-h:${DATE}`,kind:'attendance',payload:{status:'present'}}),attempt({recordId:`attendance:enrollment-j:${DATE}`,enrollmentId:'enrollment-j',kind:'attendance',payload:{status:'absent'}})];
  server.results=results([...good,skill('old',{curriculumVersion:'templates-older'})],{conflicts:[{id:'elsewhere',operation:skill('x',{classId:'class-two'}),current:null,resolved:false}]});
  const user=userEvent.setup();show();
- await user.selectOptions(await screen.findByLabelText('Class'),'class-one');
- await user.click(screen.getByRole('button',{name:'Print completed sheets'}));
+ await user.click(await screen.findByRole('button',{name:'Print completed sheet for 004201'}));
  expect(await screen.findByRole('alert')).toHaveTextContent('one curriculum version');expect(mocks.print).not.toHaveBeenCalled();
  server.results={...server.results,records:good};
  await user.click(screen.getByRole('button',{name:'Refresh submissions'}));
  await waitFor(()=>expect(screen.queryByRole('alert')).not.toBeInTheDocument());
- await user.click(screen.getByRole('button',{name:'Print completed sheets'}));
+ await user.click(screen.getByRole('button',{name:'Print completed sheet for 004201'}));
  await waitFor(()=>expect(mocks.print).toHaveBeenCalledTimes(1));
  const request=mocks.print.mock.calls[0][0];
  expect(request.rosters).toHaveLength(1);expect(request.rosters[0].template).toBe('Splash1');
@@ -278,16 +284,15 @@ it('builds completed sheets from accepted server-successful records only and blo
  ]);
 });
 
-it('lists swimmers in blank-sheet name order on the completed sheet, the Student filter and skill progress, not in database order',async()=>{
+it('lists swimmers in blank-sheet name order on the completed sheet and the class card, not in database order',async()=>{
  server.registry!.courses[0].swimmers[1].matchKey=johnnyKey;
  server.registry!.courses[0].swimmers.reverse();
  server.results=results([attempt({recordId:'attempt-j',enrollmentId:'enrollment-j'}),attempt()]);
  const user=userEvent.setup();show();
- await user.selectOptions(await screen.findByLabelText('Class'),'class-one');
- expect(within(screen.getByLabelText('Student')).getAllByRole('option').map(o=>o.textContent)).toEqual(['All students','Harrold','Johnny']);
- const progress=screen.getByText('Skill progress across all lesson dates').parentElement!;
- expect(within(progress).getAllByRole('heading',{level:4}).map(h=>h.textContent)).toEqual(['Harrold','Johnny']);
- await user.click(screen.getByRole('button',{name:'Print completed sheets'}));
+ const card=await screen.findByRole('region',{name:/\(004201\)/});
+ await within(card).findByRole('button',{name:'Open skill progress for Johnny'});
+ expect(within(card).getAllByRole('button',{name:/^Open skill progress for /}).map(b=>b.getAttribute('aria-label'))).toEqual(['Open skill progress for Harrold','Open skill progress for Johnny']);
+ await user.click(screen.getByRole('button',{name:'Print completed sheet for 004201'}));
  await waitFor(()=>expect(mocks.print).toHaveBeenCalledTimes(1));
  expect(mocks.print.mock.calls[0][0].rosters[0].roster.students.map((s:{name:string})=>s.name)).toEqual(['Harrold','Johnny']);
 });
@@ -297,7 +302,7 @@ it('resolves names from a local class package without sending it anywhere, and r
  const pkg=(datasetId:string)=>({schemaVersion:1,kind:'rec-tablet-classes',datasetId,instructor:'Package Teacher',courses:[{sourceId,name:'Splash 1',level:'Splash1',startTime:'16:00',location:'Pool',lessonDates:[DATE],swimmers:[{sourceId:'source-h',name:'Package Only Name'}]}]});
  const file=(datasetId:string)=>new File([JSON.stringify(pkg(datasetId))],'classes.json',{type:'application/json'});
  const user=userEvent.setup();show(false);
- expect(await screen.findByText('Unresolved student (enrollme)',{selector:'strong'})).toBeVisible();
+ expect((await screen.findAllByText('Unresolved student (enrollme)',{selector:'strong'}))[0]).toBeVisible();
  expect(screen.getByText(/Load this session’s class package below to resolve names/)).toBeVisible();
  const input=screen.getByLabelText('Load local class package to resolve names (stays in this browser)');
  await waitFor(()=>expect(input).toBeEnabled());
@@ -309,4 +314,37 @@ it('resolves names from a local class package without sending it anywhere, and r
  expect(await screen.findByText('Package Only Name',{selector:'strong'})).toBeVisible();
  expect(calls.every(c=>c.method==='GET')).toBe(true);
  for(const c of calls)expect(`${c.url}${JSON.stringify(c.body??'')}`).not.toMatch(/Package Only Name|Package Teacher/);
+});
+it('loads results one registered class at a time and never asks for the whole session at once',async()=>{
+ server.registry!.courses.push({sourceId:courseSourceId(session.id,'other'),classId:'class-two',instructorId:'instructor-two',lessonDates:[DATE],swimmers:[]});
+ server.results=results([attempt(),attempt({recordId:'other-attempt',classId:'class-two'})]);
+ const user=userEvent.setup();show();
+ await user.click(await screen.findByRole('button',{name:'Open skill progress for Harrold'}));
+ await screen.findByText('Submitted records and revision history');
+ await waitFor(()=>expect(calls.filter(c=>c.method==='GET'&&c.url.includes('/results')).map(c=>c.url.split('/results')[1]).sort()).toEqual(['?classId=class-one','?classId=class-two']));
+ expect(await screen.findAllByText(/revision \d/)).toHaveLength(2);
+});
+
+it('prints one instructor or every instructor in one job, skipping classes that are not ready and saying why',async()=>{
+ server.registry!.courses[0].swimmers[1].matchKey=johnnyKey;
+ server.registry!.courses.push({sourceId:courseSourceId(session.id,'other'),classId:'class-two',instructorId:'instructor-two',lessonDates:[DATE],swimmers:[]});
+ server.results=results([attempt({payload:{...attempt().payload,skillId:'Splash1:2'},success:true})]);
+ const user=userEvent.setup();show();
+ await user.click(await screen.findByRole('button',{name:'Print all instructors'}));
+ await waitFor(()=>expect(mocks.print).toHaveBeenCalledTimes(1));
+ expect(mocks.print.mock.calls[0][0].rosters.map((r:{roster:{code:string}})=>r.roster.code)).toEqual(['004201']);
+ expect(screen.getByText('Printed 1 of 2 classes.')).toBeVisible();
+ expect(screen.getByText(/other Class other \(Unassigned\): Load and reconcile every student name before printing/)).toBeVisible();
+ // Printing changes nothing on the server, so it does not reload every class afterwards.
+ expect(calls.filter(c=>c.method==='GET'&&c.url.includes('/results?classId=')).length).toBe(2);
+ await user.selectOptions(screen.getByLabelText('Instructor'),course.instructor);
+ expect(document.querySelectorAll('[data-component="results-class-card"]')).toHaveLength(1);
+ await user.click(screen.getByRole('button',{name:`Print completed sheets for ${course.instructor}`}));
+ await waitFor(()=>expect(mocks.print).toHaveBeenCalledTimes(2));
+ expect(mocks.print.mock.calls[1][0].rosters).toHaveLength(1);
+ expect(screen.getByText('Printed 1 of 1 classes.')).toBeVisible();
+ await user.selectOptions(screen.getByLabelText('Instructor'),'Unassigned');
+ await user.click(screen.getByRole('button',{name:'Print completed sheets for Unassigned'}));
+ expect(await screen.findByRole('alert')).toHaveTextContent('None of these classes can print yet');
+ expect(mocks.print).toHaveBeenCalledTimes(2);
 });

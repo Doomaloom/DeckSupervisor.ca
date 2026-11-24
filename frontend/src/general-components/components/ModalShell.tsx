@@ -29,6 +29,9 @@ export function ModalShell({
             role="presentation"
         >
             <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={title}
                 className={cn(
                     "relative w-full max-w-4xl rounded-card border-2 border-secondary/20 bg-accent p-8 text-secondary shadow-xl",
                     panelClassName,

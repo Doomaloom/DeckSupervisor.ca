@@ -31,7 +31,7 @@ export async function fetchResultRegistry(id:string):Promise<ResultRegistry|null
 export const putResultRegistry=(r:ResultRegistry)=>resultRequest<ResultRegistry>(`${base(r.sessionId)}/result-identities`,'PUT',r);
 export const fetchResultClasses=(id:string)=>resultRequest<{classes:{id:string;code:string;instructorId:string}[]}>(`${base(id)}/result-classes`);
 export const reconcileResultIdentity=(id:string,body:{courseId:string;swimmerId:string;enrollmentId:string;matchKey:string})=>resultRequest(`${base(id)}/result-identities/reconcile`,'POST',body);
-export const fetchResults=(id:string)=>resultRequest<Results>(`${base(id)}/results`);
+export const fetchResults=(id:string,classId?:string)=>resultRequest<Results>(`${base(id)}/results${classId?`?classId=${encodeURIComponent(classId)}`:''}`);
 export const submitResult=(id:string,operation:ResultOperation)=>resultRequest<{receipts:{operationId:string;status:string;revision:number;reason?:string}[]}>(`${base(id)}/results`,'POST',{schemaVersion:1,operations:[operation]});
 export const resolveResultConflict=(id:string,conflict:string,choice:'current'|'incoming',expectedRevision:number)=>resultRequest(`${base(id)}/results/conflicts/${encodeURIComponent(conflict)}/resolve`,'POST',{choice,expectedRevision});
 export const fetchResultGrants=(id:string)=>resultRequest<{grants:ResultGrant[]}>(`${base(id)}/result-grants`);
