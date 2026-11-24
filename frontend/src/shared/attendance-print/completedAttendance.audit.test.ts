@@ -60,7 +60,8 @@ describe('completed sheets across every production template', () => {
             expect(row.dataset.enrollmentId).toBe(`enrollment-${studentIndex}`);
             expect(row.children).toHaveLength(blankRows[studentIndex].children.length);
             expect(row.children[0].textContent).toContain(`${studentIndex + 1}. ${names[studentIndex]}`);
-            expect(row.children[0].textContent).toContain('[09/07 ✓] [09/14 ×] [09/21  ]');
+            expect(row.children[0].textContent).toContain('Absent/Present');
+            expect([...row.querySelectorAll<HTMLElement>('[data-date]')].map(slot => `${slot.textContent}${slot.querySelector('svg')?.dataset.mark ?? ''}`)).toEqual(['[Day 1]P', '[Day 2]A', '[Day 3]']);
             [...row.children].slice(1).forEach((cell, offset) => {
                 const cellIndex = offset + 1, columnIndex = mapped.get(cellIndex), element = cell as HTMLElement;
                 if (columnIndex === undefined) {
@@ -73,7 +74,8 @@ describe('completed sheets across every production template', () => {
                 const expected = Math.min(3, count(studentIndex, columnIndex));
                 seen.add(expected);
                 expect(element.dataset.earnedChecks, `${template} ${columns[columnIndex].heading}`).toBe(String(expected));
-                expect(element.textContent!.trim()).toBe('✓'.repeat(expected));
+                expect(element.querySelectorAll('svg[data-mark="check"]')).toHaveLength(expected);
+                expect(element.textContent!.trim()).toBe('');
             });
         });
         expect(row0Checks(rows[0])).toHaveLength(columns.length);
@@ -108,10 +110,11 @@ describe('completed sheets across every production template', () => {
         expect(summary.map(rows => rows.map(row => row.id))).toEqual([
             Array.from({ length: LIMIT }, (_, i) => `enrollment-${i}`), Array.from({ length: LIMIT }, (_, i) => `enrollment-${i}`), [`enrollment-${LIMIT}`], [`enrollment-${LIMIT}`],
         ]);
-        const dateLabels = (text: string) => [...text.matchAll(/\[(\d\d\/\d\d) (.)\]/g)].map(match => `${match[1]}${match[2]}`);
-        expect(dateLabels(summary[0][0].text)).toEqual(dates.slice(0, 14).map((date, i) => `${date.slice(5).replace('-', '/')}${i === 0 ? '✓' : ' '}`));
-        expect(dateLabels(summary[1][0].text)).toEqual(['09/15✓']);
-        expect(dateLabels(summary[3][0].text)).toEqual(['09/15×']);
+        const dateLabels = (front: number, row: number) => [...fronts[front].querySelectorAll<HTMLTableRowElement>('[data-generated-attendance-row]')[row].querySelectorAll<HTMLElement>('[data-date]')].map(slot => `${slot.textContent}=${slot.dataset.date}${slot.querySelector('svg')?.dataset.mark ?? ''}`);
+        expect(dateLabels(0, 0)).toEqual(dates.slice(0, 14).map((date, i) => `[Day ${i + 1}]=${date}${i === 0 ? 'P' : ''}`));
+        // A continuation sheet numbers its slots on from the first sheet: lesson 15 is [Day 15].
+        expect(dateLabels(1, 0)).toEqual([`[Day 15]=${dates[14]}P`]);
+        expect(dateLabels(3, 0)).toEqual([`[Day 15]=${dates[14]}A`]);
         // Earned checks are cumulative for the session and repeat unchanged on each continuation sheet.
         expect(summary[1][0].checks).toEqual(summary[0][0].checks);
         expect(summary[3][0].checks).toEqual(summary[2][0].checks);

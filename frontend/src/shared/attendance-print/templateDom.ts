@@ -89,9 +89,13 @@ export function fillAttendanceRoster(
     roster: AttendancePrintRoster,
     session: string,
     // firstRowNumber keeps numbering continuous when a class is split across sheets.
-    options: { dailyAttendance?: boolean; firstRowNumber?: number } = {},
+    options: { dailyAttendance?: boolean; firstRowNumber?: number; firstDayNumber?: number } = {},
 ) {
     const firstRowNumber = options.firstRowNumber ?? 1;
+    const firstDayNumber = options.firstDayNumber ?? 1;
+    // Completed sheets print exactly like blank ones; each [Day n] slot carries its lesson date so
+    // fillCompletedMarks can write P or A over it by hand.
+    const lessonDates = roster.completed ? [...roster.completed.lessonDates].sort() : [];
     const startDate = roster.completed
         ? [...roster.completed.lessonDates].sort()[0] ?? ""
         : roster.schedule.trim().split(/\s+/)[1] ?? "";
@@ -126,37 +130,25 @@ export function fillAttendanceRoster(
 
         const font = root.ownerDocument.createElement("font");
 
-        // Completed sheets omit the handwritten A/P prompt (the dated ✓/× line already records
-        // attendance) and set that line as a tight block, so a whole class fits on one page.
-        if (!roster.completed) {
-            font.append(root.ownerDocument.createElement("br"));
-            const absent = root.ownerDocument.createElement("span");
-            absent.style.textDecoration = "underline";
-            absent.textContent = "A";
-            font.append(absent, "bsent/");
-            const present = root.ownerDocument.createElement("span");
-            present.style.textDecoration = "underline";
-            present.textContent = "P";
-            font.append(present, "resent", root.ownerDocument.createElement("br"));
-        }
+        font.append(root.ownerDocument.createElement("br"));
+        const absent = root.ownerDocument.createElement("span");
+        absent.style.textDecoration = "underline";
+        absent.textContent = "A";
+        font.append(absent, "bsent/");
+        const present = root.ownerDocument.createElement("span");
+        present.style.textDecoration = "underline";
+        present.textContent = "P";
+        font.append(present, "resent", root.ownerDocument.createElement("br"));
         const days = root.ownerDocument.createElement("span");
         days.style.color = "rgb(98, 98, 98)";
         days.style.fontSize = "10.5px";
-        if (roster.completed) {
-            days.style.fontFamily = 'Arial';
-            days.style.fontSize = '9px';
-            days.style.display = 'block';
-            days.style.lineHeight = '1.2';
-            days.textContent = [...roster.completed.lessonDates].sort().map(date => {
-                const status = student.results?.attendance[date];
-                const mark = status === 'present' ? '✓' : status === 'absent' ? '×' : ' ';
-                return `[${date.slice(5).replace('-', '/')} ${mark}]`;
-            }).join(' ');
-        } else {
-            days.textContent = Array.from(
-                { length: 14 },
-                (_, day) => `[Day ${day + 1}]`,
-            ).join(" ");
+        for (let day = 0; day < 14; day += 1) {
+            if (day) days.append(" ");
+            const slot = root.ownerDocument.createElement("span");
+            slot.dataset.day = String(firstDayNumber + day);
+            if (lessonDates[day]) slot.dataset.date = lessonDates[day];
+            slot.textContent = `[Day ${firstDayNumber + day}]`;
+            days.append(slot);
         }
         font.append(days);
         if (options.dailyAttendance !== false) nameCell.append(font);

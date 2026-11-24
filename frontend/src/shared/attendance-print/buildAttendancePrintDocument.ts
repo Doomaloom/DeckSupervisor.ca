@@ -6,7 +6,7 @@ import compatibilityCss from "./attendanceCompatibility.css?inline";
 import { buildSchematicCoverElement } from "./schematicCover";
 import { extractAttendanceTemplateSections, fillAttendanceRoster, } from "./templateDom";
 import { loadAttendanceTemplate } from "./templateRegistry";
-import { fillCompletedMarks, validateCompletedRoster } from './completedAttendance';
+import { fillCompletedMarks, HAND_MARK_CSS, validateCompletedRoster } from './completedAttendance';
 import type { AttendancePrintItem, AttendancePrintOptions, AttendancePrintRequest, } from "./types";
 
 export function groupAttendancePrintItems(items: AttendancePrintItem[]) {
@@ -83,7 +83,7 @@ export async function buildAttendancePrintDocument(
         for (let student = 0; student < Math.max(1, item.roster.students.length); student += COMPLETED_STUDENTS_PER_SHEET) {
             for (let date = 0; date < dates.length; date += 14) {
                 const lessonDates = dates.slice(date, date + 14);
-                pages.push({ ...item, firstRowNumber: student + 1, roster: {
+                pages.push({ ...item, firstRowNumber: student + 1, firstDayNumber: date + 1, roster: {
                     ...item.roster,
                     completed: { ...item.roster.completed, lessonDates },
                     students: item.roster.students.slice(student, student + COMPLETED_STUDENTS_PER_SHEET).map(person => ({
@@ -105,7 +105,7 @@ export async function buildAttendancePrintDocument(
         "default-src 'self' data: blob:; script-src 'none'; style-src 'unsafe-inline'; font-src 'self' data: blob:";
     document.head.append(meta);
     const style = document.createElement("style");
-    style.textContent = `${attendanceFontCss()}\n${compatibilityCss}`;
+    style.textContent = `${attendanceFontCss()}\n${compatibilityCss}\n${HAND_MARK_CSS}`;
     document.head.append(style);
     document.body.className = "attendance-print-document";
 
@@ -170,7 +170,7 @@ export async function buildAttendancePrintDocument(
                         fragment,
                         item.roster,
                         request.session?.trim() || "Session",
-                        { firstRowNumber: item.firstRowNumber },
+                        { firstRowNumber: item.firstRowNumber, firstDayNumber: item.firstDayNumber },
                     );
                     fillCompletedMarks(fragment, item.roster, item.template);
                     if (paired) {

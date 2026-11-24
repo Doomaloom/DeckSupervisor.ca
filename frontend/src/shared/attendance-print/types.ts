@@ -28,6 +28,8 @@ export type AttendancePrintItem = {
     roster: AttendancePrintRoster;
     /** Row number of the first student on a completed continuation sheet. */
     firstRowNumber?: number;
+    /** Day number of the first [Day n] slot when a long session continues on another sheet. */
+    firstDayNumber?: number;
 };
 
 export type AttendancePrintRequest = {

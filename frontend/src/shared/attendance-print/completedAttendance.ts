@@ -1,5 +1,6 @@
 import manifest from './completedPrintMap.json';
 import type { AttendancePrintRoster } from './types';
+import { handMarkSvg } from './handMarks';
 
 export const COMPLETED_PRINT_CURRICULUM_VERSION = manifest.curriculumVersion;
 export type CompletedPrintColumn = {cellIndex: number; heading: string; skillIds: string[]; aggregation: 'all' | 'any'};
@@ -43,15 +44,37 @@ export function fillCompletedMarks(root: HTMLElement, roster: AttendancePrintRos
     const rows = root.querySelectorAll<HTMLTableRowElement>('[data-generated-attendance-row]');
     rows.forEach((row, index) => {
         const student = roster.students[index];
-        row.dataset.enrollmentId = student.enrollmentId!;
+        const id = student.enrollmentId!;
+        row.dataset.enrollmentId = id;
+        // Marks are pen strokes laid over the untouched blank sheet, so it reads like one filled in by hand.
         for (const column of columns) {
             const cell = row.children[column.cellIndex] as HTMLElement;
             const count = earnedChecks(column, student.results!.successfulAttempts);
-            cell.textContent = count ? '✓'.repeat(count) : '\u00a0';
-            cell.style.fontFamily = 'Arial';
-            cell.style.fontSize = '10px';
-            cell.style.textAlign = 'center';
             cell.dataset.earnedChecks = String(count);
+            if (!count) continue;
+            cell.style.position = 'relative';
+            const marks = root.ownerDocument.createElement('span');
+            marks.className = 'hand-checks';
+            marks.dataset.count = String(count);
+            for (let mark = 0; mark < count; mark += 1) marks.append(handMarkSvg(root.ownerDocument, 'check', `${id}:${column.cellIndex}:${mark}`));
+            cell.append(marks);
         }
+        row.querySelectorAll<HTMLElement>('[data-date]').forEach(slot => {
+            const status = student.results!.attendance[slot.dataset.date!];
+            if (status !== 'present' && status !== 'absent') return;
+            slot.dataset.attendance = status;
+            slot.style.position = 'relative';
+            const mark = handMarkSvg(root.ownerDocument, status === 'present' ? 'P' : 'A', `${id}:${slot.dataset.date}`);
+            mark.classList.add('hand-attendance');
+            slot.append(mark);
+        });
     });
 }
+
+/** Sizes and places the pen marks inside their cells; part of the print document's stylesheet. */
+export const HAND_MARK_CSS = `
+.hand-checks{position:absolute;inset:12% 4%;display:flex;align-items:center;justify-content:center;gap:2%;pointer-events:none}
+.hand-checks .hand-mark{width:31%;height:100%;flex:0 0 31%}
+.hand-attendance{position:absolute;left:58%;top:-0.95em;width:1.35em;height:1.35em;pointer-events:none}
+.hand-mark{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+`;

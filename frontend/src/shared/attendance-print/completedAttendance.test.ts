@@ -13,14 +13,20 @@ const roster = (): AttendancePrintRoster => ({
     completed:{curriculumVersion:COMPLETED_PRINT_CURRICULUM_VERSION, lessonDates:['2026-09-07','2026-09-14','2026-09-21']},
     students:[{name:'Avery <Test>', enrollmentId:'enrollment-1', results:{attendance:{'2026-09-07':'present','2026-09-14':'absent'},successfulAttempts:{'Splash1:1':1,'Splash1:2':2,'Splash1:3':4}}}],
 });
+const slots = (row: Element) => [...row.querySelectorAll<HTMLElement>('[data-date]')].map(slot => `${slot.dataset.date}:${slot.querySelector('svg')?.dataset.mark ?? ''}`);
 describe('completed historical attendance sheets', () => {
     it('fills earned checks and dated attendance safely, leaves administrative fields blank', async () => {
         const document = await buildAttendancePrintDocument({template:'Splash1', roster:roster()});
         const row = document.querySelector('[data-generated-attendance-row]')!;
-        expect([...row.querySelectorAll('[data-earned-checks]')].slice(0,4).map(cell => cell.textContent?.trim())).toEqual(['✓','✓✓','✓✓✓','']);
+        // Checks are pen strokes over the blank cell, never typed characters.
+        expect([...row.querySelectorAll('[data-earned-checks]')].slice(0,4).map(cell => cell.querySelectorAll('svg[data-mark="check"]').length)).toEqual([1,2,3,0]);
+        expect([...row.querySelectorAll('[data-earned-checks]')].slice(0,4).map(cell => cell.textContent?.trim())).toEqual(['','','','']);
         expect(row.textContent).toContain('Avery <Test>');
         expect(row.querySelector('test')).toBeNull();
-        expect(row.textContent).toContain('[09/07 ✓] [09/14 ×] [09/21  ]');
+        // The blank sheet's A/P prompt and [Day n] slots stay; P and A are written over the slot of each lesson date.
+        expect(row.textContent).toContain('Absent/Present');
+        expect(row.textContent).toContain(Array.from({length:14},(_,d)=>`[Day ${d+1}]`).join(' '));
+        expect(slots(row)).toEqual(['2026-09-07:P','2026-09-14:A','2026-09-21:']);
         expect(row.children[1].textContent?.trim()).toBe('');
         expect(document.querySelector('#start_time')?.textContent).toBe('2026-09-07 09:00');
         expect(document.querySelector('[data-page-kind="attendance-back"]')?.textContent).toContain('Foot-first entry');
@@ -55,11 +61,11 @@ describe('completed historical attendance sheets', () => {
     const fronts = (document: Document) => [...document.querySelectorAll('[data-page-kind="attendance-front"]')].map(page =>
         [...page.querySelectorAll<HTMLElement>('[data-generated-attendance-row]')].map(row => {
             const marks = [...row.querySelectorAll<HTMLElement>('[data-earned-checks]')].map(cell => Number(cell.dataset.earnedChecks));
-            return {label: row.querySelector('td strong')!.textContent, id: row.dataset.enrollmentId, marks: marks.slice(0,2), ticks: row.querySelector('td font span:last-child')!.textContent};
+            return {label: row.querySelector('td strong')!.textContent, id: row.dataset.enrollmentId, marks: marks.slice(0,2), ticks: slots(row).join(' ')};
         }));
     const expected = (n: number, lessonDates = ['2026-09-10','2026-09-17']) => ({
         label:`${n}. Swimmer ${n}`, id:`e${n}`, marks:[(n-1)%3+1, n%3],
-        ticks:lessonDates.map((date,d)=>`[${date.slice(5).replace('-','/')} ${d===0 && date==='2026-09-10' ? ((n-1)%2?'×':'✓') : ' '}]`).join(' '),
+        ticks:lessonDates.map((date,d)=>`${date}:${d===0 && date==='2026-09-10' ? ((n-1)%2?'A':'P') : ''}`).join(' '),
     });
     it('keeps every realistic class on one sheet numbered 1 to N with each swimmer\'s results on their row', async () => {
         for (const count of [1, 8, 11, 12, 14, COMPLETED_STUDENTS_PER_SHEET]) {
@@ -91,12 +97,15 @@ describe('completed historical attendance sheets', () => {
         expect(pages[0][1]).toEqual(expected(2, dates.slice(0,14)));
         expect(pages[1][10]).toEqual(expected(11, dates.slice(14)));
     });
-    it('drops the handwritten Absent/Present prompt only on completed rows', async () => {
+    it('prints the name cell exactly like the blank sheet, with only pen marks added on completed rows', async () => {
         const completed = await buildAttendancePrintDocument({template:'Splash7', roster:classOf(2)});
-        expect(completed.querySelector('[data-generated-attendance-row] td')!.textContent).not.toContain('bsent/');
+        const cell = completed.querySelector('[data-generated-attendance-row] td')!.cloneNode(true) as HTMLElement;
+        cell.querySelectorAll('svg').forEach(svg => svg.remove());
+        cell.querySelectorAll<HTMLElement>('[data-date]').forEach(slot => { slot.removeAttribute('data-date'); slot.removeAttribute('data-attendance'); slot.removeAttribute('style'); });
         const r = classOf(2); delete r.completed; r.students.forEach(s => { delete s.results; delete s.enrollmentId; });
         const blank = await buildAttendancePrintDocument({template:'Splash7', roster:r});
         expect(blank.querySelector('[data-generated-attendance-row] td')!.textContent).toContain('Absent/Present');
+        expect(cell.outerHTML).toBe(blank.querySelector('[data-generated-attendance-row] td')!.outerHTML);
         expect(blank.querySelectorAll('.print-page[data-completed]')).toHaveLength(0);
     });
     it('numbers blank sheets from 1 in one table for every level template', async () => {
