@@ -1,0 +1,337 @@
+{
+  "level": "Splash5",
+  "images": {
+    "outside": "splash-5-outside.jpg",
+    "inside": "splash-5-inside.jpg"
+  },
+  "source": {
+    "pdf": "splash-1-to-6-report-cards-combined.pdf",
+    "outsidePage": 11,
+    "insidePage": 12
+  },
+  "fields": {
+    "participant": {
+      "page": "outside",
+      "x": 75.9,
+      "y": 72.6
+    },
+    "instructor": {
+      "page": "outside",
+      "x": 75.3,
+      "y": 77.0
+    },
+    "date": {
+      "page": "outside",
+      "x": 72.4,
+      "y": 81.6
+    },
+    "session": {
+      "page": "outside",
+      "x": 87.9,
+      "y": 81.6
+    }
+  },
+  "nextLevel": [
+    {
+      "level": "Splash5",
+      "page": "outside",
+      "x": 37.61,
+      "y": 22.29
+    },
+    {
+      "level": "Splash6",
+      "page": "outside",
+      "x": 37.61,
+      "y": 26.09
+    }
+  ],
+  "criteria": {
+    "Splash5:1:1": {
+      "page": "inside",
+      "x": 3.59,
+      "y": 14.85
+    },
+    "Splash5:2:1": {
+      "page": "inside",
+      "x": 3.82,
+      "y": 23.62
+    },
+    "Splash5:3:1": {
+      "page": "inside",
+      "x": 4.27,
+      "y": 38.18
+    },
+    "Splash5:3:2": {
+      "page": "inside",
+      "x": 4.32,
+      "y": 40.62
+    },
+    "Splash5:3:3": {
+      "page": "inside",
+      "x": 4.46,
+      "y": 42.85
+    },
+    "Splash5:3:4": {
+      "page": "inside",
+      "x": 4.41,
+      "y": 45.03
+    },
+    "Splash5:3:5": {
+      "page": "inside",
+      "x": 4.57,
+      "y": 47.35
+    },
+    "Splash5:4:1": {
+      "page": "inside",
+      "x": 4.66,
+      "y": 54.09
+    },
+    "Splash5:4:2": {
+      "page": "inside",
+      "x": 4.79,
+      "y": 56.41
+    },
+    "Splash5:4:3": {
+      "page": "inside",
+      "x": 4.84,
+      "y": 60.65
+    },
+    "Splash5:4:4": {
+      "page": "inside",
+      "x": 4.89,
+      "y": 62.79
+    },
+    "Splash5:5:1": {
+      "page": "inside",
+      "x": 5.34,
+      "y": 75.68
+    },
+    "Splash5:6:1": {
+      "page": "inside",
+      "x": 36.91,
+      "y": 15.88
+    },
+    "Splash5:6:2": {
+      "page": "inside",
+      "x": 36.93,
+      "y": 20.56
+    },
+    "Splash5:7:1": {
+      "page": "inside",
+      "x": 37.07,
+      "y": 36.0
+    },
+    "Splash5:7:2": {
+      "page": "inside",
+      "x": 37.09,
+      "y": 38.23
+    },
+    "Splash5:7:3": {
+      "page": "inside",
+      "x": 37.16,
+      "y": 44.44
+    },
+    "Splash5:7:4": {
+      "page": "inside",
+      "x": 37.18,
+      "y": 48.68
+    },
+    "Splash5:7:5": {
+      "page": "inside",
+      "x": 37.18,
+      "y": 52.94
+    },
+    "Splash5:7:6": {
+      "page": "inside",
+      "x": 37.23,
+      "y": 57.12
+    },
+    "Splash5:7:7": {
+      "page": "inside",
+      "x": 37.18,
+      "y": 61.29
+    },
+    "Splash5:8-front-crawl:1": {
+      "page": "inside",
+      "x": 37.45,
+      "y": 87.77
+    },
+    "Splash5:8-front-crawl:2": {
+      "page": "inside",
+      "x": 37.34,
+      "y": 68.15
+    },
+    "Splash5:8-front-crawl:3": {
+      "page": "inside",
+      "x": 37.32,
+      "y": 70.44
+    },
+    "Splash5:8-front-crawl:4": {
+      "page": "inside",
+      "x": 37.3,
+      "y": 74.68
+    },
+    "Splash5:8-front-crawl:5": {
+      "page": "inside",
+      "x": 37.41,
+      "y": 77.0
+    },
+    "Splash5:8-front-crawl:6": {
+      "page": "inside",
+      "x": 37.32,
+      "y": 79.27
+    },
+    "Splash5:8-front-crawl:7": {
+      "page": "inside",
+      "x": 37.34,
+      "y": 83.35
+    },
+    "Splash5:8-back-crawl:1": {
+      "page": "inside",
+      "x": 69.5,
+      "y": 35.41
+    },
+    "Splash5:8-back-crawl:2": {
+      "page": "inside",
+      "x": 69.43,
+      "y": 13.82
+    },
+    "Splash5:8-back-crawl:3": {
+      "page": "inside",
+      "x": 69.52,
+      "y": 16.15
+    },
+    "Splash5:8-back-crawl:4": {
+      "page": "inside",
+      "x": 69.55,
+      "y": 20.38
+    },
+    "Splash5:8-back-crawl:5": {
+      "page": "inside",
+      "x": 69.52,
+      "y": 26.59
+    },
+    "Splash5:8-back-crawl:6": {
+      "page": "inside",
+      "x": 69.41,
+      "y": 28.88
+    },
+    "Splash5:8-back-crawl:7": {
+      "page": "inside",
+      "x": 69.52,
+      "y": 33.12
+    },
+    "Splash5:9:1": {
+      "page": "inside",
+      "x": 69.52,
+      "y": 42.15
+    },
+    "Splash5:9:2": {
+      "page": "inside",
+      "x": 69.52,
+      "y": 44.41
+    },
+    "Splash5:9:3": {
+      "page": "inside",
+      "x": 69.43,
+      "y": 50.59
+    },
+    "Splash5:9:4": {
+      "page": "inside",
+      "x": 69.55,
+      "y": 52.88
+    },
+    "Splash5:9:5": {
+      "page": "inside",
+      "x": 69.55,
+      "y": 57.12
+    },
+    "Splash5:9:6": {
+      "page": "inside",
+      "x": 69.55,
+      "y": 59.38
+    },
+    "Splash5:10:1": {
+      "page": "outside",
+      "x": 2.84,
+      "y": 16.68
+    },
+    "Splash5:10:2": {
+      "page": "outside",
+      "x": 2.98,
+      "y": 18.91
+    },
+    "Splash5:11:1": {
+      "page": "outside",
+      "x": 3.14,
+      "y": 29.68
+    },
+    "Splash5:11:2": {
+      "page": "outside",
+      "x": 3.21,
+      "y": 31.94
+    },
+    "Splash5:12a:1": {
+      "page": "outside",
+      "x": 3.29,
+      "y": 38.56
+    },
+    "Splash5:12b:1": {
+      "page": "outside",
+      "x": 3.48,
+      "y": 47.32
+    },
+    "Splash5:13a:2": {
+      "page": "outside",
+      "x": 5.8,
+      "y": 69.1
+    },
+    "Splash5:13b:2": {
+      "page": "outside",
+      "x": 5.9,
+      "y": 75.5
+    },
+    "Splash5:13c:2": {
+      "page": "outside",
+      "x": 6.05,
+      "y": 82.1
+    },
+    "Splash5:13d:2": {
+      "page": "outside",
+      "x": 6.25,
+      "y": 92.6
+    }
+  },
+  "unmapped": [
+    {
+      "criterionId": "Splash5:13a:1",
+      "reason": "single shared Water Smart participation box on card (listed under extraBoxes)"
+    },
+    {
+      "criterionId": "Splash5:13b:1",
+      "reason": "single shared Water Smart participation box on card (listed under extraBoxes)"
+    },
+    {
+      "criterionId": "Splash5:13c:1",
+      "reason": "single shared Water Smart participation box on card (listed under extraBoxes)"
+    },
+    {
+      "criterionId": "Splash5:13d:1",
+      "reason": "single shared Water Smart participation box on card (listed under extraBoxes)"
+    }
+  ],
+  "extraBoxes": [
+    {
+      "page": "inside",
+      "x": 36.93,
+      "y": 18.29,
+      "label": "Treading water 90 seconds time met (6:2 mapped to the distance box)"
+    },
+    {
+      "page": "outside",
+      "x": 3.82,
+      "y": 64.59,
+      "label": "Water Smart participation box (one box for all four messages; no per-message criterion)"
+    }
+  ]
+}
